@@ -2,6 +2,7 @@ import yfinance as yf
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from datetime import datetime
 
 def calculate_capm_and_additional_metrics(ticker):
     # 무위험 수익률(Rf): 10년 만기 미국 국채 금리 가져오기
@@ -20,7 +21,7 @@ def calculate_capm_and_additional_metrics(ticker):
 
     # 분석 기간 설정 (예시: 2015-03-01부터 2025-03-20까지)
     start_date = "2015-03-01"
-    end_date = "2025-03-20"
+    end_date = datetime.today().strftime("%Y-%m-%d")
     stock_data = stock.history(start=start_date, end=end_date)
     sp500_data = sp500.history(start=start_date, end=end_date)
 
@@ -74,6 +75,7 @@ def calculate_capm_and_additional_metrics(ticker):
         win_rate_down = np.nan
         avg_loss = np.nan
 
+    # =========================== 결과 ===========================
     print(f"무위험 수익률 (Rf): {rf:.2%}")
     print(f"시장 기대수익률 (Rm): {expected_market_return:.2%}")
     print(f"{ticker}의 yfinance 제공 베타 (β): {beta_yfinance:.2f}")
