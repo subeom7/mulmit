@@ -12,14 +12,15 @@ def calculate_capm_and_additional_metrics(ticker):
     # 시장 기대수익률(Rm): S&P 500의 장기 평균 수익률 (여기서는 8%로 가정)
     expected_market_return = 0.08
 
-    # yfinance에서 제공하는 해당 주식의 베타(β) 가져오기
+    # yfinance에서 제공하는 해당 주식의 베타(β)와 forward PE 가져오기
     stock = yf.Ticker(ticker)
     beta_yfinance = stock.info.get('beta', np.nan)  # 값이 없을 경우 대비
+    forward_pe = stock.info.get('forwardPE', np.nan)  # Forward PE 가져오기
 
     # S&P 500과 해당 주식의 과거 주가 데이터를 가져와 직접 베타 계산
     sp500 = yf.Ticker("^GSPC")  # S&P 500 지수
 
-    # 분석 기간 설정 (예시: 2015-03-01부터 2025-03-20까지)
+    # 분석 기간 설정 (예시: 2015-03-01부터 오늘까지)
     start_date = "2015-03-01"
     end_date = datetime.today().strftime("%Y-%m-%d")
     stock_data = stock.history(start=start_date, end=end_date)
@@ -82,6 +83,7 @@ def calculate_capm_and_additional_metrics(ticker):
     print(f"{ticker}의 직접 계산한 전체 베타 (β): {beta_calculated:.2f}")
     print(f"{ticker}의 전체 알파 (α): {alpha_calculated:.4f}")
     print(f"{ticker}의 기대수익률 (E(R)): {expected_return:.2%}")
+    print(f"{ticker}의 Forward PE: {forward_pe}")
     print("---------- 업사이드/다운사이드 세부 지표 ----------")
     print(f"업사이드 베타 (시장 상승 시): {upside_beta:.2f}")
     print(f"업사이드 알파: {upside_alpha:.4f}")
