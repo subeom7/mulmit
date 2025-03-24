@@ -43,6 +43,13 @@ def calculate_capm_and_additional_metrics(ticker):
 
     # CAPM 모형: 주식의 기대수익률 계산
     expected_return = rf + beta_calculated * (expected_market_return - rf)
+    sigma_i = stock_returns.std()
+    # 연간 표준편차로 변환 (주식 거래일: 약 252일/년)
+    trading_days = 252
+    sigma_i_annual = sigma_i * np.sqrt(trading_days)
+
+    # 샤프지수 계산
+    sharpe_ratio = (expected_return - rf) / sigma_i_annual
 
     # 업사이드 (시장 상승일) 데이터 추출
     returns_up = returns[returns['SP500'] > 0]
@@ -93,6 +100,7 @@ def calculate_capm_and_additional_metrics(ticker):
     print(f"다운사이드 알파: {downside_alpha:.4f}")
     print(f"시장 하락일 주식 승률: {win_rate_down:.2%}")
     print(f"평균 하락폭 (시장 하락일): {avg_loss:.2%}")
+    print(f"샤프 지수: {sharpe_ratio:.2%}")
 
 if __name__ == "__main__":
     calculate_capm_and_additional_metrics("INTC")
