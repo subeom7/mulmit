@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# 로컬 저장소(SQLite) & 예전 피클 캐시
+.data/
+.cache/
+
+# 배포 비밀값
+.env
+deploy/certs/
+
+.idea/
+.vscode/
+.DS_Store

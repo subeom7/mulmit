@@ -1,0 +1,15 @@
+# 윈도우에서 작업하고 리눅스에 배포한다. CRLF가 섞여 들어가면
+# 셸 스크립트는 `bad interpreter: /usr/bin/env bash^M`으로 죽고
+# Dockerfile/Caddyfile도 조용히 이상하게 동작한다.
+* text=auto eol=lf
+
+*.sh          text eol=lf
+Dockerfile    text eol=lf
+Caddyfile     text eol=lf
+*.yml         text eol=lf
+*.yaml        text eol=lf
+
+*.png binary
+*.jpg binary
+*.pkl binary
+*.db  binary
