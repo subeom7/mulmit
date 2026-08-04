@@ -1,0 +1,124 @@
+name: CI / Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # 배포가 겹치면 나중 것이 먼저 것을 되돌릴 수 있다
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  AWS_REGION: ap-northeast-2
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Lint
+        run: ruff check app tests scripts cli.py
+      - name: Test
+        run: pytest tests/ -q
+
+  build:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    # ARM 네이티브 러너. QEMU 에뮬레이션으로 scipy/statsmodels를 빌드하면
+    # 10분 걸리는 게 여기선 1분이면 끝난다. public 저장소는 무료.
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        run: |
+          echo "image=${REGISTRY}/${IMAGE_NAME,,}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "latest=${REGISTRY}/${IMAGE_NAME,,}:latest" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}
+            ${{ steps.meta.outputs.latest }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC로 AWS 역할을 위임받는다. 정적 액세스 키 없음.
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: SSM으로 배포
+        env:
+          INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
+          IMAGE: ${{ needs.build.outputs.image }}
+        run: |
+          set -euo pipefail
+
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "deploy ${GITHUB_SHA::7}" \
+            --timeout-seconds 600 \
+            --parameters "commands=[
+              'set -euo pipefail',
+              'cd /opt/stock-metrics',
+              'git fetch --depth 1 origin ${GITHUB_SHA}',
+              'git checkout --force ${GITHUB_SHA}',
+              './deploy/release.sh ${IMAGE}'
+            ]" \
+            --query Command.CommandId --output text)
+
+          echo "SSM command: $COMMAND_ID"
+
+          # send-command는 비동기다. 끝날 때까지 기다렸다가 결과를 가져온다.
+          for _ in $(seq 1 60); do
+            STATUS=$(aws ssm list-command-invocations \
+              --command-id "$COMMAND_ID" --details \
+              --query 'CommandInvocations[0].Status' --output text)
+            case "$STATUS" in
+              Success|Failed|Cancelled|TimedOut) break ;;
+            esac
+            sleep 10
+          done
+
+          aws ssm list-command-invocations \
+            --command-id "$COMMAND_ID" --details \
+            --query 'CommandInvocations[0].CommandPlugins[0].Output' \
+            --output text
+
+          test "$STATUS" = "Success"

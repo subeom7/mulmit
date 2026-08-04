@@ -1,0 +1,46 @@
+# Caddy는 DOMAIN에 대해 Let's Encrypt 인증서를 자동으로 발급·갱신한다.
+#
+# 중요 — Cloudflare를 앞에 둘 때의 함정:
+#   주황색 구름(프록시 ON) 상태면 Caddy의 HTTP-01 갱신 요청이 Cloudflare에
+#   가로채여 60일 뒤 갱신이 조용히 실패한다. 두 가지 중 하나를 택할 것.
+#
+#   (A) 회색 구름(DNS only)로 두고 Caddy가 인증서를 관리 — 지금 설정.
+#       가장 단순하고 바로 동작한다. Cloudflare 캐시·WAF는 못 쓴다.
+#
+#   (B) 주황색 구름 + Cloudflare Origin Certificate — 캐시/WAF를 쓰려면 이쪽.
+#       CF 대시보드에서 Origin Certificate를 만들어(15년, 갱신 불필요)
+#       호스트의 ./deploy/certs/ 에 두고 아래 tls 줄의 주석을 해제한 뒤,
+#       CF의 SSL 모드를 반드시 "Full (strict)"로 바꾼다.
+#       compose의 caddy 볼륨에 `- ./deploy/certs:/certs:ro` 를 추가할 것.
+
+{$DOMAIN} {
+	# (B)를 쓸 때 주석 해제하고 위 automatic HTTPS를 대체한다
+	# tls /certs/origin.pem /certs/origin.key
+
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# 대시보드는 정적 HTML 하나라 오래 캐시해도 된다. API는 캐시 금지 —
+	# 리포트 캐시는 서버(store.reports)가 이미 하고 있고, 여기서 또 캐시하면
+	# 새 거래일이 반영되지 않는다.
+	@api path /api/*
+	header @api Cache-Control "no-store"
+
+	reverse_proxy web:8000 {
+		health_uri /api/health
+		health_interval 15s
+		health_timeout 5s
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
