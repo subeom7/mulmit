@@ -71,7 +71,10 @@ jobs:
 
   deploy:
     needs: build
-    if: github.ref == 'refs/heads/main'
+    # DEPLOY_ENABLED는 저장소 Variables에 둔다(Secrets 아님). 인프라와 시크릿이
+    # 준비되기 전에 main에 머지해도 배포 잡이 빨갛게 실패하지 않는다.
+    # 준비가 끝나면 Settings > Variables에서 true로 바꾼다.
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read

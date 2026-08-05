@@ -7,7 +7,9 @@
 # SSH 없이 관리할 수 있다.
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-https://github.com/OWNER/stock-metrics-calculator.git}"
+REPO_URL="${REPO_URL:-https://github.com/subeom7/stock-metrics-calculator.git}"
+# 머지 전에 브랜치를 올려 검증할 때 쓴다. 평소에는 main.
+BRANCH="${BRANCH:-main}"
 APP_DIR="/opt/stock-metrics"
 
 echo ">> 패키지 설치"
@@ -46,9 +48,12 @@ cat > /etc/docker/daemon.json <<'JSON'
 JSON
 systemctl restart docker
 
-echo ">> 저장소 클론"
+echo ">> 저장소 클론 (${BRANCH})"
 if [[ ! -d "$APP_DIR/.git" ]]; then
-  git clone "$REPO_URL" "$APP_DIR"
+  git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
+else
+  git -C "$APP_DIR" fetch origin "$BRANCH"
+  git -C "$APP_DIR" checkout --force "origin/${BRANCH}"
 fi
 cd "$APP_DIR"
 chmod +x deploy/*.sh

@@ -12,7 +12,7 @@
 name: stock-metrics
 
 x-app: &app
-  image: ${IMAGE:-ghcr.io/OWNER/stock-metrics-calculator:latest}
+  image: ${IMAGE:-ghcr.io/subeom7/stock-metrics-calculator:latest}
   restart: unless-stopped
   environment: &app-env
     DATABASE_URL: postgresql+psycopg://stock:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD를 .env에 설정하세요}@db:5432/stock
