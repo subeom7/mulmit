@@ -7,7 +7,7 @@
 # SSH 없이 관리할 수 있다.
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-https://github.com/subeom7/stock-metrics-calculator.git}"
+REPO_URL="${REPO_URL:-https://github.com/subeom7/mulmit.git}"
 # 머지 전에 브랜치를 올려 검증할 때 쓴다. 평소에는 main.
 BRANCH="${BRANCH:-main}"
 APP_DIR="/opt/stock-metrics"

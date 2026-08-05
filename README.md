@@ -1,7 +1,14 @@
-# stock-metrics-calculator
+# 물밑 · mulmit
+
+[mulmit.com](https://mulmit.com)
 
 티커 하나를 넣으면 **CAPM 지표 · 최대낙폭(MDD) · 미래 MDD 확률분포**를 계산해서
 한 페이지 대시보드로 보여주는 FastAPI 앱.
+
+이름은 **언더워터(underwater)** 에서 왔다. 낙폭 분석에서 전고점 아래에 잠겨 있는
+구간을 부르는 말이고, 이 서비스의 핵심 차트가 그 언더워터 곡선이다.
+"얼마나 올랐나"가 아니라 **"얼마나 잠겨 있었고, 앞으로 얼마나 잠길 수 있나"** 를
+보는 도구다.
 
 ```
 pip install -r requirements-dev.txt

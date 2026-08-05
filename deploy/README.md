@@ -18,7 +18,7 @@ git push main
 ```bash
 export AWS_REGION=ap-northeast-2
 export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export GITHUB_REPO="OWNER/stock-metrics-calculator"   # 본인 것으로 교체
+export GITHUB_REPO="subeom7/mulmit"
 ```
 
 ---
@@ -105,8 +105,8 @@ aws ssm start-session --target "$INSTANCE_ID"
 
 ```bash
 sudo su -
-export REPO_URL="https://github.com/OWNER/stock-metrics-calculator.git"
-curl -fsSL "https://raw.githubusercontent.com/OWNER/stock-metrics-calculator/main/deploy/bootstrap.sh" | bash
+export REPO_URL="https://github.com/subeom7/mulmit.git"
+curl -fsSL "https://raw.githubusercontent.com/subeom7/mulmit/main/deploy/bootstrap.sh" | bash
 vi /opt/stock-metrics/.env     # DOMAIN, IMAGE 채우기
 cd /opt/stock-metrics && docker compose up -d
 ```
@@ -196,7 +196,7 @@ Settings → Packages에서 패키지 가시성이 public인지 확인할 것.
 
 | 이름 | 유형 | 값 | 프록시 |
 |---|---|---|---|
-| `stock` (또는 `@`) | A | 4번의 탄력적 IP | **처음엔 DNS only** |
+|  `@` 와 `www` | A | 4번의 탄력적 IP | **처음엔 DNS only** |
 
 Caddy가 Let's Encrypt 인증서를 받으려면 80번이 직접 닿아야 한다. 인증서가
 발급되고 사이트가 뜬 걸 확인한 다음에 프록시를 켜되, 그때는 `deploy/Caddyfile`
