@@ -61,8 +61,19 @@ chmod +x deploy/*.sh
 if [[ ! -f .env ]]; then
   cp deploy/env.example .env
   # POSTGRES_PASSWORD를 무작위로 채운다. 사람이 정하면 약해진다.
-  PASSWORD="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"
+  #
+  # `tr -dc ... </dev/urandom | head -c 32` 를 쓰면 안 된다. head가 32바이트를
+  # 읽고 파이프를 닫는 순간 tr이 SIGPIPE로 죽고, set -o pipefail + set -e가
+  # 여기서 스크립트를 중단시킨다. 그러면 sed가 실행되지 않아 env.example의
+  # 빈 값이 그대로 남고, compose가 나중에야 "POSTGRES_PASSWORD가 없다"고
+  # 실패한다. 실제로 이걸로 한 번 막혔다. openssl은 파이프가 없어 안전하다.
+  PASSWORD="$(openssl rand -hex 24)"
   sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${PASSWORD}|" .env
+
+  if ! grep -qE '^POSTGRES_PASSWORD=.+' .env; then
+    echo "!! POSTGRES_PASSWORD 생성에 실패했습니다. .env를 확인하세요." >&2
+    exit 1
+  fi
   echo
   echo "  !! .env를 만들었습니다. DOMAIN과 IMAGE를 채워 주세요:"
   echo "     sudo vi ${APP_DIR}/.env"
