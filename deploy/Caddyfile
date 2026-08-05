@@ -13,6 +13,20 @@
 #       CF의 SSL 모드를 반드시 "Full (strict)"로 바꾼다.
 #       compose의 caddy 볼륨에 `- ./deploy/certs:/certs:ro` 를 추가할 것.
 
+# www -> apex 리다이렉트.
+#
+# DNS에 www 레코드를 두면 Caddy에도 사이트 블록이 있어야 한다. 없으면
+# www로 온 요청은 매칭되는 인증서가 없어 TLS 핸드셰이크 단계에서 끊긴다
+# (브라우저에 "안전하지 않은 연결"이 뜬다). 실제로 이걸로 한 번 걸렸다.
+#
+# DOMAIN과 별도 변수를 쓰는 이유: 도메인 없이 IP로 띄워 검증할 때
+# DOMAIN=:80을 쓰는데, `www.{$DOMAIN}`이면 "www.:80"이 되어 Caddy 설정
+# 자체가 로드에 실패한다. 기본값 www.localhost는 Caddy가 내부 CA로
+# 처리하므로 공개 ACME를 두드리지 않는다.
+{$WWW_DOMAIN:www.localhost} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
 {$DOMAIN} {
 	# (B)를 쓸 때 주석 해제하고 위 automatic HTTPS를 대체한다
 	# tls /certs/origin.pem /certs/origin.key

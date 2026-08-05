@@ -77,6 +77,8 @@ services:
       - "443:443"
     environment:
       DOMAIN: ${DOMAIN:?DOMAIN을 .env에 설정하세요}
+      # 비워 두면 www 블록이 www.localhost로 떠서 실질적으로 비활성화된다
+      WWW_DOMAIN: ${WWW_DOMAIN:-www.localhost}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
