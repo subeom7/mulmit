@@ -143,7 +143,7 @@ cat > /tmp/trust.json <<JSON
 }
 JSON
 
-aws iam create-role --role-name stock-metrics-deploy \
+aws iam create-role --role-name mulmit-deploy \
   --assume-role-policy-document file:///tmp/trust.json
 ```
 
@@ -174,23 +174,48 @@ cat > /tmp/policy.json <<JSON
 }
 JSON
 
-aws iam put-role-policy --role-name stock-metrics-deploy \
+aws iam put-role-policy --role-name mulmit-deploy \
   --policy-name deploy --policy-document file:///tmp/policy.json
 
-echo "AWS_DEPLOY_ROLE_ARN=arn:aws:iam::${ACCOUNT_ID}:role/stock-metrics-deploy"
+echo "AWS_DEPLOY_ROLE_ARN=arn:aws:iam::${ACCOUNT_ID}:role/mulmit-deploy"
 ```
 
 ## 6. GitHub 설정
 
 저장소 → Settings → Secrets and variables → Actions:
 
+**Secrets** 탭:
+
 | 이름 | 값 |
 |---|---|
 | `AWS_DEPLOY_ROLE_ARN` | 위 5번 출력 |
 | `EC2_INSTANCE_ID` | 위 3번 출력 |
 
-GHCR 이미지는 저장소가 public이면 별도 인증 없이 EC2에서 받아진다.
-Settings → Packages에서 패키지 가시성이 public인지 확인할 것.
+**Variables** 탭 (Secrets 아님):
+
+| 이름 | 값 |
+|---|---|
+| `DEPLOY_ENABLED` | `true` |
+
+`DEPLOY_ENABLED`를 Variables에 두는 이유: job-level `if:`에서는 secrets
+컨텍스트를 평가할 수 없다. 그리고 이 게이트가 있어야 인프라가 준비되기 전에
+main에 머지해도 배포 잡이 빨갛게 실패하지 않는다.
+
+### GHCR 패키지 가시성 — 첫 배포가 여기서 막힌다
+
+**Actions가 처음 푸시한 GHCR 패키지는 저장소가 public이어도 private으로
+생성된다.** EC2에는 레지스트리 자격증명이 없으므로 `docker compose pull`이
+`denied`로 실패한다.
+
+첫 빌드가 끝난 뒤 한 번만 바꿔 주면 된다:
+
+```
+github.com/users/<계정>/packages/container/mulmit/settings
+  → Danger Zone → Change visibility → Public
+```
+
+private으로 두고 싶다면 대신 EC2에서 read:packages 스코프의 PAT로
+`docker login ghcr.io`를 해 두어야 한다.
 
 ## 7. DNS
 
