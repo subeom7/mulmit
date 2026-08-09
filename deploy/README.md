@@ -150,6 +150,35 @@ aws iam create-role --role-name mulmit-deploy \
 `sub` 조건이 핵심이다. 이걸 빼면 **아무 GitHub 저장소나** 이 역할을 위임받을
 수 있다. `ref:refs/heads/main`으로 못 박아서 main 브랜치 워크플로만 통과한다.
 
+### sub 값을 추측해서 쓰지 말 것 — 실제 클레임을 보고 쓴다
+
+위 형식(`repo:OWNER/REPO:ref:...`)이 문서에 흔히 나오지만, GitHub은 소유자와
+저장소에 **숫자 ID를 붙인 불변 subject 클레임**을 쓸 수 있다.
+
+```
+기대한 값   repo:subeom7/mulmit:ref:refs/heads/main
+실제 값     repo:subeom7@59524446/mulmit@951757952:ref:refs/heads/main
+```
+
+저장소 이름을 바꿔도 신뢰가 엉뚱한 곳으로 넘어가지 않게 하는 장치다. 이
+프로젝트는 실제로 저장소 이름을 바꿨기 때문에 여기 걸렸다. 결과는
+`configure-aws-credentials` 단계에서 `AccessDenied`인데, 워크플로 로그만으로는
+이유를 알 수 없다.
+
+**실제 클레임은 CloudTrail에서 확인한다.** 실패한 요청의 `userIdentity.userName`에
+그대로 찍힌다.
+
+```bash
+aws cloudtrail lookup-events --region ap-northeast-2 \
+  --lookup-attributes AttributeKey=EventName,AttributeValue=AssumeRoleWithWebIdentity \
+  --max-results 1 --query 'Events[0].CloudTrailEvent' --output text \
+  | python -c "import json,sys; e=json.load(sys.stdin); print(e['userIdentity']['userName'])"
+```
+
+찍힌 값을 그대로 `sub`에 넣는다. 와일드카드로 두 형식을 동시에 커버할 수도
+있지만, ID로 고정하는 쪽이 이름 기반보다 오히려 안전하다 — 이름은 바뀌어도
+ID는 영구적이다.
+
 권한은 그 인스턴스 하나에 명령을 보내는 것만:
 
 ```bash
