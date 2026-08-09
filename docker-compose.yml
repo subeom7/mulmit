@@ -1,0 +1,92 @@
+# EC2 한 대에 올리는 전체 스택.
+#
+#   caddy   TLS 종료 + 리버스 프록시
+#   web     FastAPI (수집 스레드 없음)
+#   ingest  수집 배치 (프로세스 하나만)
+#   db      Postgres
+#
+# 수집을 별도 서비스로 뺀 이유: web은 gunicorn 워커가 여러 개라
+# 내장 스레드를 쓰면 워커 수만큼 같은 티커를 중복으로 받아 온다.
+# 그래서 web은 INGEST_ENABLED=false로 못 박는다.
+
+name: stock-metrics
+
+x-app: &app
+  image: ${IMAGE:-ghcr.io/subeom7/mulmit:latest}
+  restart: unless-stopped
+  environment: &app-env
+    DATABASE_URL: postgresql+psycopg://stock:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD를 .env에 설정하세요}@db:5432/stock
+    MARKET_TICKER: ${MARKET_TICKER:-^GSPC}
+    SEED_TICKERS: ${SEED_TICKERS:-AAPL,MSFT,SPY,QQQ}
+    PRICE_MAX_AGE: ${PRICE_MAX_AGE:-72000}
+    REPORT_TTL: ${REPORT_TTL:-86400}
+    DEFAULT_SIMS: ${DEFAULT_SIMS:-5000}
+    MAX_SIMS: ${MAX_SIMS:-50000}
+    TZ: Asia/Seoul
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: stock
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD를 .env에 설정하세요}
+      POSTGRES_DB: stock
+      TZ: Asia/Seoul
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stock -d stock"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    # 외부로 열지 않는다. 접속이 필요하면 SSM으로 들어와 compose exec를 쓴다.
+    expose:
+      - "5432"
+
+  web:
+    <<: *app
+    environment:
+      <<: *app-env
+      INGEST_ENABLED: "false"
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+    expose:
+      - "8000"
+
+  ingest:
+    <<: *app
+    command: ["python", "-m", "app.ingest", "--loop"]
+    environment:
+      <<: *app-env
+      INGEST_ENABLED: "true"
+      INGEST_INTERVAL: ${INGEST_INTERVAL:-3600}
+      INGEST_BATCH_SIZE: ${INGEST_BATCH_SIZE:-40}
+      INGEST_DELAY: ${INGEST_DELAY:-1.5}
+    healthcheck:
+      disable: true
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN을 .env에 설정하세요}
+      # 비워 두면 www 블록이 www.localhost로 떠서 실질적으로 비활성화된다
+      WWW_DOMAIN: ${WWW_DOMAIN:-www.localhost}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

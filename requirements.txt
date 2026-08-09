@@ -1,4 +1,13 @@
-statsmodels
-yfinance
-pandas
-numpy
+fastapi>=0.110
+uvicorn[standard]>=0.27
+gunicorn>=21.2
+slowapi>=0.1.9
+SQLAlchemy>=2.0
+psycopg[binary]>=3.1
+yfinance>=0.2.54
+# yfinance 0.2.54+는 curl_cffi가 있으면 크롬 TLS 지문으로 요청한다.
+# 없으면 requests로 폴백하는데 야후가 그 지문을 우선적으로 차단한다.
+curl_cffi>=0.7
+pandas>=2.0
+numpy>=1.24
+statsmodels>=0.14
