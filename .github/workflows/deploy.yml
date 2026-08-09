@@ -102,7 +102,7 @@ jobs:
               'cd /opt/stock-metrics',
               'git fetch --depth 1 origin ${GITHUB_SHA}',
               'git checkout --force ${GITHUB_SHA}',
-              './deploy/release.sh ${IMAGE}'
+              'bash deploy/release.sh ${IMAGE}'
             ]" \
             --query Command.CommandId --output text)
 
