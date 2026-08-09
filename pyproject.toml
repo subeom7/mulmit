@@ -18,6 +18,13 @@ ignore = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# 저장소 루트를 sys.path에 넣는다.
+#
+# `python -m pytest`는 현재 디렉터리를 sys.path 맨 앞에 자동으로 넣지만
+# `pytest` 실행파일은 넣지 않는다. 그래서 conftest.py의 `from app import ...`가
+# 호출 방식에 따라 되기도 하고 안 되기도 했다. 로컬에서는 전자로 돌리고
+# CI는 후자를 쓰는 바람에 "로컬은 통과, CI는 전멸"이 됐다.
+pythonpath = ["."]
 filterwarnings = [
     "ignore::DeprecationWarning:pkg_resources",
 ]
