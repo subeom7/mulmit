@@ -37,7 +37,7 @@ def _seed(db, *, notes: str = ""):
     )
 
 
-def test_macro_overview_has_cards_series_freshness_and_attribution(db):
+def test_macro_overview_has_cards_series_freshness_and_attribution(db, fred_serving):
     _seed(db)
     client = TestClient(app)
 
@@ -72,7 +72,7 @@ def test_macro_overview_has_cards_series_freshness_and_attribution(db):
     assert "stale-while-revalidate" in response.headers["cache-control"]
 
 
-def test_macro_series_endpoint_and_unknown_series(db):
+def test_macro_series_endpoint_and_unknown_series(db, fred_serving):
     _seed(db)
     client = TestClient(app)
 
@@ -89,7 +89,7 @@ def test_macro_series_endpoint_and_unknown_series(db):
     assert unknown.status_code == 404
 
 
-def test_provider_copyright_note_fails_closed_at_runtime(db):
+def test_provider_copyright_note_fails_closed_at_runtime(db, fred_serving):
     _seed(db, notes="Copyright © Example Data Owner. Reprinted with permission.")
     client = TestClient(app)
 
@@ -108,7 +108,7 @@ def test_provider_copyright_note_fails_closed_at_runtime(db):
     assert detail.json()["series"]["observations"] == []
 
 
-def test_macro_history_is_validated_without_network_access(db):
+def test_macro_history_is_validated_without_network_access(db, fred_serving):
     client = TestClient(app)
     assert client.get("/api/market/macro?history=forever").status_code == 422
 

@@ -18,7 +18,12 @@ x-app: &app
     DATABASE_URL: postgresql+psycopg://stock:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD를 .env에 설정하세요}@db:5432/stock
     MARKET_TICKER: ${MARKET_TICKER:-^GSPC}
     SEED_TICKERS: ${SEED_TICKERS:-AAPL,MSFT,SPY,QQQ}
+    # 권리 게이트는 web(서빙)과 ingest(수집) 양쪽에서 같은 값이어야 한다.
+    # ingest 블록에만 두면 web이 이미지 기본값으로 판정해 운영 설정과 어긋난다.
     LEGACY_PRICE_DATA_ENABLED: ${LEGACY_PRICE_DATA_ENABLED:-false}
+    FRED_ENABLED: ${FRED_ENABLED:-false}
+    KRX_ENABLED: ${KRX_ENABLED:-false}
+    HIP3_PUBLIC_DISPLAY_ENABLED: ${HIP3_PUBLIC_DISPLAY_ENABLED:-false}
     PRICE_MAX_AGE: ${PRICE_MAX_AGE:-72000}
     FRED_MAX_AGE: ${FRED_MAX_AGE:-21600}
     REPORT_TTL: ${REPORT_TTL:-86400}
@@ -68,12 +73,11 @@ services:
       INGEST_INTERVAL: ${INGEST_INTERVAL:-3600}
       INGEST_BATCH_SIZE: ${INGEST_BATCH_SIZE:-40}
       INGEST_DELAY: ${INGEST_DELAY:-1.5}
-      FRED_ENABLED: ${FRED_ENABLED:-false}
+      # 키와 수집 튜닝값은 수집 프로세스에만 필요하다. 게이트 자체는 x-app에 있다.
       FRED_API_KEY: ${FRED_API_KEY:-}
       FRED_TIMEOUT: ${FRED_TIMEOUT:-15}
       FRED_RETRIES: ${FRED_RETRIES:-2}
       FRED_INGEST_DELAY: ${FRED_INGEST_DELAY:-0.1}
-      KRX_ENABLED: ${KRX_ENABLED:-false}
       KRX_API_KEY: ${KRX_API_KEY:-}
       KRX_TIMEOUT: ${KRX_TIMEOUT:-15}
       KRX_RETRIES: ${KRX_RETRIES:-2}

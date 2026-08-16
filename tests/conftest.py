@@ -12,11 +12,16 @@ from app.providers.base import DataUnavailable, RateLimited
 
 @pytest.fixture
 def db(tmp_path, monkeypatch):
-    """테스트마다 빈 SQLite. 네트워크는 전혀 쓰지 않는다."""
+    """테스트마다 빈 SQLite. 네트워크는 전혀 쓰지 않는다.
+
+    권리 게이트는 전부 배포 기본값(닫힘)으로 둔다. 값을 실제로 서빙하는
+    테스트는 아래 opt-in fixture 중 하나를 명시적으로 요청해야 한다.
+    """
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(config, "FRED_ENABLED", False)
     monkeypatch.setattr(config, "FRED_API_KEY", "")
     monkeypatch.setattr(config, "LEGACY_PRICE_DATA_ENABLED", False)
+    monkeypatch.setattr(config, "HIP3_PUBLIC_DISPLAY_ENABLED", False)
     store.reset(f"sqlite:///{tmp_path / 'test.db'}")
     store.init_db()
     yield store
@@ -27,6 +32,22 @@ def db(tmp_path, monkeypatch):
 def legacy_price_data(db, monkeypatch):
     """Opt in only tests that intentionally exercise the quarantined Yahoo-era lane."""
     monkeypatch.setattr(config, "LEGACY_PRICE_DATA_ENABLED", True)
+
+
+@pytest.fixture
+def fred_serving(db, monkeypatch):
+    """Open the FRED lane for tests that assert on assembled macro payloads.
+
+    Public deployments keep this closed; these tests describe the shape a
+    licensed or approved lane produces, not what mulmit.com serves today.
+    """
+    monkeypatch.setattr(config, "FRED_ENABLED", True)
+
+
+@pytest.fixture
+def hip3_public_display(monkeypatch):
+    """Opt in tests that assert on served Hyperliquid HIP-3 payloads."""
+    monkeypatch.setattr(config, "HIP3_PUBLIC_DISPLAY_ENABLED", True)
 
 
 def make_close(n=400, start="2020-01-01", seed=0, drift=0.0004, vol=0.02):

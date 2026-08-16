@@ -52,6 +52,11 @@ FRED_MAX_AGE = _int("FRED_MAX_AGE", 60 * 60 * 6)
 FRED_TIMEOUT = _float("FRED_TIMEOUT", 15.0)
 FRED_RETRIES = _int("FRED_RETRIES", 2)
 FRED_INGEST_DELAY = _float("FRED_INGEST_DELAY", 0.1)
+# Hyperliquid HIP-3 / trade.xyz values are reachable without a key, but public
+# reachability is not a redistribution right. Written confirmation is still
+# pending, so the serving gate defaults to closed and a deployment has to opt in
+# explicitly (and record that decision in docs/DATA_SOURCE_REGISTER.md).
+HIP3_PUBLIC_DISPLAY_ENABLED = _bool("HIP3_PUBLIC_DISPLAY_ENABLED", False)
 # KRX OPEN API must remain disabled until KRX approves the exact public use
 # case. Possessing a key alone does not grant redistribution rights.
 KRX_ENABLED = _bool("KRX_ENABLED", False)
