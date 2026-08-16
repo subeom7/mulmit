@@ -14,6 +14,8 @@ from app import config, data, service
 from app.providers.base import DataUnavailable, RateLimited
 from tests.conftest import FakeProvider, make_close
 
+pytestmark = pytest.mark.usefixtures("legacy_price_data")
+
 
 @pytest.fixture
 def provider(monkeypatch):

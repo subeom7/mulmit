@@ -43,6 +43,21 @@ DATABASE_URL = os.environ.get("DATABASE_URL") or f"sqlite:///{DATA_DIR / 'stock.
 PRICE_MAX_AGE = _int("PRICE_MAX_AGE", 60 * 60 * 20)
 INFO_MAX_AGE = _int("INFO_MAX_AGE", 60 * 60 * 24 * 3)
 MACRO_MAX_AGE = _int("MACRO_MAX_AGE", 60 * 60 * 12)
+# FRED adapter is kept for licensed/private evaluation only. Current FRED API
+# terms restrict storing/caching API content for redistribution, so public
+# deployments must remain disabled unless written permission is obtained.
+FRED_API_KEY = os.environ.get("FRED_API_KEY", "").strip()
+FRED_ENABLED = _bool("FRED_ENABLED", False)
+FRED_MAX_AGE = _int("FRED_MAX_AGE", 60 * 60 * 6)
+FRED_TIMEOUT = _float("FRED_TIMEOUT", 15.0)
+FRED_RETRIES = _int("FRED_RETRIES", 2)
+FRED_INGEST_DELAY = _float("FRED_INGEST_DELAY", 0.1)
+# KRX OPEN API must remain disabled until KRX approves the exact public use
+# case. Possessing a key alone does not grant redistribution rights.
+KRX_ENABLED = _bool("KRX_ENABLED", False)
+KRX_API_KEY = os.environ.get("KRX_API_KEY", "").strip()
+KRX_TIMEOUT = _float("KRX_TIMEOUT", 15.0)
+KRX_RETRIES = _int("KRX_RETRIES", 2)
 # 조립된 리포트 응답 캐시. 시드가 고정이라 같은 입력이면 결과가 같다.
 REPORT_TTL = _int("REPORT_TTL", 60 * 60 * 24)
 # 없는 티커를 기억해 두는 시간(같은 오타로 야후를 계속 두드리지 않도록)
@@ -103,5 +118,8 @@ SIM_CHUNK = _int("SIM_CHUNK", 1000)  # 메모리 절약용 청크 크기
 RANDOM_SEED = _int("RANDOM_SEED", 20260801)  # 재현 가능한 결과
 
 # --- 데이터 공급자 -----------------------------------------------------------
+# Yahoo/yfinance 경로는 공개 재배포 권리가 확인되지 않은 레거시 기능이다.
+# 사설/개발 환경에서 명시적으로 opt-in한 경우에만 사용한다.
+LEGACY_PRICE_DATA_ENABLED = _bool("LEGACY_PRICE_DATA_ENABLED", False)
 # 유료 API로 갈아탈 때 여기만 바꾼다. providers/__init__.py 참고.
 PROVIDER = os.environ.get("PROVIDER", "yahoo")

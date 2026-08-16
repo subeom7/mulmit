@@ -14,10 +14,19 @@ from app.providers.base import DataUnavailable, RateLimited
 def db(tmp_path, monkeypatch):
     """테스트마다 빈 SQLite. 네트워크는 전혀 쓰지 않는다."""
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "FRED_ENABLED", False)
+    monkeypatch.setattr(config, "FRED_API_KEY", "")
+    monkeypatch.setattr(config, "LEGACY_PRICE_DATA_ENABLED", False)
     store.reset(f"sqlite:///{tmp_path / 'test.db'}")
     store.init_db()
     yield store
     store.reset()
+
+
+@pytest.fixture
+def legacy_price_data(db, monkeypatch):
+    """Opt in only tests that intentionally exercise the quarantined Yahoo-era lane."""
+    monkeypatch.setattr(config, "LEGACY_PRICE_DATA_ENABLED", True)
 
 
 def make_close(n=400, start="2020-01-01", seed=0, drift=0.0004, vol=0.02):

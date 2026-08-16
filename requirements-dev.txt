@@ -1,3 +1,8 @@
 -r requirements.txt
 pytest>=8.0
 ruff>=0.6
+# Starlette TestClient supports the legacy httpx client and uses httpx2 on
+# current releases. Keep both so a clean dev/CI install works across the
+# FastAPI/Starlette versions allowed by requirements.txt.
+httpx>=0.27,<0.29
+httpx2>=2.0.0

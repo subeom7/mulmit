@@ -139,6 +139,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, [tabindex="0"]:
   color: var(--text-secondary); background: transparent; cursor: pointer; font-size: 12px; font-weight: 650;
 }
 .utility-button:hover { background: var(--wash); color: var(--text-primary); }
+.monitor-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.monitor-link .label-en { display: none; }
+html[lang="en"] .monitor-link .label-ko { display: none; }
+html[lang="en"] .monitor-link .label-en { display: inline; }
 
 .intro { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(260px, .55fr); gap: 32px; align-items: end; margin: 0 0 38px; }
 .eyebrow { margin: 0 0 10px; color: var(--series-1); font: 650 11px/1.4 var(--mono); letter-spacing: .11em; text-transform: uppercase; }
@@ -376,6 +380,7 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
   </div>
   <div class="live-badge"><span class="live-dot" aria-hidden="true"></span><span data-i18n="app.live">LIVE DATA</span></div>
   <div class="header-actions">
+    <a class="utility-button monitor-link" href="/" aria-label="Market monitor"><span class="label-ko">시장</span><span class="label-en">Monitor</span></a>
     <button class="utility-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
     <button class="utility-button" id="theme-toggle" type="button" aria-label="테마 전환">테마</button>
   </div>
