@@ -125,6 +125,16 @@ def test_seed_and_market_tickers_are_always_targeted(db, provider, monkeypatch):
     assert {"^GSPC", "AAPL", "MSFT"} <= fetched
 
 
+def test_sector_etfs_are_always_targeted(db, provider, monkeypatch):
+    monkeypatch.setattr(config, "MARKET_TICKER", "^GSPC")
+    monkeypatch.setattr(config, "SEED_TICKERS", [])
+
+    ingest.run_once()
+
+    fetched = {call[0] for call in provider.price_calls}
+    assert set(config.SECTOR_ETF_TICKERS) <= fetched
+
+
 def test_batch_size_is_respected(db, provider, monkeypatch):
     monkeypatch.setattr(config, "SEED_TICKERS", [f"T{i}" for i in range(20)])
     monkeypatch.setattr(config, "INGEST_BATCH_SIZE", 5)
@@ -136,6 +146,8 @@ def test_batch_size_is_respected(db, provider, monkeypatch):
 def test_popular_tickers_refresh_first(db, provider, monkeypatch):
     """배치 예산이 모자랄 때 아무도 안 보는 티커부터 받으면 안 된다."""
     monkeypatch.setattr(config, "SEED_TICKERS", [])
+    # 이 테스트는 고정 대상이 아닌 동적 대상끼리의 우선순위만 검증한다.
+    monkeypatch.setattr(config, "SECTOR_ETF_TICKERS", ())
     monkeypatch.setattr(config, "MARKET_TICKER", "IGNORED")
     for ticker, hits in [("COLD", 1), ("HOT", 30)]:
         store.save_prices(ticker, make_close(50))
@@ -148,3 +160,17 @@ def test_popular_tickers_refresh_first(db, provider, monkeypatch):
 
     ordered = [c[0] for c in provider.price_calls if c[0] in {"HOT", "COLD"}]
     assert ordered and ordered[0] == "HOT"
+
+
+def test_pinned_sector_etfs_rotate_through_small_batches(db, provider, monkeypatch):
+    """고정 대상이 배치 한도보다 많아도 뒤쪽 ETF가 영원히 굶지 않는다."""
+    monkeypatch.setattr(config, "MARKET_TICKER", config.SECTOR_ETF_TICKERS[0])
+    monkeypatch.setattr(config, "SEED_TICKERS", [])
+    monkeypatch.setattr(config, "INGEST_BATCH_SIZE", 3)
+
+    for _ in range(4):
+        result = ingest.run_once()
+        assert result["attempted"] <= 3
+
+    fetched = {call[0] for call in provider.price_calls}
+    assert set(config.SECTOR_ETF_TICKERS) <= fetched

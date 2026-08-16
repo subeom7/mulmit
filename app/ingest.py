@@ -71,14 +71,21 @@ def _targets(explicit: list[str] | None) -> list[str]:
 
     # 시장지수와 시드는 조회 여부와 무관하게 항상 최신이어야 한다.
     # CAPM이 시장지수 없이는 아예 계산되지 않기 때문이다.
-    pinned = [config.MARKET_TICKER, *config.SEED_TICKERS]
+    pinned = [
+        config.MARKET_TICKER,
+        *config.SECTOR_ETF_TICKERS,
+        *config.SEED_TICKERS,
+    ]
     stale = store.stale_tickers(config.PRICE_MAX_AGE, config.INGEST_BATCH_SIZE)
 
     ordered: list[str] = []
     for ticker in [*pinned, *stale]:
         if ticker not in ordered:
             ordered.append(ticker)
-    return ordered[: config.INGEST_BATCH_SIZE]
+    # 여기서 자르면 고정 대상 수가 INGEST_BATCH_SIZE보다 클 때 뒤쪽 ETF가
+    # 영원히 선택되지 않는다. run_once가 이미 최신인 앞쪽 대상을 건너뛴 뒤
+    # 실제 시도 횟수만 제한해야 여러 배치에 걸쳐 전부 순환한다.
+    return ordered
 
 
 def run_once(tickers: list[str] | None = None) -> dict:
@@ -95,21 +102,25 @@ def run_once(tickers: list[str] | None = None) -> dict:
 
     _refresh_macro()
 
+    automatic = not tickers
     targets = _targets(tickers)
     result = {"attempted": 0, "updated": 0, "missing": 0, "failed": 0, "rate_limited": 0}
 
-    for index, ticker in enumerate(targets):
+    for ticker in targets:
         # 필요 없는 갱신은 건너뛴다(핀 티커가 방금 갱신된 경우 등)
         record = store.get_instrument(ticker)
         if (
-            not tickers
+            automatic
             and record
             and record.get("prices_updated_at")
             and time.time() - record["prices_updated_at"] < config.PRICE_MAX_AGE
         ):
             continue
 
-        if index and config.INGEST_DELAY > 0:
+        if automatic and result["attempted"] >= config.INGEST_BATCH_SIZE:
+            break
+
+        if result["attempted"] and config.INGEST_DELAY > 0:
             time.sleep(config.INGEST_DELAY)
 
         result["attempted"] += 1
