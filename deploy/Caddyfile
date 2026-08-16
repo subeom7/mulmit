@@ -41,13 +41,17 @@
 		-Server
 	}
 
-	# 대시보드는 정적 HTML 하나라 오래 캐시해도 된다. API는 캐시 금지 —
-	# 리포트 캐시는 서버(store.reports)가 이미 하고 있고, 여기서 또 캐시하면
-	# 새 거래일이 반영되지 않는다.
-	@api path /api/*
-	header @api Cache-Control "no-store"
+	# FastAPI가 market snapshot별 TTL을 정한다. 모든 /api 응답을 여기서
+	# no-store로 덮어쓰면 macro/weekend의 짧은 public cache가 무효가 된다.
+	# 계산량이 크거나 운영 상태를 담는 엔드포인트만 캐시하지 않는다.
+	@uncached_api path /api/metrics* /api/correlation* /api/status /api/health
+	header @uncached_api Cache-Control "no-store"
 
 	reverse_proxy web:8000 {
+		# DNS-only mode: replace, do not append to, public forwarding headers.
+		# This keeps application rate limits from being bypassed by spoofed IPs.
+		header_up X-Forwarded-For {remote_host}
+		header_up -CF-Connecting-IP
 		health_uri /api/health
 		health_interval 15s
 		health_timeout 5s

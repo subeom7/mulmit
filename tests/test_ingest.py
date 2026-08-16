@@ -12,6 +12,8 @@ from app import config, data, ingest, store
 from app.providers.base import DataUnavailable, RateLimited
 from tests.conftest import FakeProvider, make_close
 
+pytestmark = pytest.mark.usefixtures("legacy_price_data")
+
 
 @pytest.fixture
 def provider(monkeypatch):
@@ -149,6 +151,8 @@ def test_popular_tickers_refresh_first(db, provider, monkeypatch):
     # 이 테스트는 고정 대상이 아닌 동적 대상끼리의 우선순위만 검증한다.
     monkeypatch.setattr(config, "SECTOR_ETF_TICKERS", ())
     monkeypatch.setattr(config, "MARKET_TICKER", "IGNORED")
+    monkeypatch.setattr(ingest, "ASSET_TICKERS", ())
+    monkeypatch.setattr(ingest, "CORRELATION_TICKERS", ())
     for ticker, hits in [("COLD", 1), ("HOT", 30)]:
         store.save_prices(ticker, make_close(50))
         for _ in range(hits):

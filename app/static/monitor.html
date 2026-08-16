@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Mulmit 글로벌 자산·거시경제·유동성 모니터">
+  <title>Market Monitor · Mulmit</title>
+  <link rel="stylesheet" href="/static/monitor.css?v=20260816-7">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to market data</a>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Mulmit home">
+      <span class="brand-mark" aria-hidden="true">M</span>
+      <span><strong>Mulmit</strong><small data-i18n="brand.tagline">MARKET SIGNAL CONSOLE</small></span>
+    </a>
+    <nav class="mast-nav" aria-label="Primary">
+      <a class="nav-chip mobile-essential" href="/analytics" data-i18n="nav.analytics">종목 분석</a>
+      <a class="nav-chip active" href="/" aria-current="page" data-i18n="nav.monitor">시장 모니터</a>
+      <a class="nav-chip" href="/docs">API</a>
+    </nav>
+    <div class="mast-actions">
+      <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
+      <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
+      <button class="icon-button" id="theme-toggle" type="button" data-i18n-aria="theme.toggle" aria-label="테마 전환">◐</button>
+    </div>
+  </header>
+
+  <main id="main" class="shell">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <p class="kicker" data-i18n="hero.kicker">GLOBAL MARKET INTELLIGENCE</p>
+        <h1 id="hero-title" data-i18n="hero.title">한눈에 읽는 시장의 온도.</h1>
+        <p class="hero-copy" data-i18n="hero.copy">가격, 위험, 유동성, 거시경제를 같은 시간축에서 확인합니다. 연결되지 않은 데이터는 추정하지 않습니다.</p>
+      </div>
+      <aside class="hero-meta" aria-live="polite">
+        <span data-i18n="hero.updated">마지막 갱신</span>
+        <strong id="updated-at">—</strong>
+        <button class="refresh-button" id="refresh-button" type="button"><span aria-hidden="true">↻</span> <span data-i18n="action.refresh">새로고침</span></button>
+      </aside>
+    </section>
+
+    <section class="overview" aria-labelledby="overview-title">
+      <div class="section-heading compact">
+        <span class="section-index">00</span>
+        <div><p class="eyebrow" data-i18n="overview.eyebrow">MARKET TAPE</p><h2 id="overview-title" data-i18n="overview.title">시장 요약</h2></div>
+        <span class="source-pill" id="overview-source">API</span>
+      </div>
+      <div id="overview-groups" class="overview-groups" aria-live="polite"></div>
+    </section>
+
+    <section class="weekend-pulse" id="weekend-pulse" aria-labelledby="weekend-title">
+      <div class="section-heading compact">
+        <span class="section-index">W</span>
+        <div><p class="eyebrow">HYPERLIQUID HIP-3 · WEEKEND REFERENCE</p><h2 id="weekend-title" data-i18n="weekend.title">Weekend Pulse · 주말 참고 신호</h2></div>
+        <span class="source-pill">HIP-3</span>
+      </div>
+      <div class="risk-strip" role="note">
+        <span class="status-badge warn" data-i18n="weekend.notSpot">현물가격 아님</span>
+        <span class="status-badge warn" data-i18n="weekend.leverage">레버리지 파생</span>
+        <span class="status-badge warn" data-i18n="weekend.syntheticPerp">USD 환산 합성 무기한선물</span>
+        <span class="status-badge warn" data-i18n="weekend.liquidity">저유동성 가능</span>
+        <span class="status-badge warn" data-i18n="weekend.noPromise">월요일 방향 보장 안 됨</span>
+      </div>
+      <div id="weekend-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="weekend-grid" class="weekend-grid" hidden></div>
+      <p class="weekend-disclaimer" id="weekend-disclaimer" data-i18n="weekend.defaultDisclaimer">주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.</p>
+    </section>
+
+    <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
+
+    <div id="deep-sections"></div>
+
+    <section class="dashboard-section" id="sector-flow" aria-labelledby="sector-flow-title">
+      <div class="section-heading">
+        <span class="section-index">30</span>
+        <div><p class="eyebrow">S&amp;P 500 · SECTOR ETFs</p><h2 id="sector-flow-title" data-i18n="sector.title">섹터 자금 흐름</h2></div>
+        <div class="segmented" id="sector-period" role="group" aria-label="Sector return period">
+          <button type="button" data-period="1d">1D</button><button type="button" data-period="1w">1W</button>
+          <button type="button" data-period="1m">1M</button><button type="button" data-period="1y">1Y</button>
+        </div>
+      </div>
+      <div class="panel sector-panel">
+        <div id="sector-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
+        <div id="sector-bars" class="sector-bars" hidden aria-hidden="true"></div>
+        <div class="table-scroll"><table id="sector-table" class="accessible-table"><caption data-i18n="sector.caption">S&amp;P 500 섹터 ETF 기간 수익률</caption><thead></thead><tbody></tbody></table></div>
+        <footer class="panel-footer" id="sector-footer"></footer>
+        <p class="interpretation-note" data-i18n="sector.interpretation">플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.</p>
+      </div>
+    </section>
+
+    <section class="dashboard-section" id="constituent-heatmap" aria-labelledby="tv-title">
+      <div class="section-heading">
+        <span class="section-index">31</span>
+        <div><p class="eyebrow">TRADINGVIEW · THIRD-PARTY EMBED</p><h2 id="tv-title" data-i18n="tv.title">S&amp;P 500 종목 히트맵</h2></div>
+        <div class="segmented" id="tv-period" role="group" aria-label="Heatmap performance period">
+          <button type="button" data-period="1d">1D</button><button type="button" data-period="1w">1W</button>
+          <button type="button" data-period="1m">1M</button><button type="button" data-period="1y">1Y</button>
+        </div>
+      </div>
+      <div class="panel tv-panel">
+        <div class="notice-line"><span class="status-badge info" data-i18n="tv.embed">외부 위젯</span><span data-i18n="tv.notice">이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.</span></div>
+        <div id="tradingview-host" class="tradingview-host lazy-host" data-lazy="tradingview"><div class="state-block" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div></div>
+        <footer class="panel-footer"><a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView</a><span data-i18n="tv.terms">데이터·표시 조건은 제공자 정책을 따릅니다.</span></footer>
+      </div>
+    </section>
+
+    <section class="dashboard-section" id="correlation" aria-labelledby="corr-title">
+      <div class="section-heading">
+        <span class="section-index">32</span>
+        <div><p class="eyebrow">DAILY RETURNS · PEARSON</p><h2 id="corr-title" data-i18n="corr.title">자산군 상관관계</h2></div>
+        <label class="select-label"><span data-i18n="period.label">기간</span><select id="corr-period"><option value="3mo">3M</option><option value="6mo">6M</option><option value="1y" selected>1Y</option><option value="2y">2Y</option></select></label>
+      </div>
+      <div class="panel correlation-panel lazy-host" data-lazy="correlation">
+        <div id="corr-state" class="state-block" role="status" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div>
+        <div id="corr-table-wrap" class="table-scroll" hidden></div>
+        <footer class="panel-footer"><span data-i18n="corr.note">서로 다른 시장 시간대는 동시 일간 수익률 상관을 왜곡할 수 있습니다.</span><span data-i18n="corr.scale">+1은 같은 방향, 0은 약한 선형 관계, −1은 반대 방향입니다. 상관은 인과관계가 아닙니다.</span></footer>
+      </div>
+    </section>
+
+    <section class="methodology" aria-labelledby="method-title">
+      <p class="eyebrow">DATA POLICY</p>
+      <h2 id="method-title" data-i18n="method.title">숫자를 다루는 원칙</h2>
+      <div class="method-grid">
+        <article><strong data-i18n="method.one.title">출처를 함께 표시</strong><p data-i18n="method.one.copy">각 수치는 공급자, 기준일, 신선도를 함께 보여줍니다.</p></article>
+        <article><strong data-i18n="method.two.title">단위를 추측하지 않음</strong><p data-i18n="method.two.copy">API가 제공한 단위와 배율만 사용합니다.</p></article>
+        <article><strong data-i18n="method.three.title">미연결은 미연결로</strong><p data-i18n="method.three.copy">라이선스나 API가 없는 지표는 숫자 대신 상태를 표시합니다.</p></article>
+      </div>
+      <div id="attribution" class="attribution"></div>
+    </section>
+  </main>
+
+  <template id="metric-card-template">
+    <article class="metric-card">
+      <header><div><p class="metric-kicker"></p><h3></h3></div><div class="badge-row"></div></header>
+      <div class="metric-primary"><strong>—</strong><span class="metric-unit"></span></div>
+      <div class="metric-change"></div>
+      <div class="chart-slot" aria-hidden="true"></div>
+      <p class="metric-description"></p>
+      <div class="metric-hints" aria-label="Interpretation"></div>
+      <footer></footer>
+    </article>
+  </template>
+  <script src="/static/monitor.js?v=20260816-7" defer></script>
+</body>
+</html>

@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -20,22 +20,23 @@ from slowapi.util import get_remote_address
 
 from . import __version__, config, ingest, service, store
 from .data import DataUnavailable, RateLimited
+from .macro_dashboard import build_macro_series, build_macro_snapshot
+from .market_assets import build_asset_snapshot
 from .market_sectors import build_sector_snapshot
 from .metrics.correlation import correlation_matrix
+from .weekend_signals import build_weekend_signals
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger(__name__)
 
 
 def client_key(request: Request) -> str:
-    """Cloudflare 뒤에서도 실제 클라이언트를 식별한다.
+    """Use the client address sanitized by the reverse proxy.
 
-    프록시를 그대로 두면 request.client.host가 전부 Cloudflare IP라서
-    모든 사용자가 하나의 버킷을 공유한다. CF-Connecting-IP가 먼저다.
+    Caddy overwrites ``X-Forwarded-For`` with its immediate peer, preventing a
+    public client from creating arbitrary rate-limit buckets with spoofed
+    forwarding headers. Cloudflare mode requires explicit proxy trust in Caddy.
     """
-    cf_ip = request.headers.get("cf-connecting-ip")
-    if cf_ip:
-        return cf_ip
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[0].strip()
@@ -43,6 +44,19 @@ def client_key(request: Request) -> str:
 
 
 limiter = Limiter(key_func=client_key, default_limits=[config.RATE_LIMIT])
+
+_LEGACY_PRICE_DATA_DISABLED = {
+    "code": "legacy_price_data_disabled",
+    "message": (
+        "Legacy Yahoo price data is disabled while Mulmit migrates to a "
+        "licensed market-data provider."
+    ),
+}
+
+
+def require_legacy_price_data() -> None:
+    if not config.LEGACY_PRICE_DATA_ENABLED:
+        raise HTTPException(status_code=503, detail=_LEGACY_PRICE_DATA_DISABLED)
 
 
 @asynccontextmanager
@@ -85,6 +99,16 @@ if config.STATIC_DIR.is_dir():
 
 @app.get("/", include_in_schema=False)
 def index() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "monitor.html")
+
+
+@app.get("/monitor", include_in_schema=False)
+def market_monitor() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "monitor.html")
+
+
+@app.get("/analytics", include_in_schema=False)
+def stock_analytics() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "index.html")
 
 
@@ -101,14 +125,77 @@ def health() -> dict:
 @app.get("/api/status")
 def status() -> dict:
     """운영용 요약. 수집이 돌고 있는지 여기서 본다."""
-    return {"version": __version__, "provider": config.PROVIDER, **store.stats()}
+    legacy_enabled = config.LEGACY_PRICE_DATA_ENABLED
+    return {
+        "version": __version__,
+        "provider": config.PROVIDER if legacy_enabled else "disabled",
+        "legacy_provider": config.PROVIDER,
+        "legacy_price_data_enabled": legacy_enabled,
+        **store.stats(),
+    }
 
 
 @app.get("/api/market/sectors")
 @limiter.limit(config.RATE_LIMIT)
 def market_sectors(request: Request) -> dict:
     """저장된 11개 섹터 ETF로 일·주·월·연 히트맵 스냅샷을 만든다."""
+    require_legacy_price_data()
     return build_sector_snapshot()
+
+
+@app.get("/api/market/assets")
+@limiter.limit(config.RATE_LIMIT)
+def market_assets(
+    request: Request,
+    response: Response,
+    history: str = Query("3y", pattern="^(1y|2y|3y|5y|max)$"),
+) -> dict:
+    """Live global and Korean synthetic-perpetual proxies from Hyperliquid HIP-3."""
+    response.headers["Cache-Control"] = "private, max-age=30, stale-while-revalidate=300"
+    response.headers["X-Data-Source"] = "Hyperliquid HIP-3"
+    return build_asset_snapshot(history)
+
+
+@app.get("/api/market/weekend")
+@limiter.limit(config.RATE_LIMIT)
+def market_weekend(request: Request, response: Response) -> dict:
+    """Hyperliquid HIP-3 synthetic-perpetual weekend price-discovery signals."""
+    response.headers["Cache-Control"] = "private, max-age=15, stale-while-revalidate=300"
+    response.headers["X-Data-Source"] = "Hyperliquid HIP-3"
+    return build_weekend_signals()
+
+
+@app.get("/api/market/macro")
+@limiter.limit(config.RATE_LIMIT)
+def market_macro(
+    request: Request,
+    response: Response,
+    history: str = Query("3y", pattern="^(1y|2y|3y|5y|10y|max)$"),
+) -> dict:
+    """FRED 거시·유동성·스트레스 카드와 차트. 저장소만 읽는다."""
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=3600"
+    response.headers["X-Data-Source"] = "FRED"
+    return build_macro_snapshot(history)
+
+
+@app.get("/api/market/macro/{series_id}")
+@limiter.limit(config.RATE_LIMIT)
+def market_macro_series(
+    series_id: str,
+    request: Request,
+    response: Response,
+    history: str = Query("3y", pattern="^(1y|2y|3y|5y|10y|max)$"),
+) -> dict:
+    """단일 FRED 시계열 상세. 공급자 네트워크 호출은 하지 않는다."""
+    try:
+        payload = build_macro_series(series_id, history)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="지원하지 않는 FRED 시계열입니다.") from exc
+    if payload is None:
+        raise HTTPException(status_code=404, detail="아직 수집된 FRED 데이터가 없습니다.")
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=3600"
+    response.headers["X-Data-Source"] = "FRED"
+    return payload
 
 
 @app.get("/api/metrics")
@@ -125,6 +212,7 @@ def metrics(
     lookback: int = Query(config.DEFAULT_LOOKBACK_YEARS, ge=1, le=50, description="분석 기간(년)"),
     series: bool = Query(True, description="차트용 시계열 포함 여부"),
 ) -> dict:
+    require_legacy_price_data()
     try:
         return service.build_report(
             ticker,
@@ -150,9 +238,16 @@ def metrics(
 @limiter.limit(config.RATE_LIMIT_HEAVY)
 def correlation(
     request: Request,
-    tickers: str = Query(..., description="쉼표로 구분, 예: AAPL,MSFT,GLD"),
+    tickers: str = Query(
+        ...,
+        min_length=3,
+        max_length=263,
+        pattern=r"^[A-Za-z0-9.^=_\-, ]+$",
+        description="쉼표로 구분한 최대 12개 티커, 예: AAPL,MSFT,GLD",
+    ),
     period: str = Query("1y", pattern="^(1mo|3mo|6mo|1y|2y|5y|10y|max)$"),
 ) -> dict:
+    require_legacy_price_data()
     try:
         return service.sanitize(correlation_matrix(tickers.split(","), period=period))
     except RateLimited as exc:

@@ -14,6 +14,7 @@ DateTime을 쓰면 두 DB의 동작이 갈린다. 나이 계산도 뺄셈 한 �
 
 from __future__ import annotations
 
+import datetime as dt
 import gzip
 import json
 import logging
@@ -76,6 +77,45 @@ macro = sa.Table(
     sa.Column("updated_at", sa.Float, nullable=False),
 )
 
+# FRED 시계열은 ``macro``의 단일 최신값과 분리한다. 관측치를 날짜별로
+# 정규화해 두어 카드, 변화율, 장기 차트가 모두 네트워크 없이 같은 원본을 읽는다.
+fred_series = sa.Table(
+    "fred_series",
+    metadata,
+    sa.Column("series_id", sa.String(64), primary_key=True),
+    sa.Column("title", sa.String(512), nullable=False),
+    sa.Column("units", sa.String(256)),
+    sa.Column("units_short", sa.String(128)),
+    sa.Column("frequency", sa.String(128)),
+    sa.Column("frequency_short", sa.String(32)),
+    sa.Column("seasonal_adjustment", sa.String(128)),
+    sa.Column("seasonal_adjustment_short", sa.String(32)),
+    sa.Column("observation_start", sa.Date),
+    sa.Column("observation_end", sa.Date),
+    sa.Column("provider_last_updated", sa.String(64)),
+    sa.Column("notes", sa.Text),
+    sa.Column("publisher", sa.String(256)),
+    sa.Column("publisher_url", sa.String(512)),
+    sa.Column("series_url", sa.String(512), nullable=False),
+    sa.Column("copyrighted", sa.Boolean, nullable=False, server_default=sa.false()),
+    sa.Column("observation_count", sa.Integer, nullable=False, server_default="0"),
+    sa.Column("last_observation_date", sa.Date),
+    sa.Column("fetched_at", sa.Float),
+    sa.Column("last_attempted_at", sa.Float),
+    sa.Column("status", sa.String(16), nullable=False, server_default="ok"),
+    sa.Column("error", sa.Text),
+    sa.Index("ix_fred_series_freshness", "status", "fetched_at"),
+)
+
+fred_observations = sa.Table(
+    "fred_observations",
+    metadata,
+    sa.Column("series_id", sa.String(64), primary_key=True),
+    sa.Column("date", sa.Date, primary_key=True),
+    sa.Column("value", sa.Float, nullable=False),
+    sa.Index("ix_fred_observations_date", "date"),
+)
+
 # 조립된 응답 캐시. RANDOM_SEED가 고정이라 (티커, 파라미터, 마지막 거래일)이
 # 같으면 결과 JSON이 바이트 단위로 같다. 그래서 통째로 캐시해도 안전하다.
 reports = sa.Table(
@@ -132,7 +172,18 @@ def _build_engine() -> sa.Engine:
 
 
 def init_db() -> None:
-    metadata.create_all(engine())
+    eng = engine()
+    if eng.dialect.name != "postgresql":
+        metadata.create_all(eng)
+        return
+
+    # web and ingest containers can boot simultaneously. PostgreSQL's
+    # check-first CREATE TABLE sequence is not race-free across processes, so
+    # serialize this lightweight schema bootstrap until formal migrations are
+    # introduced.
+    with eng.begin() as conn:
+        conn.execute(sa.text("SELECT pg_advisory_xact_lock(:key)"), {"key": 556_794_014_902})
+        metadata.create_all(conn)
 
 
 def reset(url: str | None = None) -> None:
@@ -370,6 +421,176 @@ def load_macro(key: str, max_age: int | None = None) -> float | None:
     return float(row.value)
 
 
+# --- FRED 정규화 시계열 ------------------------------------------------------
+
+
+def _optional_date(value: Any) -> Any:
+    if value in {None, ""} or isinstance(value, dt.date):
+        return value or None
+    try:
+        return dt.date.fromisoformat(str(value))
+    except ValueError:
+        return None
+
+
+def save_fred_series(
+    series_id: str,
+    remote_metadata: dict[str, Any],
+    observations: Iterable[tuple[dt.date, float]],
+    *,
+    publisher: str,
+    publisher_url: str,
+    series_url: str,
+) -> int:
+    """Replace one FRED series atomically with its current-vintage observations."""
+    series_id = series_id.strip().upper()
+    values = sorted({date: float(value) for date, value in observations}.items())
+    if not values:
+        raise ValueError(f"{series_id} observations must not be empty")
+
+    now = time.time()
+    notes = str(remote_metadata.get("notes") or "")
+    row = {
+        "series_id": series_id,
+        "title": str(remote_metadata.get("title") or series_id),
+        "units": remote_metadata.get("units"),
+        "units_short": remote_metadata.get("units_short"),
+        "frequency": remote_metadata.get("frequency"),
+        "frequency_short": remote_metadata.get("frequency_short"),
+        "seasonal_adjustment": remote_metadata.get("seasonal_adjustment"),
+        "seasonal_adjustment_short": remote_metadata.get("seasonal_adjustment_short"),
+        "observation_start": _optional_date(remote_metadata.get("observation_start")),
+        "observation_end": _optional_date(remote_metadata.get("observation_end")),
+        "provider_last_updated": remote_metadata.get("last_updated"),
+        "notes": notes,
+        "publisher": publisher,
+        "publisher_url": publisher_url,
+        "series_url": series_url,
+        "copyrighted": "copyright" in notes.lower(),
+        "observation_count": len(values),
+        "last_observation_date": values[-1][0],
+        "fetched_at": now,
+        "last_attempted_at": now,
+        "status": "ok",
+        "error": None,
+    }
+    observation_rows = [
+        {"series_id": series_id, "date": date, "value": value}
+        for date, value in values
+    ]
+
+    with engine().begin() as conn:
+        existing_values = [
+            (item.date, float(item.value))
+            for item in conn.execute(
+                sa.select(fred_observations.c.date, fred_observations.c.value)
+                .where(fred_observations.c.series_id == series_id)
+                .order_by(fred_observations.c.date)
+            )
+        ]
+        conn.execute(_upsert(fred_series, [row], [key for key in row if key != "series_id"]))
+        if existing_values == values:
+            return len(values)
+        # 전체 현재 빈티지를 받으므로 교정되거나 제거된 과거 관측치까지 정확히 반영한다.
+        conn.execute(
+            sa.delete(fred_observations).where(fred_observations.c.series_id == series_id)
+        )
+        for start in range(0, len(observation_rows), 1000):
+            conn.execute(sa.insert(fred_observations), observation_rows[start : start + 1000])
+    return len(values)
+
+
+def mark_fred_error(series_id: str, message: str) -> None:
+    """Record an ingest error without discarding the last known-good observations."""
+    series_id = series_id.strip().upper()
+    now = time.time()
+    with engine().begin() as conn:
+        existing = conn.execute(
+            sa.select(fred_series.c.series_id).where(fred_series.c.series_id == series_id)
+        ).first()
+        if existing:
+            conn.execute(
+                sa.update(fred_series)
+                .where(fred_series.c.series_id == series_id)
+                .values(status="error", error=message[:1000], last_attempted_at=now)
+            )
+        else:
+            conn.execute(
+                sa.insert(fred_series).values(
+                    series_id=series_id,
+                    title=series_id,
+                    series_url=f"https://fred.stlouisfed.org/series/{series_id}",
+                    status="error",
+                    error=message[:1000],
+                    last_attempted_at=now,
+                )
+            )
+
+
+def get_fred_series(series_id: str) -> dict | None:
+    stmt = sa.select(fred_series).where(
+        fred_series.c.series_id == series_id.strip().upper()
+    )
+    with engine().connect() as conn:
+        row = conn.execute(stmt).mappings().first()
+    return dict(row) if row else None
+
+
+def list_fred_series(series_ids: Iterable[str] | None = None) -> list[dict]:
+    stmt = sa.select(fred_series)
+    if series_ids is not None:
+        normalized = [series_id.strip().upper() for series_id in series_ids]
+        if not normalized:
+            return []
+        stmt = stmt.where(fred_series.c.series_id.in_(normalized))
+    stmt = stmt.order_by(fred_series.c.series_id)
+    with engine().connect() as conn:
+        return [dict(row) for row in conn.execute(stmt).mappings()]
+
+
+def stale_fred_series(series_ids: Iterable[str], max_age: int) -> list[str]:
+    """Return catalog ids missing a successful fetch or older than ``max_age``."""
+    ordered = list(dict.fromkeys(series_id.strip().upper() for series_id in series_ids))
+    if not ordered:
+        return []
+    cutoff = time.time() - max_age
+    stmt = sa.select(
+        fred_series.c.series_id,
+        fred_series.c.fetched_at,
+        fred_series.c.status,
+    ).where(fred_series.c.series_id.in_(ordered))
+    with engine().connect() as conn:
+        fetched = {
+            row.series_id: (row.fetched_at, row.status) for row in conn.execute(stmt)
+        }
+    return [
+        series_id
+        for series_id in ordered
+        if series_id not in fetched
+        or fetched[series_id][0] is None
+        or fetched[series_id][0] < cutoff
+        or fetched[series_id][1] != "ok"
+    ]
+
+
+def load_fred_observations(
+    series_id: str,
+    *,
+    start: dt.date | None = None,
+    end: dt.date | None = None,
+) -> list[tuple[dt.date, float]]:
+    stmt = sa.select(fred_observations.c.date, fred_observations.c.value).where(
+        fred_observations.c.series_id == series_id.strip().upper()
+    )
+    if start is not None:
+        stmt = stmt.where(fred_observations.c.date >= start)
+    if end is not None:
+        stmt = stmt.where(fred_observations.c.date <= end)
+    stmt = stmt.order_by(fred_observations.c.date)
+    with engine().connect() as conn:
+        return [(row.date, float(row.value)) for row in conn.execute(stmt)]
+
+
 # --- 응답 캐시 ---------------------------------------------------------------
 
 
@@ -423,6 +644,15 @@ def stats() -> dict:
             "cached_reports": conn.execute(
                 sa.select(sa.func.count()).select_from(reports)
             ).scalar_one(),
+            "fred_series": conn.execute(
+                sa.select(sa.func.count()).select_from(fred_series)
+            ).scalar_one(),
+            "fred_observations": conn.execute(
+                sa.select(sa.func.count()).select_from(fred_observations)
+            ).scalar_one(),
+            "last_fred_ingest": conn.execute(
+                sa.select(sa.func.max(fred_series.c.fetched_at))
+            ).scalar(),
             "last_ingest": conn.execute(
                 sa.select(sa.func.max(instruments.c.prices_updated_at))
             ).scalar(),

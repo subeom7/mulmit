@@ -12,6 +12,8 @@ AAPL vs 삼성전자가 음수로 나온다). capm.py의 지연보정 베타와 
 
 from __future__ import annotations
 
+import re
+
 import pandas as pd
 
 from .. import data
@@ -21,6 +23,8 @@ _PERIOD_DAYS = {
     "1mo": 30, "3mo": 91, "6mo": 182, "1y": 365,
     "2y": 730, "5y": 1826, "10y": 3652, "max": None,
 }
+MAX_CORRELATION_TICKERS = 12
+_TICKER_PATTERN = re.compile(r"^[A-Z0-9.^=_-]{1,20}$")
 
 
 def _window(close: pd.Series, period: str) -> pd.Series:
@@ -35,6 +39,11 @@ def correlation_matrix(tickers: list[str], period: str = "1y") -> dict:
     unique = list(dict.fromkeys(tickers))
     if len(unique) < 2:
         raise ValueError("티커를 2개 이상 입력하세요.")
+    if len(unique) > MAX_CORRELATION_TICKERS:
+        raise ValueError(f"티커는 최대 {MAX_CORRELATION_TICKERS}개까지 입력할 수 있습니다.")
+    invalid = [ticker for ticker in unique if not _TICKER_PATTERN.fullmatch(ticker)]
+    if invalid:
+        raise ValueError("티커는 영문·숫자와 . ^ = _ - 문자만 사용할 수 있습니다.")
     if period not in _PERIOD_DAYS:
         raise ValueError(f"지원하지 않는 기간입니다: {period}")
 
