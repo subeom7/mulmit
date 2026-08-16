@@ -62,7 +62,7 @@ def calculate_period_returns(close: pd.Series, as_of: pd.Timestamp) -> dict:
     """하나의 공통 기준일에 맞춘 네 기간 수익률과 실제 기준 종가일."""
     prepared = _prepare_close(close)
     as_of = pd.Timestamp(as_of).normalize()
-    empty = {period: None for period in PERIODS}
+    empty = dict.fromkeys(PERIODS)
     if prepared is None or as_of not in prepared.index:
         return {"returns": empty, "baseline_dates": dict(empty)}
 
@@ -107,14 +107,14 @@ def calculate_sector_snapshot(
         if close is None:
             status = "missing"
             calculation = {
-                "returns": {period: None for period in PERIODS},
-                "baseline_dates": {period: None for period in PERIODS},
+                "returns": dict.fromkeys(PERIODS),
+                "baseline_dates": dict.fromkeys(PERIODS),
             }
         elif last_date < as_of:
             status = "stale"
             calculation = {
-                "returns": {period: None for period in PERIODS},
-                "baseline_dates": {period: None for period in PERIODS},
+                "returns": dict.fromkeys(PERIODS),
+                "baseline_dates": dict.fromkeys(PERIODS),
             }
         else:
             status = "ok"
