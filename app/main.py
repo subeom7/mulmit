@@ -20,6 +20,7 @@ from slowapi.util import get_remote_address
 
 from . import __version__, config, ingest, service, store
 from .data import DataUnavailable, RateLimited
+from .market_sectors import build_sector_snapshot
 from .metrics.correlation import correlation_matrix
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -57,9 +58,12 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(
-    title="Stock Metrics Calculator",
+    title="Mulmit Market Intelligence",
     version=__version__,
-    description="티커 하나로 CAPM·낙폭·미래 MDD 확률분포를 계산합니다.",
+    description=(
+        "S&P 500 섹터 흐름과 개별 종목의 CAPM·낙폭·미래 MDD 확률분포를 "
+        "제공합니다. / S&P 500 sector trends and stock risk analytics."
+    ),
     lifespan=lifespan,
 )
 app.state.limiter = limiter
@@ -98,6 +102,13 @@ def health() -> dict:
 def status() -> dict:
     """운영용 요약. 수집이 돌고 있는지 여기서 본다."""
     return {"version": __version__, "provider": config.PROVIDER, **store.stats()}
+
+
+@app.get("/api/market/sectors")
+@limiter.limit(config.RATE_LIMIT)
+def market_sectors(request: Request) -> dict:
+    """저장된 11개 섹터 ETF로 일·주·월·연 히트맵 스냅샷을 만든다."""
+    return build_sector_snapshot()
 
 
 @app.get("/api/metrics")

@@ -2,8 +2,8 @@
 
 [mulmit.com](https://mulmit.com)
 
-티커 하나를 넣으면 **CAPM 지표 · 최대낙폭(MDD) · 미래 MDD 확률분포**를 계산해서
-한 페이지 대시보드로 보여주는 FastAPI 앱.
+**S&P 500 섹터 흐름**과 개별 티커의 **CAPM 지표 · 최대낙폭(MDD) · 미래 MDD
+확률분포**를 한 페이지에서 보여주는 FastAPI 대시보드. 한국어와 영어를 지원한다.
 
 이름은 **언더워터(underwater)** 에서 왔다. 낙폭 분석에서 전고점 아래에 잠겨 있는
 구간을 부르는 말이고, 이 서비스의 핵심 차트가 그 언더워터 곡선이다.
@@ -77,6 +77,7 @@ AAPL 1년 기준 실제 출력 — 세 방법이 근접한다:
 ```
 app/
   main.py            FastAPI 라우트 + 레이트리밋
+  market_sectors.py  S&P 500 섹터 ETF 기간별 스냅샷
   service.py         티커 -> 대시보드 페이로드 조립 + 응답 캐시
   data.py            데이터 파사드 (저장소 우선, 공급자는 최후 수단)
   store.py           Postgres/SQLite 영속 저장소
@@ -92,9 +93,9 @@ app/
     forecast.py      미래 MDD 몬테카를로
     correlation.py   티커 간 상관계수
     common.py        연율화 계수 추론
-  static/index.html  대시보드 (외부 의존성 없음, 차트는 직접 그린 SVG)
+  static/index.html  한·영 대시보드 (외부 의존성 없음, 차트는 직접 그린 SVG)
 deploy/              Caddyfile, 배포·부트스트랩 스크립트, AWS 문서
-tests/               66개 (네트워크 불필요)
+tests/               84개 (네트워크 불필요)
 ```
 
 ```
@@ -145,7 +146,8 @@ git push origin main
 
 | 엔드포인트 | 설명 |
 |---|---|
-| `GET /` | 대시보드 |
+| `GET /` | 한·영 대시보드 |
+| `GET /api/market/sectors` | S&P 500 11개 섹터의 1일·1주·1개월·1년 수익률 |
 | `GET /api/metrics?ticker=AAPL` | 전체 지표 (JSON) |
 | `GET /api/correlation?tickers=AAPL,MSFT` | 상관계수 행렬 |
 | `GET /api/health` | 헬스체크 (DB 연결까지 확인) |

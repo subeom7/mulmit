@@ -62,6 +62,21 @@ SEED_TICKERS = [
     for t in os.environ.get("SEED_TICKERS", "AAPL,MSFT,SPY,QQQ").split(",")
     if t.strip()
 ]
+# S&P 500의 11개 GICS 섹터를 추종하는 Select Sector SPDR ETF.
+# 사용자 시드와 분리해 두어 SEED_TICKERS를 바꿔도 섹터 히트맵은 계속 갱신한다.
+SECTOR_ETF_TICKERS = (
+    "XLB",
+    "XLC",
+    "XLE",
+    "XLF",
+    "XLI",
+    "XLK",
+    "XLP",
+    "XLRE",
+    "XLU",
+    "XLV",
+    "XLY",
+)
 
 # --- 요청 제한 ---------------------------------------------------------------
 # 몬테카를로는 CPU를 쓴다. 캐시를 우회하는 파라미터 조합으로 서버를 갈아넣는
