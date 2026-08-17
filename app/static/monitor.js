@@ -788,15 +788,18 @@ function renderAll() {
   $$(".lazy-comparison[data-visible='1']").forEach((card) => renderComparison(Number(card.dataset.comparison)));
   const times = [state.macro?.generated_at, state.assets?.generated_at, state.sectors?.generated_at, state.sectors?.as_of, state.weekend?.generated_at].filter(Boolean);
   $("#updated-at").textContent = times.length ? dateText(times.sort().at(-1)) : "—";
-  const health = ["macro", "assets", "sectors", "weekend"].map(endpointHealth); const badge = $("#connection-badge");
+  // A deliberately disabled lane is absence by decision, not degraded service.
+  // It leaves the health calculation entirely: with the legacy price lane off,
+  // the badge would otherwise read "partial data" forever on a healthy site.
+  const health = ["macro", "assets", "sectors", "weekend"].map(endpointHealth)
+    .filter((item) => item !== "disabled");
+  const badge = $("#connection-badge");
   const count = (value) => health.filter((item) => item === value).length;
-  const usable = count("usable"); const stale = count("stale"); const disabled = count("disabled");
-  // A lane the operator switched off is not a connection failure, so it must
-  // never render as "offline".
-  const key = usable === health.length ? "status.live"
+  const usable = count("usable"); const stale = count("stale");
+  const key = !health.length ? "status.disabled"
+    : usable === health.length ? "status.live"
     : usable || stale ? (usable ? "status.partial" : "status.staleData")
-    : disabled === health.length ? "status.disabled"
-    : disabled ? "status.partial" : "status.offline";
+    : "status.offline";
   badge.className = `connection-badge ${key === "status.live" ? "ok" : key === "status.staleData" ? "stale" : key === "status.offline" ? "error" : ""}`;
   $("span", badge).textContent = t(key);
   $("#overview-source").textContent = [state.assets?.provider?.name || state.assets?.provider?.id, state.macro?.provider?.name || state.macro?.provider?.id].filter(Boolean).join(" + ") || "API";
