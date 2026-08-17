@@ -2,7 +2,11 @@
 
 작성일: 2026-08-17
 관련 항목: `docs/DATA_SOURCE_REGISTER.md` §5.2 `financial_stress`, §4.1 문의 대기 목록
-상태: **발송 전.** 발송 후 회신을 새 `decision_id`로 기록한다.
+상태: **발송 완료 (2026-08-17).** FRED 공식 문의 폼(<https://fred.stlouisfed.org/contactus/>)으로
+제출 — 주제 "Permissions to use the Data", 확인 배너("Your e-mail has been sent
+to the FRED team")와 `POST /ajax/contact.php` 200 확인. 폼 리셋 특성상 1차 클릭도
+전송됐을 수 있어 본문에 중복 양해 문구를 포함했다. 회신을 받으면 새
+`decision_id`(DS-2026-007 예정)로 기록한다.
 
 ## 왜 이 문의가 성립하는가
 

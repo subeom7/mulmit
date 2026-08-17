@@ -611,7 +611,7 @@ Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로
 | 수신처 | 막고 있는 것 | 상태 | 초안 |
 |---|---|---|---|
 | trade.xyz **및** Hyperliquid (수신처 2곳) | 자산 카드 전체의 역사 차트. `historical_storage: false`라 현재는 최신값만 보인다 | **발송 완료 2026-08-17** (양쪽 각각). 회신 대기. `DS-2026-001`, `recheck_at: 2026-09-16` | [`INQUIRY_HYPERLIQUID_TRADE_XYZ.md`](INQUIRY_HYPERLIQUID_TRADE_XYZ.md) |
-| Federal Reserve Bank of St. Louis | `financial_stress`(STLFSI4). 뉴욕 연준과 같은 구조 — 연방기관이 아니라 저작권을 주장하지만, 명시적 이용허락을 주는지가 관건이다. 시리즈 태그가 "Copyrighted: Citation Required"(2026-08-17 확인)라 인용이 완결 조건인지 서면으로 묻는다. FRED 경유 복제는 하지 않는다 | **초안 있음**, 발송 전 | [`INQUIRY_STLOUISFED_STLFSI.md`](INQUIRY_STLOUISFED_STLFSI.md) |
+| Federal Reserve Bank of St. Louis | `financial_stress`(STLFSI4). 뉴욕 연준과 같은 구조 — 연방기관이 아니라 저작권을 주장하지만, 명시적 이용허락을 주는지가 관건이다. 시리즈 태그가 "Copyrighted: Citation Required"(2026-08-17 확인)라 인용이 완결 조건인지 서면으로 묻는다. FRED 경유 복제는 하지 않는다 | **발송 완료 2026-08-17** (FRED 문의 폼, Permissions to use the Data). 회신 대기 | [`INQUIRY_STLOUISFED_STLFSI.md`](INQUIRY_STLOUISFED_STLFSI.md) |
 | 한국거래소 | 실시간 시세와 KRX 통계정보 전체(§3.4). 장 마감값은 §3.9로 이미 해결됨 | 초안 없음. 우선순위 낮아짐 | — |
 | Cboe | VIX·SKEW·VVIX·OVX·Put/Call | 서면 허가가 명시적으로 필요하고 월 예산 안의 근거가 없어 **문의하지 않기로** 결정 | — |
 
@@ -894,6 +894,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | BLS lane 추가(`DS-2026-005`), DOL ETA는 보류 사유 기록 | Claude assisted |
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
+| 2026-08-17 | STLFSI4 문의 **발송** — FRED 공식 폼, 확인 배너·POST 200 검증. 회신 대기 | Claude assisted |
 | 2026-08-17 | 코스피 지수군 섹션 추가 — 지수 하루 스냅샷(1요청/일, 168지수)으로 대표 지수 10종·코스피 200 섹터 11종의 종가·전일·연초·52주·거래대금 표. 지수명이 시리즈 간 비유일함을 확인해 (이름,분류) 복합키와 KOSPI시리즈 고정 적용. 미확정 52주 최저 0값은 결측 처리 | Claude assisted |
 | 2026-08-17 | 국내 종목 검색·분석 추가 — FSC 전 종목 스냅샷 로스터 + 요청 기반 5년 종가, 낙폭·MDD·변동성 파생 통계. 야후 시절 단일종목 분석의 한국판을 승인 lane 위에 재구축 | Claude assisted |
 | 2026-08-17 | 공개 준비 정리: 레거시 lane 섹션(섹터 모니터·상관관계·종목 위험 분석)을 오류 표시 대신 숨김, analytics는 내부자 공시 조회 모드로 전환, 레코드 없는 라이선스·예약 카드 숨김. 데이터·권리 변경 없음 — lane이 열리면 화면이 저절로 복원된다 | Claude assisted |
