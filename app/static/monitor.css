@@ -89,6 +89,24 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 .brand strong { display: block; font-size: 14px; letter-spacing: -.02em; }
 .brand small { display: block; margin-top: 1px; color: var(--faint); font: 9px/1.25 var(--mono); letter-spacing: .09em; }
 .mast-nav { display: flex; gap: 5px; }
+/* --- 화면 전환 탭 -----------------------------------------------------------
+   두 화면 사이를 오가는 길이 잘 보이지 않았다. 어느 화면에 있는지와 다른
+   화면으로 가는 길이 함께 보여야 한다. 두 페이지가 같은 모양을 쓴다. */
+.view-switch {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px;
+}
+.view-tab {
+  padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  color: var(--muted); text-decoration: none; white-space: nowrap;
+  transition: background .12s, color .12s;
+}
+.view-tab:hover { color: var(--ink); }
+.view-tab.active { background: var(--accent); color: #fff; }
+@media (max-width: 640px) {
+  .view-tab { padding: 6px 11px; font-size: 12px; }
+}
+
 .nav-chip, .icon-button, .refresh-button {
   border: 1px solid var(--line); color: var(--muted); background: transparent;
   text-decoration: none; border-radius: 7px; transition: border-color .15s, color .15s, background .15s;

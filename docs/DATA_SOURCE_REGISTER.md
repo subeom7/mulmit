@@ -306,7 +306,7 @@ notes: >
 | 현재 상태 | `approved` (아래 근거의 성격에 주의) |
 | 코드 위치 | `app/providers/fedboard.py`, `app/ingest.py` |
 | 배포 기본값 | `FEDBOARD_ENABLED=false` |
-| 현재 사용 | H.15 10년물·2년물 국채 금리와 계산된 10Y−2Y 스프레드, H.10 공식 환율 5종 |
+| 현재 사용 | H.15 금리, 계산된 10Y−2Y, H.10 환율 5종, H.4.1 유동성 3종, H.6 통화량 2종 |
 | 기술 비용 | 무료. API 키 없음 |
 | 접근 경로 | 릴리스 페이지 XML 아카이브 (`/releases/h15/data/FRB_h15_xml.zip`) |
 | attribution | 표준 출처 표기를 `rights.notice`로 함께 전달 |
@@ -372,6 +372,15 @@ notes: >
   표시된다.
 - 이 환율은 HIP-3 합성 FX(`xyz:JPY` 등)와 **별도 key**(`fx_*`)다. 공식값과 합성값을
   같은 카드에 섞지 않는다.
+- **릴리스마다 단위 배율이 다르다.** H.4.1은 백만 달러, H.6은 십억 달러다. 한쪽으로
+  통일하면 1,000배 어긋나면서도 여전히 숫자처럼 보인다. 각자의 원 단위로 저장하고
+  화면이 `units` 문자열만 보고 $B/$T로 환산한다.
+- **H.4.1의 `_Fnn` 접미사는 연준 지구(District)이지 세부 항목이 아니다.** 합계는
+  `DISTRIBUTION=TOT`인 접미사 없는 계열이다. 재무부 계정은 전부 2지구(뉴욕)에 있어
+  `RESPPLLDT_F02`가 지금은 총계와 같지만, 지구가 나뉘는 순간 조용히 틀려진다.
+- 계열 식별은 값 교차검증으로 확인했다: 총자산 6.76T, 지급준비금 2.95T, TGA 0.96T.
+  `RESMO14A_N.M`은 값이 5.49T라 MMF처럼 보이지만 실제로는 **본원통화**다. 설명
+  주석(`AnnotationText`)을 확인하지 않으면 이런 오라벨이 난다.
 
 ### 3.8 Yahoo Finance / yfinance
 
@@ -464,14 +473,14 @@ alias를 정리해 proxy와 exact가 서로 다른 카드에 붙도록 먼저 �
 | `financial_stress` | `STLFSI4` | St. Louis Fed 별도 permission 또는 대체 자체 지수 | `license_required` | FRED 우회 복제 금지 |
 | `treasury_10y` | `RIFLGFCY10_N.B` | **Fed Board H.15 (연결됨)** | `approved` | 2001~ 일별. `DS-2026-004` |
 | `treasury_2y`(신규) | `RIFLGFCY02_N.B` | **Fed Board H.15 (연결됨)** | `approved` | 10Y−2Y 계산의 입력이자 자체 카드 |
-| `m2` | `M2SL` | Federal Reserve Board H.6 후보 | `pending_review` | 계절조정·단위 보존 |
+| `m2` | `M2.M` | **Fed Board H.6 (연결됨)** | `approved` | 계절조정 월간, **십억 달러** 단위 |
 | `unemployment` | `UNRATE` | BLS `LNS14000000` 후보 | `pending_review` | 월간, 계절조정 여부 확인 |
 | `initial_claims` | `ICSA` | DOL ETA | `pending_review` | 주간, revised 값 처리 |
-| `fed_assets` | `WALCL` | Fed Board H.4.1 | `pending_review` | $M/$B 변환은 API metadata 기준 |
-| `reserve_balances` | `WRESBAL` | Fed Board H.4.1 후보 | `pending_review` | exact line item 검증 |
+| `fed_assets` | `RESPPA_N.WW` | **Fed Board H.4.1 (연결됨)** | `approved` | 백만 달러 단위. 6.76T |
+| `reserve_balances` | `RESH4R_N.WW` | **Fed Board H.4.1 (연결됨)** | `approved` | 2.95T |
 | `reverse_repo` | `RRP` | **New York Fed (연결됨)** | `approved` | 익일물 낙찰 총액. **단위가 달러**이며 FRED의 십억 달러와 다름 |
-| `treasury_general_account` | `WTREGEN` | Fed Board H.4.1 또는 Treasury | `pending_review` | series 정의가 같을 때만 교체 |
-| `retail_money_market_funds` | `WRMFNS` | Fed Board H.6 후보 | `pending_review` | retail/institutional 범위 혼동 금지 |
+| `treasury_general_account` | `RESPPLLDT_N.WW` | **Fed Board H.4.1 (연결됨)** | `approved` | 지구별 합계(TOT). 0.96T |
+| `retail_money_market_funds` | `MMFGB.M` | **Fed Board H.6 (연결됨)** | `approved` | 리테일 전용. 기관형(`MMFIN`)은 2021년 중단 |
 | `sofr` | `SOFR` | **New York Fed (연결됨)** | `approved` | 2018-04-02~ 일별. `DS-2026-003` |
 | `effective_fed_funds` | `EFFR` | **New York Fed (연결됨)** | `approved` | 2016~ 일별. percentile/volume과 target rate 혼동 금지 |
 | `reserve_interest` | `IORB` | Federal Reserve Board | `pending_review` | 정책 시행일 기준 step series |

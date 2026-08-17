@@ -134,6 +134,25 @@ button:focus-visible, input:focus-visible, select:focus-visible, [tabindex="0"]:
 }
 .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--positive); box-shadow: 0 0 0 4px rgba(52, 211, 153, .12); }
 .header-actions { display: flex; align-items: center; gap: 7px; }
+/* --- 화면 전환 탭 -----------------------------------------------------------
+   두 화면을 오가는 길이 헤더 구석의 작은 버튼 하나였다. 어느 화면에 있는지와
+   다른 화면으로 가는 길이 둘 다 한눈에 보여야 한다. */
+.view-switch {
+  display: inline-flex; gap: 2px; padding: 3px; margin-left: 4px;
+  background: var(--wash);
+  border: 1px solid var(--border); border-radius: 999px;
+}
+.view-tab {
+  padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  color: var(--text-muted); text-decoration: none; white-space: nowrap;
+  transition: background .12s, color .12s;
+}
+.view-tab:hover { color: var(--text-primary); }
+.view-tab.active { background: var(--series-1); color: #fff; }
+@media (max-width: 640px) {
+  .view-tab { padding: 6px 11px; font-size: 12px; }
+}
+
 .utility-button {
   min-width: 52px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
   color: var(--text-secondary); background: transparent; cursor: pointer; font-size: 12px; font-weight: 650;
@@ -379,6 +398,7 @@ ul.notes li::before { content: ""; position: absolute; left: 0; top: 9px; width:
   .filters { align-items: stretch; }
   .field, .field input, .field select, button.primary { width: 100%; }
   .examples button, .utility-button { min-height: 42px; }
+  .view-tab { min-height: 42px; display: inline-flex; align-items: center; }
 }
 @media (max-width: 430px) {
   .market-pulse { grid-template-columns: 1fr 1fr; }
@@ -420,9 +440,12 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
     <div class="brand-name">Mulmit</div>
     <div class="brand-tag" data-i18n="app.tagline">Market intelligence · risk first</div>
   </div>
+  <nav class="view-switch" aria-label="View">
+    <a class="view-tab" href="/" data-i18n="nav.monitor">시장 모니터</a>
+    <a class="view-tab active" href="/analytics" aria-current="page" data-i18n="nav.analytics">종목 분석</a>
+  </nav>
   <div class="live-badge"><span class="live-dot" aria-hidden="true"></span><span data-i18n="app.live">LIVE DATA</span></div>
   <div class="header-actions">
-    <a class="utility-button monitor-link" href="/" aria-label="Market monitor"><span class="label-ko">시장</span><span class="label-en">Monitor</span></a>
     <button class="utility-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
     <button class="utility-button" id="theme-toggle" type="button" aria-label="테마 전환">테마</button>
   </div>
@@ -692,6 +715,7 @@ const I18N = {
     "horizon.3m": "3개월", "horizon.6m": "6개월", "horizon.1y": "1년", "horizon.3y": "3년",
     "lookback.5y": "최근 5년", "lookback.10y": "최근 10년", "lookback.20y": "최근 20년",
     "drift.historical": "과거 추세 유지", "drift.zero": "0% (보수적)", "drift.capm": "CAPM 기대수익률",
+    "nav.monitor": "시장 모니터", "nav.analytics": "종목 분석",
     "legal.privacy": "개인정보처리방침", "legal.terms": "이용약관", "legal.disclaimer": "면책 고지",
     "legal.notAdvice": "Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.",
     "insider.title": "내부자거래 공시", "insider.sub": "SEC EDGAR Form 3·4·5 원문에서 임원·이사·10% 주주의 보고 내역을 그대로 옮깁니다.",
@@ -782,6 +806,7 @@ const I18N = {
     "horizon.3m": "3 months", "horizon.6m": "6 months", "horizon.1y": "1 year", "horizon.3y": "3 years",
     "lookback.5y": "Last 5 years", "lookback.10y": "Last 10 years", "lookback.20y": "Last 20 years",
     "drift.historical": "Continue historical trend", "drift.zero": "0% (conservative)", "drift.capm": "CAPM expected return",
+    "nav.monitor": "Market monitor", "nav.analytics": "Stock analytics",
     "legal.privacy": "Privacy policy", "legal.terms": "Terms of use", "legal.disclaimer": "Disclaimer",
     "legal.notAdvice": "Mulmit is an information service, not investment advice or a solicitation to trade.",
     "insider.title": "Insider filings", "insider.sub": "Officer, director and 10% owner transactions relayed verbatim from SEC EDGAR Forms 3, 4 and 5.",

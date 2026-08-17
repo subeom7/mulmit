@@ -488,7 +488,7 @@ def stale_tickers(max_age: int, limit: int) -> list[str]:
             instruments.c.status == "ok",
             sa.or_(
                 instruments.c.prices_updated_at.is_(None),
-                instruments.c.prices_updated_at < cutoff,
+                instruments.c.prices_updated_at <= cutoff,
             ),
         )
         .order_by(
@@ -676,7 +676,7 @@ def stale_fred_series(series_ids: Iterable[str], max_age: int) -> list[str]:
         for series_id in ordered
         if series_id not in fetched
         or fetched[series_id][0] is None
-        or fetched[series_id][0] < cutoff
+        or fetched[series_id][0] <= cutoff
         or fetched[series_id][1] != "ok"
     ]
 
@@ -845,7 +845,13 @@ def load_economic_observations(
 
 
 def stale_economic_series(series_keys: Iterable[str], max_age: int) -> list[str]:
-    """Keys never fetched successfully, or older than ``max_age``."""
+    """Keys never fetched successfully, or at least ``max_age`` old.
+
+    The cutoff comparison is `<=` for the same reason the cache TTLs are: on a
+    coarse clock a row written and checked inside one tick has an age of
+    exactly zero, so `<` would make ``max_age=0`` mean "never refresh" instead
+    of "always refresh".
+    """
     ordered = list(dict.fromkeys(key.strip() for key in series_keys))
     if not ordered:
         return []
@@ -862,7 +868,7 @@ def stale_economic_series(series_keys: Iterable[str], max_age: int) -> list[str]
         for key in ordered
         if key not in fetched
         or fetched[key][0] is None
-        or fetched[key][0] < cutoff
+        or fetched[key][0] <= cutoff
         or fetched[key][1] != "ok"
     ]
 
@@ -1059,7 +1065,7 @@ def stale_insider_tickers(pinned: Iterable[str], max_age: int, limit: int) -> li
         if ticker in ordered:
             continue
         if record is None or record["status"] == "queued" or (
-            record["status"] == "ok" and (record["fetched_at"] or 0) < cutoff
+            record["status"] == "ok" and (record["fetched_at"] or 0) <= cutoff
         ):
             ordered.append(ticker)
 
@@ -1069,7 +1075,7 @@ def stale_insider_tickers(pinned: Iterable[str], max_age: int, limit: int) -> li
             for row in known.values()
             if row["ticker"] not in ordered
             and row["status"] != "unavailable"
-            and ((row["fetched_at"] or 0) < cutoff)
+            and ((row["fetched_at"] or 0) <= cutoff)
         ),
         key=lambda row: (-(row["request_count"] or 0), row["fetched_at"] or 0.0),
     )
