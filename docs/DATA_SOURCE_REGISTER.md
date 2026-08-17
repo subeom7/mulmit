@@ -382,7 +382,72 @@ notes: >
   `RESMO14A_N.M`은 값이 5.49T라 MMF처럼 보이지만 실제로는 **본원통화**다. 설명
   주석(`AnnotationText`)을 확인하지 않으면 이런 오라벨이 난다.
 
-### 3.8 Yahoo Finance / yfinance
+### 3.8 U.S. Bureau of Labor Statistics
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `bls` |
+| 현재 상태 | `approved` |
+| 코드 위치 | `app/providers/bls.py`, `app/ingest.py` |
+| 배포 기본값 | `BLS_ENABLED=false`, `BLS_API_KEY=`(선택) |
+| 현재 사용 | 실업률 `LNS14000000` (계절조정 월간) |
+| 접근 조건 | 키 없이 하루 25회·10년, 키 등록 시 500회·20년 |
+| attribution | 출처 표기 요청. `rights.notice`로 전달 |
+| 공식 근거 | [Linking and Copyright](https://www.bls.gov/bls/linksite.htm), [Developers](https://www.bls.gov/developers/home.htm) |
+
+이 프로젝트에서 권리 근거가 **가장 직접적으로 명시된** 공급자다. Fed Board는
+연방기관 저작물이라는 §105 추론이었지만, BLS는 자기 페이지에 직접 쓴다.
+
+> The Bureau of Labor Statistics (BLS) is a Federal government agency and
+> everything that we publish, both in hard copy and electronically, **is in the
+> public domain**... You are free to use our public domain material **without
+> specific permission**, although we do ask that you **cite the Bureau of Labor
+> Statistics as the source**.
+
+```yaml
+decision_id: DS-2026-005
+provider_id: bls
+status: approved
+reviewed_at: 2026-08-17
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://www.bls.gov/bls/linksite.htm
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  cache_ttl_seconds: 300
+  stale_seconds: 0
+  historical_storage: true
+  derived_metrics: true
+  advertising: true
+attribution: "Source: U.S. Bureau of Labor Statistics."
+expires_at: null
+recheck_at: 2027-08-17
+notes: >
+  공개 도메인이 명시돼 있고 조건은 출처 표기뿐이다. BLS 엠블럼은 등록상표이므로
+  로고는 사용하지 않는다. 월간 자료의 M13은 연평균이며 월 관측치가 아니므로 제외한다.
+```
+
+### 3.9 DOL ETA 신규 실업수당 — **보류**
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `dol_eta` |
+| 현재 상태 | `pending_review` |
+| 대상 카드 | `initial_claims` (계속 빈 상태) |
+
+기계판독 경로가 요구 조건을 만족하지 못해 연결하지 않았다.
+
+- `oui.doleta.gov/unemploy/csv/ar539.csv`는 열리지만 **주(州)별**이고 컬럼이
+  `c1`~`c23`으로 익명이다. 어느 열이 신규 청구인지 추측하면 틀린 숫자가 나온다.
+- 전국 **계절조정** 헤드라인(예: 209,000)은 `data.asp` HTML 페이지와 PDF에만 있다.
+  HTML 스크래핑은 §10에서 금지한 방식이다.
+- 주별 합계는 계절조정 전 값이라 FRED `ICSA`와 다른 계열이며, 같은 것처럼 표시할 수 없다.
+
+연결하려면 ETA 539 레코드 레이아웃 문서를 확보하거나, 전국 계열의 CSV/JSON 경로를
+찾아야 한다.
+
+### 3.10 Yahoo Finance / yfinance
 
 | 항목 | 기록 |
 |---|---|
@@ -395,7 +460,7 @@ notes: >
 
 yfinance 패키지가 공개 표시·저장·재배포 권리를 부여한다고 해석하지 않는다. 401/429를 스크래핑 엔드포인트로 우회하지 않는다.
 
-### 3.9 Cboe, ICE, IMF
+### 3.11 Cboe, ICE, IMF
 
 | 공급자/권리자 | 대상 | 상태 | 현재 결정 | 공식 근거 |
 |---|---|---|---|---|
@@ -474,7 +539,7 @@ alias를 정리해 proxy와 exact가 서로 다른 카드에 붙도록 먼저 �
 | `treasury_10y` | `RIFLGFCY10_N.B` | **Fed Board H.15 (연결됨)** | `approved` | 2001~ 일별. `DS-2026-004` |
 | `treasury_2y`(신규) | `RIFLGFCY02_N.B` | **Fed Board H.15 (연결됨)** | `approved` | 10Y−2Y 계산의 입력이자 자체 카드 |
 | `m2` | `M2.M` | **Fed Board H.6 (연결됨)** | `approved` | 계절조정 월간, **십억 달러** 단위 |
-| `unemployment` | `UNRATE` | BLS `LNS14000000` 후보 | `pending_review` | 월간, 계절조정 여부 확인 |
+| `unemployment` | `LNS14000000` | **BLS (연결됨)** | `approved` | 계절조정 월간. `DS-2026-005` |
 | `initial_claims` | `ICSA` | DOL ETA | `pending_review` | 주간, revised 값 처리 |
 | `fed_assets` | `RESPPA_N.WW` | **Fed Board H.4.1 (연결됨)** | `approved` | 백만 달러 단위. 6.76T |
 | `reserve_balances` | `RESH4R_N.WW` | **Fed Board H.4.1 (연결됨)** | `approved` | 2.95T |
@@ -506,12 +571,51 @@ alias를 정리해 proxy와 exact가 서로 다른 카드에 붙도록 먼저 �
 
 앞의 셋과 뒤의 둘은 방향이 반대다. 화면과 API 모두 `units`에 방향을 문장으로 적는다.
 
-### 5.4 옵션·심리·분석
+### 5.4 Mulmit 유동성·스트레스 지수 (자체 산출)
+
+`GET /api/market/stress` · 코드 `app/stress_index.py`
+
+CNN Fear & Greed는 명칭도 점수도 복제하지 않는다. 그 지수의 7개 입력 중 5개가
+우리가 표시 권리를 갖지 못한 것(변동성, 풋/콜, 하이일드, 안전자산 수요, 가격
+모멘텀·폭)이라, 남은 것으로 만들면 **심리 지수가 아니라 유동성·거시 스트레스
+지수**가 된다. 그래서 측정하는 것의 이름을 붙였다.
+
+| 입력 | 방향 | 근거 |
+|---|---|---|
+| 장단기 금리차 | 낮을수록 스트레스 | 평탄·역전은 경기 위험 반영 |
+| 역레포 잔액 | 낮을수록 스트레스 | 시장으로 되돌릴 완충이 얇아짐 |
+| 지급준비금 | 낮을수록 스트레스 | 결제 여력 축소 |
+| 재무부 TGA | 높을수록 스트레스 | 그만큼 현금이 정부 계정에 묶임 |
+| 실업률 | 높을수록 스트레스 | 경기 스트레스 |
+| 원·달러 | 높을수록 스트레스 | 달러 조달 여건 |
+
+산식 (응답의 `method`에도 동일하게 실린다):
+
+1. 각 입력을 **최근 5년 자기 이력 안의 백분위**로 점수화한다. 고정 범위가 아니라
+   자기 이력과 비교하며, 백분위라 정규성을 가정하지 않는다. 역레포처럼 강하게
+   치우친 계열에 z-score를 쓰면 왜곡된다.
+2. **스트레스가 큰 쪽이 항상 높아지도록** 방향을 맞춘다.
+3. **동일 가중**. 가중치를 적합시킬 근거가 없으므로 적합하지 않았다는 사실을
+   동일 가중으로 드러낸다.
+4. 결측 입력은 **채우지 않고 제외**하며 응답에 명시한다. 입력이 3개 미만이면
+   지수를 아예 산출하지 않고 구조화된 503을 반환한다.
+5. 0~100으로 표시하고 100이 최대 긴축이다.
+
+경계 조건:
+
+- 공개할 권리가 없는 계열은 입력에서 제외된다. 합성 지수를 통해 withheld 계열을
+  세탁해 내보내지 않는다(`series_values_servable` 검사).
+- lane이 닫히면 그 lane의 입력도 함께 빠진다.
+- **수익률 대비 백테스트는 하지 않았다.** 이 지수는 현재 여건을 자기 이력과 비교해
+  요약할 뿐이며 예측이 아니다. 화면과 API의 면책에 그대로 적는다.
+- 값은 다른 심리 지수와 비교할 수 없다. 화면에 그렇게 적는다.
+
+### 5.5 옵션·심리·분석
 
 | 기능 | 현재 상태 | 활성화 조건 |
 |---|---|---|
 | SKEW, VVIX, OVX, PCR | `license_required` placeholder | Cboe 등 원 권리자의 공개 표시 계약 |
-| Fear & Greed | 미연결 | CNN 명칭·점수를 복제하지 않고 권리 확인된 입력으로 `Mulmit Market Sentiment` 자체 산식 구현 가능 |
+| Fear & Greed | **복제하지 않음** | 대신 `Mulmit 유동성·스트레스 지수`를 자체 산출한다. 아래 참조 |
 | 섹터 ETF 1D/1W/1M/1Y | legacy disabled | 승인된 EOD 역사 가격 저장소 확보 |
 | 자산군 상관관계 | legacy disabled | 동일 기준의 승인 가격·환율·거래일 데이터 확보 |
 | `/analytics` CAPM/MDD | legacy disabled | 조정가격, 벤치마크, 무위험수익률의 공개 사용 권리 확보 |
@@ -653,4 +757,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | SEC EDGAR lane 추가(`DS-2026-002`)와 Form 3/4/5 표시 규칙 기록 | Claude assisted |
 | 2026-08-17 | New York Fed lane 추가(`DS-2026-003`), HIP-3와 Hyperliquid 자체 DEX 상장 주체 구분 | Claude assisted |
 | 2026-08-17 | Federal Reserve Board lane 추가(`DS-2026-004`). DDP 폐지를 피해 릴리스 페이지 XML 사용 | Claude assisted |
+| 2026-08-17 | H.10 환율, H.4.1 유동성, H.6 통화량 연결 | Claude assisted |
+| 2026-08-17 | BLS lane 추가(`DS-2026-005`), DOL ETA는 보류 사유 기록 | Claude assisted |
+| 2026-08-17 | `Mulmit 유동성·스트레스 지수` 도입. CNN Fear & Greed 복제 대신 자체 산식 | Claude assisted |
 

@@ -364,3 +364,25 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 @media (max-width: 640px) {
   .site-footer p { margin-left: 0; }
 }
+
+/* --- 유동성·스트레스 지수 ---------------------------------------------------
+   점수만 크게 띄우면 어디서 나온 값인지 알 수 없다. 입력과 산식을 같은 카드
+   안에서 보여주는 것이 이 지수의 요점이다. */
+.stress-headline { margin-bottom: 18px; }
+.stress-score { display: flex; align-items: baseline; gap: 12px; }
+.stress-score strong { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; }
+.stress-score span { font-size: 14px; color: var(--muted); }
+.stress-scale {
+  position: relative; height: 6px; margin: 12px 0 6px; border-radius: 999px;
+  background: linear-gradient(90deg, var(--green), var(--amber), var(--red));
+}
+.stress-scale i {
+  position: absolute; top: -4px; width: 3px; height: 14px; border-radius: 2px;
+  background: var(--ink); box-shadow: 0 0 0 2px var(--panel);
+}
+.stress-scale-note { margin: 0; font-size: 11.5px; color: var(--faint); }
+.stress-method, .stress-disclaimer {
+  font-size: 11.5px; line-height: 1.6; color: var(--muted); margin: 12px 0 0;
+}
+.stress-disclaimer { color: var(--faint); }
+#stress-table td.num { text-align: right; font-variant-numeric: tabular-nums; }

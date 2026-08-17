@@ -52,6 +52,17 @@ FRED_MAX_AGE = _int("FRED_MAX_AGE", 60 * 60 * 6)
 FRED_TIMEOUT = _float("FRED_TIMEOUT", 15.0)
 FRED_RETRIES = _int("FRED_RETRIES", 2)
 FRED_INGEST_DELAY = _float("FRED_INGEST_DELAY", 0.1)
+# U.S. Bureau of Labor Statistics. Their terms state outright that everything
+# BLS publishes is in the public domain and free to use without permission, in
+# return for citing BLS as the source. https://www.bls.gov/bls/linksite.htm
+# A key is optional: it raises the daily allowance from 25 to 500 queries and
+# the window from ten years to twenty.
+BLS_ENABLED = _bool("BLS_ENABLED", False)
+BLS_API_KEY = os.environ.get("BLS_API_KEY", "").strip()
+BLS_TIMEOUT = _float("BLS_TIMEOUT", 20.0)
+BLS_RETRIES = _int("BLS_RETRIES", 2)
+BLS_MAX_AGE = _int("BLS_MAX_AGE", 60 * 60 * 12)
+
 # Board of Governors statistical releases (H.15 rates, later H.10 FX and more).
 # The Board is retiring its Data Download Program in favour of FRED, which we
 # cannot use, so this reads the release-page XML archives the transition notice
