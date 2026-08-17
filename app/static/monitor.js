@@ -118,7 +118,8 @@ const METRICS = {
   vnm: { aliases: ["vnm", "vietnam"], label: LABEL("베트남 VNM", "Vietnam VNM"), group: "emerging", format: "currency", currency: "USD", accent: "#38bdf8", description: LABEL("베트남 주식시장 ETF", "Vietnam equity ETF") },
   ewj: { aliases: ["ewj", "japan"], label: LABEL("일본 EWJ", "Japan EWJ"), group: "emerging", format: "currency", currency: "USD", accent: "#38bdf8", description: LABEL("일본 주식시장 ETF", "Japan equity ETF") },
   vix: { aliases: ["vix", "vixcls"], label: LABEL("VIX 변동성", "VIX volatility"), group: "risk", format: "number", accent: "#fb7185" },
-  sentiment: { aliases: ["sentiment", "fear_greed", "mulmit_sentiment"], label: LABEL("시장 심리", "Market sentiment"), group: "risk", format: "number", accent: "#fb7185", description: LABEL("공식 입력과 공개된 방법론으로 산출하는 자체 지수 연결 대기", "Awaiting a proprietary index built from licensed inputs and a published methodology") },
+  // reserved: no source can fill this yet by design (own index, not built).
+  sentiment: { aliases: ["sentiment", "fear_greed", "mulmit_sentiment"], label: LABEL("시장 심리", "Market sentiment"), group: "risk", format: "number", reserved: true, accent: "#fb7185", description: LABEL("공식 입력과 공개된 방법론으로 산출하는 자체 지수 연결 대기", "Awaiting a proprietary index built from licensed inputs and a published methodology") },
   yield_curve: { aliases: ["yield_curve", "t10y2y", "yield_spread"], label: LABEL("장단기 금리차", "10Y–2Y curve"), group: "risk", format: "percentPoints", accent: "#fb7185" },
   high_yield_spread: { aliases: ["high_yield_spread", "bamlh0a0hym2"], label: LABEL("하이일드 스프레드", "High-yield spread"), group: "risk", format: "percentPoints", accent: "#fb7185" },
   financial_stress: { aliases: ["financial_stress", "stlfsi4"], label: LABEL("금융스트레스", "Financial stress"), group: "risk", format: "number", accent: "#fb7185" },
@@ -540,11 +541,43 @@ function makeMetricCard(key) {
   return card;
 }
 
+// A card with no record is hidden only when its lane answered successfully:
+// then the emptiness is a fact about the data (licence pending, product gone,
+// series on hold), not an outage. During an endpoint failure nothing is hidden,
+// so a broken fetch still looks broken instead of quietly shrinking the page.
+function laneLoaded(key) {
+  const lane = CARD_LANES.get(key);
+  if (lane === "macro") return Boolean(state.macro);
+  if (lane === "assets") return Boolean(state.assets);
+  return false;
+}
+
+function pruneEmpty() {
+  $$(".summary-card, .metric-card").forEach((card) => {
+    const key = card.dataset.metric;
+    // Definition-level licensed cards (Cboe's option gauges) cannot fill
+    // without a contract no matter what any endpoint says, so they hide on the
+    // same rule without needing a lane to have answered.
+    const definition = METRICS[key] || {};
+    card.hidden = !state.records.get(key)
+      && (laneLoaded(key) || Boolean(definition.licensed) || Boolean(definition.reserved));
+  });
+  $$(".overview-group").forEach((group) => {
+    group.hidden = $$(".summary-card", group).every((card) => card.hidden);
+  });
+  $$("#deep-sections .dashboard-section").forEach((section) => {
+    const cards = $$(".metric-card", section);
+    if (cards.length) section.hidden = cards.every((card) => card.hidden);
+  });
+}
+
 function renderJumpNav() {
   const nav = $("#jump-nav"); nav.replaceChildren();
-  [...SECTIONS.map((section, index) => ({ id: section.id, text: `${String(index + 1).padStart(2, "0")} ${localValue(section.title, state.lang)}` })),
-    { id: "liquidity-comparisons", text: `09 ${state.lang === "ko" ? "유동성 비교" : "Comparisons"}` }, { id: "sector-flow", text: `30 ${t("sector.title")}` },
-    { id: "constituent-heatmap", text: `31 ${t("tv.title")}` }, { id: "correlation", text: `32 ${t("corr.title")}` }]
+  [{ id: "constituent-heatmap", text: t("tv.title") },
+    ...SECTIONS.map((section, index) => ({ id: section.id, text: `${String(index + 1).padStart(2, "0")} ${localValue(section.title, state.lang)}` })),
+    { id: "liquidity-comparisons", text: `${String(SECTIONS.length + 1).padStart(2, "0")} ${state.lang === "ko" ? "유동성 비교" : "Comparisons"}` },
+    { id: "sector-flow", text: t("sector.title") }, { id: "correlation", text: t("corr.title") }]
+    .filter((item) => !document.getElementById(item.id)?.hidden)
     .forEach((item) => { const link = document.createElement("a"); link.href = `#${item.id}`; link.textContent = item.text; nav.append(link); });
 }
 
@@ -742,6 +775,16 @@ async function loadCore() {
 
 function renderAll() {
   renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex();
+  // The sector monitor and the correlation matrix live on the quarantined
+  // legacy price lane. When the deployment has that lane switched off they are
+  // not failing — they are absent by decision, so they are hidden rather than
+  // left showing a retry prompt for something a retry cannot fix.
+  const legacyOff = errorCode("sectors") === "legacy_price_data_disabled";
+  const sectorSection = $("#sector-flow"), corrSection = $("#correlation");
+  if (sectorSection) sectorSection.hidden = legacyOff;
+  if (corrSection) corrSection.hidden = legacyOff;
+  if (legacyOff) state.correlationLoaded = true; // the lazy loader must not fetch it
+  pruneEmpty(); renderJumpNav();
   $$(".lazy-comparison[data-visible='1']").forEach((card) => renderComparison(Number(card.dataset.comparison)));
   const times = [state.macro?.generated_at, state.assets?.generated_at, state.sectors?.generated_at, state.sectors?.as_of, state.weekend?.generated_at].filter(Boolean);
   $("#updated-at").textContent = times.length ? dateText(times.sort().at(-1)) : "—";

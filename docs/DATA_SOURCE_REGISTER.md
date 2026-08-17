@@ -889,6 +889,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | BLS lane 추가(`DS-2026-005`), DOL ETA는 보류 사유 기록 | Claude assisted |
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
+| 2026-08-17 | 공개 준비 정리: 레거시 lane 섹션(섹터 모니터·상관관계·종목 위험 분석)을 오류 표시 대신 숨김, analytics는 내부자 공시 조회 모드로 전환, 레코드 없는 라이선스·예약 카드 숨김. 데이터·권리 변경 없음 — lane이 열리면 화면이 저절로 복원된다 | Claude assisted |
 | 2026-08-17 | 영구 공석 proxy 카드(코스닥·원달러 합성)를 한국 섹션에서 제거, 개요 타일을 공식 카드로 교체. 데이터·권리 변경 없음 | Claude assisted |
 | 2026-08-17 | HIP-3 문의 **발송** — XYZ Ltd와 Hyperliquid Corp. 양쪽. P0의 마지막 미발송 항목 해소 | Claude assisted |
 | 2026-08-17 | HIP-3 문의 초안 개정: XYZ Ltd·Hyperliquid Corp. 약관 정독 결과 반영, 연락처 확정, 기초 자산 원 권리자 질문을 최우선으로 이동. §4.1 문의 대기 목록 신설 | Claude assisted |

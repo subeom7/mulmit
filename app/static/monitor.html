@@ -52,6 +52,21 @@
       <div id="overview-groups" class="overview-groups" aria-live="polite"></div>
     </section>
 
+    <section class="dashboard-section" id="constituent-heatmap" aria-labelledby="tv-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">TRADINGVIEW · THIRD-PARTY EMBED</p><h2 id="tv-title" data-i18n="tv.title">S&amp;P 500 종목 히트맵</h2></div>
+        <div class="segmented" id="tv-period" role="group" aria-label="Heatmap performance period">
+          <button type="button" data-period="1d">1D</button><button type="button" data-period="1w">1W</button>
+          <button type="button" data-period="1m">1M</button><button type="button" data-period="1y">1Y</button>
+        </div>
+      </div>
+      <div class="panel tv-panel">
+        <div class="notice-line"><span class="status-badge info" data-i18n="tv.embed">외부 위젯</span><span data-i18n="tv.notice">이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.</span></div>
+        <div id="tradingview-host" class="tradingview-host lazy-host" data-lazy="tradingview"><div class="state-block" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div></div>
+        <footer class="panel-footer"><a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView</a><span data-i18n="tv.terms">데이터·표시 조건은 제공자 정책을 따릅니다.</span></footer>
+      </div>
+    </section>
+
     <section class="weekend-pulse" id="weekend-pulse" aria-labelledby="weekend-title">
       <div class="section-heading compact">
         <span class="section-index">W</span>
@@ -112,22 +127,6 @@
         <div class="table-scroll"><table id="sector-table" class="accessible-table"><caption data-i18n="sector.caption">S&amp;P 500 섹터 ETF 기간 수익률</caption><thead></thead><tbody></tbody></table></div>
         <footer class="panel-footer" id="sector-footer"></footer>
         <p class="interpretation-note" data-i18n="sector.interpretation">플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.</p>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="constituent-heatmap" aria-labelledby="tv-title">
-      <div class="section-heading">
-        <span class="section-index">31</span>
-        <div><p class="eyebrow">TRADINGVIEW · THIRD-PARTY EMBED</p><h2 id="tv-title" data-i18n="tv.title">S&amp;P 500 종목 히트맵</h2></div>
-        <div class="segmented" id="tv-period" role="group" aria-label="Heatmap performance period">
-          <button type="button" data-period="1d">1D</button><button type="button" data-period="1w">1W</button>
-          <button type="button" data-period="1m">1M</button><button type="button" data-period="1y">1Y</button>
-        </div>
-      </div>
-      <div class="panel tv-panel">
-        <div class="notice-line"><span class="status-badge info" data-i18n="tv.embed">외부 위젯</span><span data-i18n="tv.notice">이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.</span></div>
-        <div id="tradingview-host" class="tradingview-host lazy-host" data-lazy="tradingview"><div class="state-block" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div></div>
-        <footer class="panel-footer"><a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView</a><span data-i18n="tv.terms">데이터·표시 조건은 제공자 정책을 따릅니다.</span></footer>
       </div>
     </section>
 
