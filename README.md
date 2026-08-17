@@ -17,6 +17,13 @@
 - **[다음 세션 인수인계](docs/NEXT_SESSION_HANDOFF.md)** — 우선순위, 코드 위치, API 계약, 테스트·배포 완료 기준
 - **[데이터 공급자·권리 등록부](docs/DATA_SOURCE_REGISTER.md)** — 공급자별 공개 표시·캐시·재배포 판정, 예산, 카드 매핑
 
+공개 화면의 법적 고지는 `/privacy`(개인정보처리방침), `/terms`(이용약관),
+`/disclaimer`(면책 고지)에 있다. 세 페이지 모두 KO/EN 본문을 DOM에 함께 담아
+스크립트 없이도 읽히고, 어떤 데이터 lane이 닫혀 있어도 항상 200으로 응답한다.
+개인정보처리방침은 boilerplate가 아니라 이 사이트가 실제로 하는 일(접속 로그,
+레이트리밋용 IP, localStorage 설정, TradingView 위젯의 제3자 전달)만 적는다.
+동작이 바뀌면 문서를 먼저 고친다.
+
 이름은 **언더워터(underwater)** 에서 왔다. 낙폭 분석에서 전고점 아래에 잠겨 있는
 구간을 부르는 말이고, 이 서비스의 핵심 차트가 그 언더워터 곡선이다.
 "얼마나 올랐나"가 아니라 **"얼마나 잠겨 있었고, 앞으로 얼마나 잠길 수 있나"** 를
@@ -179,6 +186,23 @@ FRED_MAX_AGE=21600
 LEGACY_PRICE_DATA_ENABLED=false
 HIP3_PUBLIC_DISPLAY_ENABLED=false
 ```
+
+`SEC_EDGAR_ENABLED`는 `/analytics`의 내부자거래(Form 3·4·5) 패널을 켠다. EDGAR는
+미국 연방정부 공시 시스템이고 SEC는 누구나 무료로 접근·다운로드할 수 있다고
+안내하지만, 자동 접근에는 연락처가 담긴 User-Agent 선언과 초당 10요청 상한이
+따른다. 연락처는 배포마다 다르고 저장소에 커밋하지 않으므로
+`SEC_EDGAR_USER_AGENT`가 비어 있으면 `ENABLED=true`여도 lane이 닫힌다.
+
+```dotenv
+SEC_EDGAR_ENABLED=false
+SEC_EDGAR_USER_AGENT=            # 예: "Mulmit admin@example.com"
+SEC_EDGAR_TICKERS=AAPL,MSFT,NVDA,GOOGL,TSLA
+```
+
+수집은 배치에서만 한다. 목록에 없는 티커를 검색하면 EDGAR를 즉석에서 부르지 않고
+`queued`로 답한 뒤 다음 수집 주기가 가져간다. 표시할 때 시장 매수(`P`)·매도(`S`)와
+부여(`A`)·파생 행사(`M`)·세금 상계(`F`)를 절대 합산하지 않는다. RSU 베스팅 한 건이
+거대한 매매 신호처럼 보이는 것을 막기 위해서다.
 
 `HIP3_PUBLIC_DISPLAY_ENABLED`는 Hyperliquid HIP-3 / trade.xyz 값의 공개 표시
 게이트다. API가 키 없이 열려 있다는 사실은 재표시 권리가 아니므로 코드 기본값은

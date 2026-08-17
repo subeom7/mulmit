@@ -116,7 +116,7 @@ notes: >
 
 후속 작업:
 
-- Privacy 문서에 외부 위젯이 페이지 URL, 위젯 종류·심볼, IP 등 공급자 문서에 적힌 정보를 처리할 수 있음을 알린다.
+- ~~Privacy 문서에 외부 위젯이 페이지 URL, 위젯 종류·심볼, IP 등 공급자 문서에 적힌 정보를 처리할 수 있음을 알린다.~~ **완료 (2026-08-17).** `/privacy` §4에 위젯이 사용자 브라우저에서 직접 로드되며 TradingView가 IP·페이지 URL·브라우저 정보를 받는다는 사실과 차단 방법을 기재했다.
 - 외부 스크립트 실패 시 명시적 unavailable fallback을 추가한다.
 - 광고·유료화 전 상업 사용 조건을 다시 확인한다.
 
@@ -173,7 +173,61 @@ KRX 승인이 나더라도 KRX 공식 종가는 HIP-3 `xyz:KR200`·`xyz:SMSN`과
 key로 저장한다. 같은 카드 안에서 두 값을 번갈아 채우거나 한 시계열로 이어 붙이지
 않는다.
 
-### 3.5 Yahoo Finance / yfinance
+### 3.5 SEC EDGAR (Form 3/4/5 지분공시)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `sec_edgar` |
+| 현재 상태 | `approved` (아래 승인 범위 한정) |
+| 코드 위치 | `app/providers/sec_edgar.py`, `app/insider_filings.py`, `app/store.py`, `app/ingest.py` |
+| 배포 기본값 | `SEC_EDGAR_ENABLED=false`, `SEC_EDGAR_USER_AGENT=` (미설정이면 lane이 닫힘) |
+| 현재 사용 | 티커→CIK 매핑, 회사 submissions, Form 3/4/5 원본 XML의 보고 항목 |
+| 기술 비용 | 무료. API 키 없음 |
+| 접근 조건 | 연락처가 담긴 User-Agent 선언 필수, 초당 10요청 상한(사용자 단위, 기기 수 무관) |
+| 표시 경계 | 공시된 값을 가공 없이 전달. 부여(A)·파생 행사(M)·세금 상계(F)를 시장 매수(P)·매도(S)와 합산하지 않음 |
+| 공식 근거 | [Accessing EDGAR data](https://www.sec.gov/os/accessing-edgar-data), [EDGAR APIs](https://www.sec.gov/search-filings/edgar-application-programming-interfaces), [Privacy and Security Policy](https://www.sec.gov/about/privacy-information) |
+
+다른 공급자와 조건이 다른 이유는 EDGAR가 상용 벤더 피드가 아니라 미국 연방정부의
+공시 시스템이기 때문이다. SEC는 “Anyone can access and download this information
+for free”라고 명시하고, 라이선스 게이트가 아니라 운영 규칙(선언된 User-Agent,
+요청 상한)을 둔다. 미 연방정부 저작물에는 저작권이 없다.
+
+그렇다고 무조건이라고 적지는 않는다. 확인된 범위는 아래로 한정한다.
+
+```yaml
+decision_id: DS-2026-002
+provider_id: sec_edgar
+status: approved
+reviewed_at: 2026-08-17
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://www.sec.gov/os/accessing-edgar-data
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  cache_ttl_seconds: 300
+  stale_seconds: 0
+  historical_storage: true
+  derived_metrics: true       # 공시된 값의 합계까지. 예측·등급은 포함하지 않음
+  advertising: unconfirmed    # 광고 도입 전 fair access 정책 재확인
+attribution: "U.S. Securities and Exchange Commission · EDGAR"
+expires_at: null
+recheck_at: 2027-02-17
+notes: >
+  운영 조건은 라이선스가 아니라 fair access다. 초당 10요청 상한을 provider가
+  자체적으로 강제하고, 연락처가 없는 User-Agent면 lane을 열지 않는다. SEC는
+  정책 변경 가능성을 명시하므로 recheck_at에 재확인한다. 차단은 IP 단위로
+  이뤄지므로 fail-closed 동작이 실질적으로 중요하다.
+```
+
+표시 규칙:
+
+- Form 4의 거래 코드를 원문 그대로 표시하고 라벨만 번역한다.
+- `P`(시장 매수)와 `S`(시장 매도)만 합계에 넣는다. `A`(부여), `M`(파생 행사), `F`(세금 원천징수 상계)는 개별 행으로만 보여 준다. 이걸 합치면 RSU 베스팅 한 건이 거대한 매매 신호처럼 보인다.
+- 단가가 없는 공시(무상 부여 등)의 금액은 0이 아니라 빈 값이다.
+- 요청 경로에서 EDGAR를 호출하지 않는다. 수집되지 않은 티커는 `queued`로 답하고 다음 배치가 가져간다.
+
+### 3.6 Yahoo Finance / yfinance
 
 | 항목 | 기록 |
 |---|---|
@@ -186,7 +240,7 @@ key로 저장한다. 같은 카드 안에서 두 값을 번갈아 채우거나 �
 
 yfinance 패키지가 공개 표시·저장·재배포 권리를 부여한다고 해석하지 않는다. 401/429를 스크래핑 엔드포인트로 우회하지 않는다.
 
-### 3.6 Cboe, ICE, IMF
+### 3.7 Cboe, ICE, IMF
 
 | 공급자/권리자 | 대상 | 상태 | 현재 결정 | 공식 근거 |
 |---|---|---|---|---|
@@ -293,6 +347,7 @@ alias를 정리해 proxy와 exact가 서로 다른 카드에 붙도록 먼저 �
 | 섹터 ETF 1D/1W/1M/1Y | legacy disabled | 승인된 EOD 역사 가격 저장소 확보 |
 | 자산군 상관관계 | legacy disabled | 동일 기준의 승인 가격·환율·거래일 데이터 확보 |
 | `/analytics` CAPM/MDD | legacy disabled | 조정가격, 벤치마크, 무위험수익률의 공개 사용 권리 확보 |
+| `/analytics` 내부자거래 | SEC EDGAR 연결됨 (`SEC_EDGAR_ENABLED`) | 가격 lane과 무관하게 동작. 미수집 티커는 `queued` 후 다음 배치 |
 | S&P 500 종목 히트맵 | TradingView widget | 공식 위젯 범위와 attribution 유지 |
 
 ## 6. 유료 공급자 예산 조사
@@ -427,4 +482,5 @@ notes: "No confidential contract language here"
 |---|---|---|
 | 2026-08-16 | 최초 공급자·권리·예산·카드 매핑 등록 | Codex assisted |
 | 2026-08-16 | 교차검토 반영: 실제 UI key 정정, 공개 JSON 표현 수정, KRX 출처·제3자 제공 조건 명시, ICE/IMF 경로 정정, proxy와 공식값 key 분리, HIP-3 결정 기록 추가 | Claude assisted |
+| 2026-08-17 | SEC EDGAR lane 추가(`DS-2026-002`)와 Form 3/4/5 표시 규칙 기록 | Claude assisted |
 

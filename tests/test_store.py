@@ -164,3 +164,24 @@ def test_stats(db):
     assert stats["price_rows"] == 40
     assert stats["cached_reports"] == 1
     assert stats["last_ingest"] == pytest.approx(time.time(), abs=60)
+
+
+def test_zero_ttl_always_expires_even_within_one_clock_tick(db, monkeypatch):
+    """`ttl=0` must mean "do not serve from cache", not "expire eventually".
+
+    time.time() commonly returns the same value for consecutive calls on
+    Windows, so a save and a load can land on one tick and produce an age of
+    exactly 0.0. A `>` comparison then served the cached value and made both
+    TTL assertions intermittently fail.
+    """
+    frozen = 1_800_000_000.0
+    monkeypatch.setattr(time, "time", lambda: frozen)
+
+    db.save_report("same-tick", {"v": 1})
+    db.save_macro("same-tick", 1.5)
+
+    assert db.load_report("same-tick", ttl=0) is None
+    assert db.load_macro("same-tick", max_age=0) is None
+    # A real budget still serves the value.
+    assert db.load_report("same-tick", ttl=3600) == {"v": 1}
+    assert db.load_macro("same-tick", max_age=3600) == pytest.approx(1.5)

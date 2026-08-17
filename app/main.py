@@ -20,6 +20,12 @@ from slowapi.util import get_remote_address
 
 from . import __version__, config, data_rights, ingest, service, store
 from .data import DataUnavailable, RateLimited
+from .insider_filings import (
+    DEFAULT_TRANSACTIONS,
+    MAX_PUBLIC_TRANSACTIONS,
+    InsiderDataDisabled,
+    build_insider_report,
+)
 from .macro_dashboard import MacroDataDisabled, build_macro_series, build_macro_snapshot
 from .market_assets import build_asset_snapshot
 from .market_sectors import build_sector_snapshot
@@ -136,6 +142,21 @@ def stock_analytics() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "index.html")
 
 
+@app.get("/privacy", include_in_schema=False)
+def privacy_policy() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "privacy.html")
+
+
+@app.get("/terms", include_in_schema=False)
+def terms_of_use() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "terms.html")
+
+
+@app.get("/disclaimer", include_in_schema=False)
+def disclaimer() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "disclaimer.html")
+
+
 @app.get("/api/health")
 def health() -> dict:
     """로드밸런서·배포 스크립트용. DB까지 확인해야 의미가 있다."""
@@ -230,6 +251,41 @@ def market_macro_series(
         raise HTTPException(status_code=404, detail="아직 수집된 거시 데이터가 없습니다.")
     response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=3600"
     response.headers["X-Data-Source"] = _macro_data_source()
+    return payload
+
+
+@app.get("/api/insider/{ticker}")
+@limiter.limit(config.RATE_LIMIT)
+def insider_filings(
+    ticker: str,
+    request: Request,
+    response: Response,
+    limit: int = Query(DEFAULT_TRANSACTIONS, ge=1, le=MAX_PUBLIC_TRANSACTIONS),
+) -> dict:
+    """SEC EDGAR Form 3/4/5 지분공시. 저장소만 읽는다.
+
+    수집되지 않은 티커는 EDGAR를 즉석에서 부르지 않고 `queued` 상태로 답한 뒤
+    다음 수집 주기가 가져간다.
+    """
+    if not ticker.strip():
+        raise HTTPException(status_code=422, detail="ticker is required")
+    try:
+        payload = build_insider_report(ticker, limit)
+    except InsiderDataDisabled as exc:
+        detail = (
+            data_rights.INSIDER_NOT_CONFIGURED
+            if exc.reason == "not_configured"
+            else data_rights.INSIDER_DATA_DISABLED
+        )
+        raise HTTPException(
+            status_code=503,
+            detail=detail,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    # Short cache only: a queued ticker becomes collected on the next cycle and
+    # a stale answer would hide that.
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "SEC EDGAR"
     return payload
 
 

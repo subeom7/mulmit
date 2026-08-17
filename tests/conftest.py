@@ -22,6 +22,8 @@ def db(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "FRED_API_KEY", "")
     monkeypatch.setattr(config, "LEGACY_PRICE_DATA_ENABLED", False)
     monkeypatch.setattr(config, "HIP3_PUBLIC_DISPLAY_ENABLED", False)
+    monkeypatch.setattr(config, "SEC_EDGAR_ENABLED", False)
+    monkeypatch.setattr(config, "SEC_EDGAR_USER_AGENT", "")
     store.reset(f"sqlite:///{tmp_path / 'test.db'}")
     store.init_db()
     yield store
@@ -48,6 +50,13 @@ def fred_serving(db, monkeypatch):
 def hip3_public_display(monkeypatch):
     """Opt in tests that assert on served Hyperliquid HIP-3 payloads."""
     monkeypatch.setattr(config, "HIP3_PUBLIC_DISPLAY_ENABLED", True)
+
+
+@pytest.fixture
+def sec_edgar(db, monkeypatch):
+    """Open the SEC EDGAR lane with a declared contact, as the SEC requires."""
+    monkeypatch.setattr(config, "SEC_EDGAR_ENABLED", True)
+    monkeypatch.setattr(config, "SEC_EDGAR_USER_AGENT", "Mulmit test admin@example.com")
 
 
 def make_close(n=400, start="2020-01-01", seed=0, drift=0.0004, vol=0.02):

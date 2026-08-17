@@ -25,6 +25,7 @@ from . import config, data, store
 from .market_assets import ASSET_TICKERS, CORRELATION_TICKERS
 from .providers import DataUnavailable, RateLimited, get_provider
 from .providers.fred import FRED_SERIES, FredProvider
+from .providers.sec_edgar import SecEdgarProvider
 
 log = logging.getLogger(__name__)
 
@@ -132,6 +133,105 @@ def refresh_fred(*, force: bool = False) -> dict:
     return result
 
 
+def refresh_insider_filings(*, force: bool = False) -> dict:
+    """Refresh SEC EDGAR ownership filings for the watchlist and searched tickers.
+
+    Independent of every price lane: EDGAR is a public federal disclosure system
+    and needs no vendor key, only a declared contact and a request budget.
+    """
+    if not config.SEC_EDGAR_ENABLED:
+        return {"skipped": "disabled", "attempted": 0, "updated": 0, "failed": 0}
+    if not config.SEC_EDGAR_USER_AGENT:
+        return {"skipped": "not_configured", "attempted": 0, "updated": 0, "failed": 0}
+
+    max_age = 0 if force else config.SEC_EDGAR_MAX_AGE
+    targets = store.stale_insider_tickers(
+        config.SEC_EDGAR_TICKERS, max_age, config.SEC_EDGAR_BATCH_SIZE
+    )
+    if not targets:
+        return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
+
+    provider = SecEdgarProvider(
+        config.SEC_EDGAR_USER_AGENT,
+        timeout=config.SEC_EDGAR_TIMEOUT,
+        retries=config.SEC_EDGAR_RETRIES,
+        request_interval=config.SEC_EDGAR_REQUEST_INTERVAL,
+    )
+    result = {
+        "attempted": 0,
+        "updated": 0,
+        "failed": 0,
+        "unknown": 0,
+        "rate_limited": 0,
+        "transactions": 0,
+    }
+
+    try:
+        ticker_map = provider.fetch_ticker_map()
+    except RateLimited:
+        return {"skipped": "rate_limited", "attempted": 0, "updated": 0, "failed": 0}
+    except Exception as exc:  # noqa: BLE001 - one outage must not crash the batch
+        log.warning("EDGAR 티커 매핑 실패: %s", exc)
+        return {"skipped": "ticker_map_unavailable", "attempted": 0, "updated": 0, "failed": 0}
+
+    for ticker in targets:
+        result["attempted"] += 1
+        entry = ticker_map.get(ticker)
+        if entry is None:
+            # Not an EDGAR filer: a foreign listing, an ETF or a typo. Remember it
+            # so the batch stops retrying, and let the API say so.
+            result["unknown"] += 1
+            store.mark_insider_error(ticker, "not listed in EDGAR company tickers", status="unavailable")
+            continue
+        cik, name = entry
+        try:
+            company = provider.fetch_company(cik, form_limit=config.SEC_EDGAR_FILING_LIMIT)
+            saved = store.save_insider_filings(
+                ticker,
+                cik=company.cik,
+                name=company.name or name,
+                exchange=company.exchanges[0] if company.exchanges else None,
+                filings_seen=company.filings_seen,
+                transactions=[
+                    {
+                        "accession_number": item.accession_number,
+                        "sequence": item.sequence,
+                        "form_type": item.form_type,
+                        "filing_date": item.filing_date,
+                        "transaction_date": item.transaction_date,
+                        "owner_name": item.owner_name,
+                        "owner_cik": item.owner_cik,
+                        "owner_title": item.owner_title,
+                        "is_director": item.is_director,
+                        "is_officer": item.is_officer,
+                        "is_ten_percent_owner": item.is_ten_percent_owner,
+                        "security_title": item.security_title,
+                        "transaction_code": item.transaction_code,
+                        "acquired_disposed": item.acquired_disposed,
+                        "is_derivative": item.is_derivative,
+                        "shares": item.shares,
+                        "price_per_share": item.price_per_share,
+                        "shares_owned_after": item.shares_owned_after,
+                        "direct_or_indirect": item.direct_or_indirect,
+                        "filing_url": item.filing_url,
+                    }
+                    for item in company.transactions
+                ],
+            )
+            result["updated"] += 1
+            result["transactions"] += saved
+            log.info("EDGAR 갱신 %s (%d행 / 공시 %d건)", ticker, saved, company.filings_seen)
+        except RateLimited:
+            result["rate_limited"] += 1
+            log.warning("EDGAR 요청 제한 — 남은 티커는 다음 주기에 재시도")
+            break
+        except Exception as exc:  # noqa: BLE001 - 한 티커 실패가 나머지를 막지 않는다
+            result["failed"] += 1
+            store.mark_insider_error(ticker, str(exc))
+            log.warning("EDGAR 갱신 실패 %s: %s", ticker, exc)
+    return result
+
+
 def _targets(explicit: list[str] | None) -> list[str]:
     if not config.LEGACY_PRICE_DATA_ENABLED:
         return []
@@ -170,8 +270,10 @@ def run_once(tickers: list[str] | None = None) -> dict:
     # keep macro data fresh without constructing or calling the legacy Yahoo
     # provider at all.
     if not config.LEGACY_PRICE_DATA_ENABLED:
+        insider_result = {"skipped": "explicit_price_refresh"}
         if automatic:
             fred_result = refresh_fred()
+            insider_result = refresh_insider_filings()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
             "skipped": "legacy_price_data_disabled",
@@ -182,6 +284,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             "rate_limited": 0,
             "purged_reports": purged,
             "fred": fred_result,
+            "insider": insider_result,
             "elapsed": round(time.time() - started, 2),
         }
         log.info("레거시 가격 수집 비활성화: %s", result)
@@ -193,11 +296,13 @@ def run_once(tickers: list[str] | None = None) -> dict:
         if waiting > 0:
             # Price-provider backoff must not disable the independent FRED lane.
             fred_result = refresh_fred()
+            insider_result = refresh_insider_filings()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
                 "skipped": "backoff",
                 "resume_in": round(waiting),
                 "fred": fred_result,
+                "insider": insider_result,
             }
 
     _refresh_macro()
@@ -244,12 +349,15 @@ def run_once(tickers: list[str] | None = None) -> dict:
 
     # Price data is the latency-sensitive lane. Refresh FRED afterwards so a
     # slow macro-provider outage cannot postpone all ticker updates.
+    insider_result = {"skipped": "explicit_price_refresh"}
     if automatic:
         fred_result = refresh_fred()
+        insider_result = refresh_insider_filings()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged
     result["fred"] = fred_result
+    result["insider"] = insider_result
     result["elapsed"] = round(time.time() - started, 2)
     log.info("수집 완료: %s", result)
     return result

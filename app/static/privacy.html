@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ko" data-theme="dark" data-lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Mulmit 개인정보처리방침 — 계정도 쿠키도 분석도구도 없는 공개 대시보드가 실제로 처리하는 정보">
+  <meta name="doc-title-ko" content="개인정보처리방침 · Mulmit">
+  <meta name="doc-title-en" content="Privacy Policy · Mulmit">
+  <title>개인정보처리방침 · Mulmit</title>
+  <link rel="stylesheet" href="/static/legal.css?v=20260817-1">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Mulmit home">
+      <span class="brand-mark" aria-hidden="true">M</span>
+      <span><strong>Mulmit</strong><small>MARKET SIGNAL CONSOLE</small></span>
+    </a>
+    <nav class="mast-nav" aria-label="Primary">
+      <a class="nav-chip" href="/">시장 모니터</a>
+      <a class="nav-chip" href="/analytics">종목 분석</a>
+    </nav>
+    <div class="mast-actions">
+      <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
+      <button class="icon-button" id="theme-toggle" type="button" aria-label="테마 전환">◐</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <p class="doc-kicker">PRIVACY</p>
+
+    <div class="lang-ko" lang="ko">
+      <h1>개인정보처리방침</h1>
+      <p class="doc-meta">시행일 2026-08-17 · 최종 개정 2026-08-17</p>
+      <p class="doc-lede">
+        Mulmit은 로그인 없이 누구나 볼 수 있는 시장 데이터 대시보드입니다. 회원가입도, 광고도,
+        분석 도구도 없습니다. 이 문서는 형식적인 문구를 늘어놓는 대신 이 사이트가 실제로 무엇을
+        처리하는지만 적습니다.
+      </p>
+
+      <div class="callout">
+        <p>
+          <strong>요약</strong> — Mulmit은 계정을 만들지 않고, 쿠키를 사용하지 않으며,
+          이름·이메일·전화번호·결제정보를 받는 입력란이 없습니다. 서버가 남기는 것은 웹서버
+          접속 기록뿐이고, 브라우저에 저장되는 것은 언어·테마 같은 화면 설정뿐입니다.
+        </p>
+      </div>
+
+      <h2>1. 수집하지 않는 것</h2>
+      <p>먼저 없는 것을 분명히 해 둡니다. Mulmit은 다음을 수집하거나 처리하지 않습니다.</p>
+      <ul>
+        <li>회원 계정, 아이디, 비밀번호 — 로그인 기능 자체가 없습니다.</li>
+        <li>이름, 이메일, 전화번호, 주소, 생년월일, 주민등록번호 등 식별정보</li>
+        <li>결제수단, 카드번호, 계좌정보 — 유료 기능이 없습니다.</li>
+        <li>보유 종목, 매매 내역, 자산 규모 등 이용자의 금융 정보</li>
+        <li>쿠키를 이용한 추적, 광고 식별자, 크로스사이트 트래킹</li>
+        <li>Google Analytics 등 제3자 분석 도구</li>
+      </ul>
+
+      <h2>2. 실제로 처리되는 정보</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>항목</th><th>목적</th><th>보관</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>접속 로그<br>(IP 주소, 접속 시각, 요청 경로, User-Agent, 응답 코드)</td>
+              <td>서비스 운영, 장애 대응, 비정상 트래픽 확인</td>
+              <td>서버 컨테이너 로그로만 저장. 별도 데이터베이스에 적재하거나 다른 정보와 결합하지 않음</td>
+            </tr>
+            <tr>
+              <td>IP 주소 (요청 빈도 제한용)</td>
+              <td>같은 출처의 과도한 요청 차단</td>
+              <td>서버 메모리에서만 사용하고 저장하지 않음. 프로세스가 재시작되면 사라짐</td>
+            </tr>
+            <tr>
+              <td>티커 조회 횟수</td>
+              <td>이용자가 실제로 찾는 종목을 다음 수집 주기에 우선 포함</td>
+              <td>종목별 누적 횟수만 저장. 누가 조회했는지는 기록하지 않으며 IP·세션과 연결되지 않음</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        접속 로그는 웹서버가 동작하기 위해 남기는 기술적 기록입니다. Mulmit은 이 로그를 이용자
+        프로필을 만들거나 개인을 식별하는 용도로 사용하지 않습니다.
+      </p>
+
+      <h2>3. 브라우저에 저장되는 설정</h2>
+      <p>
+        Mulmit은 쿠키를 사용하지 않습니다. 대신 브라우저의 로컬 저장소(localStorage)에 화면 설정을
+        저장합니다. 이 값들은 <strong>서버로 전송되지 않고</strong> 이용자 기기에만 남습니다.
+      </p>
+      <ul>
+        <li>언어 선택 (한국어 / English)</li>
+        <li>테마 선택 (다크 / 라이트)</li>
+        <li>차트 기간 선택 (일간·주간·월간·연간 등)</li>
+      </ul>
+      <p>브라우저의 사이트 데이터 삭제 기능으로 언제든 지울 수 있고, 지워도 서비스 이용에 지장이 없습니다.</p>
+
+      <h2>4. 외부 서비스</h2>
+      <p>
+        시장 모니터 화면의 <strong>S&amp;P 500 종목 히트맵</strong>은 TradingView가 제공하는 공식
+        위젯입니다. 이 위젯은 이용자의 브라우저가 TradingView 서버에서 직접 불러오므로, 그 과정에서
+        <strong>TradingView가 이용자의 IP 주소, 접속한 페이지 주소, 브라우저 정보 등을 받게 됩니다.</strong>
+        Mulmit 서버를 거치지 않는 직접 연결이며, Mulmit은 이 데이터를 받지도 저장하지도 않습니다.
+      </p>
+      <p>
+        해당 처리에는 TradingView의 정책이 적용됩니다.
+        <a href="https://www.tradingview.com/policies/" target="_blank" rel="noopener noreferrer">TradingView 정책</a>을
+        확인하세요. 위젯을 원하지 않으면 브라우저 확장 프로그램이나 콘텐츠 차단 설정으로 막을 수 있으며,
+        그래도 나머지 화면은 정상 동작합니다.
+      </p>
+      <p>
+        Mulmit이 시장·공시 데이터를 받아오기 위해 외부 제공기관(예: 미국 증권거래위원회 EDGAR,
+        Hyperliquid)에 요청을 보낼 때는 <strong>서버가 대신 요청</strong>합니다. 이때 전달되는 것은
+        서버의 정보이며 이용자의 IP나 브라우저 정보는 포함되지 않습니다.
+      </p>
+
+      <h2>5. 제3자 제공과 처리 위탁</h2>
+      <p>
+        Mulmit은 이용자의 개인정보를 제3자에게 판매하거나 제공하지 않습니다. 다만 서비스를 운영하기
+        위해 다음 인프라를 사용하며, 그 과정에서 접속 기록이 해당 사업자의 설비에 남을 수 있습니다.
+      </p>
+      <ul>
+        <li>Amazon Web Services — 서버 호스팅 (서울 리전)</li>
+        <li>GitHub — 소스코드 및 배포 자동화 (컨테이너 이미지 배포)</li>
+      </ul>
+
+      <h2>6. 이용자의 권리</h2>
+      <p>
+        Mulmit은 이용자를 식별할 수 있는 정보를 보관하지 않으므로, 특정 개인의 정보를 찾아 열람·정정·
+        삭제하는 것이 기술적으로 불가능합니다. 문의나 요청이 있으면 아래 연락처로 알려 주세요. 처리
+        내용에 문제가 있다고 판단되면 개인정보 분쟁조정위원회(1833-6972), 개인정보침해 신고센터
+        (118) 등에 상담을 신청할 수 있습니다.
+      </p>
+
+      <h2>7. 아동의 개인정보</h2>
+      <p>Mulmit은 만 14세 미만 아동을 대상으로 하지 않으며, 연령 정보를 포함해 어떤 개인정보도 수집하지 않습니다.</p>
+
+      <h2>8. 방침 변경</h2>
+      <p>
+        광고 도입, 이용자 계정 추가 등 처리 내용이 달라지면 이 문서를 먼저 개정하고 시행일을 바꿉니다.
+        특히 <strong>광고를 도입하면 광고 사업자가 쿠키나 식별자를 사용할 수 있으므로</strong>, 그 시점에
+        이 방침을 실제 동작에 맞게 다시 씁니다.
+      </p>
+
+      <h2>9. 연락처</h2>
+      <p>
+        개인정보 보호책임자: Mulmit 운영자<br>
+        문의: <a href="https://github.com/subeom7/mulmit/issues" target="_blank" rel="noopener noreferrer">GitHub 이슈</a>
+      </p>
+    </div>
+
+    <div class="lang-en" lang="en">
+      <h1>Privacy Policy</h1>
+      <p class="doc-meta">Effective 2026-08-17 · Last revised 2026-08-17</p>
+      <p class="doc-lede">
+        Mulmit is a market-data dashboard anyone can read without signing in. There are no accounts,
+        no advertising and no analytics tools. Rather than reciting boilerplate, this page describes
+        only what the site actually does.
+      </p>
+
+      <div class="callout">
+        <p>
+          <strong>In short</strong> — Mulmit creates no accounts, sets no cookies, and has no field
+          that asks for your name, email, phone number or payment details. The server keeps ordinary
+          web access logs; your browser keeps display preferences such as language and theme.
+        </p>
+      </div>
+
+      <h2>1. What is not collected</h2>
+      <p>Starting with the absences. Mulmit does not collect or process:</p>
+      <ul>
+        <li>Accounts, usernames or passwords — there is no sign-in at all.</li>
+        <li>Names, email addresses, phone numbers, postal addresses or dates of birth</li>
+        <li>Payment methods, card numbers or bank details — nothing here is paid</li>
+        <li>Your holdings, trades or portfolio size</li>
+        <li>Cookie-based tracking, advertising identifiers or cross-site tracking</li>
+        <li>Third-party analytics such as Google Analytics</li>
+      </ul>
+
+      <h2>2. What is actually processed</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Data</th><th>Purpose</th><th>Retention</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Access logs<br>(IP address, timestamp, request path, User-Agent, status code)</td>
+              <td>Running the service, diagnosing faults, spotting abusive traffic</td>
+              <td>Kept only as server container logs. Never loaded into a database or combined with other data</td>
+            </tr>
+            <tr>
+              <td>IP address (rate limiting)</td>
+              <td>Blocking excessive requests from one source</td>
+              <td>Held in server memory only and never written to disk. Lost on restart</td>
+            </tr>
+            <tr>
+              <td>Ticker lookup counts</td>
+              <td>Prioritising the symbols people actually search for in the next collection cycle</td>
+              <td>A running count per symbol. Who searched is not recorded and is never linked to an IP or session</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Access logs are the technical record a web server keeps in order to function. Mulmit does not
+        use them to build profiles or to identify individuals.
+      </p>
+
+      <h2>3. Preferences stored in your browser</h2>
+      <p>
+        Mulmit sets no cookies. It stores display preferences in your browser's localStorage instead.
+        These values <strong>are never sent to the server</strong> and stay on your device.
+      </p>
+      <ul>
+        <li>Language (Korean / English)</li>
+        <li>Theme (dark / light)</li>
+        <li>Chart period selections</li>
+      </ul>
+      <p>Clearing site data in your browser removes them, and the site works normally afterwards.</p>
+
+      <h2>4. Third-party services</h2>
+      <p>
+        The <strong>S&amp;P 500 constituent heatmap</strong> on the market monitor is an official
+        TradingView widget. Your browser loads it directly from TradingView, which means
+        <strong>TradingView receives your IP address, the page URL and browser information</strong> in
+        the process. That connection does not pass through Mulmit's server, and Mulmit neither
+        receives nor stores this data.
+      </p>
+      <p>
+        TradingView's own terms govern that processing — see the
+        <a href="https://www.tradingview.com/policies/" target="_blank" rel="noopener noreferrer">TradingView policies</a>.
+        You can block the widget with a browser extension or content blocker; the rest of the page
+        continues to work.
+      </p>
+      <p>
+        When Mulmit fetches market and filing data from outside sources such as the U.S. Securities
+        and Exchange Commission's EDGAR system or Hyperliquid, <strong>the server makes those
+        requests</strong>. They carry the server's details, not your IP or browser information.
+      </p>
+
+      <h2>5. Sharing and processors</h2>
+      <p>
+        Mulmit does not sell or share personal data. It does rely on the following infrastructure to
+        operate, and access records may exist on their systems:
+      </p>
+      <ul>
+        <li>Amazon Web Services — server hosting (Seoul region)</li>
+        <li>GitHub — source code and deployment automation</li>
+      </ul>
+
+      <h2>6. Your rights</h2>
+      <p>
+        Because Mulmit holds nothing that identifies you, it is technically unable to look up, correct
+        or delete an individual's records. Questions are welcome at the contact below. If you believe
+        the handling described here is inadequate, Korean users may contact the Personal Information
+        Dispute Mediation Committee (1833-6972) or the privacy infringement report centre (118).
+      </p>
+
+      <h2>7. Children</h2>
+      <p>Mulmit is not directed at children under 14 and collects no personal data, including age.</p>
+
+      <h2>8. Changes</h2>
+      <p>
+        If what the site processes changes — for example by adding advertising or user accounts — this
+        document is revised first and its effective date updated. In particular,
+        <strong>introducing advertising would let an ad provider set cookies or identifiers</strong>,
+        so this policy will be rewritten to match reality at that point.
+      </p>
+
+      <h2>9. Contact</h2>
+      <p>
+        Data protection contact: the Mulmit operator<br>
+        Enquiries: <a href="https://github.com/subeom7/mulmit/issues" target="_blank" rel="noopener noreferrer">GitHub issues</a>
+      </p>
+    </div>
+
+    <footer class="doc-footer">
+      <a href="/terms">이용약관 / Terms</a>
+      <a href="/disclaimer">면책 고지 / Disclaimer</a>
+      <a href="/">시장 모니터 / Monitor</a>
+    </footer>
+  </main>
+
+  <script src="/static/legal.js?v=20260817-1" defer></script>
+</body>
+</html>
