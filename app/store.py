@@ -116,6 +116,57 @@ fred_observations = sa.Table(
     sa.Index("ix_fred_observations_date", "date"),
 )
 
+# SEC EDGAR 지분공시(Form 3/4/5). 공시는 한 번 제출되면 바뀌지 않고 정정은
+# 새 accession으로 올라오므로, 배치는 최근 N건만 받아 upsert하고 이미 받은
+# 과거 공시는 그대로 쌓아 둔다.
+sec_companies = sa.Table(
+    "sec_companies",
+    metadata,
+    sa.Column("ticker", sa.String(32), primary_key=True),
+    sa.Column("cik", sa.String(16)),
+    sa.Column("name", sa.String(256)),
+    sa.Column("exchange", sa.String(64)),
+    sa.Column("filings_seen", sa.Integer, nullable=False, server_default="0"),
+    sa.Column("fetched_at", sa.Float),
+    sa.Column("last_attempted_at", sa.Float),
+    # ok | unavailable | error. unavailable은 EDGAR에 없는 티커를 기억해 둔다.
+    sa.Column("status", sa.String(16), nullable=False, server_default="ok"),
+    sa.Column("error", sa.Text),
+    # 사용자가 검색한 티커를 배치가 우선 수집하게 하는 기준. instruments와 같은 방식.
+    sa.Column("request_count", sa.Integer, nullable=False, server_default="0"),
+    sa.Column("last_requested_at", sa.Float),
+    sa.Index("ix_sec_companies_refresh", "status", "fetched_at"),
+)
+
+insider_transactions = sa.Table(
+    "insider_transactions",
+    metadata,
+    sa.Column("accession_number", sa.String(32), primary_key=True),
+    sa.Column("sequence", sa.Integer, primary_key=True),
+    sa.Column("ticker", sa.String(32), nullable=False),
+    sa.Column("cik", sa.String(16)),
+    sa.Column("form_type", sa.String(8), nullable=False),
+    sa.Column("filing_date", sa.Date, nullable=False),
+    sa.Column("transaction_date", sa.Date),
+    sa.Column("owner_name", sa.String(256), nullable=False),
+    sa.Column("owner_cik", sa.String(16)),
+    sa.Column("owner_title", sa.String(256)),
+    sa.Column("is_director", sa.Boolean, nullable=False, server_default=sa.false()),
+    sa.Column("is_officer", sa.Boolean, nullable=False, server_default=sa.false()),
+    sa.Column("is_ten_percent_owner", sa.Boolean, nullable=False, server_default=sa.false()),
+    sa.Column("security_title", sa.String(256)),
+    sa.Column("transaction_code", sa.String(4)),
+    sa.Column("acquired_disposed", sa.String(4)),
+    sa.Column("is_derivative", sa.Boolean, nullable=False, server_default=sa.false()),
+    # 공시에 값이 없는 칸이 흔하다(예: 무상 부여의 단가). 0으로 채우지 않는다.
+    sa.Column("shares", sa.Float),
+    sa.Column("price_per_share", sa.Float),
+    sa.Column("shares_owned_after", sa.Float),
+    sa.Column("direct_or_indirect", sa.String(4)),
+    sa.Column("filing_url", sa.String(512), nullable=False),
+    sa.Index("ix_insider_ticker_date", "ticker", "transaction_date"),
+)
+
 # 조립된 응답 캐시. RANDOM_SEED가 고정이라 (티커, 파라미터, 마지막 거래일)이
 # 같으면 결과 JSON이 바이트 단위로 같다. 그래서 통째로 캐시해도 안전하다.
 reports = sa.Table(
@@ -591,6 +642,171 @@ def load_fred_observations(
         return [(row.date, float(row.value)) for row in conn.execute(stmt)]
 
 
+# --- SEC EDGAR 지분공시 ------------------------------------------------------
+
+
+def save_insider_filings(
+    ticker: str,
+    *,
+    cik: str,
+    name: str,
+    exchange: str | None,
+    filings_seen: int,
+    transactions: Iterable[dict[str, Any]],
+) -> int:
+    """Upsert one company's filings.
+
+    Filings are immutable once submitted — a correction arrives as a new
+    accession — so rows already collected are kept rather than replaced. That
+    lets a small per-cycle fetch limit accumulate real history over time.
+    """
+    ticker = ticker.strip().upper()
+    now = time.time()
+    rows = [{**row, "ticker": ticker, "cik": cik} for row in transactions]
+
+    with engine().begin() as conn:
+        conn.execute(
+            _upsert(
+                sec_companies,
+                [{
+                    "ticker": ticker,
+                    "cik": cik,
+                    "name": name,
+                    "exchange": exchange,
+                    "filings_seen": filings_seen,
+                    "fetched_at": now,
+                    "last_attempted_at": now,
+                    "status": "ok",
+                    "error": None,
+                }],
+                ["cik", "name", "exchange", "filings_seen", "fetched_at",
+                 "last_attempted_at", "status", "error"],
+            )
+        )
+        for start in range(0, len(rows), 500):
+            chunk = rows[start : start + 500]
+            conn.execute(
+                _upsert(
+                    insider_transactions,
+                    chunk,
+                    [key for key in chunk[0] if key not in {"accession_number", "sequence"}],
+                )
+            )
+    return len(rows)
+
+
+def mark_insider_error(ticker: str, message: str, *, status: str = "error") -> None:
+    """Remember a failure without discarding filings already collected."""
+    ticker = ticker.strip().upper()
+    now = time.time()
+    with engine().begin() as conn:
+        updated = conn.execute(
+            sa.update(sec_companies)
+            .where(sec_companies.c.ticker == ticker)
+            .values(status=status, error=message[:1000], last_attempted_at=now)
+        ).rowcount
+        if not updated:
+            conn.execute(
+                sa.insert(sec_companies).values(
+                    ticker=ticker,
+                    status=status,
+                    error=message[:1000],
+                    last_attempted_at=now,
+                )
+            )
+
+
+def get_insider_company(ticker: str) -> dict | None:
+    stmt = sa.select(sec_companies).where(sec_companies.c.ticker == ticker.strip().upper())
+    with engine().connect() as conn:
+        row = conn.execute(stmt).mappings().first()
+    return dict(row) if row else None
+
+
+def touch_insider_request(ticker: str) -> None:
+    """Record that a visitor asked for this ticker so the batch collects it next.
+
+    Request handlers must never call EDGAR, so an unseen ticker is queued here
+    and answered on a later visit instead of being fetched inline.
+    """
+    ticker = ticker.strip().upper()
+    now = time.time()
+    with engine().begin() as conn:
+        updated = conn.execute(
+            sa.update(sec_companies)
+            .where(sec_companies.c.ticker == ticker)
+            .values(
+                request_count=sec_companies.c.request_count + 1,
+                last_requested_at=now,
+            )
+        ).rowcount
+        if not updated:
+            conn.execute(
+                sa.insert(sec_companies).values(
+                    ticker=ticker,
+                    status="queued",
+                    request_count=1,
+                    last_requested_at=now,
+                )
+            )
+
+
+def load_insider_transactions(ticker: str, *, limit: int = 100) -> list[dict]:
+    """Most recent reported lines first. Filing date breaks ties for same-day rows."""
+    stmt = (
+        sa.select(insider_transactions)
+        .where(insider_transactions.c.ticker == ticker.strip().upper())
+        .order_by(
+            insider_transactions.c.transaction_date.desc().nulls_last(),
+            insider_transactions.c.filing_date.desc(),
+            insider_transactions.c.accession_number.desc(),
+            insider_transactions.c.sequence.asc(),
+        )
+        .limit(limit)
+    )
+    with engine().connect() as conn:
+        return [dict(row) for row in conn.execute(stmt).mappings()]
+
+
+def stale_insider_tickers(pinned: Iterable[str], max_age: int, limit: int) -> list[str]:
+    """Pinned watchlist first, then whatever visitors actually searched for."""
+    cutoff = time.time() - max_age
+    ordered: list[str] = []
+    known = {
+        row["ticker"]: row
+        for row in (
+            dict(item)
+            for item in _select_companies()
+        )
+    }
+    for ticker in (t.strip().upper() for t in pinned):
+        record = known.get(ticker)
+        if ticker in ordered:
+            continue
+        if record is None or record["status"] == "queued" or (
+            record["status"] == "ok" and (record["fetched_at"] or 0) < cutoff
+        ):
+            ordered.append(ticker)
+
+    requested = sorted(
+        (
+            row
+            for row in known.values()
+            if row["ticker"] not in ordered
+            and row["status"] != "unavailable"
+            and ((row["fetched_at"] or 0) < cutoff)
+        ),
+        key=lambda row: (-(row["request_count"] or 0), row["fetched_at"] or 0.0),
+    )
+    ordered.extend(row["ticker"] for row in requested)
+    return ordered[:limit]
+
+
+def _select_companies() -> list[dict]:
+    with engine().connect() as conn:
+        return [dict(row) for row in conn.execute(sa.select(sec_companies)).mappings()]
+
+
 # --- 응답 캐시 ---------------------------------------------------------------
 
 
@@ -652,6 +868,15 @@ def stats() -> dict:
             ).scalar_one(),
             "last_fred_ingest": conn.execute(
                 sa.select(sa.func.max(fred_series.c.fetched_at))
+            ).scalar(),
+            "insider_companies": conn.execute(
+                sa.select(sa.func.count()).select_from(sec_companies)
+            ).scalar_one(),
+            "insider_transactions": conn.execute(
+                sa.select(sa.func.count()).select_from(insider_transactions)
+            ).scalar_one(),
+            "last_insider_ingest": conn.execute(
+                sa.select(sa.func.max(sec_companies.c.fetched_at))
             ).scalar(),
             "last_ingest": conn.execute(
                 sa.select(sa.func.max(instruments.c.prices_updated_at))

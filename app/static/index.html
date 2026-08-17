@@ -251,6 +251,36 @@ body[data-loading="1"] #result { opacity: .45; transition: opacity .12s; }
 }
 .card > p.sub { font-size: 12.5px; color: var(--text-muted); margin: 0 0 18px; }
 
+/* --- 내부자거래 ----------------------------------------------------------- */
+.insider-card .state-block {
+  padding: 14px 0; font-size: 13px; color: var(--text-muted);
+}
+.insider-card .state-block.disabled { color: var(--text-secondary); }
+.insider-summary { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+.insider-stat {
+  flex: 1 1 160px; padding: 12px 14px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface-2, transparent);
+}
+.insider-stat .k { display: block; font-size: 11.5px; color: var(--text-muted); margin-bottom: 4px; }
+.insider-stat .v { font-size: 17px; font-weight: 620; letter-spacing: -0.01em; }
+.insider-stat .n { display: block; font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+.insider-stat.buy .v { color: var(--up, #087f61); }
+.insider-stat.sell .v { color: var(--down, #c93c55); }
+.insider-basis { font-size: 11.5px; color: var(--text-muted); margin: 0 0 14px; line-height: 1.55; }
+.table-scroll { overflow-x: auto; }
+.insider-table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 620px; }
+.insider-table th, .insider-table td {
+  text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.insider-table th { font-weight: 600; color: var(--text-muted); font-size: 11.5px; }
+.insider-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.insider-table td.owner { white-space: normal; min-width: 160px; }
+.insider-table .role { font-size: 11px; color: var(--text-muted); }
+.insider-table .code { font-weight: 600; }
+.insider-table tr.open-market .code { color: var(--text-primary); }
+.insider-table tr:not(.open-market) { color: var(--text-secondary); }
+.insider-source { font-size: 11.5px; color: var(--text-muted); margin: 12px 0 0; line-height: 1.6; }
+
 /* --- 종목 제목 ------------------------------------------------------------ */
 .identity { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
 .identity .sym { font-size: 26px; font-weight: 680; letter-spacing: -0.02em; }
@@ -495,6 +525,25 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
 
 <div id="status" role="status" aria-live="polite"></div>
 
+<!-- 내부자거래는 가격 분석과 독립된 lane이다. /api/metrics가 막혀 있어도 보인다. -->
+<section class="card insider-card" id="insider" hidden aria-labelledby="insider-title">
+  <h2 id="insider-title" data-i18n="insider.title">내부자거래 공시</h2>
+  <p class="sub" data-i18n="insider.sub">SEC EDGAR Form 3·4·5 원문에서 임원·이사·10% 주주의 보고 내역을 그대로 옮깁니다.</p>
+  <div id="insider-state" class="state-block" role="status" aria-live="polite"></div>
+  <div id="insider-body" hidden>
+    <div class="insider-summary" id="insider-summary"></div>
+    <p class="insider-basis" id="insider-basis"></p>
+    <div class="table-scroll">
+      <table class="insider-table" id="insider-table">
+        <caption class="sr-only" data-i18n="insider.tableCaption">보고된 내부자 거래 내역</caption>
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="insider-source" id="insider-source"></p>
+  </div>
+</section>
+
 <div id="result" hidden>
 
   <div class="card">
@@ -622,6 +671,23 @@ const I18N = {
     "horizon.3m": "3개월", "horizon.6m": "6개월", "horizon.1y": "1년", "horizon.3y": "3년",
     "lookback.5y": "최근 5년", "lookback.10y": "최근 10년", "lookback.20y": "최근 20년",
     "drift.historical": "과거 추세 유지", "drift.zero": "0% (보수적)", "drift.capm": "CAPM 기대수익률",
+    "insider.title": "내부자거래 공시", "insider.sub": "SEC EDGAR Form 3·4·5 원문에서 임원·이사·10% 주주의 보고 내역을 그대로 옮깁니다.",
+    "insider.tableCaption": "보고된 내부자 거래 내역", "insider.loading": "{ticker} 공시를 불러오는 중입니다.",
+    "insider.queued": "{ticker}는 아직 수집되지 않았습니다. 다음 수집 주기에 포함되며, 잠시 뒤 다시 조회하면 표시됩니다.",
+    "insider.noFilings": "{ticker}에 대해 수집된 Form 3·4·5 공시가 없습니다.",
+    "insider.unknown": "{ticker}는 EDGAR 상장사 목록에 없습니다. 미국 외 상장 종목이나 ETF일 수 있습니다.",
+    "insider.disabled": "내부자거래 공시 수집이 이 배포에서 비활성 상태입니다.",
+    "insider.notConfigured": "EDGAR 접근에 필요한 연락처 User-Agent가 설정되지 않았습니다.",
+    "insider.error": "공시를 불러오지 못했습니다.",
+    "insider.buys": "시장 매수", "insider.sells": "시장 매도", "insider.otherLines": "비시장 거래 라인",
+    "insider.filingsCount": "{count}건", "insider.sharesCount": "{shares}주",
+    "insider.colDate": "거래일", "insider.colOwner": "보고자", "insider.colCode": "유형",
+    "insider.colShares": "수량", "insider.colPrice": "단가", "insider.colValue": "금액",
+    "insider.colAfter": "거래 후 보유", "insider.colFiling": "공시",
+    "insider.roleDirector": "이사", "insider.roleOfficer": "임원", "insider.roleTenPercent": "10% 주주",
+    "insider.derivative": "파생",
+    "insider.view": "원문",
+    "insider.source": "{publisher} · EDGAR {forms} · {asof} 수집 · 공시 {filings}건에서 {returned}행",
     "result.badCase": "상위 5% 악조건", "result.expectedShortfall": "최악 5% 평균", "result.prob20": "-20% 초과 확률",
     "result.readTitle": "이 종목 읽기", "result.readSub": "아래 숫자들을 문장으로 옮긴 것입니다. 투자 판단이 아니라 사실 서술입니다.",
     "result.priceTitle": "가격 추이", "result.underwaterTitle": "언더워터 곡선 — 전고점 대비 낙폭",
@@ -693,6 +759,23 @@ const I18N = {
     "horizon.3m": "3 months", "horizon.6m": "6 months", "horizon.1y": "1 year", "horizon.3y": "3 years",
     "lookback.5y": "Last 5 years", "lookback.10y": "Last 10 years", "lookback.20y": "Last 20 years",
     "drift.historical": "Continue historical trend", "drift.zero": "0% (conservative)", "drift.capm": "CAPM expected return",
+    "insider.title": "Insider filings", "insider.sub": "Officer, director and 10% owner transactions relayed verbatim from SEC EDGAR Forms 3, 4 and 5.",
+    "insider.tableCaption": "Reported insider transactions", "insider.loading": "Loading filings for {ticker}.",
+    "insider.queued": "{ticker} has not been collected yet. It is queued for the next ingest cycle — check back shortly.",
+    "insider.noFilings": "No Form 3, 4 or 5 filings have been collected for {ticker}.",
+    "insider.unknown": "{ticker} is not in the EDGAR company list. It may be a non-US listing or an ETF.",
+    "insider.disabled": "Insider-filing collection is disabled for this deployment.",
+    "insider.notConfigured": "The contact User-Agent required for EDGAR access is not configured.",
+    "insider.error": "Could not load the filings.",
+    "insider.buys": "Open-market buys", "insider.sells": "Open-market sells", "insider.otherLines": "Non-open-market lines",
+    "insider.filingsCount": "{count} lines", "insider.sharesCount": "{shares} shares",
+    "insider.colDate": "Trade date", "insider.colOwner": "Reporter", "insider.colCode": "Type",
+    "insider.colShares": "Shares", "insider.colPrice": "Price", "insider.colValue": "Value",
+    "insider.colAfter": "Held after", "insider.colFiling": "Filing",
+    "insider.roleDirector": "Director", "insider.roleOfficer": "Officer", "insider.roleTenPercent": "10% owner",
+    "insider.derivative": "Derivative",
+    "insider.view": "Source",
+    "insider.source": "{publisher} · EDGAR {forms} · collected {asof} · {returned} lines from {filings} filings",
     "result.badCase": "Worst 5% threshold", "result.expectedShortfall": "Average worst 5%", "result.prob20": "Chance below -20%",
     "result.readTitle": "How to read this stock", "result.readSub": "A factual reading of the figures below, not investment advice.",
     "result.priceTitle": "Price history", "result.underwaterTitle": "Underwater curve — drawdown from the prior peak",
@@ -792,6 +875,8 @@ function applyLocale() {
     showHeatmapState(heatState.messageKey, heatState.withRetry);
   }
   if (lastReport) render(lastReport);
+  if (lastInsider) renderInsider(lastInsider);
+  else if (insiderState_) insiderState(insiderState_.key, insiderState_.vars, insiderState_.disabled);
   renderStatus();
 }
 
@@ -1595,6 +1680,198 @@ function statusKeyForHttp(status) {
   return "status.httpError";
 }
 
+/* =========================================================================
+   내부자거래 (SEC EDGAR)
+   가격 분석과 별개의 lane이라 /api/metrics가 503이어도 독립적으로 그린다.
+   ========================================================================= */
+let insiderController = null;
+let insiderRequestId = 0;
+// Kept so a language switch re-renders the panel without another EDGAR round trip.
+let lastInsider = null;
+let insiderState_ = null;
+
+const INSIDER_DISABLED_KEYS = {
+  insider_data_disabled: "insider.disabled",
+  insider_data_not_configured: "insider.notConfigured",
+};
+
+function insiderState(messageKey, vars = {}, disabled = false) {
+  insiderState_ = { key: messageKey, vars, disabled };
+  lastInsider = null;
+  const node = document.getElementById("insider-state");
+  node.hidden = false;
+  node.classList.toggle("disabled", disabled);
+  node.textContent = t(messageKey, vars);
+  document.getElementById("insider-body").hidden = true;
+}
+
+function formatShares(value) {
+  if (value === null || value === undefined) return NBSP;
+  return new Intl.NumberFormat(localeCode(), { maximumFractionDigits: 0 }).format(value);
+}
+
+function formatUsd(value, { compact = false } = {}) {
+  if (value === null || value === undefined) return NBSP;
+  return new Intl.NumberFormat(localeCode(), {
+    style: "currency", currency: "USD", currencyDisplay: "narrowSymbol",
+    notation: compact ? "compact" : "standard",
+    maximumFractionDigits: compact ? 1 : (Math.abs(value) < 100 ? 2 : 0),
+  }).format(value);
+}
+
+function ownerRoles(roles) {
+  const map = {
+    director: "insider.roleDirector",
+    officer: "insider.roleOfficer",
+    ten_percent_owner: "insider.roleTenPercent",
+  };
+  return (roles || []).map((role) => (map[role] ? t(map[role]) : role));
+}
+
+function renderInsider(payload) {
+  const state = document.getElementById("insider-state");
+  const body = document.getElementById("insider-body");
+  const coverage = payload.coverage || {};
+  const rows = Array.isArray(payload.transactions) ? payload.transactions : [];
+
+  if (!rows.length) {
+    const key = coverage.status === "queued" ? "insider.queued"
+      : coverage.status === "unknown_to_edgar" ? "insider.unknown"
+      : coverage.status === "error" ? "insider.error"
+      : "insider.noFilings";
+    insiderState(key, { ticker: payload.ticker });
+    return;
+  }
+
+  lastInsider = payload;
+  insiderState_ = null;
+  state.hidden = true;
+  state.classList.remove("disabled");
+  body.hidden = false;
+
+  const summary = payload.summary || {};
+  const open = summary.open_market || {};
+  const stats = [
+    { key: "insider.buys", cls: "buy", bucket: open.purchase },
+    { key: "insider.sells", cls: "sell", bucket: open.sale },
+  ];
+  const host = document.getElementById("insider-summary");
+  host.replaceChildren();
+  for (const stat of stats) {
+    const bucket = stat.bucket || { filings: 0, shares: 0, value: 0 };
+    const box = el("div", `insider-stat ${stat.cls}`);
+    box.appendChild(el("span", "k", t(stat.key)));
+    box.appendChild(el("span", "v", bucket.value ? formatUsd(bucket.value, { compact: true }) : NBSP));
+    box.appendChild(el("span", "n",
+      `${t("insider.filingsCount", { count: bucket.filings || 0 })} · ${t("insider.sharesCount", { shares: formatShares(bucket.shares || 0) })}`));
+    host.appendChild(box);
+  }
+  const other = el("div", "insider-stat");
+  other.appendChild(el("span", "k", t("insider.otherLines")));
+  other.appendChild(el("span", "v", String(summary.non_open_market_lines ?? 0)));
+  host.appendChild(other);
+
+  // 합산 기준은 서버가 문장으로 내려준다. 프런트가 다시 해석하지 않는다.
+  document.getElementById("insider-basis").textContent =
+    (uiLang === "ko" ? summary.basis_ko : summary.basis) || summary.basis || "";
+
+  const table = document.getElementById("insider-table");
+  const headers = ["insider.colDate", "insider.colOwner", "insider.colCode", "insider.colShares",
+    "insider.colPrice", "insider.colValue", "insider.colAfter", "insider.colFiling"];
+  const headRow = el("tr");
+  for (const key of headers) {
+    const th = el("th", null, t(key));
+    th.scope = "col";
+    headRow.appendChild(th);
+  }
+  table.querySelector("thead").replaceChildren(headRow);
+
+  const tbody = table.querySelector("tbody");
+  tbody.replaceChildren();
+  for (const row of rows) {
+    const tr = el("tr", row.transaction.open_market ? "open-market" : null);
+    tr.appendChild(el("td", null, formatDate(row.transaction_date) || NBSP));
+
+    const owner = el("td", "owner");
+    owner.appendChild(document.createTextNode(row.owner.name || NBSP));
+    const roleText = [...ownerRoles(row.owner.roles), row.owner.title].filter(Boolean).join(" · ");
+    if (roleText) owner.appendChild(el("div", "role", roleText));
+    tr.appendChild(owner);
+
+    const code = el("td");
+    const label = row.transaction.label || {};
+    const codeSpan = el("span", "code", row.transaction.code || NBSP);
+    codeSpan.title = label[uiLang] || label.en || "";
+    code.appendChild(codeSpan);
+    code.appendChild(document.createTextNode(` ${label[uiLang] || label.en || ""}`));
+    if (row.transaction.is_derivative) code.appendChild(el("div", "role", t("insider.derivative")));
+    tr.appendChild(code);
+
+    tr.appendChild(el("td", "num", formatShares(row.shares)));
+    tr.appendChild(el("td", "num", formatUsd(row.price_per_share)));
+    tr.appendChild(el("td", "num", formatUsd(row.value, { compact: true })));
+    tr.appendChild(el("td", "num", formatShares(row.shares_owned_after)));
+
+    const filing = el("td");
+    if (row.filing_url) {
+      const link = el("a", null, t("insider.view"));
+      link.href = row.filing_url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      filing.appendChild(link);
+    } else {
+      filing.textContent = NBSP;
+    }
+    tr.appendChild(filing);
+    tbody.appendChild(tr);
+  }
+
+  const source = payload.source || {};
+  const footer = document.getElementById("insider-source");
+  footer.replaceChildren();
+  footer.appendChild(document.createTextNode(t("insider.source", {
+    publisher: source.publisher || "SEC",
+    forms: (source.forms || []).join("/"),
+    asof: coverage.fetched_at ? new Date(coverage.fetched_at).toLocaleString(localeCode()) : "—",
+    filings: coverage.filings_seen ?? 0,
+    returned: coverage.returned ?? rows.length,
+  })));
+  const notice = payload.rights?.notice_localized?.[uiLang] || payload.rights?.notice;
+  if (notice) footer.appendChild(el("div", null, notice));
+}
+
+async function loadInsider(ticker) {
+  const panel = document.getElementById("insider");
+  if (!ticker) { panel.hidden = true; lastInsider = null; insiderState_ = null; return; }
+  panel.hidden = false;
+  if (insiderController) insiderController.abort();
+  const requestId = ++insiderRequestId;
+  const controller = new AbortController();
+  insiderController = controller;
+  insiderState("insider.loading", { ticker });
+
+  try {
+    const response = await fetch(`/api/insider/${encodeURIComponent(ticker)}`, { signal: controller.signal });
+    const body = await response.json().catch(() => ({}));
+    if (requestId !== insiderRequestId) return;
+    if (!response.ok) {
+      const code = body?.detail?.code;
+      if (INSIDER_DISABLED_KEYS[code]) {
+        insiderState(INSIDER_DISABLED_KEYS[code], {}, true);
+        return;
+      }
+      insiderState("insider.error");
+      return;
+    }
+    renderInsider(body);
+  } catch (error) {
+    if (error.name === "AbortError" || requestId !== insiderRequestId) return;
+    insiderState("insider.error");
+  } finally {
+    if (insiderController === controller) insiderController = null;
+  }
+}
+
 async function load(push) {
   const params = new URLSearchParams({
     ticker: document.getElementById("ticker").value.trim().toUpperCase(),
@@ -1610,8 +1887,12 @@ async function load(push) {
     filters.setAttribute("aria-busy", "false");
     document.getElementById("go").disabled = false;
     setStatusKey("status.tickerRequired", {}, true);
+    loadInsider(null);
     return;
   }
+  // Deliberately not awaited and not inside the try below: the insider lane is
+  // independent, so it must still render when /api/metrics is gated off.
+  loadInsider(params.get("ticker"));
   const controller = new AbortController();
   metricsController = controller;
 

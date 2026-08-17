@@ -52,6 +52,31 @@ FRED_MAX_AGE = _int("FRED_MAX_AGE", 60 * 60 * 6)
 FRED_TIMEOUT = _float("FRED_TIMEOUT", 15.0)
 FRED_RETRIES = _int("FRED_RETRIES", 2)
 FRED_INGEST_DELAY = _float("FRED_INGEST_DELAY", 0.1)
+# SEC EDGAR insider-ownership filings (Forms 3/4/5). EDGAR is a public federal
+# disclosure system and the SEC states anyone may access and download it for
+# free, but automated access has hard operating rules: a declared User-Agent
+# carrying a real contact address, and at most 10 requests/second across all
+# machines. The contact address is deployment-specific and is never committed,
+# so an unset SEC_EDGAR_USER_AGENT keeps the lane closed.
+# https://www.sec.gov/os/accessing-edgar-data
+SEC_EDGAR_ENABLED = _bool("SEC_EDGAR_ENABLED", False)
+SEC_EDGAR_USER_AGENT = os.environ.get("SEC_EDGAR_USER_AGENT", "").strip()
+SEC_EDGAR_TIMEOUT = _float("SEC_EDGAR_TIMEOUT", 15.0)
+SEC_EDGAR_RETRIES = _int("SEC_EDGAR_RETRIES", 2)
+# 0.15s between requests is ~6.7/s, comfortably under the published 10/s cap
+# even when a retry lands next to a scheduled call.
+SEC_EDGAR_REQUEST_INTERVAL = _float("SEC_EDGAR_REQUEST_INTERVAL", 0.15)
+SEC_EDGAR_MAX_AGE = _int("SEC_EDGAR_MAX_AGE", 60 * 60 * 12)
+# Filings pulled per company per refresh. Form 4s are small but numerous.
+SEC_EDGAR_FILING_LIMIT = _int("SEC_EDGAR_FILING_LIMIT", 40)
+# Companies refreshed per batch, so one cycle cannot monopolise the rate budget.
+SEC_EDGAR_BATCH_SIZE = _int("SEC_EDGAR_BATCH_SIZE", 5)
+SEC_EDGAR_TICKERS = [
+    t.strip().upper()
+    for t in os.environ.get("SEC_EDGAR_TICKERS", "AAPL,MSFT,NVDA,GOOGL,TSLA").split(",")
+    if t.strip()
+]
+
 # Hyperliquid HIP-3 / trade.xyz values are reachable without a key, but public
 # reachability is not a redistribution right. Written confirmation is still
 # pending, so the serving gate defaults to closed and a deployment has to opt in

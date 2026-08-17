@@ -21,6 +21,7 @@ from . import config
 FRED = "fred"
 HYPERLIQUID_HIP3 = "hyperliquid_hip3"
 LEGACY_PRICE_DATA = "legacy_price_data"
+SEC_EDGAR = "sec_edgar"
 
 # --- structured client contracts --------------------------------------------
 # The frontend keys off ``code``: these are disabled states, not retryable
@@ -40,6 +41,21 @@ HIP3_PENDING_RIGHTS = {
     "message": (
         "Public display rights for Hyperliquid HIP-3 / trade.xyz data are not "
         "confirmed in writing, so Mulmit withholds the values."
+    ),
+}
+
+INSIDER_DATA_DISABLED = {
+    "code": "insider_data_disabled",
+    "status": "disabled",
+    "message": "SEC EDGAR insider-filing collection is disabled for this deployment.",
+}
+
+INSIDER_NOT_CONFIGURED = {
+    "code": "insider_data_not_configured",
+    "status": "not_configured",
+    "message": (
+        "SEC_EDGAR_USER_AGENT must declare a contact address before EDGAR may be "
+        "queried, as required by the SEC fair-access policy."
     ),
 }
 
@@ -71,6 +87,22 @@ def hip3_public_display_enabled() -> bool:
     return bool(config.HIP3_PUBLIC_DISPLAY_ENABLED)
 
 
+def sec_edgar_serving_enabled() -> bool:
+    """A declared contact address is part of the permission, not a nicety.
+
+    The SEC's fair-access policy treats an undeclared automated client as an
+    unclassified bot, so an unset ``SEC_EDGAR_USER_AGENT`` closes the lane even
+    when the operator switched it on.
+    """
+    return bool(config.SEC_EDGAR_ENABLED and config.SEC_EDGAR_USER_AGENT)
+
+
+def sec_edgar_status() -> str:
+    if not config.SEC_EDGAR_ENABLED:
+        return "disabled"
+    return "enabled" if config.SEC_EDGAR_USER_AGENT else "not_configured"
+
+
 def lane_report() -> dict[str, dict[str, str]]:
     """Operator-facing lane summary for ``/api/status``."""
     report: dict[str, dict[str, str]] = {
@@ -81,6 +113,10 @@ def lane_report() -> dict[str, dict[str, str]]:
         HYPERLIQUID_HIP3: {
             "status": "enabled" if hip3_public_display_enabled() else "pending_rights",
             "gate": "HIP3_PUBLIC_DISPLAY_ENABLED",
+        },
+        SEC_EDGAR: {
+            "status": sec_edgar_status(),
+            "gate": "SEC_EDGAR_ENABLED + SEC_EDGAR_USER_AGENT",
         },
     }
     for provider_id in _MACRO_LANES:

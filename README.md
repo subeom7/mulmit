@@ -180,6 +180,23 @@ LEGACY_PRICE_DATA_ENABLED=false
 HIP3_PUBLIC_DISPLAY_ENABLED=false
 ```
 
+`SEC_EDGAR_ENABLED`는 `/analytics`의 내부자거래(Form 3·4·5) 패널을 켠다. EDGAR는
+미국 연방정부 공시 시스템이고 SEC는 누구나 무료로 접근·다운로드할 수 있다고
+안내하지만, 자동 접근에는 연락처가 담긴 User-Agent 선언과 초당 10요청 상한이
+따른다. 연락처는 배포마다 다르고 저장소에 커밋하지 않으므로
+`SEC_EDGAR_USER_AGENT`가 비어 있으면 `ENABLED=true`여도 lane이 닫힌다.
+
+```dotenv
+SEC_EDGAR_ENABLED=false
+SEC_EDGAR_USER_AGENT=            # 예: "Mulmit admin@example.com"
+SEC_EDGAR_TICKERS=AAPL,MSFT,NVDA,GOOGL,TSLA
+```
+
+수집은 배치에서만 한다. 목록에 없는 티커를 검색하면 EDGAR를 즉석에서 부르지 않고
+`queued`로 답한 뒤 다음 수집 주기가 가져간다. 표시할 때 시장 매수(`P`)·매도(`S`)와
+부여(`A`)·파생 행사(`M`)·세금 상계(`F`)를 절대 합산하지 않는다. RSU 베스팅 한 건이
+거대한 매매 신호처럼 보이는 것을 막기 위해서다.
+
 `HIP3_PUBLIC_DISPLAY_ENABLED`는 Hyperliquid HIP-3 / trade.xyz 값의 공개 표시
 게이트다. API가 키 없이 열려 있다는 사실은 재표시 권리가 아니므로 코드 기본값은
 false이고, 서면 확인 전 현행 화면을 유지하려면 서버 `.env`에서 명시적으로 켠 뒤
