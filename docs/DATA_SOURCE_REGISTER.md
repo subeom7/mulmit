@@ -56,6 +56,7 @@ Mulmit의 `/api/market/*`는 인증 없이 열려 있으므로 누구나 응답 
 | 캐시 | 자산 30초/300초 stale, 주말 5분/30분 stale, 프로세스 로컬 |
 | 공개 결정 | 서면 확인 전 권리 게이트 추가가 최우선 |
 | 표시 경계 | 합성 무기한선물 참고값이며 현물·공식 지수 종가·월요일 예측이 아님 |
+| 상장 주체 구분 | `xyz:` 접두사는 trade.xyz가 HIP-3로 배포한 상품, 접두사 없는 심볼(`BTC`)은 Hyperliquid 자체 DEX 상품이다. 같은 API·같은 게이트를 쓰지만 publisher가 다르므로 응답에서 구분한다 |
 | 공식 근거 | [Hyperliquid info API](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint), [rate limits](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/rate-limits-and-user-limits), [trade.xyz API](https://docs.trade.xyz/api/overview), [Korea products](https://docs.trade.xyz/asset-directory/korea), [trade.xyz Terms](https://trade.xyz/terms) |
 
 확인이 필요한 질문:
@@ -227,7 +228,75 @@ notes: >
 - 단가가 없는 공시(무상 부여 등)의 금액은 0이 아니라 빈 값이다.
 - 요청 경로에서 EDGAR를 호출하지 않는다. 수집되지 않은 티커는 `queued`로 답하고 다음 배치가 가져간다.
 
-### 3.6 Yahoo Finance / yfinance
+### 3.6 New York Fed markets API (SOFR·EFFR·역레포)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `nyfed` |
+| 현재 상태 | `approved` |
+| 코드 위치 | `app/providers/nyfed.py`, `app/ingest.py`, `app/macro_dashboard.py` |
+| 배포 기본값 | `NYFED_ENABLED=false` |
+| 현재 사용 | SOFR, EFFR(reference rates), 익일물 역레포 총 낙찰금액 |
+| 기술 비용 | 무료. API 키 없음 |
+| 접근 조건 | 사이트 기능을 방해하지 않는 범위의 자동 접근. 요청 간격 0.2초 적용 |
+| attribution | **필수.** 아래 문구가 응답의 `rights.notice`로 값과 함께 나감 |
+| 공식 근거 | [Terms of Use](https://www.newyorkfed.org/privacy/termsofuse), [Reference Rates](https://www.newyorkfed.org/markets/reference-rates), [Markets API](https://markets.newyorkfed.org/static/docs/markets-api.html) |
+
+이 프로젝트에서 가장 명확한 권리 근거다. 추론이 아니라 약관이 직접 열거한다.
+
+> The New York Fed grants you a non-exclusive license... to use, copy, and
+> distribute Content for your personal or business purposes. You may: Access
+> the Content, manually or **through an automated process or device**...;
+> **Download, store, and use** Content in any format or media; **Copy and
+> distribute** the Content in any format or media; and **Modify and create
+> derivative works** from the Content.
+
+Mulmit이 하는 모든 일이 여기 포함된다 — 배치 수집, 사설 DB 히스토리, 공개 JSON API,
+변화율 계산. "business purposes"라 향후 광고 도입도 별도 확인이 필요 없다.
+
+라이선스는 조건부다. 복제·배포할 때 지정된 출처 식별자를 반드시 포함해야 한다.
+
+```text
+© [year] Federal Reserve Bank of New York. Content from the New York Fed
+subject to the Terms of Use at newyorkfed.org.
+```
+
+문구를 문서에만 두면 렌더링 시점에 아무도 읽지 않으므로, 코드가 계열마다
+`rights.notice`에 실어 보낸다.
+
+```yaml
+decision_id: DS-2026-003
+provider_id: nyfed
+status: approved
+reviewed_at: 2026-08-17
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://www.newyorkfed.org/privacy/termsofuse
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  cache_ttl_seconds: 300
+  stale_seconds: 0
+  historical_storage: true
+  derived_metrics: true
+  advertising: true        # "personal or business purposes"에 포함
+attribution: "© [year] Federal Reserve Bank of New York. Content from the New York Fed subject to the Terms of Use at newyorkfed.org."
+expires_at: null
+recheck_at: 2027-08-17
+notes: >
+  약관 최종 개정 2023-06-09 기준. 조건은 출처 표기이며 코드가 rights.notice로
+  자동 포함한다. 역레포는 FRED의 RRPONTSYD(십억 달러)와 달리 원 단위가 달러이므로
+  재환산하지 않고 그대로 저장한다.
+```
+
+표시 규칙:
+
+- 역레포는 **달러 단위**다. FRED `RRPONTSYD`는 십억 달러라 두 값을 같은 축에 두지 않는다.
+- 하루에 두 건 이상 운영이 있으면 합산하고, 기간물(`Repo`)은 익일물 계열에 넣지 않는다.
+- 게시된 날짜에 금리가 없으면 0이 아니라 결측으로 둔다.
+- 이 lane이 소유한 계열은 FRED가 다시 가져가지 못한다(`_series_owner` 가드).
+
+### 3.7 Yahoo Finance / yfinance
 
 | 항목 | 기록 |
 |---|---|
@@ -240,7 +309,7 @@ notes: >
 
 yfinance 패키지가 공개 표시·저장·재배포 권리를 부여한다고 해석하지 않는다. 401/429를 스크래핑 엔드포인트로 우회하지 않는다.
 
-### 3.7 Cboe, ICE, IMF
+### 3.8 Cboe, ICE, IMF
 
 | 공급자/권리자 | 대상 | 상태 | 현재 결정 | 공식 근거 |
 |---|---|---|---|---|
@@ -322,11 +391,11 @@ alias를 정리해 proxy와 exact가 서로 다른 카드에 붙도록 먼저 �
 | `initial_claims` | `ICSA` | DOL ETA | `pending_review` | 주간, revised 값 처리 |
 | `fed_assets` | `WALCL` | Fed Board H.4.1 | `pending_review` | $M/$B 변환은 API metadata 기준 |
 | `reserve_balances` | `WRESBAL` | Fed Board H.4.1 후보 | `pending_review` | exact line item 검증 |
-| `reverse_repo` | `RRPONTSYD` | New York Fed operations | `pending_review` | overnight RRP aggregate 정의 검증 |
+| `reverse_repo` | `RRP` | **New York Fed (연결됨)** | `approved` | 익일물 낙찰 총액. **단위가 달러**이며 FRED의 십억 달러와 다름 |
 | `treasury_general_account` | `WTREGEN` | Fed Board H.4.1 또는 Treasury | `pending_review` | series 정의가 같을 때만 교체 |
 | `retail_money_market_funds` | `WRMFNS` | Fed Board H.6 후보 | `pending_review` | retail/institutional 범위 혼동 금지 |
-| `sofr` | `SOFR` | New York Fed | `pending_review` | observation date와 publication time 분리 |
-| `effective_fed_funds` | `EFFR` | New York Fed | `pending_review` | percentile/volume과 target rate 혼동 금지 |
+| `sofr` | `SOFR` | **New York Fed (연결됨)** | `approved` | 2018-04-02~ 일별. `DS-2026-003` |
+| `effective_fed_funds` | `EFFR` | **New York Fed (연결됨)** | `approved` | 2016~ 일별. percentile/volume과 target rate 혼동 금지 |
 | `reserve_interest` | `IORB` | Federal Reserve Board | `pending_review` | 정책 시행일 기준 step series |
 | `high_yield_spread` | `BAMLH0A0HYM2` | ICE Data Indices | `license_required` | 계약 전 blank |
 | `wti_exact`(신규) | `DCOILWTICO` | EIA `PET.RWTC.D` 후보 | `pending_review` | exact endpoint·units 재검증. `wti` proxy 카드와 별도 key |
@@ -483,4 +552,5 @@ notes: "No confidential contract language here"
 | 2026-08-16 | 최초 공급자·권리·예산·카드 매핑 등록 | Codex assisted |
 | 2026-08-16 | 교차검토 반영: 실제 UI key 정정, 공개 JSON 표현 수정, KRX 출처·제3자 제공 조건 명시, ICE/IMF 경로 정정, proxy와 공식값 key 분리, HIP-3 결정 기록 추가 | Claude assisted |
 | 2026-08-17 | SEC EDGAR lane 추가(`DS-2026-002`)와 Form 3/4/5 표시 규칙 기록 | Claude assisted |
+| 2026-08-17 | New York Fed lane 추가(`DS-2026-003`), HIP-3와 Hyperliquid 자체 DEX 상장 주체 구분 | Claude assisted |
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import datetime as dt
 import time
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import Any
 
 from . import config, data_rights, store
@@ -28,6 +28,8 @@ from .providers.fred import (
     FredSeriesSpec,
     rights_status_for,
 )
+from .providers.nyfed import NYFED_PROVIDER_ID
+from .providers.nyfed import attribution as nyfed_attribution
 
 HISTORY_DAYS = {
     "1y": 366,
@@ -52,12 +54,25 @@ MAX_PUBLIC_OBSERVATIONS = 2500
 # has to hardcode a lookup table of its own.
 PROVIDER_NAMES = {
     "fred": "FRED®",
-    "nyfed": "Federal Reserve Bank of New York",
+    NYFED_PROVIDER_ID: "Federal Reserve Bank of New York",
     "bls": "U.S. Bureau of Labor Statistics",
     "eia": "U.S. Energy Information Administration",
     "federal_reserve": "Federal Reserve Board",
     "treasury": "U.S. Department of the Treasury",
 }
+
+# Some licences are conditional on carrying a specific source identifier. The
+# New York Fed prescribes exact wording, so it ships with every value rather
+# than living only in a document nobody reads at render time.
+PROVIDER_NOTICES: dict[str, Callable[[], str]] = {
+    "fred": lambda: FRED_RIGHTS_NOTICE,
+    NYFED_PROVIDER_ID: nyfed_attribution,
+}
+
+
+def _provider_notice(provider_id: str) -> str:
+    notice = PROVIDER_NOTICES.get(provider_id)
+    return notice() if notice else ""
 
 
 class MacroDataDisabled(RuntimeError):
@@ -78,16 +93,22 @@ def _lane_for(spec: FredSeriesSpec, record: dict[str, Any] | None = None) -> str
 
 
 def _rights_status_for(spec: FredSeriesSpec, record: dict[str, Any] | None) -> str:
-    """Row first, catalog second, and a provider copyright note always wins.
+    """Row first, catalog second, with one aggregator-specific safety net.
 
-    ``notes`` carries the publisher's own wording. When it mentions a copyright,
-    that is the data owner speaking after the catalog was written, so it
-    downgrades an otherwise approved series rather than being overridden.
+    FRED relays series owned by third parties and flags them by writing a
+    copyright claim into the series notes. That is the data owner speaking after
+    our catalog was written, so on the FRED lane it downgrades an otherwise
+    approved series. It is deliberately not applied to lanes that publish their
+    own data: the New York Fed asserts copyright over content it then licenses
+    to us, so the same words mean the opposite thing there.
     """
-    if record and str(record.get("notes") or "").lower().count("copyright"):
-        return "license_required"
-    if record and record.get("rights_status"):
-        return str(record["rights_status"])
+    if record:
+        provider_id = _lane_for(spec, record)
+        notes = str(record.get("notes") or "").lower()
+        if provider_id == FRED_PROVIDER_ID and "copyright" in notes:
+            return "license_required"
+        if record.get("rights_status"):
+            return str(record["rights_status"])
     return rights_status_for(spec)
 
 
@@ -327,7 +348,8 @@ def _series_payload(
         "rights": {
             "copyrighted": bool(record.get("copyrighted")),
             "public_display": True,
-            "notice": FRED_RIGHTS_NOTICE,
+            "notice": _provider_notice(provider_id),
+            "provider": provider_id,
             "series_notes": str(record.get("notes") or "")[:2000],
         },
         "observation_count": {

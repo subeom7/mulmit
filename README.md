@@ -201,6 +201,22 @@ LEGACY_PRICE_DATA_ENABLED=false
 HIP3_PUBLIC_DISPLAY_ENABLED=false
 ```
 
+`NYFED_ENABLED`는 SOFR·EFFR·익일물 역레포를 뉴욕 연준에서 직접 받아 온다. 이
+프로젝트에서 권리 근거가 가장 명확한 공급자다. NY Fed 이용약관이 자동 접근, 저장,
+복제·배포, 파생 작업을 "personal or **business** purposes"로 명시적으로 허가한다.
+키가 필요 없고, 조건은 지정된 출처 문구를 값과 함께 표시하는 것이라 코드가 응답의
+`rights.notice`에 자동으로 싣는다.
+
+```dotenv
+NYFED_ENABLED=false
+```
+
+역레포는 **달러 단위**다. FRED의 `RRPONTSYD`는 십억 달러라 두 값을 같은 축에 두면
+안 된다. 공급자가 준 원 단위를 그대로 저장하는 것이 공급자 중립 테이블의 목적이다.
+
+한 계열을 두 lane이 이름 붙일 수 있으므로, 행을 가진 공급자가 그 계열을 계속
+소유한다. FRED lane을 켜도 승인된 NY Fed 계열을 덮어쓰지 않는다.
+
 `SEC_EDGAR_ENABLED`는 `/analytics`의 내부자거래(Form 3·4·5) 패널을 켠다. EDGAR는
 미국 연방정부 공시 시스템이고 SEC는 누구나 무료로 접근·다운로드할 수 있다고
 안내하지만, 자동 접근에는 연락처가 담긴 User-Agent 선언과 초당 10요청 상한이

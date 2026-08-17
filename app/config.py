@@ -52,6 +52,20 @@ FRED_MAX_AGE = _int("FRED_MAX_AGE", 60 * 60 * 6)
 FRED_TIMEOUT = _float("FRED_TIMEOUT", 15.0)
 FRED_RETRIES = _int("FRED_RETRIES", 2)
 FRED_INGEST_DELAY = _float("FRED_INGEST_DELAY", 0.1)
+# Federal Reserve Bank of New York markets API (SOFR, EFFR, overnight RRP).
+# Their Terms of Use grant automated access plus the right to download, store,
+# copy, distribute and derive from the content for business purposes, on the
+# condition that the prescribed source identifier travels with it. No key.
+# https://www.newyorkfed.org/privacy/termsofuse
+NYFED_ENABLED = _bool("NYFED_ENABLED", False)
+NYFED_TIMEOUT = _float("NYFED_TIMEOUT", 15.0)
+NYFED_RETRIES = _int("NYFED_RETRIES", 2)
+NYFED_REQUEST_INTERVAL = _float("NYFED_REQUEST_INTERVAL", 0.2)
+NYFED_MAX_AGE = _int("NYFED_MAX_AGE", 60 * 60 * 6)
+# How much history to request per refresh. SOFR starts in 2018, so ten years
+# covers the full published series without asking for more than exists.
+NYFED_HISTORY_DAYS = _int("NYFED_HISTORY_DAYS", 366 * 10)
+
 # SEC EDGAR insider-ownership filings (Forms 3/4/5). EDGAR is a public federal
 # disclosure system and the SEC states anyone may access and download it for
 # free, but automated access has hard operating rules: a declared User-Agent
