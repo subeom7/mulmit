@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import time
 
 import pandas as pd
@@ -185,3 +186,30 @@ def test_zero_ttl_always_expires_even_within_one_clock_tick(db, monkeypatch):
     # A real budget still serves the value.
     assert db.load_report("same-tick", ttl=3600) == {"v": 1}
     assert db.load_macro("same-tick", max_age=3600) == pytest.approx(1.5)
+
+
+def test_zero_max_age_always_reports_stale_even_within_one_clock_tick(db, monkeypatch):
+    """`max_age=0` must mean "refresh now", the mirror of the TTL boundary.
+
+    A batch that force-refreshes by setting the window to zero would otherwise
+    skip everything it had just written, because the row's age is exactly zero
+    inside a single clock tick.
+    """
+    frozen = 1_800_000_000.0
+    monkeypatch.setattr(time, "time", lambda: frozen)
+
+    db.save_economic_series(
+        "same-tick",
+        provider_id="test",
+        provider_series_id="X",
+        metadata_fields={"title": "t"},
+        observations=[(dt.date(2026, 8, 13), 1.0)],
+        publisher="p",
+        publisher_url="u",
+        series_url="s",
+    )
+    db.touch_insider_request("SAMETICK")
+
+    assert db.stale_economic_series(["same-tick"], 0) == ["same-tick"]
+    # A real budget still treats the fresh row as fresh.
+    assert db.stale_economic_series(["same-tick"], 3600) == []
