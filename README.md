@@ -16,6 +16,7 @@
 
 - **[다음 세션 인수인계](docs/NEXT_SESSION_HANDOFF.md)** — 우선순위, 코드 위치, API 계약, 테스트·배포 완료 기준
 - **[데이터 공급자·권리 등록부](docs/DATA_SOURCE_REGISTER.md)** — 공급자별 공개 표시·캐시·재배포 판정, 예산, 카드 매핑
+- **[HIP-3 권리 문의 초안](docs/INQUIRY_HYPERLIQUID_TRADE_XYZ.md)** — 발송 전. 회신이 자산 카드 차트를 여는 열쇠
 
 공개 화면의 법적 고지는 `/privacy`(개인정보처리방침), `/terms`(이용약관),
 `/disclaimer`(면책 고지)에 있다. 세 페이지 모두 KO/EN 본문을 DOM에 함께 담아
@@ -200,6 +201,22 @@ FRED_MAX_AGE=21600
 LEGACY_PRICE_DATA_ENABLED=false
 HIP3_PUBLIC_DISPLAY_ENABLED=false
 ```
+
+`NYFED_ENABLED`는 SOFR·EFFR·익일물 역레포를 뉴욕 연준에서 직접 받아 온다. 이
+프로젝트에서 권리 근거가 가장 명확한 공급자다. NY Fed 이용약관이 자동 접근, 저장,
+복제·배포, 파생 작업을 "personal or **business** purposes"로 명시적으로 허가한다.
+키가 필요 없고, 조건은 지정된 출처 문구를 값과 함께 표시하는 것이라 코드가 응답의
+`rights.notice`에 자동으로 싣는다.
+
+```dotenv
+NYFED_ENABLED=false
+```
+
+역레포는 **달러 단위**다. FRED의 `RRPONTSYD`는 십억 달러라 두 값을 같은 축에 두면
+안 된다. 공급자가 준 원 단위를 그대로 저장하는 것이 공급자 중립 테이블의 목적이다.
+
+한 계열을 두 lane이 이름 붙일 수 있으므로, 행을 가진 공급자가 그 계열을 계속
+소유한다. FRED lane을 켜도 승인된 NY Fed 계열을 덮어쓰지 않는다.
 
 `SEC_EDGAR_ENABLED`는 `/analytics`의 내부자거래(Form 3·4·5) 패널을 켠다. EDGAR는
 미국 연방정부 공시 시스템이고 SEC는 누구나 무료로 접근·다운로드할 수 있다고

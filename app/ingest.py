@@ -17,6 +17,7 @@ INGEST_ENABLED=false로 둔다. **수집 프로세스는 하나여야 한다** �
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import logging
 import threading
 import time
@@ -30,6 +31,15 @@ from .providers.fred import (
     FRED_SERIES,
     FredProvider,
     rights_status_for,
+)
+from .providers.nyfed import (
+    NYFED_PROVIDER_ID,
+    NYFED_PUBLISHER,
+    NYFED_PUBLISHER_URL,
+    NYFED_SERIES,
+    NYFED_SERIES_BY_KEY,
+    NYFED_TERMS_URL,
+    NyFedProvider,
 )
 from .providers.sec_edgar import SecEdgarProvider
 
@@ -91,11 +101,16 @@ def refresh_fred(*, force: bool = False) -> dict:
     # redistribution. Keep them in the UI catalog as license-required cards,
     # but never download them for the public dashboard without a separate
     # licensed feed.
-    ids = [spec.series_id for spec in FRED_SERIES if spec.public_web]
     keys = [spec.key for spec in FRED_SERIES if spec.public_web]
     stale_keys = set(store.stale_economic_series(keys, config.FRED_MAX_AGE))
     by_key = {spec.key: spec.series_id for spec in FRED_SERIES}
-    targets = ids if force else [by_key[key] for key in keys if key in stale_keys]
+    targets = [
+        by_key[key]
+        for key in keys
+        if (force or key in stale_keys)
+        # An approved provider owns its series; FRED must not take it back.
+        and _series_owner(key) in (None, FRED_PROVIDER_ID)
+    ]
     if not targets:
         return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
 
@@ -147,6 +162,80 @@ def refresh_fred(*, force: bool = False) -> dict:
             store.mark_economic_error(spec.key, str(exc))
             log.warning("거시 갱신 실패 %s: %s", series_id, exc)
     return result
+
+
+def refresh_nyfed(*, force: bool = False) -> dict:
+    """Refresh SOFR, EFFR and the overnight reverse-repo total.
+
+    No key and no vendor contract: the New York Fed licenses this content for
+    business use, including storage and redistribution, provided the prescribed
+    source identifier goes with it.
+    """
+    if not config.NYFED_ENABLED:
+        return {"skipped": "disabled", "attempted": 0, "updated": 0, "failed": 0}
+
+    keys = [spec.series_key for spec in NYFED_SERIES]
+    targets = (
+        keys
+        if force
+        else [
+            key
+            for key in store.stale_economic_series(keys, config.NYFED_MAX_AGE)
+            # Never take a series another provider already owns.
+            if _series_owner(key) in (None, NYFED_PROVIDER_ID)
+        ]
+    )
+    if not targets:
+        return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
+
+    provider = NyFedProvider(
+        timeout=config.NYFED_TIMEOUT,
+        retries=config.NYFED_RETRIES,
+        request_interval=config.NYFED_REQUEST_INTERVAL,
+    )
+    start = dt.date.today() - dt.timedelta(days=config.NYFED_HISTORY_DAYS)
+    result = {"attempted": 0, "updated": 0, "failed": 0, "rate_limited": 0, "observations": 0}
+
+    for key in targets:
+        spec = NYFED_SERIES_BY_KEY[key]
+        result["attempted"] += 1
+        try:
+            metadata, observations = provider.fetch_series(spec, start=start)
+            count = store.save_economic_series(
+                spec.series_key,
+                provider_id=NYFED_PROVIDER_ID,
+                provider_series_id=spec.provider_series_id,
+                metadata_fields=metadata,
+                observations=observations,
+                publisher=NYFED_PUBLISHER,
+                publisher_url=NYFED_PUBLISHER_URL,
+                series_url=spec.series_url,
+                rights_status="approved",
+                rights_evidence=NYFED_TERMS_URL,
+            )
+            result["updated"] += 1
+            result["observations"] += count
+            log.info("거시 갱신 %s/%s (%d행)", NYFED_PROVIDER_ID, spec.provider_series_id, count)
+        except RateLimited:
+            result["rate_limited"] += 1
+            log.warning("NY Fed 요청 제한 — 남은 계열은 다음 주기에 재시도")
+            break
+        except Exception as exc:  # noqa: BLE001 - 한 계열 실패가 나머지를 막지 않는다
+            result["failed"] += 1
+            store.mark_economic_error(spec.series_key, str(exc))
+            log.warning("거시 갱신 실패 %s: %s", spec.provider_series_id, exc)
+    return result
+
+
+def _series_owner(series_key: str) -> str | None:
+    """Which provider last collected this series, if any.
+
+    Two lanes can name the same card. Whoever holds the row keeps it until an
+    operator deliberately clears it, so an enabled FRED lane cannot quietly
+    overwrite an approved New York Fed series with a weaker-rights copy.
+    """
+    record = store.get_economic_series(series_key)
+    return str(record["provider_id"]) if record and record.get("provider_id") else None
 
 
 def migrate_macro_store() -> dict:
@@ -303,8 +392,10 @@ def run_once(tickers: list[str] | None = None) -> dict:
     # provider at all.
     if not config.LEGACY_PRICE_DATA_ENABLED:
         insider_result = {"skipped": "explicit_price_refresh"}
+        nyfed_result = {"skipped": "explicit_price_refresh"}
         if automatic:
             fred_result = refresh_fred()
+            nyfed_result = refresh_nyfed()
             insider_result = refresh_insider_filings()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
@@ -316,6 +407,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             "rate_limited": 0,
             "purged_reports": purged,
             "fred": fred_result,
+            "nyfed": nyfed_result,
             "insider": insider_result,
             "elapsed": round(time.time() - started, 2),
         }
@@ -328,6 +420,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         if waiting > 0:
             # Price-provider backoff must not disable the independent FRED lane.
             fred_result = refresh_fred()
+            nyfed_result = refresh_nyfed()
             insider_result = refresh_insider_filings()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
@@ -382,13 +475,16 @@ def run_once(tickers: list[str] | None = None) -> dict:
     # Price data is the latency-sensitive lane. Refresh FRED afterwards so a
     # slow macro-provider outage cannot postpone all ticker updates.
     insider_result = {"skipped": "explicit_price_refresh"}
+    nyfed_result = {"skipped": "explicit_price_refresh"}
     if automatic:
         fred_result = refresh_fred()
+        nyfed_result = refresh_nyfed()
         insider_result = refresh_insider_filings()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged
     result["fred"] = fred_result
+    result["nyfed"] = nyfed_result
     result["insider"] = insider_result
     result["elapsed"] = round(time.time() - started, 2)
     log.info("수집 완료: %s", result)
