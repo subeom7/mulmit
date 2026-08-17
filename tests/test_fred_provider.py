@@ -8,6 +8,7 @@ import pytest
 
 from app.providers.base import DataUnavailable, RateLimited
 from app.providers.fred import (
+    FRED_SERIES,
     FRED_SERIES_BY_ID,
     FredConfigurationError,
     FredProvider,
@@ -20,8 +21,16 @@ def _payload(value) -> bytes:
 
 
 def test_dashboard_catalog_contains_the_required_official_series():
+    """A subset check on purpose.
+
+    The catalog grows as providers are connected, and a frozen exhaustive list
+    would fail on every addition without ever catching a real problem. What
+    matters is that the series the dashboard depends on stay present, that the
+    restricted set stays exactly what it is, and that opting in to public
+    display remains something a spec has to do deliberately.
+    """
     assert FredSeriesSpec.__dataclass_fields__["public_web"].default is False
-    assert set(FRED_SERIES_BY_ID) == {
+    assert {
         "VIXCLS",
         "T10Y2Y",
         "BAMLH0A0HYM2",
@@ -41,10 +50,14 @@ def test_dashboard_catalog_contains_the_required_official_series():
         "IORB",
         "DCOILWTICO",
         "PCOPPUSDM",
+    } <= set(FRED_SERIES_BY_ID)
+    assert {spec.series_id for spec in FRED_SERIES if not spec.public_web} == {
+        "VIXCLS",
+        "BAMLH0A0HYM2",
+        "PCOPPUSDM",
     }
-    assert {
-        series_id for series_id, spec in FRED_SERIES_BY_ID.items() if not spec.public_web
-    } == {"VIXCLS", "BAMLH0A0HYM2", "PCOPPUSDM"}
+    # Every key is unique; two cards sharing one would silently overwrite.
+    assert len({spec.key for spec in FRED_SERIES}) == len(FRED_SERIES)
 
 
 def test_fetch_series_parses_metadata_and_numeric_observations():

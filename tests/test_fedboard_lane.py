@@ -15,6 +15,7 @@ from app.providers.fedboard import FEDBOARD_DERIVED, FEDBOARD_SERIES
 TEN_YEAR = ((dt.date(2026, 8, 12), 4.68), (dt.date(2026, 8, 13), 4.63))
 TWO_YEAR = ((dt.date(2026, 8, 12), 4.20), (dt.date(2026, 8, 13), 4.15))
 SPREAD = ((dt.date(2026, 8, 12), 0.48), (dt.date(2026, 8, 13), 0.48))
+FX = ((dt.date(2026, 8, 12), 1410.5), (dt.date(2026, 8, 13), 1409.94))
 
 
 class FakeFedBoard:
@@ -42,7 +43,8 @@ class FakeFedBoard:
         self.calls.append(spec.series_key)
         if self.failure:
             raise self.failure
-        return self._payload(spec, TEN_YEAR if spec.series_key == "treasury_10y" else TWO_YEAR)
+        rows = {"treasury_10y": TEN_YEAR, "treasury_2y": TWO_YEAR}.get(spec.series_key, FX)
+        return self._payload(spec, rows)
 
     def fetch_derived(self, spec, *, start=None):
         self.calls.append(spec.series_key)
@@ -110,7 +112,11 @@ def test_the_cards_are_served_with_their_own_provider(db, fedboard):
     body = TestClient(app).get("/api/market/macro?history=max").json()
     served = {item["key"]: item for item in body["series"]}
 
-    assert set(served) == {"treasury_10y", "treasury_2y", "yield_curve"}
+    assert {"treasury_10y", "treasury_2y", "yield_curve"} <= set(served)
+    # H.10 rates arrive from the same lane and the same archive mechanism.
+    assert served["fx_usdkrw"]["latest"] == {"date": "2026-08-13", "value": 1409.94}
+    assert served["fx_usdkrw"]["units"]["short"] == "KRW/USD"
+    assert served["fx_eurusd"]["units"]["short"] == "USD/EUR"
     assert served["treasury_10y"]["latest"] == {"date": "2026-08-13", "value": 4.63}
     assert served["yield_curve"]["latest"] == {"date": "2026-08-13", "value": 0.48}
     assert served["treasury_10y"]["source"]["provider"] == "federal_reserve"
@@ -135,7 +141,7 @@ def test_a_failure_keeps_the_previous_snapshot(db, fedboard, monkeypatch):
 
     result = ingest.refresh_fedboard()
 
-    assert result["failed"] == 3
+    assert result["failed"] == len(FEDBOARD_SERIES) + len(FEDBOARD_DERIVED)
     assert store.get_economic_series("treasury_10y")["status"] == "error"
     assert len(store.load_economic_observations("treasury_10y")) == 2
 
