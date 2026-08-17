@@ -522,7 +522,54 @@ notes: >
   approved_scope.derived_metrics: true 범위 안이다.
 ```
 
-### 3.10 DOL ETA 신규 실업수당 — **보류**
+### 3.10 금융감독원 Open DART (임원·주요주주 소유상황 보고)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `dart` |
+| 현재 상태 | `approved` (아래 근거·범위 한정) |
+| 코드 위치 | `app/providers/dart.py`, `app/kr_insider.py`, `tests/test_kr_insider.py` |
+| 배포 기본값 | `DART_ENABLED=false`, `DART_API_KEY=` (미설정이면 lane이 닫힘) |
+| 현재 사용 | `corpCode.xml`(상장사 종목코드↔법인코드 매핑), `elestock.json`(소유상황 보고 목록) |
+| 접근 조건 | 발급 키 필수. 허용량은 약관 제10조 ④ "홈페이지 게시" 방식 — 스로틀 유지, 요청 기반 조회만 |
+| 표시 경계 | 보고된 값을 **가공 없이 전달**. elestock은 보고서 단위 소유수량·순증감이며 개별 매매·단가가 아님 — 화면 basis 문구로 명시. 합산 요약을 만들지 않음 |
+| attribution | `출처: 금융감독원 전자공시시스템(DART)` + 공시 원문 링크(`dsaf001/main.do?rcpNo=`)를 행마다 제공 |
+| 공식 근거 | [Open DART 소개](https://opendart.fss.or.kr/intro/main.do), [이용약관](https://opendart.fss.or.kr/intro/terms.do) |
+
+SEC EDGAR(§3.5)와 같은 클래스다: 자본시장법상 법정 공시를 담는 공공기관의
+공시 시스템이고, Open DART는 그것을 "누구나 활용"하도록 연 채널이다. 약관
+(2026-08-17 정독)은 재배포 금지 조항 없이 다음을 둔다 — 제10조 ④ 허용량 제한,
+제16조 ① 저작권은 **서비스·프로그램**에 대해 금감원 소유(공시정보 자체가 아님),
+제23조 공시정보의 정확성·완전성 비보장(제출인 책임). 침묵을 백지수표로 읽지
+않기 위해 승인 범위를 아래로 한정하고, EDGAR와 동일하게 원문 그대로의 전달과
+출처·원문 링크를 조건으로 삼는다.
+
+```yaml
+decision_id: DS-2026-008
+provider_id: dart
+status: approved
+reviewed_at: 2026-08-17
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://opendart.fss.or.kr/intro/terms.do
+approved_scope:
+  public_display: true          # 보고된 값의 원문 그대로 표시
+  server_json_relay: true
+  cache_ttl_seconds: 300
+  stale_seconds: 43200          # 보고 목록 캐시 반나절
+  historical_storage: true      # 법인코드 매핑·보고 목록 캐시
+  derived_metrics: false        # 합산·순매수 등 파생 요약을 만들지 않음
+  advertising: unconfirmed      # 광고 도입 전 허용량·조건 재확인
+attribution: "출처: 금융감독원 전자공시시스템(DART)"
+expires_at: null
+recheck_at: 2027-02-17
+notes: >
+  허용량이 약관 본문이 아니라 "홈페이지 게시" 방식이므로 반기마다 게시값을
+  재확인한다. corpCode.xml은 비상장 포함 전 법인을 담으므로 종목코드가 있는
+  상장사만 매핑에 저장한다. "-"는 0이 아니라 미보고로 파싱한다.
+```
+
+### 3.11 DOL ETA 신규 실업수당 — **보류**
 
 | 항목 | 기록 |
 |---|---|
@@ -541,7 +588,7 @@ notes: >
 연결하려면 ETA 539 레코드 레이아웃 문서를 확보하거나, 전국 계열의 CSV/JSON 경로를
 찾아야 한다.
 
-### 3.11 Yahoo Finance / yfinance
+### 3.12 Yahoo Finance / yfinance
 
 | 항목 | 기록 |
 |---|---|
@@ -554,7 +601,7 @@ notes: >
 
 yfinance 패키지가 공개 표시·저장·재배포 권리를 부여한다고 해석하지 않는다. 401/429를 스크래핑 엔드포인트로 우회하지 않는다.
 
-### 3.12 Cboe, ICE, IMF
+### 3.13 Cboe, ICE, IMF
 
 | 공급자/권리자 | 대상 | 상태 | 현재 결정 | 공식 근거 |
 |---|---|---|---|---|
@@ -894,6 +941,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | BLS lane 추가(`DS-2026-005`), DOL ETA는 보류 사유 기록 | Claude assisted |
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
+| 2026-08-17 | Open DART lane 추가(`DS-2026-008`) — 임원·주요주주 소유상황 보고를 국내 종목 분석 옆에 원문 전달. EDGAR 원문 링크를 사람용 뷰로 수정 | Claude assisted |
 | 2026-08-17 | STLFSI4 문의 **발송** — FRED 공식 폼, 확인 배너·POST 200 검증. 회신 대기 | Claude assisted |
 | 2026-08-17 | 코스피 지수군 섹션 추가 — 지수 하루 스냅샷(1요청/일, 168지수)으로 대표 지수 10종·코스피 200 섹터 11종의 종가·전일·연초·52주·거래대금 표. 지수명이 시리즈 간 비유일함을 확인해 (이름,분류) 복합키와 KOSPI시리즈 고정 적용. 미확정 52주 최저 0값은 결측 처리 | Claude assisted |
 | 2026-08-17 | 국내 종목 검색·분석 추가 — FSC 전 종목 스냅샷 로스터 + 요청 기반 5년 종가, 낙폭·MDD·변동성 파생 통계. 야후 시절 단일종목 분석의 한국판을 승인 lane 위에 재구축 | Claude assisted |

@@ -336,3 +336,49 @@ def test_cik_normalisation_and_code_labels():
 
     assert transaction_code_label("P")["en"].startswith("Open-market")
     assert transaction_code_label("ZZ")["en"] == "Code ZZ"
+
+
+def test_the_stored_filing_link_is_the_human_view_not_the_parser_input():
+    """Raw form XML renders as an unstyled document tree in a browser."""
+    import datetime as dt
+
+    calls = []
+    body = (
+        b'<?xml version="1.0"?><ownershipDocument><reportingOwner>'
+        b"<reportingOwnerId><rptOwnerName>A</rptOwnerName>"
+        b"<rptOwnerCik>1</rptOwnerCik></reportingOwnerId></reportingOwner>"
+        b"<nonDerivativeTable><nonDerivativeTransaction>"
+        b"<securityTitle><value>Common Stock</value></securityTitle>"
+        b"<transactionDate><value>2026-08-11</value></transactionDate>"
+        b"<transactionCoding><transactionCode>S</transactionCode></transactionCoding>"
+        b"<transactionAmounts><transactionShares><value>10</value></transactionShares>"
+        b"<transactionAcquiredDisposedCode><value>D</value></transactionAcquiredDisposedCode>"
+        b"</transactionAmounts></nonDerivativeTransaction></nonDerivativeTable>"
+        b"</ownershipDocument>"
+    )
+
+    def http(request, timeout):
+        calls.append(request.full_url)
+        return body
+
+    def provider():
+        return SecEdgarProvider(
+            "Mulmit test admin@example.com", http_get=http, retries=0,
+            request_interval=0.0, sleep=lambda _s: None,
+        )
+
+    # EDGAR points primaryDocument at the XSL-rendered view; the parser reads
+    # the raw twin but the stored link keeps the styled path.
+    rows = provider().fetch_ownership_document(
+        "320193", "0001140361-26-032884", "xslF345X06/form4.xml",
+        form_type="4", filing_date=dt.date(2026, 8, 13),
+    )
+    assert calls[-1].endswith("/000114036126032884/form4.xml")
+    assert rows[0].filing_url.endswith("/000114036126032884/xslF345X06/form4.xml")
+
+    # A filing with no styled twin links the index page, never the raw XML.
+    rows = provider().fetch_ownership_document(
+        "320193", "0001140361-26-032884", "form4.xml",
+        form_type="4", filing_date=dt.date(2026, 8, 13),
+    )
+    assert rows[0].filing_url.endswith("/000114036126032884/0001140361-26-032884-index.htm")

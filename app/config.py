@@ -135,6 +135,20 @@ FSC_REQUEST_INTERVAL = _float("FSC_REQUEST_INTERVAL", 0.2)
 FSC_MAX_AGE = _int("FSC_MAX_AGE", 60 * 60 * 12)
 FSC_HISTORY_DAYS = _int("FSC_HISTORY_DAYS", 366 * 5)
 
+# 금융감독원 Open DART — 임원·주요주주 특정증권등 소유상황 보고(한국판 Form 4).
+# 법정 공시를 개방하는 공공기관 API이며, 이용약관은 재배포를 금지하지 않고
+# 허용량 제한(홈페이지 게시)을 둔다. 키는 배포별 발급이라 커밋하지 않는다.
+# https://opendart.fss.or.kr/intro/terms.do
+DART_ENABLED = _bool("DART_ENABLED", False)
+DART_API_KEY = os.environ.get("DART_API_KEY", "").strip()
+DART_TIMEOUT = _float("DART_TIMEOUT", 20.0)
+DART_RETRIES = _int("DART_RETRIES", 2)
+DART_REQUEST_INTERVAL = _float("DART_REQUEST_INTERVAL", 0.25)
+# 보고서 목록 캐시. 공시는 수시 제출이라 반나절 신선도면 충분하다.
+DART_MAX_AGE = _int("DART_MAX_AGE", 60 * 60 * 12)
+# 법인코드 매핑(zip)은 거의 안 바뀐다.
+DART_CORP_MAX_AGE = _int("DART_CORP_MAX_AGE", 60 * 60 * 24 * 7)
+
 # KRX OPEN API must remain disabled until KRX approves the exact public use
 # case. Possessing a key alone does not grant redistribution rights. The FSC
 # lane above does not change this: it is a separate grant over a separate,
