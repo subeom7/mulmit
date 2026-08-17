@@ -279,3 +279,121 @@ def test_day_snapshot_probes_back_to_the_last_published_trading_day():
     assert rows[0]["srtn_cd"] == "005930"
     assert rows[0]["mrkt_tot_amt"] == 1638515000000000.0
     assert "basDt=20260816" in urls[0] and "basDt=20260814" in urls[2]
+
+
+# --- index family ------------------------------------------------------------
+
+
+def _seed_index_snapshot(db):
+    db.save_kr_index_snapshot(
+        [
+            {"idx_nm": "코스피", "idx_csf": "KOSPI시리즈", "clpr": 6813.34, "vs": 234.32,
+             "flt_rt": 3.56, "ls_yr_flt_rt": 41.2, "yr_hgst": 6813.34, "yr_hgst_dt": "20260813",
+             "yr_lwst": 2500.1, "yr_lwst_dt": "20250811", "trqu": 5.5e8, "tr_prc": 2.1e13,
+             "lstg_mrkt_tot_amt": 3.4e15},
+            {"idx_nm": "코스피 200", "idx_csf": "KOSPI시리즈", "clpr": 1071.24, "vs": 41.8,
+             "flt_rt": 4.06, "ls_yr_flt_rt": 44.0, "yr_hgst": 1071.24, "yr_hgst_dt": "20260813",
+             "yr_lwst": 330.0, "yr_lwst_dt": "20250811", "trqu": 1.0e8, "tr_prc": 1.4e13,
+             "lstg_mrkt_tot_amt": 3.0e15},
+            {"idx_nm": "코스피 200 정보기술", "idx_csf": "KOSPI시리즈", "clpr": 14258.43,
+             "vs": 870.0, "flt_rt": 6.5, "ls_yr_flt_rt": 80.0, "yr_hgst": 14258.43,
+             "yr_hgst_dt": "20260813", "yr_lwst": 3200.0, "yr_lwst_dt": "20250811",
+             "trqu": 3.0e7, "tr_prc": 8.0e12, "lstg_mrkt_tot_amt": 1.2e15},
+            {"idx_nm": "코스피 고배당 50", "idx_csf": "테마지수", "clpr": 4665.88, "vs": 8.0,
+             "flt_rt": 0.17, "ls_yr_flt_rt": 12.0, "yr_hgst": 4700.0, "yr_hgst_dt": "20260601",
+             "yr_lwst": 3900.0, "yr_lwst_dt": "20250901", "trqu": 1.0e6, "tr_prc": 1.0e11,
+             "lstg_mrkt_tot_amt": 2.0e14},
+            # 동명이지수: KOSDAQ 시리즈의 "코스피 200"은 없지만, 실제 데이터에는
+            # "IT 서비스"가 양쪽 시리즈에 존재한다. 같은 상황을 재현한다.
+            {"idx_nm": "코스피 200 정보기술", "idx_csf": "KOSDAQ시리즈", "clpr": 1.0, "vs": 0.0,
+             "flt_rt": 0.0, "ls_yr_flt_rt": 0.0, "yr_hgst": 1.0, "yr_hgst_dt": "20260101",
+             "yr_lwst": 1.0, "yr_lwst_dt": "20260101", "trqu": 0.0, "tr_prc": 0.0,
+             "lstg_mrkt_tot_amt": 0.0},
+        ],
+        "2026-08-13",
+    )
+
+
+def test_a_same_named_index_in_another_class_never_shadows_the_kospi_one(db, fsc_lane):
+    """"IT 서비스" exists in both the KOSPI and KOSDAQ series with one name."""
+    _seed_index_snapshot(db)
+
+    body = TestClient(app).get("/api/kr/indices").json()
+    sectors = next(g for g in body["groups"] if g["id"] == "kospi200-sectors")
+    it_row = next(r for r in sectors["rows"] if r["name"] == "코스피 200 정보기술")
+
+    assert it_row["close"] == 14258.43  # the KOSPI-series value, not the twin's 1.0
+
+
+def test_index_family_serves_curated_groups_from_the_snapshot(db, fsc_lane):
+    _seed_index_snapshot(db)
+
+    response = TestClient(app).get("/api/kr/indices")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["as_of"] == "2026-08-13"
+    headline = next(g for g in body["groups"] if g["id"] == "headline")
+    sectors = next(g for g in body["groups"] if g["id"] == "kospi200-sectors")
+    assert [r["name"] for r in headline["rows"]] == ["코스피", "코스피 200"]
+    assert sectors["rows"][0]["name"] == "코스피 200 정보기술"
+    assert sectors["rows"][0]["ytd_percent"] == 80.0
+    # Curation is a whitelist: a theme index in the snapshot never leaks in.
+    all_names = [r["name"] for g in body["groups"] for r in g["rows"]]
+    assert "코스피 고배당 50" not in all_names
+
+
+def test_index_family_fails_closed_with_the_lane(db, monkeypatch):
+    monkeypatch.setattr(config, "FSC_ENABLED", False)
+
+    response = TestClient(app).get("/api/kr/indices")
+
+    assert response.status_code == 503
+    assert response.json()["detail"]["code"] == "kr_stock_data_disabled"
+
+
+def test_every_curated_index_name_is_spelled_as_the_dataset_publishes_it():
+    """The whitelist is exact-match; a typo silently drops a row forever."""
+    from app.kr_stocks import KR_INDEX_HEADLINE, KR_INDEX_SECTORS
+
+    names = list(KR_INDEX_HEADLINE) + list(KR_INDEX_SECTORS)
+    assert len(names) == len(set(names))
+    # Verified against the live dataset on 2026-08-17; these two are the ones
+    # whose spacing is easy to get wrong.
+    assert "코스피200제외 코스피지수" in names
+    assert "코스피 200 초대형제외 지수" in names
+
+
+def test_index_snapshot_replace_semantics(db, fsc_lane):
+    _seed_index_snapshot(db)
+    db.save_kr_index_snapshot(
+        [{"idx_nm": "코스피", "idx_csf": "KOSPI시리즈", "clpr": 7000.0, "vs": 1.0,
+          "flt_rt": 0.1, "ls_yr_flt_rt": 1.0, "yr_hgst": 7000.0, "yr_hgst_dt": "20260814",
+          "yr_lwst": 2500.0, "yr_lwst_dt": "20250811", "trqu": 1.0, "tr_prc": 1.0,
+          "lstg_mrkt_tot_amt": 1.0}],
+        "2026-08-14",
+    )
+
+    assert store.kr_index_snapshot_meta()["count"] == 1
+    body = TestClient(app).get("/api/kr/indices").json()
+    assert body["as_of"] == "2026-08-14"
+    assert body["groups"][0]["rows"][0]["close"] == 7000.0
+
+
+def test_an_unfinalised_52_week_low_of_zero_is_null_not_a_record():
+    """The dataset publishes in-progress 52w lows as 0 with a future date."""
+    row = {"basDt": "20260813", "idxNm": "코스피", "idxCsf": "KOSPI시리즈",
+           "clpr": "6813.34", "vs": "234.32", "fltRt": "3.56", "lsYrEdVsFltRt": "61.7",
+           "yrWRcrdHgst": "6813.34", "yrWRcrdHgstDt": "20260813",
+           "yrWRcrdLwst": "0", "yrWRcrdLwstDt": "20260814",
+           "trqu": "1", "trPrc": "1", "lstgMrktTotAmt": "1"}
+    responses = [_envelope([row], total=1), _envelope([row], total=1)]
+
+    provider = FscProvider("k", http_get=lambda r, t: responses.pop(0),
+                           retries=0, request_interval=0.0, sleep=lambda _s: None)
+    from unittest.mock import patch
+    with patch("app.providers.fsc._kst_today", return_value=dt.date(2026, 8, 13)):
+        _bas, rows = provider.fetch_index_day_snapshot()
+
+    assert rows[0]["yr_lwst"] is None
+    assert rows[0]["yr_hgst"] == 6813.34

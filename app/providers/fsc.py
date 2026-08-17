@@ -231,6 +231,10 @@ def _parse_date(value: Any) -> dt.date | None:
         return None
 
 
+def _positive_or_none(value: float | None) -> float | None:
+    return value if value is not None and value > 0 else None
+
+
 def _parse_number(value: Any) -> float | None:
     text = str(value or "").strip().replace(",", "")
     if not text:
@@ -493,6 +497,58 @@ class FscProvider:
             })
         if not snapshot:
             raise DataUnavailable("FSC day snapshot parsed to zero usable rows")
+        return day.strftime("%Y-%m-%d"), snapshot
+
+    def fetch_index_day_snapshot(
+        self, *, max_probe_days: int = 10
+    ) -> tuple[str, list[dict[str, Any]]]:
+        """Return ``(bas_dt, rows)`` for every index on the latest trading day.
+
+        One request covers the whole set (~170 indices) and each row already
+        carries the day change, the year-to-date change, the 52-week high and
+        low with their dates, volume and traded value — the entire statistics
+        table, without collecting a single history series.
+        """
+        day = _kst_today()
+        for _ in range(max_probe_days):
+            probe = self._get(
+                INDEX_ENDPOINT,
+                {"basDt": day.strftime("%Y%m%d"), "numOfRows": "1", "pageNo": "1"},
+            )
+            total = _parse_number(probe.get("totalCount"))
+            if total and total > 0:
+                break
+            day -= dt.timedelta(days=1)
+        else:
+            raise DataUnavailable(
+                f"FSC published no index trading day in the last {max_probe_days} days"
+            )
+
+        rows = self._paged_rows(INDEX_ENDPOINT, {"basDt": day.strftime("%Y%m%d")})
+        snapshot = []
+        for row in rows:
+            name = str(row.get("idxNm") or "").strip()
+            if not name:
+                continue
+            snapshot.append({
+                "idx_nm": name,
+                "idx_csf": str(row.get("idxCsf") or "").strip(),
+                "clpr": _parse_number(row.get("clpr")),
+                "vs": _parse_number(row.get("vs")),
+                "flt_rt": _parse_number(row.get("fltRt")),
+                "ls_yr_flt_rt": _parse_number(row.get("lsYrEdVsFltRt")),
+                # The dataset publishes an unfinalised 52-week low as 0 with a
+                # future date. An index cannot be 0, so 0 means "not a value".
+                "yr_hgst": _positive_or_none(_parse_number(row.get("yrWRcrdHgst"))),
+                "yr_hgst_dt": str(row.get("yrWRcrdHgstDt") or "").strip() or None,
+                "yr_lwst": _positive_or_none(_parse_number(row.get("yrWRcrdLwst"))),
+                "yr_lwst_dt": str(row.get("yrWRcrdLwstDt") or "").strip() or None,
+                "trqu": _parse_number(row.get("trqu")),
+                "tr_prc": _parse_number(row.get("trPrc")),
+                "lstg_mrkt_tot_amt": _parse_number(row.get("lstgMrktTotAmt")),
+            })
+        if not snapshot:
+            raise DataUnavailable("FSC index snapshot parsed to zero usable rows")
         return day.strftime("%Y-%m-%d"), snapshot
 
     def _series_result(

@@ -45,6 +45,9 @@ const TEXT = {
     "weekend.defaultDisclaimer": "주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.",
     "weekend.proxy": "대체 신호", "weekend.direct": "직접 계약", "weekend.auxiliary": "24시간 보조", "weekend.consensus": "합성 신호", "weekend.referenceSignal": "주말 기준 신호", "weekend.funding": "시간당 펀딩", "weekend.volume": "24시간 거래대금", "weekend.openInterest": "미결제약정", "weekend.status": "상태", "weekend.confidence": "근거 품질", "weekend.session": "활성 세션", "weekend.sessionChange": "세션 기준", "weekend.change24h": "24시간 기준", "weekend.stale": "지연", "weekend.reference": "참고 품질",
     "weekend.samsungPerp": "삼성전자 USD 환산 합성 무기한선물 · 한국 현물 종가와 동일한 상품이 아닙니다.",
+    "kridx.title": "코스피 지수군", "kridx.copy": "대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 52주 범위까지 한 표에서 봅니다.",
+    "kridx.colName": "지수", "kridx.colClose": "종가", "kridx.colDay": "전일", "kridx.colYtd": "연초 대비", "kridx.colRange": "52주 범위", "kridx.colValue": "거래대금",
+    "kridx.asof": "기준 {date} · 다음 영업일 13시 이후 갱신",
     "sector.title": "섹터 자금 흐름", "sector.caption": "S&P 500 섹터 ETF 기간 수익률", "sector.name": "섹터", "sector.return": "수익률", "sector.interpretation": "플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.",
     "tv.title": "S&P 500 종목 히트맵", "tv.embed": "외부 위젯", "tv.notice": "이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.",
     "tv.terms": "데이터·표시 조건은 제공자 정책을 따릅니다.", "corr.title": "자산군 상관관계", "corr.note": "서로 다른 시장 시간대는 동시 일간 수익률 상관을 왜곡할 수 있습니다.", "corr.scale": "+1은 같은 방향, 0은 약한 선형 관계, −1은 반대 방향입니다. 상관은 인과관계가 아닙니다.",
@@ -76,6 +79,9 @@ const TEXT = {
     "weekend.defaultDisclaimer": "Weekend derivative prices can be heavily affected by shallow liquidity and leverage. Do not treat them as Monday spot-market forecasts.",
     "weekend.proxy": "Proxy", "weekend.direct": "Direct contract", "weekend.auxiliary": "24h auxiliary", "weekend.consensus": "Composite", "weekend.referenceSignal": "Weekend reference", "weekend.funding": "Hourly funding", "weekend.volume": "24h notional", "weekend.openInterest": "Open interest", "weekend.status": "Status", "weekend.confidence": "Evidence quality", "weekend.session": "Active session", "weekend.sessionChange": "Session change", "weekend.change24h": "24-hour change", "weekend.stale": "Stale", "weekend.reference": "Reference quality",
     "weekend.samsungPerp": "Samsung Electronics USD-converted synthetic perpetual · not the Korean spot close.",
+    "kridx.title": "KOSPI index family", "kridx.copy": "Confirmed closes for the headline indices and KOSPI 200 sectors, with YTD and the 52-week range in one table.",
+    "kridx.colName": "Index", "kridx.colClose": "Close", "kridx.colDay": "Day", "kridx.colYtd": "YTD", "kridx.colRange": "52w range", "kridx.colValue": "Value traded",
+    "kridx.asof": "As of {date} · updates after 13:00 KST the next business day",
     "sector.title": "Sector flow", "sector.caption": "S&P 500 sector ETF period returns", "sector.name": "Sector", "sector.return": "Return", "sector.interpretation": "Broader positive participation can confirm a wider advance. ETF returns are not the same thing as fund-flow dollars.",
     "tv.title": "S&P 500 constituent heatmap", "tv.embed": "Third-party widget", "tv.notice": "TradingView serves this embed directly; it is not Mulmit API data.",
     "tv.terms": "Provider data and display terms apply.", "corr.title": "Cross-asset correlation", "corr.note": "Different market hours can distort same-day return correlations.", "corr.scale": "+1 moves together, 0 indicates a weak linear link, and −1 moves oppositely. Correlation is not causation.",
@@ -576,6 +582,7 @@ function renderJumpNav() {
   [{ id: "constituent-heatmap", text: t("tv.title") },
     ...SECTIONS.map((section, index) => ({ id: section.id, text: `${String(index + 1).padStart(2, "0")} ${localValue(section.title, state.lang)}` })),
     { id: "liquidity-comparisons", text: `${String(SECTIONS.length + 1).padStart(2, "0")} ${state.lang === "ko" ? "유동성 비교" : "Comparisons"}` },
+    { id: "kr-indices", text: t("kridx.title") },
     { id: "sector-flow", text: t("sector.title") }, { id: "correlation", text: t("corr.title") }]
     .filter((item) => !document.getElementById(item.id)?.hidden)
     .forEach((item) => { const link = document.createElement("a"); link.href = `#${item.id}`; link.textContent = item.text; nav.append(link); });
@@ -762,19 +769,19 @@ function endpointHealth(key) {
 async function loadCore() {
   $("#refresh-button").setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
-  const [macro, assets, sectors, weekend, stress] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, krIndices] = await Promise.all([
     fetchJson("/api/market/macro?history=3y", "macro"), fetchJson("/api/market/assets?history=3y", "assets"),
     fetchJson("/api/market/sectors", "sectors"), fetchJson("/api/market/weekend", "weekend"),
-    fetchJson("/api/market/stress", "stress"),
+    fetchJson("/api/market/stress", "stress"), fetchJson("/api/kr/indices", "krIndices"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
-  state.stress = stress;
+  state.stress = stress; state.krIndices = krIndices;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets");
   renderAll(); $("#refresh-button").removeAttribute("aria-busy");
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
   // not failing — they are absent by decision, so they are hidden rather than
@@ -803,6 +810,75 @@ function renderAll() {
   badge.className = `connection-badge ${key === "status.live" ? "ok" : key === "status.staleData" ? "stale" : key === "status.offline" ? "error" : ""}`;
   $("span", badge).textContent = t(key);
   $("#overview-source").textContent = [state.assets?.provider?.name || state.assets?.provider?.id, state.macro?.provider?.name || state.macro?.provider?.id].filter(Boolean).join(" + ") || "API";
+}
+
+function formatKrw(value) {
+  if (value == null || !isFinite(value)) return "—";
+  if (Math.abs(value) >= 1e12) return `${(value / 1e12).toFixed(1)}조`;
+  if (Math.abs(value) >= 1e8) return `${Math.round(value / 1e8).toLocaleString()}억`;
+  return Math.round(value).toLocaleString();
+}
+
+function renderKrIndices() {
+  const section = $("#kr-indices");
+  if (!section) return;
+  // The table belongs beside the Korean official closes, which render
+  // dynamically; the static section is moved there once both exist.
+  const anchor = $("#korea-official");
+  if (anchor && section.previousElementSibling !== anchor) anchor.insertAdjacentElement("afterend", section);
+
+  const payload = state.krIndices;
+  if (!payload || !Array.isArray(payload.groups)) { section.hidden = true; return; }
+  const rows = payload.groups.flatMap((group) => group.rows || []);
+  if (!rows.length) { section.hidden = true; return; }
+  section.hidden = false;
+
+  const body = $("#kridx-body");
+  body.replaceChildren();
+  const signed = (value, digits = 2) => value == null ? "—" : `${value > 0 ? "+" : ""}${value.toFixed(digits)}%`;
+  const signClass = (value) => value == null ? "" : value > 0 ? "up" : value < 0 ? "down" : "";
+  for (const group of payload.groups) {
+    if (!(group.rows || []).length) continue;
+    const heading = document.createElement("h3");
+    heading.className = "kridx-group";
+    heading.textContent = localValue(group.label, state.lang);
+    body.append(heading);
+    const scroll = document.createElement("div"); scroll.className = "table-scroll";
+    const table = document.createElement("table"); table.className = "accessible-table kridx-table";
+    table.innerHTML = `<thead><tr>
+      <th scope="col">${t("kridx.colName")}</th><th scope="col" class="num">${t("kridx.colClose")}</th>
+      <th scope="col" class="num">${t("kridx.colDay")}</th><th scope="col" class="num">${t("kridx.colYtd")}</th>
+      <th scope="col" class="num">${t("kridx.colRange")}</th><th scope="col" class="num">${t("kridx.colValue")}</th>
+    </tr></thead>`;
+    const tbody = document.createElement("tbody");
+    for (const row of group.rows) {
+      const tr = document.createElement("tr");
+      const cells = [
+        ["", row.name],
+        ["num", row.close == null ? "—" : row.close.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })],
+        [`num ${signClass(row.change_percent)}`, signed(row.change_percent)],
+        [`num ${signClass(row.ytd_percent)}`, signed(row.ytd_percent, 1)],
+        ["num range", row.low_52w == null ? "—" : `${row.low_52w.toLocaleString()} ~ ${row.high_52w?.toLocaleString?.() ?? "—"}`],
+        ["num", formatKrw(row.value)],
+      ];
+      for (const [cls, text] of cells) {
+        const td = document.createElement("td");
+        if (cls) td.className = cls;
+        td.textContent = text;
+        tr.append(td);
+      }
+      tbody.append(tr);
+    }
+    table.append(tbody); scroll.append(table); body.append(scroll);
+  }
+  const source = payload.source || {};
+  $("#kridx-footer").replaceChildren();
+  const link = document.createElement("a");
+  link.href = source.url || "#"; link.target = "_blank"; link.rel = "noopener noreferrer";
+  link.textContent = source.provider_name || "금융위원회";
+  const note = document.createElement("span");
+  note.textContent = `${t("kridx.asof", { date: dateText(payload.as_of) })}`;
+  $("#kridx-footer").append(link, note);
 }
 
 function renderSectors() {

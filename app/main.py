@@ -308,6 +308,29 @@ def kr_stock_search(
     return payload
 
 
+@app.get("/api/kr/indices")
+@limiter.limit(config.RATE_LIMIT)
+def kr_index_family(request: Request, response: Response) -> dict:
+    """코스피 지수군 표. 하루치 지수 스냅샷만 읽는다.
+
+    스냅샷 한 번이 전 지수의 종가·전일대비·연초대비·52주 범위·거래대금을
+    담고 있어, 이 표를 위해 지수별 이력을 수집하지 않는다.
+    """
+    try:
+        payload = kr_stocks.index_family()
+    except kr_stocks.KrStockDisabled as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=data_rights.KR_STOCK_DISABLED,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    except (kr_stocks.KrIndexUnavailable, DataUnavailable, RateLimited) as exc:
+        raise HTTPException(status_code=503, detail="index snapshot unavailable") from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "Financial Services Commission (data.go.kr)"
+    return payload
+
+
 @app.get("/api/kr/stock/{code}")
 @limiter.limit(config.RATE_LIMIT)
 def kr_stock_analysis(code: str, request: Request, response: Response) -> dict:
