@@ -114,6 +114,11 @@ const METRICS = {
   treasury_general_account: { aliases: ["treasury_general_account", "tga", "wtregen"], label: LABEL("재무부 TGA", "Treasury General Account"), group: "liquidity", format: "compact", accent: "#38bdf8" },
   m2: { aliases: ["m2", "m2sl"], label: LABEL("미국 M2", "US M2"), group: "liquidity", format: "compact", accent: "#38bdf8" },
   retail_money_market_funds: { aliases: ["retail_money_market_funds", "wrmfns", "mmf"], label: LABEL("리테일 MMF", "Retail money market funds"), group: "liquidity", format: "compact", accent: "#38bdf8" },
+  fx_usdkrw: { aliases: ["fx_usdkrw", "rxi_n.b.ko"], label: LABEL("원·달러", "USD/KRW"), group: "fx", format: "rate", accent: "#2dd4a3", description: LABEL("달러 한 단위당 원화. 미 연준 H.10 공식 고시값입니다.", "Korean won per US dollar, from the Federal Reserve's official H.10 release.") },
+  fx_usdjpy: { aliases: ["fx_usdjpy", "rxi_n.b.ja"], label: LABEL("엔·달러", "USD/JPY"), group: "fx", format: "rate", accent: "#a78bfa", description: LABEL("달러 한 단위당 엔화", "Japanese yen per US dollar") },
+  fx_usdcny: { aliases: ["fx_usdcny", "rxi_n.b.ch"], label: LABEL("위안·달러", "USD/CNY"), group: "fx", format: "rate", accent: "#f5b942", description: LABEL("달러 한 단위당 위안화", "Chinese yuan per US dollar") },
+  fx_eurusd: { aliases: ["fx_eurusd", "rxi$us_n.b.eu"], label: LABEL("유로·달러", "EUR/USD"), group: "fx", format: "rate", accent: "#38bdf8", description: LABEL("유로 한 단위당 달러. 위 세 개와 방향이 반대입니다.", "US dollars per euro — quoted the opposite way round to the three above.") },
+  fx_gbpusd: { aliases: ["fx_gbpusd", "rxi$us_n.b.uk"], label: LABEL("파운드·달러", "GBP/USD"), group: "fx", format: "rate", accent: "#fb7185", description: LABEL("파운드 한 단위당 달러. 위 세 개와 방향이 반대입니다.", "US dollars per British pound — quoted the opposite way round to the three above.") },
   sofr: { aliases: ["sofr"], label: LABEL("SOFR", "SOFR"), group: "funding", format: "percentPoints", accent: "#2dd4a3" },
   effective_fed_funds: { aliases: ["effective_fed_funds", "effr"], label: LABEL("실효 연방기금금리", "Effective fed funds"), group: "funding", format: "percentPoints", accent: "#2dd4a3" },
   reserve_interest: { aliases: ["reserve_interest", "iorb"], label: LABEL("지급준비금 이자율", "IORB"), group: "funding", format: "percentPoints", accent: "#2dd4a3" },
@@ -194,6 +199,11 @@ const INSIGHTS = {
     description: LABEL("개인 투자자용 머니마켓펀드 잔액으로 단기 대기자금의 한 부분입니다.", "Retail money-market-fund balances, one component of short-term parked cash."),
     hints: [LABEL("증가는 현금성 자산 선호와 나란히 볼 수 있음", "A rise can align with preference for cash-like assets"), LABEL("감소분이 반드시 주식으로 이동하는 것은 아님", "A decline does not imply the money went to equities")],
   },
+  fx_usdkrw: { aliases: ["fx_usdkrw", "rxi_n.b.ko"], label: LABEL("원·달러", "USD/KRW"), group: "fx", format: "rate", accent: "#2dd4a3", description: LABEL("달러 한 단위당 원화. 미 연준 H.10 공식 고시값입니다.", "Korean won per US dollar, from the Federal Reserve's official H.10 release.") },
+  fx_usdjpy: { aliases: ["fx_usdjpy", "rxi_n.b.ja"], label: LABEL("엔·달러", "USD/JPY"), group: "fx", format: "rate", accent: "#a78bfa", description: LABEL("달러 한 단위당 엔화", "Japanese yen per US dollar") },
+  fx_usdcny: { aliases: ["fx_usdcny", "rxi_n.b.ch"], label: LABEL("위안·달러", "USD/CNY"), group: "fx", format: "rate", accent: "#f5b942", description: LABEL("달러 한 단위당 위안화", "Chinese yuan per US dollar") },
+  fx_eurusd: { aliases: ["fx_eurusd", "rxi$us_n.b.eu"], label: LABEL("유로·달러", "EUR/USD"), group: "fx", format: "rate", accent: "#38bdf8", description: LABEL("유로 한 단위당 달러. 위 세 개와 방향이 반대입니다.", "US dollars per euro — quoted the opposite way round to the three above.") },
+  fx_gbpusd: { aliases: ["fx_gbpusd", "rxi$us_n.b.uk"], label: LABEL("파운드·달러", "GBP/USD"), group: "fx", format: "rate", accent: "#fb7185", description: LABEL("파운드 한 단위당 달러. 위 세 개와 방향이 반대입니다.", "US dollars per British pound — quoted the opposite way round to the three above.") },
   sofr: {
     description: LABEL("미 국채 담보 익일물 조달금리로 담보부 달러 자금시장의 기준입니다.", "The secured overnight financing benchmark backed by US Treasuries."),
     hints: [LABEL("EFFR·IORB와의 간격이 확대되면 조달 압력 점검", "A widening gap to EFFR or IORB warrants a funding-pressure check")],
@@ -217,6 +227,7 @@ const OVERVIEW = [
   { id: "korea", label: LABEL("한국 자산", "Korean assets"), keys: ["kospi", "kosdaq", "samsung", "usdkrw"] },
   { id: "emerging", label: LABEL("글로벌 ETF", "Global ETFs"), keys: ["ewz", "inda", "vnm", "ewj"] },
   { id: "risk", label: LABEL("시장 위험", "Market risk"), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread"] },
+  { id: "fx", label: LABEL("환율", "Exchange rates"), keys: ["fx_usdkrw", "fx_usdjpy", "fx_eurusd", "fx_usdcny"] },
   { id: "macro", label: LABEL("매크로", "Macro"), keys: ["dxy", "usdjpy", "treasury_10y", "wti"] },
   { id: "liquidity", label: LABEL("유동성", "Liquidity"), keys: ["fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account"] },
   { id: "options", label: LABEL("옵션 위험", "Options risk"), keys: ["skew", "vvix", "ovx", "pcr"] },
@@ -229,6 +240,7 @@ const SECTIONS = [
   { id: "market-risk", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("시장심리·변동성·금리곡선·신용스프레드·금융스트레스를 나란히 봅니다.", "Compare sentiment, volatility, the yield curve, credit spread and financial stress."), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread", "financial_stress"] },
   { id: "macro-regime", eyebrow: "MACRO REGIME", title: LABEL("매크로 환경", "Macro regime"), copy: LABEL("달러·금리·원자재·고용의 방향을 확인합니다.", "Track the dollar, rates, commodities and labor conditions."), keys: ["dxy", "usdjpy", "treasury_10y", "wti", "copper", "unemployment", "initial_claims"] },
   { id: "liquidity", eyebrow: "FED & LIQUIDITY", title: LABEL("유동성 대차대조표", "Liquidity balance sheet"), copy: LABEL("연준·재무부·단기자금시장 유동성의 크기와 흐름입니다.", "Monitor Federal Reserve, Treasury and money-market liquidity."), keys: ["fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account", "m2", "retail_money_market_funds"] },
+  { id: "exchange-rates", eyebrow: "OFFICIAL FX · FEDERAL RESERVE H.10", title: LABEL("환율", "Exchange rates"), copy: LABEL("미 연준이 매 영업일 고시하는 공식 환율입니다. 앞의 세 개는 달러당 외화, 뒤의 두 개는 외화당 달러로 방향이 반대입니다.", "Official rates published each business day by the Federal Reserve. The first three are foreign currency per dollar; the last two are quoted the other way round."), keys: ["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd"] },
   { id: "funding", eyebrow: "OVERNIGHT FUNDING", title: LABEL("단기자금 조달금리", "Overnight funding"), copy: LABEL("담보·무담보 금리와 지급준비금 이자율의 간격을 봅니다.", "Compare secured, unsecured and reserve remuneration rates."), keys: ["sofr", "effective_fed_funds", "reserve_interest"] },
   { id: "options-risk", eyebrow: "DERIVATIVES", title: LABEL("옵션과 변동성", "Options and volatility"), copy: LABEL("공식 라이선스가 필요한 값은 계약 전까지 빈 상태로 표시합니다.", "Values requiring official display licenses remain blank until licensed."), keys: ["skew", "vvix", "ovx", "pcr"] },
 ];
@@ -334,7 +346,8 @@ const DISABLED_CODES = {
 const CARD_LANES = new Map([
   ...["sp500", "nasdaq", "gold", "bitcoin", "kospi", "kosdaq", "samsung", "usdkrw", "ewz", "inda",
     "vnm", "ewj", "dxy", "usdjpy", "vix", "wti", "copper"].map((key) => [key, "assets"]),
-  ...["yield_curve", "high_yield_spread", "financial_stress", "treasury_10y", "unemployment",
+  ...["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd",
+    "treasury_2y", "yield_curve", "high_yield_spread", "financial_stress", "treasury_10y", "unemployment",
     "initial_claims", "fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account",
     "m2", "retail_money_market_funds", "sofr", "effective_fed_funds", "reserve_interest"].map((key) => [key, "macro"]),
 ]);
@@ -403,6 +416,12 @@ function formatNumber(value, definition, record, compact = false) {
     }
   }
   if (format === "percentPoints") return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 3 }).format(value)}%`;
+  // Exchange rates are read at their conventional precision and never
+  // abbreviated: 1,409.94 not "1.41천", and 1.1559 not "1.16".
+  if (format === "rate") {
+    const digits = Math.abs(value) >= 100 ? 2 : 4;
+    return new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
+  }
   if (format === "compact" || (compact && Math.abs(value) >= 1000) || Math.abs(value) >= 1e6) return new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 2 }).format(value);
   return new Intl.NumberFormat(locale, { maximumFractionDigits: Math.abs(value) < 10 ? 2 : 1 }).format(value);
 }

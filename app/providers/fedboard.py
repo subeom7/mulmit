@@ -84,7 +84,26 @@ FEDBOARD_RELEASES: dict[str, FedBoardRelease] = {
         data_member="H15_data.xml",
         page_url=f"{FEDBOARD_SITE_BASE}/releases/h15/",
     ),
+    "H10": FedBoardRelease(
+        release_id="H10",
+        name="H.10 Foreign Exchange Rates",
+        archive_url=f"{FEDBOARD_SITE_BASE}/releases/h10/data/FRB_H10_xml.zip",
+        data_member="H10_data.xml",
+        page_url=f"{FEDBOARD_SITE_BASE}/releases/h10/",
+    ),
 }
+
+# H.10 quotes in two directions and the series name is the only signal. A name
+# containing ``$US`` is dollars per unit of the foreign currency (EUR 1.16);
+# everything else is foreign currency per dollar (KRW 1409.94). Reading one as
+# the other inverts the rate, so the direction is carried in the units rather
+# than left for a reader to infer.
+FOREIGN_PER_USD = "foreign_per_usd"
+USD_PER_FOREIGN = "usd_per_foreign"
+
+
+def quote_convention(provider_series_id: str) -> str:
+    return USD_PER_FOREIGN if "$US" in provider_series_id else FOREIGN_PER_USD
 
 
 @dataclass(frozen=True)
@@ -99,6 +118,19 @@ class FedBoardSeriesSpec:
     units_short: str
     frequency: str
     frequency_short: str
+
+
+def _fx(series_key, provider_series_id, name_ko, unit_long, unit_short):
+    return FedBoardSeriesSpec(
+        series_key=series_key,
+        release_id="H10",
+        provider_series_id=provider_series_id,
+        title=name_ko,
+        units=unit_long,
+        units_short=unit_short,
+        frequency="Daily, business days",
+        frequency_short="D",
+    )
 
 
 FEDBOARD_SERIES: tuple[FedBoardSeriesSpec, ...] = (
@@ -122,6 +154,17 @@ FEDBOARD_SERIES: tuple[FedBoardSeriesSpec, ...] = (
         frequency="Daily, business days",
         frequency_short="D",
     ),
+    # Units spell out the direction because the two conventions differ.
+    _fx("fx_usdkrw", "RXI_N.B.KO", "Korean won per US dollar",
+        "Korean won per US dollar", "KRW/USD"),
+    _fx("fx_usdjpy", "RXI_N.B.JA", "Japanese yen per US dollar",
+        "Japanese yen per US dollar", "JPY/USD"),
+    _fx("fx_usdcny", "RXI_N.B.CH", "Chinese yuan per US dollar",
+        "Chinese yuan per US dollar", "CNY/USD"),
+    _fx("fx_eurusd", "RXI$US_N.B.EU", "US dollars per euro",
+        "US dollars per euro", "USD/EUR"),
+    _fx("fx_gbpusd", "RXI$US_N.B.UK", "US dollars per British pound",
+        "US dollars per British pound", "USD/GBP"),
 )
 
 FEDBOARD_SERIES_BY_KEY = {spec.series_key: spec for spec in FEDBOARD_SERIES}

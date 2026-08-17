@@ -69,6 +69,7 @@ FRED_GROUPS = (
     FredGroup("liquidity", "유동성", "Liquidity"),
     FredGroup("rates", "정책금리", "Policy Rates"),
     FredGroup("commodities", "원자재", "Commodities"),
+    FredGroup("fx", "환율", "Foreign Exchange"),
 )
 
 _ST_LOUIS_FED = "Federal Reserve Bank of St. Louis"
@@ -115,6 +116,41 @@ FRED_SERIES = (
         "DGS2", "treasury_2y", "macro", "미국 2년물 금리", "2-Year Treasury Yield",
         "통화정책 기대를 가장 민감하게 반영하는 단기 국채 금리",
         "The short-maturity yield most sensitive to policy-rate expectations",
+        _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "RXI_N.B.KO", "fx_usdkrw", "fx", "원·달러", "USD/KRW",
+        "미국 달러 한 단위당 원화 환율의 공식 고시값",
+        "The official rate of Korean won per US dollar",
+        _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "RXI_N.B.JA", "fx_usdjpy", "fx", "엔·달러", "USD/JPY",
+        "미국 달러 한 단위당 엔화 환율의 공식 고시값",
+        "The official rate of Japanese yen per US dollar",
+        _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "RXI_N.B.CH", "fx_usdcny", "fx", "위안·달러", "USD/CNY",
+        "미국 달러 한 단위당 위안화 환율의 공식 고시값",
+        "The official rate of Chinese yuan per US dollar",
+        _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "RXI$US_N.B.EU", "fx_eurusd", "fx", "유로·달러", "EUR/USD",
+        "유로 한 단위당 달러 가격. 앞의 세 계열과 방향이 반대입니다.",
+        "US dollars per euro; quoted in the opposite direction to the three above.",
+        _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "RXI$US_N.B.UK", "fx_gbpusd", "fx", "파운드·달러", "GBP/USD",
+        "파운드 한 단위당 달러 가격. 앞의 세 계열과 방향이 반대입니다.",
+        "US dollars per British pound; quoted in the opposite direction to the three above.",
         _FED_BOARD, _FED_BOARD_URL,
         public_web=True,
     ),

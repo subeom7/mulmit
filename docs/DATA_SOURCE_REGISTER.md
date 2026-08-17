@@ -306,11 +306,11 @@ notes: >
 | 현재 상태 | `approved` (아래 근거의 성격에 주의) |
 | 코드 위치 | `app/providers/fedboard.py`, `app/ingest.py` |
 | 배포 기본값 | `FEDBOARD_ENABLED=false` |
-| 현재 사용 | H.15 10년물·2년물 국채 금리, 그리고 둘로 계산한 10Y−2Y 스프레드 |
+| 현재 사용 | H.15 10년물·2년물 국채 금리와 계산된 10Y−2Y 스프레드, H.10 공식 환율 5종 |
 | 기술 비용 | 무료. API 키 없음 |
 | 접근 경로 | 릴리스 페이지 XML 아카이브 (`/releases/h15/data/FRB_h15_xml.zip`) |
 | attribution | 표준 출처 표기를 `rights.notice`로 함께 전달 |
-| 공식 근거 | [DDP–FRED 전환 공지](https://www.federalreserve.gov/data/data-download-fred-information.htm), [H.15 릴리스](https://www.federalreserve.gov/releases/h15/) |
+| 공식 근거 | [DDP–FRED 전환 공지](https://www.federalreserve.gov/data/data-download-fred-information.htm), [H.15 릴리스](https://www.federalreserve.gov/releases/h15/), [H.10 릴리스](https://www.federalreserve.gov/releases/h10/) |
 
 **NY Fed와 근거의 성격이 다르다.** NY Fed는 저작권을 주장하고 명시적 라이선스를
 부여한다(연방기관이 아니므로). Board of Governors는 **연방기관**이라 그 저작물에
@@ -365,6 +365,13 @@ notes: >
 - 10Y−2Y는 **양쪽이 모두 게시한 날짜**로만 계산한다. 한쪽만 있는 날은 이월하지 않고 버린다.
 - 아카이브는 릴리스당 한 번만 내려받아 그 안의 모든 계열에 재사용한다.
 - 좁은 `Accept`(예: `application/zip`)에는 406으로 응답하므로 `*/*`를 보낸다.
+- **H.10은 호가 방향이 두 가지고 계열명이 유일한 단서다.** 이름에 `$US`가 있으면
+  "외화 한 단위당 달러"(EUR 1.1559), 없으면 "달러 한 단위당 외화"(KRW 1409.94)다.
+  반대로 읽으면 환율이 뒤집히므로 방향을 `units`에 문장으로 적어 저장한다.
+- H.10은 주 1회 게시되어 관측일이 며칠 지연된다. 정상이며 `freshness`가 `stale`로
+  표시된다.
+- 이 환율은 HIP-3 합성 FX(`xyz:JPY` 등)와 **별도 key**(`fx_*`)다. 공식값과 합성값을
+  같은 카드에 섞지 않는다.
 
 ### 3.8 Yahoo Finance / yfinance
 
@@ -430,7 +437,7 @@ Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로
 | `kospi` | `kospi`, `^ks11` | `xyz:KR200` | KOSPI 200 대용 합성값 | KRX 승인 후 공식 종가를 **별도 key**로 연결 |
 | `kosdaq` | `kosdaq`, `^kq11` | 없음 | missing | KRX 승인 전 비워 둠 |
 | `samsung` | `samsung`, `005930` | `xyz:SMSN` | USD/USDC 환산 합성 무기한선물 | KRX 원화 현물과 절대 병합하지 않음 |
-| `usdkrw` | `usdkrw`, `krw=x` | 현재 상품 미활성/누락 가능 | synthetic/missing | ECOS 또는 승인된 FX 공급자 검토 |
+| `usdkrw` | `usdkrw`, `krw=x` | `xyz:KRW` **상장폐지** | missing | 공식 환율은 아래 `fx_usdkrw`로 연결됨 |
 | `ewz` | `ewz`, `brazil` | `xyz:EWZ` | ETF-linked 합성값 | 권리 승인 전 gate |
 | `inda` | `inda`, `india` | `xyz:NIFTY` 가능 시 | INDA가 아닌 NIFTY 50 대용값 | 카드 라벨이 현재 `인도 INDA`이므로 NIFTY 대용값을 붙이면 라벨부터 고친다 |
 | `vnm` | `vnm`, `vietnam` | 없음 | missing | 승인 소스 전 비워 둠 |
@@ -478,7 +485,19 @@ alias를 정리해 proxy와 exact가 서로 다른 카드에 붙도록 먼저 �
 `SECTIONS`, `OVERVIEW`에 함께 추가하고 proxy 카드는 그대로 둔다. 공식값이
 생겼다고 proxy 카드를 덮어쓰지 않는다.
 
-### 5.3 옵션·심리·분석
+### 5.3 환율 카드 (Fed Board H.10, 연결됨)
+
+| UI key | 계열 | 방향 | 최근값 예시 |
+|---|---|---|---|
+| `fx_usdkrw` | `RXI_N.B.KO` | 달러당 원 | 1,409.94 |
+| `fx_usdjpy` | `RXI_N.B.JA` | 달러당 엔 | 157.54 |
+| `fx_usdcny` | `RXI_N.B.CH` | 달러당 위안 | 6.7474 |
+| `fx_eurusd` | `RXI$US_N.B.EU` | **유로당 달러** | 1.1559 |
+| `fx_gbpusd` | `RXI$US_N.B.UK` | **파운드당 달러** | 1.3498 |
+
+앞의 셋과 뒤의 둘은 방향이 반대다. 화면과 API 모두 `units`에 방향을 문장으로 적는다.
+
+### 5.4 옵션·심리·분석
 
 | 기능 | 현재 상태 | 활성화 조건 |
 |---|---|---|

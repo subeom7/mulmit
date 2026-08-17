@@ -229,3 +229,54 @@ def test_throttling_and_retries():
 def test_an_unknown_release_is_a_configuration_error():
     with pytest.raises(FedBoardConfigurationError):
         make_provider().load_release("H99")
+
+
+# --- H.10 foreign exchange --------------------------------------------------
+
+H10_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<message:MessageGroup xmlns:message="http://www.SDMX.org/message"
+                      xmlns:frb="http://www.federalreserve.gov/common"
+                      xmlns:kf="http://www.federalreserve.gov/H10">
+  <frb:DataSet id="H10">
+    <kf:Series SERIES_NAME="RXI_N.B.KO" CURRENCY="KRW">
+      <frb:Obs TIME_PERIOD="2026-08-06" OBS_VALUE="1413.50" OBS_STATUS="A"/>
+      <frb:Obs TIME_PERIOD="2026-08-07" OBS_VALUE="1409.94" OBS_STATUS="A"/>
+    </kf:Series>
+    <kf:Series SERIES_NAME="RXI$US_N.B.EU" CURRENCY="EUR">
+      <frb:Obs TIME_PERIOD="2026-08-07" OBS_VALUE="1.1559" OBS_STATUS="A"/>
+    </kf:Series>
+  </frb:DataSet>
+</message:MessageGroup>
+"""
+
+
+def test_the_two_quote_directions_are_told_apart_by_the_series_name():
+    """A `$US` in the name inverts the quote; reading it wrong flips the rate."""
+    from app.providers.fedboard import FOREIGN_PER_USD, USD_PER_FOREIGN, quote_convention
+
+    assert quote_convention("RXI_N.B.KO") == FOREIGN_PER_USD
+    assert quote_convention("RXI$US_N.B.EU") == USD_PER_FOREIGN
+
+
+def test_fx_units_state_the_direction_rather_than_leaving_it_implicit():
+    won = FEDBOARD_SERIES_BY_KEY["fx_usdkrw"]
+    euro = FEDBOARD_SERIES_BY_KEY["fx_eurusd"]
+
+    assert won.units_short == "KRW/USD"
+    assert euro.units_short == "USD/EUR"
+    assert won.units == "Korean won per US dollar"
+    assert euro.units == "US dollars per euro"
+
+
+def test_fx_series_are_read_from_the_h10_archive():
+    transport = Transport(_archive(member="H10_data.xml", body=H10_XML))
+    provider = make_provider(transport)
+
+    _, won = provider.fetch_series(FEDBOARD_SERIES_BY_KEY["fx_usdkrw"])
+    _, euro = provider.fetch_series(FEDBOARD_SERIES_BY_KEY["fx_eurusd"])
+
+    assert dict(won)[dt.date(2026, 8, 7)] == 1409.94
+    assert dict(euro)[dt.date(2026, 8, 7)] == 1.1559
+    # One archive, both currencies.
+    assert len(transport.requests) == 1
+    assert "h10" in transport.requests[0].full_url.lower()
