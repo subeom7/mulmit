@@ -75,7 +75,9 @@ Third-Party Service로 명시하고 그 각각의 조건을 지키라고 요구�
 
 ---
 
-## 본문 (영문)
+## 발송본 A — XYZ Ltd (trade.xyz) 앞
+
+수신: `legal@xyzltd.xyz`
 
 ```text
 Subject: Public display and derived-data permission for Mulmit (mulmit.com)
@@ -165,15 +167,34 @@ termination requirements. If the answer to any item is no, I will disable that
 specific use rather than continue it.
 
 Thank you for your time.
+
+Kind regards,
+Subeom Kwon
+subeomkwon@gmail.com
+https://mulmit.com
 ```
 
-### Hyperliquid Corp. 앞으로 보낼 때 바꿀 것
+## 발송본 B — Hyperliquid Corp. 앞
 
-위 본문의 조문 번호는 **XYZ Ltd 약관 기준**이다. Hyperliquid Corp.에 보낼 때는
-서두 두 문단을 아래로 바꾼다. 조문이 다른데 그대로 인용하면 약관을 안 읽고 보낸
-편지처럼 보인다.
+수신: `support@hyperliquid.zendesk.com`
+
+조문 번호가 달라 서두와 0번을 바꿨다. 남의 약관 조문을 그대로 인용하면 약관을
+안 읽고 보낸 편지처럼 보인다.
 
 ```text
+Subject: Public display and derived-data permission for Mulmit (mulmit.com)
+
+Hello,
+
+I operate Mulmit (https://mulmit.com), a publicly accessible bilingual market
+dashboard. It is a non-commercial personal project today, with no accounts, no
+paid tier and no advertising, though advertising or sponsorship may be added
+later.
+
+Mulmit currently displays reference values from perpetual contracts read
+through the public Hyperliquid info endpoint at api.hyperliquid.xyz. I do not
+scrape your web interface.
+
 I have read your Terms of Use. My reading is that they govern the Interface
 rather than the underlying protocol data — §1.1 states that the Company does
 not own, control or operate Hyperliquid, and §1.2 states that markets created
@@ -181,20 +202,78 @@ under permissionless deployment mechanisms are surfaced from onchain activity
 and are not reviewed, verified or approved by the Company. If that reading is
 wrong, please tell me and I will act on your answer.
 
-My most important question concerns the products deployed on Hyperliquid by
-third parties under HIP-3, which Mulmit displays alongside your own markets.
+My most important question concerns the HIP-3 products deployed on Hyperliquid
+by third parties, which Mulmit displays alongside your own markets, so I have
+put it first.
 
 0. UNDERLYING DATA — the question I most need answered
    For the HIP-3 products Mulmit reads through api.hyperliquid.xyz — in
-   particular the Korean equity and index products deployed by trade.xyz — is
-   there any condition, attribution requirement or display restriction that
-   Hyperliquid expects a downstream site to observe? I am asking trade.xyz the
-   same question separately; if this is entirely a matter for the deployer
-   rather than for you, saying so is a useful answer.
-```
+   particular the Korean equity and index products deployed by trade.xyz
+   (xyz:KR200, xyz:SMSN, xyz:SKHX, xyz:HYUNDAI) — is there any condition,
+   attribution requirement or display restriction that Hyperliquid expects a
+   downstream site to observe? I am asking trade.xyz the same question
+   separately; if this is entirely a matter for the deployer rather than for
+   you, saying so is a useful answer.
 
-Hyperliquid 본문에서는 0번 뒤 1~9번은 그대로 두되, 8번의 "your data"를
-"data from markets on Hyperliquid"로 바꾼다.
+I would also like written confirmation on the following. I have listed them
+separately because I do not want to assume that permission for one implies
+permission for another.
+
+1. DISPLAY
+   Showing mark price, oracle price, funding rate, open interest and 24-hour
+   notional volume to unauthenticated visitors of a public website.
+
+2. SERVER RELAY
+   Relaying those selected fields through my own server-side JSON API to my
+   frontend. The endpoints are open without authentication, so any visitor can
+   read the same JSON directly. I am not describing a private internal API.
+
+3. SHORT-TERM CACHING
+   Caching responses for 30 seconds and serving the last known value for up to
+   5 minutes when your API is unreachable.
+
+4. HISTORICAL STORAGE
+   Storing historical candles (candleSnapshot) in a private database in order
+   to draw price charts on the cards. Mulmit does not do this today precisely
+   because I have not confirmed whether it is permitted.
+
+5. DERIVED VALUES
+   Computing and displaying period changes, session-referenced changes, and
+   clearly labelled composite indicators built from several of your contracts.
+
+6. ATTRIBUTION
+   The exact wording and placement you require, and whether a logo or link is
+   mandatory.
+
+7. COMMERCIAL STATUS
+   Whether any of the above changes if the site later carries advertising or
+   sponsorship.
+
+Two further questions about how I describe your data, since I would rather be
+accurate than flattering:
+
+8. Mulmit labels values from markets on Hyperliquid as synthetic perpetual
+   references and states explicitly that they are not spot prices, official
+   index closes, or forecasts of the next session's open. Is that
+   characterisation acceptable to you, and is there wording you would prefer?
+
+9. When a contract is delisted, your API continues to return a frozen mark
+   with zero open interest and zero volume. Mulmit treats those as unavailable
+   rather than displaying them. Is that the behaviour you would expect from a
+   downstream display?
+
+If any of this requires a licence or agreement rather than a permission, I
+would appreciate the applicable terms, fees, geographic or user limits, and
+termination requirements. If the answer to any item is no, I will disable that
+specific use rather than continue it.
+
+Thank you for your time.
+
+Kind regards,
+Subeom Kwon
+subeomkwon@gmail.com
+https://mulmit.com
+```
 
 ## 한국어 참고본
 
