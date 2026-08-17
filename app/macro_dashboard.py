@@ -40,6 +40,13 @@ from .providers.fred import (
     FredSeriesSpec,
     rights_status_for,
 )
+from .providers.fsc import (
+    FSC_ATTRIBUTION,
+    FSC_PROVIDER_ID,
+    FSC_PUBLISHER,
+    FSC_PUBLISHER_URL,
+    FSC_TERMS_URL,
+)
 from .providers.nyfed import NYFED_PROVIDER_ID, NYFED_PUBLISHER_URL, NYFED_TERMS_URL
 from .providers.nyfed import attribution as nyfed_attribution
 
@@ -69,6 +76,7 @@ PROVIDER_NAMES = {
     NYFED_PROVIDER_ID: "Federal Reserve Bank of New York",
     FEDBOARD_PROVIDER_ID: "Federal Reserve Board",
     BLS_PROVIDER_ID: "U.S. Bureau of Labor Statistics",
+    FSC_PROVIDER_ID: FSC_PUBLISHER,
     "eia": "U.S. Energy Information Administration",
     "federal_reserve": "Federal Reserve Board",
     "treasury": "U.S. Department of the Treasury",
@@ -82,6 +90,7 @@ PROVIDER_NOTICES: dict[str, Callable[[], str]] = {
     NYFED_PROVIDER_ID: nyfed_attribution,
     FEDBOARD_PROVIDER_ID: lambda: FEDBOARD_ATTRIBUTION,
     BLS_PROVIDER_ID: lambda: BLS_ATTRIBUTION,
+    FSC_PROVIDER_ID: lambda: FSC_ATTRIBUTION,
 }
 
 
@@ -141,6 +150,7 @@ PROVIDER_URLS = {
     NYFED_PROVIDER_ID: NYFED_PUBLISHER_URL,
     FEDBOARD_PROVIDER_ID: FEDBOARD_PUBLISHER_URL,
     BLS_PROVIDER_ID: BLS_PUBLISHER_URL,
+    FSC_PROVIDER_ID: FSC_PUBLISHER_URL,
 }
 
 # What each lane requires be shown when its values are published.
@@ -170,6 +180,12 @@ PROVIDER_ATTRIBUTION: dict[str, Callable[[], dict[str, str]]] = {
         "name": PROVIDER_NAMES[BLS_PROVIDER_ID],
         "notice": BLS_ATTRIBUTION,
         "terms_url": BLS_TERMS_URL,
+    },
+    FSC_PROVIDER_ID: lambda: {
+        "provider": FSC_PROVIDER_ID,
+        "name": PROVIDER_NAMES[FSC_PROVIDER_ID],
+        "notice": FSC_ATTRIBUTION,
+        "terms_url": FSC_TERMS_URL,
     },
 }
 

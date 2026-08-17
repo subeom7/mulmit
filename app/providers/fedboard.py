@@ -180,6 +180,43 @@ FEDBOARD_SERIES: tuple[FedBoardSeriesSpec, ...] = (
     _fx("fx_gbpusd", "RXI$US_N.B.UK", "US dollars per British pound",
         "US dollars per British pound", "USD/GBP"),
 
+    # The Board's own trade-weighted dollar indexes, published in the same H.10
+    # archive as the bilateral rates above. They are **not** the ICE Dollar
+    # Index: different basket, different weights, and a 2006 = 100 base rather
+    # than DXY's 1973 = 100, so the levels are not comparable and these are
+    # never labelled "DXY". They are what this project may publish, which the
+    # ICE index is not.
+    FedBoardSeriesSpec(
+        series_key="dollar_index_broad",
+        release_id="H10",
+        provider_series_id="JRXWTFB_N.B",
+        title="Nominal Broad U.S. Dollar Index",
+        units="Index, Jan 2006 = 100",
+        units_short="pt",
+        frequency="Daily, business days",
+        frequency_short="D",
+    ),
+    FedBoardSeriesSpec(
+        series_key="dollar_index_afe",
+        release_id="H10",
+        provider_series_id="JRXWTFN_N.B",
+        title="Nominal Advanced Foreign Economies U.S. Dollar Index",
+        units="Index, Jan 2006 = 100",
+        units_short="pt",
+        frequency="Daily, business days",
+        frequency_short="D",
+    ),
+    FedBoardSeriesSpec(
+        series_key="dollar_index_eme",
+        release_id="H10",
+        provider_series_id="JRXWTFO_N.B",
+        title="Nominal Emerging Market Economies U.S. Dollar Index",
+        units="Index, Jan 2006 = 100",
+        units_short="pt",
+        frequency="Daily, business days",
+        frequency_short="D",
+    ),
+
     # H.4.1 reports in millions. The `_Fnn` suffix is a Reserve district, not a
     # line item, so the aggregate is the bare name with DISTRIBUTION=TOT — the
     # Treasury account sits entirely in District 2, which makes F02 look like

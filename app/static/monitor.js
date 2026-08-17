@@ -100,7 +100,18 @@ const METRICS = {
   bitcoin: { aliases: ["bitcoin", "btc", "btc-usd", "btcusd"], label: LABEL("비트코인", "Bitcoin"), group: "global", format: "currency", currency: "USD", accent: "#f5b942", description: LABEL("유동성과 위험선호에 민감한 디지털 자산", "A digital asset sensitive to liquidity and risk appetite") },
   kospi: { aliases: ["kospi", "^ks11", "ks11"], label: LABEL("코스피", "KOSPI"), group: "korea", format: "number", preferDrawdown: true, accent: "#2dd4a3", description: LABEL("한국 대형주 시장", "Korean large-cap equity market") },
   kosdaq: { aliases: ["kosdaq", "^kq11", "kq11"], label: LABEL("코스닥", "KOSDAQ"), group: "korea", format: "number", preferDrawdown: true, accent: "#2dd4a3", description: LABEL("한국 성장주 중심 시장", "Korean growth-equity market") },
-  samsung: { aliases: ["samsung", "005930.ks", "005930"], label: LABEL("삼성전자", "Samsung Electronics"), group: "korea", format: "currency", currency: "KRW", accent: "#2dd4a3", description: LABEL("한국 증시 비중이 큰 반도체 대표 종목", "A major semiconductor constituent of Korea's equity market") },
+  // `005930` deliberately absent: that is the Korean issue code, and it now
+  // identifies the official won close on `samsung_exact`. This card is the
+  // USD synthetic perpetual, so letting both match one record would merge two
+  // different measurements into one series.
+  samsung: { aliases: ["samsung", "005930.ks"], label: LABEL("삼성전자", "Samsung Electronics"), group: "korea", format: "currency", currency: "KRW", accent: "#2dd4a3", description: LABEL("한국 증시 비중이 큰 반도체 대표 종목", "A major semiconductor constituent of Korea's equity market") },
+  dollar_index_broad: { aliases: ["dollar_index_broad", "jrxwtfb_n.b"], label: LABEL("광의 달러지수", "Broad dollar index"), group: "macro", format: "number", accent: "#a78bfa", description: LABEL("연준이 교역량으로 가중한 달러 강세 지표. ICE 달러지수(DXY)와 값을 비교할 수 없습니다", "The Fed's trade-weighted dollar index — its level is not comparable with ICE's DXY") },
+  dollar_index_afe: { aliases: ["dollar_index_afe", "jrxwtfn_n.b"], label: LABEL("선진국 달러지수", "AFE dollar index"), group: "macro", format: "number", accent: "#a78bfa", description: LABEL("선진 교역상대국 통화 대비 달러", "The dollar against advanced foreign economies") },
+  dollar_index_eme: { aliases: ["dollar_index_eme", "jrxwtfo_n.b"], label: LABEL("신흥국 달러지수", "EME dollar index"), group: "macro", format: "number", accent: "#a78bfa", description: LABEL("신흥 교역상대국 통화 대비 달러", "The dollar against emerging market economies") },
+  kospi_exact: { aliases: ["kospi_exact", "fsc_kospi", "코스피"], label: LABEL("코스피 공식 종가", "KOSPI official close"), group: "korea", format: "number", accent: "#2dd4a3", description: LABEL("한국거래소 코스피 지수의 장 마감 확정값", "The confirmed Korea Exchange KOSPI close") },
+  kosdaq_exact: { aliases: ["kosdaq_exact", "fsc_kosdaq", "코스닥"], label: LABEL("코스닥 공식 종가", "KOSDAQ official close"), group: "korea", format: "number", accent: "#2dd4a3", description: LABEL("한국거래소 코스닥 지수의 장 마감 확정값", "The confirmed Korea Exchange KOSDAQ close") },
+  samsung_exact: { aliases: ["samsung_exact", "fsc_005930", "005930"], label: LABEL("삼성전자 공식 종가", "Samsung official close"), group: "korea", format: "currency", currency: "KRW", accent: "#2dd4a3", description: LABEL("삼성전자 보통주의 원화 종가", "The Korean won close for Samsung Electronics common stock") },
+  sk_hynix_exact: { aliases: ["sk_hynix_exact", "fsc_000660", "000660"], label: LABEL("SK하이닉스 공식 종가", "SK Hynix official close"), group: "korea", format: "currency", currency: "KRW", accent: "#2dd4a3", description: LABEL("SK하이닉스 보통주의 원화 종가", "The Korean won close for SK Hynix common stock") },
   usdkrw: { aliases: ["usdkrw", "krw=x", "krwusd", "usd/krw"], label: LABEL("원·달러", "USD/KRW"), group: "korea", format: "currency", currency: "KRW", accent: "#2dd4a3", description: LABEL("달러 한 단위당 원화 환율", "Korean won per US dollar") },
   ewz: { aliases: ["ewz", "brazil"], label: LABEL("브라질 EWZ", "Brazil EWZ"), group: "emerging", format: "currency", currency: "USD", accent: "#38bdf8", description: LABEL("브라질 주식시장 ETF", "Brazil equity ETF") },
   inda: { aliases: ["inda", "india"], label: LABEL("인도 INDA", "India INDA"), group: "emerging", format: "currency", currency: "USD", accent: "#38bdf8", description: LABEL("인도 주식시장 ETF", "India equity ETF") },
@@ -238,7 +249,7 @@ const OVERVIEW = [
   { id: "emerging", label: LABEL("글로벌 ETF", "Global ETFs"), keys: ["ewz", "inda", "vnm", "ewj"] },
   { id: "risk", label: LABEL("시장 위험", "Market risk"), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread"] },
   { id: "fx", label: LABEL("환율", "Exchange rates"), keys: ["fx_usdkrw", "fx_usdjpy", "fx_eurusd", "fx_usdcny"] },
-  { id: "macro", label: LABEL("매크로", "Macro"), keys: ["dxy", "usdjpy", "treasury_10y", "wti"] },
+  { id: "macro", label: LABEL("매크로", "Macro"), keys: ["dollar_index_broad", "usdjpy", "treasury_10y", "wti"] },
   { id: "liquidity", label: LABEL("유동성", "Liquidity"), keys: ["fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account"] },
   { id: "options", label: LABEL("옵션 위험", "Options risk"), keys: ["skew", "vvix", "ovx", "pcr"] },
 ];
@@ -246,11 +257,12 @@ const OVERVIEW = [
 const SECTIONS = [
   { id: "global-assets", eyebrow: "GLOBAL PRICES", title: LABEL("글로벌 자산", "Global assets"), copy: LABEL("전고점 대비 위치와 최근 가격 흐름을 함께 봅니다.", "View recent prices alongside distance from prior highs."), keys: ["sp500", "nasdaq", "gold", "bitcoin"] },
   { id: "korean-assets", eyebrow: "KOREA", title: LABEL("한국 자산", "Korean assets"), copy: LABEL("한국 주식과 환율을 같은 화면에서 비교합니다.", "Compare Korean equities and the won on one screen."), keys: ["kospi", "kosdaq", "samsung", "usdkrw"] },
+  { id: "korea-official", eyebrow: "KOREA · OFFICIAL CLOSE", title: LABEL("한국 공식 종가", "Korean official closes"), copy: LABEL("한국거래소 장 마감 확정값입니다. 금융위원회가 공공데이터로 개방한 자료로, 기준일 다음 영업일에 공개됩니다. 위의 합성 지표와 같은 값이 아닙니다.", "Confirmed Korea Exchange closes, opened as public data by the Financial Services Commission and published the next business day. These are not the synthetic values above."), keys: ["kospi_exact", "kosdaq_exact", "samsung_exact", "sk_hynix_exact"] },
   { id: "global-etfs", eyebrow: "CROSS-BORDER ETFs", title: LABEL("글로벌 지역 ETF", "Regional ETFs"), copy: LABEL("미국 상장 ETF를 통해 지역별 위험선호를 확인합니다.", "Use US-listed ETFs to compare regional risk appetite."), keys: ["ewz", "inda", "vnm", "ewj"] },
   { id: "market-risk", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("시장심리·변동성·금리곡선·신용스프레드·금융스트레스를 나란히 봅니다.", "Compare sentiment, volatility, the yield curve, credit spread and financial stress."), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread", "financial_stress"] },
-  { id: "macro-regime", eyebrow: "MACRO REGIME", title: LABEL("매크로 환경", "Macro regime"), copy: LABEL("달러·금리·원자재·고용의 방향을 확인합니다.", "Track the dollar, rates, commodities and labor conditions."), keys: ["dxy", "usdjpy", "treasury_10y", "wti", "copper", "unemployment", "initial_claims"] },
+  { id: "macro-regime", eyebrow: "MACRO REGIME", title: LABEL("매크로 환경", "Macro regime"), copy: LABEL("달러·금리·원자재·고용의 방향을 확인합니다.", "Track the dollar, rates, commodities and labor conditions."), keys: ["dollar_index_broad", "dxy", "usdjpy", "treasury_10y", "wti", "copper", "unemployment", "initial_claims"] },
   { id: "liquidity", eyebrow: "FED & LIQUIDITY", title: LABEL("유동성 대차대조표", "Liquidity balance sheet"), copy: LABEL("연준·재무부·단기자금시장 유동성의 크기와 흐름입니다.", "Monitor Federal Reserve, Treasury and money-market liquidity."), keys: ["fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account", "m2", "retail_money_market_funds"] },
-  { id: "exchange-rates", eyebrow: "OFFICIAL FX · FEDERAL RESERVE H.10", title: LABEL("환율", "Exchange rates"), copy: LABEL("미 연준이 매 영업일 고시하는 공식 환율입니다. 앞의 세 개는 달러당 외화, 뒤의 두 개는 외화당 달러로 방향이 반대입니다.", "Official rates published each business day by the Federal Reserve. The first three are foreign currency per dollar; the last two are quoted the other way round."), keys: ["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd"] },
+  { id: "exchange-rates", eyebrow: "OFFICIAL FX · FEDERAL RESERVE H.10", title: LABEL("환율", "Exchange rates"), copy: LABEL("미 연준이 매 영업일 고시하는 공식 환율입니다. 앞의 세 개는 달러당 외화, 뒤의 두 개는 외화당 달러로 방향이 반대입니다.", "Official rates published each business day by the Federal Reserve. The first three are foreign currency per dollar; the last two are quoted the other way round."), keys: ["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd", "dollar_index_afe", "dollar_index_eme"] },
   { id: "funding", eyebrow: "OVERNIGHT FUNDING", title: LABEL("단기자금 조달금리", "Overnight funding"), copy: LABEL("담보·무담보 금리와 지급준비금 이자율의 간격을 봅니다.", "Compare secured, unsecured and reserve remuneration rates."), keys: ["sofr", "effective_fed_funds", "reserve_interest"] },
   { id: "options-risk", eyebrow: "DERIVATIVES", title: LABEL("옵션과 변동성", "Options and volatility"), copy: LABEL("공식 라이선스가 필요한 값은 계약 전까지 빈 상태로 표시합니다.", "Values requiring official display licenses remain blank until licensed."), keys: ["skew", "vvix", "ovx", "pcr"] },
 ];
@@ -361,7 +373,9 @@ const CARD_LANES = new Map([
   ...["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd",
     "treasury_2y", "yield_curve", "high_yield_spread", "financial_stress", "treasury_10y", "unemployment",
     "initial_claims", "fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account",
-    "m2", "retail_money_market_funds", "sofr", "effective_fed_funds", "reserve_interest"].map((key) => [key, "macro"]),
+    "m2", "retail_money_market_funds", "sofr", "effective_fed_funds", "reserve_interest",
+    "dollar_index_broad", "dollar_index_afe", "dollar_index_eme",
+    "kospi_exact", "kosdaq_exact", "samsung_exact", "sk_hynix_exact"].map((key) => [key, "macro"]),
 ]);
 
 // One place decides why a card shows no number, so the summary tile and the

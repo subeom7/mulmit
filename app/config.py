@@ -120,8 +120,25 @@ SEC_EDGAR_TICKERS = [
 # pending, so the serving gate defaults to closed and a deployment has to opt in
 # explicitly (and record that decision in docs/DATA_SOURCE_REGISTER.md).
 HIP3_PUBLIC_DISPLAY_ENABLED = _bool("HIP3_PUBLIC_DISPLAY_ENABLED", False)
+# Financial Services Commission end-of-day data on data.go.kr. The three
+# datasets used here are registered with 이용허락범위 "제한 없음" — the portal's
+# widest licence tier — which is a different and broader grant than the KRX
+# OPEN API terms below. Published the next business day at 13:00 KST, so this
+# is never a live quote. https://www.data.go.kr/data/15094808/openapi.do
+FSC_ENABLED = _bool("FSC_ENABLED", False)
+FSC_API_KEY = os.environ.get("FSC_API_KEY", "").strip()
+FSC_TIMEOUT = _float("FSC_TIMEOUT", 20.0)
+FSC_RETRIES = _int("FSC_RETRIES", 2)
+FSC_REQUEST_INTERVAL = _float("FSC_REQUEST_INTERVAL", 0.2)
+# One publication a day means a long refresh window costs nothing and keeps the
+# daily call allowance clear.
+FSC_MAX_AGE = _int("FSC_MAX_AGE", 60 * 60 * 12)
+FSC_HISTORY_DAYS = _int("FSC_HISTORY_DAYS", 366 * 5)
+
 # KRX OPEN API must remain disabled until KRX approves the exact public use
-# case. Possessing a key alone does not grant redistribution rights.
+# case. Possessing a key alone does not grant redistribution rights. The FSC
+# lane above does not change this: it is a separate grant over a separate,
+# next-day dataset, not KRX approval arriving by another route.
 KRX_ENABLED = _bool("KRX_ENABLED", False)
 KRX_API_KEY = os.environ.get("KRX_API_KEY", "").strip()
 KRX_TIMEOUT = _float("KRX_TIMEOUT", 15.0)

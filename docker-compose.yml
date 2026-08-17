@@ -27,6 +27,7 @@ x-app: &app
     NYFED_ENABLED: ${NYFED_ENABLED:-false}
     FEDBOARD_ENABLED: ${FEDBOARD_ENABLED:-false}
     BLS_ENABLED: ${BLS_ENABLED:-false}
+    FSC_ENABLED: ${FSC_ENABLED:-false}
     SEC_EDGAR_ENABLED: ${SEC_EDGAR_ENABLED:-false}
     # web은 lane 판정에만 쓰고 EDGAR를 호출하지 않지만, 값이 다르면 서빙과 수집의
     # 판정이 어긋나므로 같은 값을 넘긴다.
@@ -88,6 +89,9 @@ services:
       KRX_API_KEY: ${KRX_API_KEY:-}
       BLS_API_KEY: ${BLS_API_KEY:-}
       BLS_MAX_AGE: ${BLS_MAX_AGE:-43200}
+      FSC_API_KEY: ${FSC_API_KEY:-}
+      FSC_MAX_AGE: ${FSC_MAX_AGE:-43200}
+      FSC_HISTORY_DAYS: ${FSC_HISTORY_DAYS:-1830}
       FEDBOARD_MAX_AGE: ${FEDBOARD_MAX_AGE:-43200}
       FEDBOARD_HISTORY_DAYS: ${FEDBOARD_HISTORY_DAYS:-9150}
       NYFED_MAX_AGE: ${NYFED_MAX_AGE:-21600}
