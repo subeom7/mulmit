@@ -592,7 +592,9 @@ function pruneEmpty() {
   $$(".overview-group").forEach((group) => {
     group.hidden = $$(".summary-card", group).every((card) => card.hidden);
   });
-  $$("#deep-sections .dashboard-section").forEach((section) => {
+  // #korea-official is relocated out of #deep-sections into the Korea zone,
+  // so the selector must name it or an all-empty section would keep its header.
+  $$("#deep-sections .dashboard-section, #korea-official").forEach((section) => {
     const cards = $$(".metric-card", section);
     if (cards.length) section.hidden = cards.every((card) => card.hidden);
   });
@@ -970,7 +972,8 @@ function renderKrOvernight() {
       const dd = document.createElement("dd"); dd.textContent = valueText;
       wrap.append(dt, dd); return wrap;
     };
-    meta.append(row(t("kro.mark"), `${markUsd}${change24h === null ? "" : ` · 24h ${formatSigned(change24h)}`}`));
+    const markText = card.kind === "index" ? kroMoney(mark, "index") : markUsd;
+    meta.append(row(t("kro.mark"), `${markText}${change24h === null ? "" : ` · 24h ${formatSigned(change24h)}`}`));
     meta.append(row(t("kro.official"), officialClose === null ? "—" : `${kroMoney(officialClose, card.kind)} · ${kroDate(card.official?.date)}`));
     if (card.kind !== "index" && payload.fx?.status === "ok") {
       meta.append(row(t("kro.fx"), `${payload.fx.rate.toLocaleString("en-US", { maximumFractionDigits: 2 })} · ${kroDate(payload.fx.date)} H.10`));
