@@ -24,6 +24,8 @@ def db(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "HIP3_PUBLIC_DISPLAY_ENABLED", False)
     monkeypatch.setattr(config, "SEC_EDGAR_ENABLED", False)
     monkeypatch.setattr(config, "SEC_EDGAR_USER_AGENT", "")
+    monkeypatch.setattr(config, "FSC_ENABLED", False)
+    monkeypatch.setattr(config, "FSC_API_KEY", "")
     store.reset(f"sqlite:///{tmp_path / 'test.db'}")
     store.init_db()
     yield store

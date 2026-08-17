@@ -70,12 +70,15 @@ FRED_GROUPS = (
     FredGroup("rates", "정책금리", "Policy Rates"),
     FredGroup("commodities", "원자재", "Commodities"),
     FredGroup("fx", "환율", "Foreign Exchange"),
+    FredGroup("korea", "한국 공식 종가", "Korean Official Closes"),
 )
 
 _ST_LOUIS_FED = "Federal Reserve Bank of St. Louis"
 _ST_LOUIS_FED_URL = "https://www.stlouisfed.org/"
 _FED_BOARD = "Board of Governors of the Federal Reserve System"
 _FED_BOARD_URL = "https://www.federalreserve.gov/"
+_FSC = "금융위원회 (Financial Services Commission)"
+_FSC_URL = "https://www.fsc.go.kr/"
 _NY_FED = "Federal Reserve Bank of New York"
 _NY_FED_URL = "https://www.newyorkfed.org/"
 
@@ -232,6 +235,41 @@ FRED_SERIES = (
         "국제통화기금이 집계한 월간 글로벌 구리 가격", "Monthly global copper price reported by the IMF",
         "International Monetary Fund", "https://www.imf.org/",
         public_web=False,
+    ),
+    # Korean official closes, published as open data by the Financial Services
+    # Commission. These are separate cards from the HIP-3 proxies `kospi`,
+    # `kosdaq` and `samsung` on purpose: an exchange close in won and a synthetic
+    # perpetual in USD are not the same measurement, so they never share a key
+    # and are never spliced into one series.
+    FredSeriesSpec(
+        "FSC_KOSPI", "kospi_exact", "korea", "코스피 (공식 종가)", "KOSPI (official close)",
+        "한국거래소 코스피 지수의 공식 종가. 다음 영업일에 공개되는 장 마감 기준값입니다",
+        "The official Korea Exchange KOSPI close, published the next business day",
+        _FSC, _FSC_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "FSC_KOSDAQ", "kosdaq_exact", "korea", "코스닥 (공식 종가)", "KOSDAQ (official close)",
+        "한국거래소 코스닥 지수의 공식 종가. 다음 영업일에 공개되는 장 마감 기준값입니다",
+        "The official Korea Exchange KOSDAQ close, published the next business day",
+        _FSC, _FSC_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "FSC_005930", "samsung_exact", "korea", "삼성전자 (공식 종가)",
+        "Samsung Electronics (official close)",
+        "삼성전자 보통주의 원화 종가. USD 환산 합성 무기한선물과 다른 값입니다",
+        "The Korean won close for Samsung Electronics common stock, not a USD synthetic",
+        _FSC, _FSC_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "FSC_000660", "sk_hynix_exact", "korea", "SK하이닉스 (공식 종가)",
+        "SK Hynix (official close)",
+        "SK하이닉스 보통주의 원화 종가. USD 환산 합성 무기한선물과 다른 값입니다",
+        "The Korean won close for SK Hynix common stock, not a USD synthetic",
+        _FSC, _FSC_URL,
+        public_web=True,
     ),
 )
 FRED_SERIES_BY_ID = {spec.series_id: spec for spec in FRED_SERIES}

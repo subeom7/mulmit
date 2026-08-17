@@ -51,6 +51,15 @@ from .providers.fred import (
     FredProvider,
     rights_status_for,
 )
+from .providers.fsc import (
+    FSC_PROVIDER_ID,
+    FSC_PUBLISHER,
+    FSC_PUBLISHER_URL,
+    FSC_SERIES,
+    FSC_SERIES_BY_KEY,
+    FSC_TERMS_URL,
+    FscProvider,
+)
 from .providers.nyfed import (
     NYFED_PROVIDER_ID,
     NYFED_PUBLISHER,
@@ -376,6 +385,74 @@ def refresh_bls(*, force: bool = False) -> dict:
     return result
 
 
+def refresh_fsc(*, force: bool = False) -> dict:
+    """Refresh the Korean official closes published as FSC open data.
+
+    One publication a day, the business day after the close, so this asks for a
+    date window rather than a snapshot and lets the store deduplicate. A missing
+    row for today is the normal state before 13:00 KST, not a failure.
+    """
+    if not config.FSC_ENABLED:
+        return {"skipped": "disabled", "attempted": 0, "updated": 0, "failed": 0}
+    if not config.FSC_API_KEY:
+        # Enabled without a key is an operator mistake worth naming, not a
+        # silent no-op that looks like "the market had no data today".
+        log.warning("FSC_ENABLED=true 이지만 FSC_API_KEY가 비어 있어 건너뜁니다")
+        return {"skipped": "not_configured", "attempted": 0, "updated": 0, "failed": 0}
+
+    keys = [spec.series_key for spec in FSC_SERIES]
+    targets = (
+        keys
+        if force
+        else [
+            key
+            for key in store.stale_economic_series(keys, config.FSC_MAX_AGE)
+            if _series_owner(key) in (None, FSC_PROVIDER_ID)
+        ]
+    )
+    if not targets:
+        return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
+
+    provider = FscProvider(
+        config.FSC_API_KEY,
+        timeout=config.FSC_TIMEOUT,
+        retries=config.FSC_RETRIES,
+        request_interval=config.FSC_REQUEST_INTERVAL,
+    )
+    start = dt.date.today() - dt.timedelta(days=config.FSC_HISTORY_DAYS)
+    result = {"attempted": 0, "updated": 0, "failed": 0, "rate_limited": 0, "observations": 0}
+
+    for key in targets:
+        spec = FSC_SERIES_BY_KEY[key]
+        result["attempted"] += 1
+        try:
+            metadata, observations = provider.fetch_series(spec, start=start)
+            count = store.save_economic_series(
+                spec.series_key,
+                provider_id=FSC_PROVIDER_ID,
+                provider_series_id=spec.provider_series_id,
+                metadata_fields=metadata,
+                observations=observations,
+                publisher=FSC_PUBLISHER,
+                publisher_url=FSC_PUBLISHER_URL,
+                series_url=spec.series_url,
+                rights_status="approved",
+                rights_evidence=FSC_TERMS_URL,
+            )
+            result["updated"] += 1
+            result["observations"] += count
+            log.info("거시 갱신 %s/%s (%d행)", FSC_PROVIDER_ID, spec.provider_series_id, count)
+        except RateLimited:
+            result["rate_limited"] += 1
+            log.warning("data.go.kr 일일 호출 한도 — 다음 주기에 재시도")
+            break
+        except Exception as exc:  # noqa: BLE001 - 한 계열 실패가 나머지를 막지 않는다
+            result["failed"] += 1
+            store.mark_economic_error(spec.series_key, str(exc))
+            log.warning("거시 갱신 실패 %s: %s", spec.provider_series_id, exc)
+    return result
+
+
 def _series_owner(series_key: str) -> str | None:
     """Which provider last collected this series, if any.
 
@@ -544,11 +621,13 @@ def run_once(tickers: list[str] | None = None) -> dict:
         nyfed_result = {"skipped": "explicit_price_refresh"}
         fedboard_result = {"skipped": "explicit_price_refresh"}
         bls_result = {"skipped": "explicit_price_refresh"}
+        fsc_result = {"skipped": "explicit_price_refresh"}
         if automatic:
             fred_result = refresh_fred()
             nyfed_result = refresh_nyfed()
             fedboard_result = refresh_fedboard()
             bls_result = refresh_bls()
+            fsc_result = refresh_fsc()
             insider_result = refresh_insider_filings()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
@@ -563,6 +642,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             "nyfed": nyfed_result,
             "fedboard": fedboard_result,
             "bls": bls_result,
+            "fsc": fsc_result,
             "insider": insider_result,
             "elapsed": round(time.time() - started, 2),
         }
@@ -578,6 +658,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             nyfed_result = refresh_nyfed()
             fedboard_result = refresh_fedboard()
             bls_result = refresh_bls()
+            fsc_result = refresh_fsc()
             insider_result = refresh_insider_filings()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
@@ -635,11 +716,13 @@ def run_once(tickers: list[str] | None = None) -> dict:
     nyfed_result = {"skipped": "explicit_price_refresh"}
     fedboard_result = {"skipped": "explicit_price_refresh"}
     bls_result = {"skipped": "explicit_price_refresh"}
+    fsc_result = {"skipped": "explicit_price_refresh"}
     if automatic:
         fred_result = refresh_fred()
         nyfed_result = refresh_nyfed()
         fedboard_result = refresh_fedboard()
         bls_result = refresh_bls()
+        fsc_result = refresh_fsc()
         insider_result = refresh_insider_filings()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
@@ -648,6 +731,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     result["nyfed"] = nyfed_result
     result["fedboard"] = fedboard_result
     result["bls"] = bls_result
+    result["fsc"] = fsc_result
     result["insider"] = insider_result
     result["elapsed"] = round(time.time() - started, 2)
     log.info("수집 완료: %s", result)

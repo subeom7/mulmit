@@ -176,6 +176,12 @@ KRX 승인이 나더라도 KRX 공식 종가는 HIP-3 `xyz:KR200`·`xyz:SMSN`과
 key로 저장한다. 같은 카드 안에서 두 값을 번갈아 채우거나 한 시계열로 이어 붙이지
 않는다.
 
+**이 lane이 막혀 있는 동안에도 코스피·코스닥·삼성전자·SK하이닉스의 장 마감값은
+표시된다.** 금융위원회가 같은 자료를 공공데이터로 개방했고 그 이용허락범위가
+“제한 없음”이기 때문이다(§3.9, `DS-2026-006`). 다만 그것은 T+1 장 마감값이고,
+실시간 시세와 KRX 통계정보 전체는 여전히 이 lane의 승인 대상이다. §3.9가 열렸다고
+`KRX_ENABLED`를 켜지 않는다.
+
 ### 3.5 SEC EDGAR (Form 3/4/5 지분공시)
 
 | 항목 | 기록 |
@@ -428,7 +434,65 @@ notes: >
   로고는 사용하지 않는다. 월간 자료의 M13은 연평균이며 월 관측치가 아니므로 제외한다.
 ```
 
-### 3.9 DOL ETA 신규 실업수당 — **보류**
+### 3.9 금융위원회 공공데이터 (data.go.kr)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `fsc` |
+| 현재 상태 | `approved` |
+| 코드 위치 | `app/providers/fsc.py`, `app/ingest.py`, `tests/test_fsc_provider.py` |
+| 배포 기본값 | `FSC_ENABLED=false`, `FSC_API_KEY=` |
+| 현재 사용 | 코스피·코스닥 지수 종가, 삼성전자 `005930`·SK하이닉스 `000660` 종가 |
+| 기술 비용 | 무료. data.go.kr 활용신청으로 키 발급 |
+| 갱신 | 일 1회. 기준일 **다음 영업일 13시(KST) 이후** 공개. 실시간 아님 |
+| attribution | `출처: 금융위원회 (공공데이터포털 data.go.kr)`. `rights.notice`로 전달 |
+| 공식 근거 | [주식시세정보](https://www.data.go.kr/data/15094808/openapi.do), [지수시세정보](https://www.data.go.kr/data/15094807/openapi.do), [KRX상장종목정보](https://www.data.go.kr/data/15094775/openapi.do) |
+
+**§3.4의 KRX lane과 혼동하지 않는다.** 원 데이터는 같은 거래소에서 나오지만 허락의
+근거가 다르다. KRX OPEN API 약관은 비상업 이용으로 한정하고 제3자 제공을 금지하며,
+Mulmit의 공개 JSON API가 바로 그 “제3자 제공”에 해당할 수 있어 아직
+`pending_rights`다. 금융위원회는 같은 장 마감 자료를 연계받아 공공데이터로
+개방했고, 위 세 데이터셋 모두 포털에 이용허락범위 **“제한 없음”**, 비용 **“무료”**로
+등록돼 있다. 포털이 부여하는 가장 넓은 등급이고, 이 lane이 기대는 근거는 그것이다.
+
+이 lane을 여는 것은 KRX 승인이 아니다. 실시간 시세와 KRX 통계정보 전체는 여전히
+별도 계약 영역이고 `KRX_ENABLED`는 계속 `false`다. 두 게이트는 서로를 열지 않으며
+`tests/test_fsc_provider.py::test_opening_this_lane_does_not_open_the_krx_lane`이
+이를 고정한다.
+
+공식 종가는 HIP-3 합성값과 **별도 key**로 저장한다(§5.1·§5.2 참조). `samsung` 카드의
+alias에서 `005930`을 제거했다 — 그 코드는 이제 공식 원화 종가를 식별하므로,
+alias를 그대로 두면 하나의 레코드가 합성 무기한선물 카드와 공식 종가 카드에 동시에
+붙어 서로 다른 측정값이 한 카드에서 섞인다.
+
+```yaml
+decision_id: DS-2026-006
+provider_id: fsc
+status: approved
+reviewed_at: 2026-08-17
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://www.data.go.kr/data/15094808/openapi.do
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  cache_ttl_seconds: 300
+  stale_seconds: 0
+  historical_storage: true
+  derived_metrics: true
+  advertising: true
+attribution: "출처: 금융위원회 (공공데이터포털 data.go.kr)"
+expires_at: null
+recheck_at: 2027-08-17
+notes: >
+  이용허락범위 "제한 없음"은 포털의 최광의 등급이며 상업적 이용과 재배포를 별도로
+  제한하지 않는다. 다만 개방 자료는 T+1 장 마감값이므로 실시간이라고 표기하지
+  않는다. LIKE 계열 필터(likeSrtnCd)는 요청 전송량을 줄이는 용도이고, 저장 전에
+  srtnCd/idxNm을 정확히 재확인한다. 같은 식별자·같은 날짜에 서로 다른 종가가
+  둘 이상 오면 하나를 고르지 않고 그 계열을 실패시킨다.
+```
+
+### 3.10 DOL ETA 신규 실업수당 — **보류**
 
 | 항목 | 기록 |
 |---|---|
@@ -447,7 +511,7 @@ notes: >
 연결하려면 ETA 539 레코드 레이아웃 문서를 확보하거나, 전국 계열의 CSV/JSON 경로를
 찾아야 한다.
 
-### 3.10 Yahoo Finance / yfinance
+### 3.11 Yahoo Finance / yfinance
 
 | 항목 | 기록 |
 |---|---|
@@ -460,7 +524,7 @@ notes: >
 
 yfinance 패키지가 공개 표시·저장·재배포 권리를 부여한다고 해석하지 않는다. 401/429를 스크래핑 엔드포인트로 우회하지 않는다.
 
-### 3.11 Cboe, ICE, IMF
+### 3.12 Cboe, ICE, IMF
 
 | 공급자/권리자 | 대상 | 상태 | 현재 결정 | 공식 근거 |
 |---|---|---|---|---|
@@ -508,9 +572,9 @@ Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로
 | `nasdaq` | `nasdaq`, `qqq` | `xyz:XYZ100` | Nasdaq 대용 합성값 | 공식 Nasdaq Composite/100으로 표기 금지 |
 | `gold` | `gold`, `xauusd` | `xyz:GOLD` | 합성 proxy | 승인 범위 확인 |
 | `bitcoin` | `bitcoin`, `btc` | 없음 | missing | HIP-3 main DEX BTC 경로와 외부 표시 권리를 함께 검토 |
-| `kospi` | `kospi`, `^ks11` | `xyz:KR200` | KOSPI 200 대용 합성값 | KRX 승인 후 공식 종가를 **별도 key**로 연결 |
-| `kosdaq` | `kosdaq`, `^kq11` | 없음 | missing | KRX 승인 전 비워 둠 |
-| `samsung` | `samsung`, `005930` | `xyz:SMSN` | USD/USDC 환산 합성 무기한선물 | KRX 원화 현물과 절대 병합하지 않음 |
+| `kospi` | `kospi`, `^ks11` | `xyz:KR200` | KOSPI 200 대용 합성값 | 공식 종가는 `kospi_exact`로 **연결됨**(`DS-2026-006`). 이 카드는 그대로 둔다 |
+| `kosdaq` | `kosdaq`, `^kq11` | 없음 | missing | HIP-3 대용값이 없다. 공식 종가는 `kosdaq_exact`로 **연결됨** |
+| `samsung` | `samsung`, `005930.ks` | `xyz:SMSN` | USD/USDC 환산 합성 무기한선물 | alias `005930` **제거됨**. 그 코드는 이제 `samsung_exact`(원화 공식 종가)를 식별하므로 두 카드가 한 레코드를 집으면 안 된다 |
 | `usdkrw` | `usdkrw`, `krw=x` | `xyz:KRW` **상장폐지** | missing | 공식 환율은 아래 `fx_usdkrw`로 연결됨 |
 | `ewz` | `ewz`, `brazil` | `xyz:EWZ` | ETF-linked 합성값 | 권리 승인 전 gate |
 | `inda` | `inda`, `india` | `xyz:NIFTY` 가능 시 | INDA가 아닌 NIFTY 50 대용값 | 카드 라벨이 현재 `인도 INDA`이므로 NIFTY 대용값을 붙이면 라벨부터 고친다 |
@@ -553,7 +617,10 @@ alias를 정리해 proxy와 exact가 서로 다른 카드에 붙도록 먼저 �
 | `wti_exact`(신규) | `DCOILWTICO` | EIA `PET.RWTC.D` 후보 | `pending_review` | exact endpoint·units 재검증. `wti` proxy 카드와 별도 key |
 | `vix_exact`(신규) | `VIXCLS` | Cboe | `license_required` | FRED를 통해 공개하지 않음. `vix` proxy 카드와 별도 key |
 | `copper_exact`(신규) | `PCOPPUSDM` | IMF | `pending_review` | 직접 이용조건 확인 후 결정. `copper` proxy 카드와 별도 key |
-| `kospi_exact`(신규) | 없음 | KRX | `pending_rights` | 승인 시 KOSPI 공식 종가. `kospi`(HIP-3 KR200)와 별도 key |
+| `kospi_exact` | 없음 | **금융위원회 공공데이터 (연결됨)** | `approved` | KOSPI 공식 종가. T+1 공개. `kospi`(HIP-3 KR200)와 별도 key. `DS-2026-006` |
+| `kosdaq_exact` | 없음 | **금융위원회 공공데이터 (연결됨)** | `approved` | KOSDAQ 공식 종가. HIP-3 대용값이 없어 유일한 소스 |
+| `samsung_exact` | 없음 | **금융위원회 공공데이터 (연결됨)** | `approved` | 삼성전자 **원화** 종가. `samsung`(USD 합성)과 단위부터 다르다 |
+| `sk_hynix_exact` | 없음 | **금융위원회 공공데이터 (연결됨)** | `approved` | SK하이닉스 원화 종가 |
 
 `*_exact` 키는 아직 `METRICS`에 없다. 공식 lane을 여는 PR에서 `METRICS`,
 `SECTIONS`, `OVERVIEW`에 함께 추가하고 proxy 카드는 그대로 둔다. 공식값이
@@ -759,5 +826,6 @@ notes: "No confidential contract language here"
 | 2026-08-17 | Federal Reserve Board lane 추가(`DS-2026-004`). DDP 폐지를 피해 릴리스 페이지 XML 사용 | Claude assisted |
 | 2026-08-17 | H.10 환율, H.4.1 유동성, H.6 통화량 연결 | Claude assisted |
 | 2026-08-17 | BLS lane 추가(`DS-2026-005`), DOL ETA는 보류 사유 기록 | Claude assisted |
+| 2026-08-17 | 금융위원회 공공데이터 lane 추가(`DS-2026-006`). 코스피·코스닥·삼성전자·SK하이닉스 공식 종가를 KRX 승인과 별개 근거로 연결. `samsung` alias에서 `005930` 제거 | Claude assisted |
 | 2026-08-17 | `Mulmit 유동성·스트레스 지수` 도입. CNN Fear & Greed 복제 대신 자체 산식 | Claude assisted |
 
