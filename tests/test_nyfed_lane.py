@@ -201,3 +201,28 @@ def test_status_reports_the_lane(db, nyfed):
 def test_unregistered_lane_still_fails_closed(db):
     assert data_rights.macro_lane_enabled("nyfed") is False
     assert data_rights.series_values_servable("nyfed", "approved") is False
+
+
+def test_the_snapshot_credits_the_lane_that_served_it(db, nyfed):
+    """FRED is switched off; crediting it for New York Fed rates would be a lie."""
+    ingest.refresh_nyfed()
+
+    body = TestClient(app).get("/api/market/macro?history=max").json()
+
+    assert body["provider"]["id"] == "nyfed"
+    assert body["provider"]["name"] == "Federal Reserve Bank of New York"
+    assert "FRED" not in body["provider"]["name"]
+    providers = body["attribution"]["providers"]
+    assert [entry["provider"] for entry in providers] == ["nyfed"]
+    assert "newyorkfed.org" in providers[0]["terms_url"]
+    # No FRED terms surface while the FRED lane is closed.
+    assert "api_terms_url" not in body["attribution"]
+
+
+def test_both_lanes_are_credited_when_both_serve(db, nyfed, monkeypatch):
+    monkeypatch.setattr(config, "FRED_ENABLED", True)
+
+    body = TestClient(app).get("/api/market/macro?history=max").json()
+
+    assert body["provider"]["id"] == "multi-source"
+    assert {entry["provider"] for entry in body["attribution"]["providers"]} == {"fred", "nyfed"}

@@ -274,3 +274,22 @@ def test_a_secondary_venue_outage_only_costs_its_own_cards():
     assert [item["id"] for item in snapshot["assets"]] == ["sp500"]
     assert "bitcoin" in snapshot["missing"]
     assert snapshot["provider"].get("error") is None
+
+
+def test_a_hyperliquid_listed_perpetual_is_not_labelled_synthetic():
+    """The UI picks its badge from source.venue, so the API must report it.
+
+    HIP-3 deployments list synthetics referencing an outside market; the main
+    venue lists Hyperliquid's own contracts. Calling a real BTC perpetual
+    synthetic is the mirror image of calling a synthetic one spot.
+    """
+    provider = FixtureProvider([
+        ("BTC", _context("63500", "62000")),
+        ("xyz:SP500", _context("110", "100")),
+    ])
+
+    assets = {item["id"]: item for item in build_asset_snapshot("1y", provider)["assets"]}
+
+    assert assets["bitcoin"]["source"]["venue"] == "main"
+    assert "synthetic" not in assets["bitcoin"]["instrument_kind"]
+    assert assets["sp500"]["source"]["venue"] == "xyz"
