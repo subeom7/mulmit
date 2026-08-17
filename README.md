@@ -173,6 +173,20 @@ FRED 어댑터는 현행 API 약관이 API 콘텐츠의 저장·캐시·제3자 
 공개 배포에서 켜지 않는다. 서면 허가나 동일 지표의 허용된 원발행기관 피드를
 확보한 사설 환경에서만 검토한다.
 
+거시 시계열은 공급자 중립 테이블(`economic_series` / `economic_observations`)에
+저장한다. 계열은 내부 안정 키(`treasury_10y`)로 식별하고, 공급자 id와 공급자의 원본
+id(`fred` / `DGS10`), 그리고 권리 상태를 행에 함께 담는다. 그래서 NY Fed나 BLS를
+연결하는 일이 스키마 변경이 아니라 행 변경이 된다. 레거시 `fred_*` 테이블은 남아
+있고, 아직 옮기지 않은 계열만 그쪽에서 읽는다. 옮기려면:
+
+```powershell
+python -m app.ingest --migrate-macro
+```
+
+게이트는 두 겹이다. lane이 "이 공급자를 서빙해도 되는가"를, 행의 `rights_status`가
+"이 계열을 서빙해도 되는가"를 답하고 둘 다 통과해야 값이 나간다. FRED lane이 열려도
+`VIXCLS`는 Cboe 권리라 계속 비어 있는 이유다.
+
 권리 플래그는 수집뿐 아니라 **서빙까지** 결정한다. `FRED_ENABLED=false`면 과거에
 적재된 FRED 행이 DB에 남아 있어도 `/api/market/macro`가 값을 반환하지 않고
 `macro_data_disabled` 503과 `Cache-Control: no-store`를 돌려준다. 판정은

@@ -1,23 +1,32 @@
-"""Read-only FRED dashboard assembly from normalized local data."""
+"""Read-only macro dashboard assembly from normalized local data.
+
+Reads the provider-neutral ``economic_series`` tables first and falls back to
+the legacy ``fred_*`` tables only for series that have not been migrated yet.
+Nothing here calls a provider.
+"""
 
 from __future__ import annotations
 
 import datetime as dt
 import time
+from collections.abc import Iterable
 from typing import Any
 
 from . import config, data_rights, store
 from .providers.fred import (
     FRED_API_TERMS_URL,
     FRED_GROUPS,
+    FRED_PROVIDER_ID,
     FRED_REQUIRED_NOTICE,
     FRED_RIGHTS_NOTICE,
     FRED_SERIES,
     FRED_SERIES_BY_ID,
+    FRED_SERIES_BY_KEY,
     FRED_SITE_BASE,
     FRED_TERMS_URL,
     FRED_USER_TERMS,
     FredSeriesSpec,
+    rights_status_for,
 )
 
 HISTORY_DAYS = {
@@ -38,19 +47,48 @@ _OBSERVATION_GRACE_DAYS = {
 }
 MAX_PUBLIC_OBSERVATIONS = 2500
 
+# ``source.provider`` carries the stable machine id, per the published contract.
+# ``source.provider_name`` is what a card footer should print, so the UI never
+# has to hardcode a lookup table of its own.
+PROVIDER_NAMES = {
+    "fred": "FRED®",
+    "nyfed": "Federal Reserve Bank of New York",
+    "bls": "U.S. Bureau of Labor Statistics",
+    "eia": "U.S. Energy Information Administration",
+    "federal_reserve": "Federal Reserve Board",
+    "treasury": "U.S. Department of the Treasury",
+}
+
 
 class MacroDataDisabled(RuntimeError):
     """Raised when no macro provider lane may currently be served publicly."""
 
 
-def _lane_for(_spec: FredSeriesSpec) -> str:
-    """Every catalog entry is still FRED-sourced.
+def _lane_for(spec: FredSeriesSpec, record: dict[str, Any] | None = None) -> str:
+    """Which provider lane decides whether this series may be served.
 
-    P1 replaces this with the ``provider_id`` column on ``economic_series``.
-    Keeping the lookup behind one function means that migration changes the
-    mapping, not every call site.
+    The stored row is the authority once a series has been collected through
+    the neutral tables, so an approved NY Fed feed answers for itself even
+    though it happens to share a catalog entry with the FRED adapter. The
+    catalog is only the fallback for a series nothing has collected yet.
     """
-    return data_rights.FRED
+    if record and record.get("provider_id"):
+        return str(record["provider_id"])
+    return FRED_PROVIDER_ID
+
+
+def _rights_status_for(spec: FredSeriesSpec, record: dict[str, Any] | None) -> str:
+    """Row first, catalog second, and a provider copyright note always wins.
+
+    ``notes`` carries the publisher's own wording. When it mentions a copyright,
+    that is the data owner speaking after the catalog was written, so it
+    downgrades an otherwise approved series rather than being overridden.
+    """
+    if record and str(record.get("notes") or "").lower().count("copyright"):
+        return "license_required"
+    if record and record.get("rights_status"):
+        return str(record["rights_status"])
+    return rights_status_for(spec)
 
 
 def _utc_iso(epoch: float | None = None) -> str:
@@ -157,8 +195,44 @@ def _license_required_payload(spec: FredSeriesSpec) -> dict[str, Any]:
 
 
 def _requires_license(spec: FredSeriesSpec, record: dict[str, Any] | None = None) -> bool:
-    """Fail closed when either the catalog or current provider notes restrict reuse."""
-    return not spec.public_web or bool(record and record.get("copyrighted"))
+    """Fail closed unless the effective rights verdict is an explicit approval."""
+    return _rights_status_for(spec, record) != data_rights.SERVABLE_ROW_RIGHTS
+
+
+def _load_record(spec: FredSeriesSpec) -> dict[str, Any] | None:
+    """Neutral tables first, legacy FRED tables only while a series is unmigrated."""
+    record = store.get_economic_series(spec.key)
+    if record is not None:
+        return record
+    return _adapt_legacy(spec, store.get_fred_series(spec.series_id))
+
+
+def _adapt_legacy(spec: FredSeriesSpec, record: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Present a legacy ``fred_series`` row in the neutral shape.
+
+    Transitional only. Once :func:`store.migrate_fred_series_to_economic` has
+    run for a series, ``_load_record`` never reaches this.
+    """
+    if record is None:
+        return None
+    adapted = dict(record)
+    adapted["provider_id"] = FRED_PROVIDER_ID
+    adapted["provider_series_id"] = record.get("series_id")
+    adapted["rights_status"] = (
+        "license_required" if record.get("copyrighted") else rights_status_for(spec)
+    )
+    adapted["_legacy"] = True
+    return adapted
+
+
+def _load_observations(
+    spec: FredSeriesSpec,
+    record: dict[str, Any],
+    start: dt.date | None,
+) -> list[tuple[dt.date, float]]:
+    if record.get("_legacy"):
+        return store.load_fred_observations(spec.series_id, start=start)
+    return store.load_economic_observations(spec.key, start=start)
 
 
 def _series_payload(
@@ -168,13 +242,13 @@ def _series_payload(
 ) -> dict[str, Any] | None:
     # Second line of defence. Callers already filter by lane, but this reader is
     # the only place that turns stored rows into public values, so it refuses on
-    # its own rather than trusting whoever called it.
-    if not data_rights.macro_lane_enabled(_lane_for(spec)):
+    # its own rather than trusting whoever called it. Both gates are checked:
+    # the provider lane and the row's own rights verdict.
+    if not data_rights.series_values_servable(
+        _lane_for(spec, record), _rights_status_for(spec, record)
+    ):
         return None
-    all_observations = store.load_fred_observations(
-        spec.series_id,
-        start=_history_start(history),
-    )
+    all_observations = _load_observations(spec, record, _history_start(history))
     if not all_observations:
         return None
     observations = _downsample_observations(all_observations)
@@ -201,15 +275,21 @@ def _series_payload(
     observation_age_days = max(0, (dt.date.today() - latest_date).days)
     data_is_fresh = observation_age_days <= max_observation_age_days
     is_fresh = fetch_is_fresh and data_is_fresh
+    provider_id = _lane_for(spec, record)
     return {
-        "id": spec.series_id,
+        # ``id`` stays the provider's own series id and ``key`` the internal one,
+        # which is what the published contract already promised.
+        "id": record.get("provider_series_id") or spec.series_id,
         "key": spec.key,
         "group": spec.group,
         "label": {"ko": spec.label_ko, "en": spec.label_en},
         "description": {"ko": spec.description_ko, "en": spec.description_en},
         "status": record.get("status") or "ok",
         "source": {
-            "provider": "FRED®",
+            "provider": provider_id,
+            "provider_name": PROVIDER_NAMES.get(provider_id, provider_id),
+            "provider_series_id": record.get("provider_series_id") or spec.series_id,
+            # Prefer the original publisher over the aggregator that relayed it.
             "publisher": record.get("publisher") or spec.publisher,
             "publisher_url": record.get("publisher_url") or spec.publisher_url,
             "url": record.get("series_url") or spec.series_url,
@@ -262,25 +342,44 @@ def _series_payload(
     }
 
 
+def _load_records(specs: Iterable[FredSeriesSpec]) -> dict[str, dict[str, Any] | None]:
+    """One batched read per table rather than a query per series."""
+    specs = list(specs)
+    neutral = {row["series_key"]: row for row in store.list_economic_series(s.key for s in specs)}
+    unmigrated = [spec for spec in specs if spec.key not in neutral]
+    legacy = (
+        {row["series_id"]: row for row in store.list_fred_series(s.series_id for s in unmigrated)}
+        if unmigrated
+        else {}
+    )
+    return {
+        spec.key: neutral.get(spec.key) or _adapt_legacy(spec, legacy.get(spec.series_id))
+        for spec in specs
+    }
+
+
 def build_macro_snapshot(history: str = "3y") -> dict[str, Any]:
     _history_start(history)  # validate even when the database is empty
-    servable = [spec for spec in FRED_SERIES if data_rights.macro_lane_enabled(_lane_for(spec))]
+    records = _load_records(FRED_SERIES)
+    servable = [
+        spec
+        for spec in FRED_SERIES
+        if data_rights.macro_lane_enabled(_lane_for(spec, records.get(spec.key)))
+    ]
     servable_ids = {spec.series_id for spec in servable}
     disabled = [spec.series_id for spec in FRED_SERIES if spec.series_id not in servable_ids]
     if not servable:
         # Every lane is closed, so there is nothing to shape a 200 around. The
         # route turns this into a structured 503 with no public cache headers.
-        raise MacroDataDisabled(", ".join(sorted({_lane_for(spec) for spec in FRED_SERIES})))
+        raise MacroDataDisabled(
+            ", ".join(sorted({_lane_for(spec, records.get(spec.key)) for spec in FRED_SERIES}))
+        )
 
-    records = {
-        record["series_id"]: record
-        for record in store.list_fred_series(spec.series_id for spec in servable)
-    }
     payloads: list[dict[str, Any]] = []
     missing: list[str] = []
     restricted: list[str] = []
     for spec in servable:
-        record = records.get(spec.series_id)
+        record = records.get(spec.key)
         if _requires_license(spec, record):
             payloads.append(_license_required_payload(spec))
             restricted.append(spec.series_id)
@@ -325,12 +424,16 @@ def build_macro_snapshot(history: str = "3y") -> dict[str, Any]:
 
 def build_macro_series(series_id: str, history: str = "3y") -> dict[str, Any] | None:
     _history_start(history)
-    spec = FRED_SERIES_BY_ID.get(series_id.strip().upper())
+    requested = series_id.strip()
+    # Both the provider's id (DGS10) and the internal key (treasury_10y) resolve,
+    # so a link keeps working after a series moves to a different provider.
+    spec = FRED_SERIES_BY_ID.get(requested.upper()) or FRED_SERIES_BY_KEY.get(requested.lower())
     if spec is None:
         raise KeyError(series_id)
-    if not data_rights.macro_lane_enabled(_lane_for(spec)):
-        raise MacroDataDisabled(_lane_for(spec))
-    record = store.get_fred_series(spec.series_id)
+    record = _load_record(spec)
+    lane = _lane_for(spec, record)
+    if not data_rights.macro_lane_enabled(lane):
+        raise MacroDataDisabled(lane)
     if _requires_license(spec, record):
         return {
             "generated_at": _utc_iso(),

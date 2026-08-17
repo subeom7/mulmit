@@ -192,6 +192,17 @@ FRED_SERIES = (
     ),
 )
 FRED_SERIES_BY_ID = {spec.series_id: spec for spec in FRED_SERIES}
+FRED_SERIES_BY_KEY = {spec.key: spec for spec in FRED_SERIES}
+
+# The rights verdict the catalog already encodes, restated in the vocabulary the
+# neutral store uses. ``public_web=False`` on this catalog has always meant "the
+# underlying data belongs to someone else" (Cboe, ICE, IMF), so it maps to
+# license_required rather than a generic pending.
+FRED_PROVIDER_ID = "fred"
+
+
+def rights_status_for(spec: FredSeriesSpec) -> str:
+    return "approved" if spec.public_web else "license_required"
 
 
 class FredConfigurationError(DataError):

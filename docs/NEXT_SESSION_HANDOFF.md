@@ -11,9 +11,9 @@
 
 핵심은 단순히 API 키를 추가하는 것이 아니다. 다음 순서로 진행한다.
 
-1. ~~`FRED_ENABLED=false`인데도 과거 DB 행이 macro API에서 노출될 수 있는 serving gate를 먼저 막는다.~~ **완료 (2026-08-16).** `app/data_rights.py`에서 공급자 lane 단위로 판정하고, 이후 승인되는 원 발행기관 lane은 같은 게이트에서 독립적으로 열린다. 운영 DB의 기존 FRED 행 purge·quarantine 방침만 남았다.
+1. ~~`FRED_ENABLED=false`인데도 과거 DB 행이 macro API에서 노출될 수 있는 serving gate를 먼저 막는다.~~ **완료 (2026-08-16).** `app/data_rights.py`에서 공급자 lane 단위로 판정한다. 운영 DB의 FRED 행은 0건으로 확인되어 purge 대상이 없다.
 2. 현재 공개 중인 HIP-3 합성 시세의 외부 표시 권한을 서면으로 확인하거나, 확인 전까지 공개 API를 기능 플래그 뒤로 옮긴다.
-3. FRED 중심 저장 구조를 공급자 중립적인 거시 시계열 구조로 바꾼다.
+3. ~~FRED 중심 저장 구조를 공급자 중립적인 거시 시계열 구조로 바꾼다.~~ **완료 (2026-08-17).** `economic_series`/`economic_observations`와 행 단위 `rights_status`. 마이그레이션은 `python -m app.ingest --migrate-macro`.
 4. FRED를 우회 수집하지 말고 각 원 발행기관의 공식 피드를 직접 연결한다.
 5. KRX는 Mulmit 공개 화면 사용 목적을 정확히 적어 승인을 받은 뒤 연결한다.
 6. VIX·SKEW·VVIX·OVX·Put/Call Ratio·ICE BofA 스프레드는 계약 전까지 `license_required`를 유지한다.
@@ -86,8 +86,8 @@ Co-authored-by: Codex <codex@openai.com>
 > 이후 승인되는 NY Fed·BLS·EIA lane은 FRED lane이 닫힌 채로도 독립적으로 열린다.
 > `HIP3_PUBLIC_DISPLAY_ENABLED`가 꺼지면 `/api/market/assets`와
 > `/api/market/weekend`도 같은 방식으로 `pending_rights` 503을 반환한다.
-> 남은 일: 운영 DB의 기존 `fred_series`/`fred_observations` purge·quarantine 방침
-> 결정과 runbook 기록.
+> 운영 DB의 FRED 행은 0건으로 확인되어 purge 대상이 없다(`/api/status`의
+> `fred_series`·`fred_observations`).
 
 ### 3.3 현재 값이 표시되는 영역
 
@@ -178,14 +178,13 @@ HIP3_PUBLIC_DISPLAY_ENABLED=false
 
 - `LEGACY_PRICE_DATA_ENABLED=true`는 Yahoo/yfinance 기반 경로를 다시 열기 때문에 공개 배포에서 사용하지 않는다.
 - `FRED_ENABLED=true`는 현행 FRED 약관상 저장·캐시·제3자 제공 문제를 해결하지 못한다.
-- 현재 `FRED_ENABLED=false`는 수집만 중단한다. serving gate가 추가되기 전에는 운영 DB에 FRED 행이 없다는 사실까지 별도로 확인한다.
+- `FRED_ENABLED=false`는 수집과 서빙을 모두 막는다. DB에 행이 남아 있어도 값이 나가지 않는다.
 - `KRX_ENABLED=true`는 API 키 보유가 아니라 정확한 공개 사용 승인을 받은 뒤에만 고려한다.
 - `HIP3_PUBLIC_DISPLAY_ENABLED`는 코드 기본값 false다. 서면 확인 전 현행 화면을 유지하기로 결정한 경우에만 서버 `.env`에서 true로 두고, 그 결정과 유효기간을 source register에 남긴다.
 
-권리 게이트 변수는 `docker-compose.yml`의 `ingest`뿐 아니라 `web` 서비스에도
-반드시 전달한다. 지금 `FRED_ENABLED`·`KRX_ENABLED`는 `ingest` 블록에만 있어서
-`web`은 이미지 기본값을 쓰고, serving gate를 web에서 판정하는 순간 운영 값과
-어긋난다. 서빙에 영향을 주는 플래그는 공용 `x-app` env에 올린다.
+권리 게이트 변수는 `docker-compose.yml`의 공용 `x-app` env에 있어 `web`과 `ingest`
+양쪽에 전달된다. 서빙에 영향을 주는 플래그를 `ingest` 블록에만 두면 web이 이미지
+기본값으로 판정해 운영 값과 어긋나므로, 새 게이트를 추가할 때도 `x-app`에 올린다.
 
 ## 5. 우선순위별 실행 계획
 
@@ -193,9 +192,9 @@ HIP3_PUBLIC_DISPLAY_ENABLED=false
 
 목표: 권리가 확인되지 않은 공급자가 설정 실수로 공개되지 않게 한다.
 
-> 상태(2026-08-16): 아래 1·2·3·4·6·8·9·10은 `agent/rights-serving-gate`에서
-> 구현·검증했다. 남은 항목은 5(운영 DB purge/quarantine 방침 결정과 runbook 기록)와
-> 7(HIP-3/trade.xyz 서면 문의 발송 및 회신 기록)이다.
+> 상태(2026-08-17): 1·2·3·4·6·8·9·10은 `agent/rights-serving-gate`에서 구현·검증했다.
+> 5는 운영 DB에 FRED 행이 0건으로 확인되어 옮기거나 지울 대상이 없다.
+> **남은 항목은 7(HIP-3/trade.xyz 서면 문의 발송 및 회신 기록) 하나뿐이다.**
 
 1. `FRED_ENABLED=false`이면 DB에 FRED 행이 있어도 `/api/market/macro`와 상세 route가 그 행의 값·변화·관측치를 절대 반환하지 않게 한다. 판정 단위는 series의 공급자 lane이며, 등록되지 않은 lane은 fail-closed로 본다.
 2. 서빙 가능한 lane이 하나도 없으면 macro 응답은 구조화된 503(`macro_data_disabled`)을 쓰고 `public` Cache-Control을 `no-store`로 바꾼다. lane이 하나라도 열려 있으면 200을 유지하되 막힌 lane의 series는 응답에서 제외하거나 `disabled` 상태로만 표시한다.
@@ -242,6 +241,22 @@ fixture와 같은 방식으로 FRED lane을 의도적으로 여는 opt-in fixtur
 - UI가 `데이터 미연결`(`missing`)과 `권리 확인 중`(`pending_rights`), `비활성`(`disabled`)을 구분함
 
 ### P1. 거시 저장소를 공급자 중립 구조로 전환
+
+> **완료 (2026-08-17, `agent/economic-series-store`).** `economic_series` /
+> `economic_observations`를 추가했고 조립기는 새 테이블을 우선 읽는다. 아직
+> 마이그레이션되지 않은 계열만 레거시 `fred_*`로 폴백한다. ingest는 새 테이블에만
+> 쓴다. 마이그레이션은 부팅이 아니라 명시적 실행이다.
+>
+> ```powershell
+> python -m app.ingest --migrate-macro
+> ```
+>
+> 운영 DB에는 FRED 행이 0건이라 실행이 필수는 아니지만, 레거시 행이 있는 환경에서는
+> 이 명령으로 옮긴다. 기존 테이블은 삭제하지 않는다.
+>
+> 추가된 것: 행 단위 `rights_status`. lane 게이트가 "이 공급자를 서빙해도 되는가"를
+> 답하고, 행이 "이 계열을 서빙해도 되는가"를 답한다. 둘 다 통과해야 값이 나간다.
+> 그래서 FRED lane이 열려도 `VIXCLS`(Cboe 권리)는 계속 비어 있다.
 
 현재 `fred_series`, `fred_observations`, `save_fred_series()`처럼 이름과 메타데이터가 FRED에 묶여 있다. 원 발행기관을 직접 연결하려면 이 구조부터 일반화한다.
 
@@ -654,6 +669,9 @@ Co-authored-by: Codex <codex@openai.com>
 | 환경변수 | `app/config.py` |
 | 배치 조율 | `app/ingest.py` |
 | DB 테이블·저장 | `app/store.py` |
+| SEC EDGAR 어댑터 | `app/providers/sec_edgar.py` |
+| 내부자거래 응답 조립 | `app/insider_filings.py` |
+| 법적 고지 페이지 | `app/static/privacy.html`, `terms.html`, `disclaimer.html`, `legal.css`, `legal.js` |
 | 거시 응답 조립 | `app/macro_dashboard.py` |
 | FRED 카탈로그/어댑터 | `app/providers/fred.py` |
 | KRX 어댑터 | `app/providers/krx.py` |

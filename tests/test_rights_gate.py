@@ -16,7 +16,7 @@ from fastapi.testclient import TestClient
 from app import config, data_rights
 from app.macro_dashboard import MacroDataDisabled, build_macro_series, build_macro_snapshot
 from app.main import app
-from app.providers.fred import FRED_SERIES, FRED_SERIES_BY_ID
+from app.providers.fred import FRED_SERIES, FRED_SERIES_BY_ID, FRED_SERIES_BY_KEY
 
 MACRO_PATHS = ("/api/market/macro?history=max", "/api/market/macro/dgs10?history=max")
 
@@ -42,6 +42,35 @@ def _seed_fred(db, series_id: str = "DGS10", value: float = 14.25) -> None:
         publisher=spec.publisher,
         publisher_url=spec.publisher_url,
         series_url=spec.series_url,
+    )
+
+
+def _seed_economic(
+    db,
+    series_key: str,
+    *,
+    provider_id: str,
+    provider_series_id: str,
+    value: float,
+    rights_status: str = "approved",
+) -> None:
+    spec = FRED_SERIES_BY_KEY[series_key]
+    db.save_economic_series(
+        series_key,
+        provider_id=provider_id,
+        provider_series_id=provider_series_id,
+        metadata_fields={
+            "title": spec.label_en,
+            "units": "Percent",
+            "units_short": "%",
+            "frequency": "Daily",
+            "frequency_short": "D",
+        },
+        observations=[(dt.date(2026, 8, 13), value - 0.25), (dt.date(2026, 8, 14), value)],
+        publisher=spec.publisher,
+        publisher_url=spec.publisher_url,
+        series_url=spec.series_url,
+        rights_status=rights_status,
     )
 
 
@@ -82,21 +111,16 @@ def test_unknown_series_still_reports_not_found_not_disabled(db, fred_serving):
     assert TestClient(app).get("/api/market/macro/NOPE").status_code == 404
 
 
-def test_gate_is_scoped_to_the_fred_lane_not_the_whole_macro_route(db, monkeypatch):
+def test_gate_is_scoped_to_the_provider_lane_not_the_whole_macro_route(db, monkeypatch):
     """An approved lane must serve even while the FRED lane stays closed.
 
-    P1 adds ``economic_series`` with a real ``provider_id``. Until then this
-    registers a second lane the same way that migration will, so the gate is
-    proven to be per lane rather than a macro-wide kill switch.
+    The provider now comes from the stored row rather than from the catalog, so
+    this exercises the real mechanism: one series collected as ``nyfed``, the
+    rest still FRED-sourced and therefore withheld.
     """
-    approved = FRED_SERIES_BY_ID["SOFR"]
     monkeypatch.setitem(data_rights._MACRO_LANES, "nyfed", lambda: True)
-    monkeypatch.setattr(
-        "app.macro_dashboard._lane_for",
-        lambda spec: "nyfed" if spec.series_id == approved.series_id else data_rights.FRED,
-    )
-    _seed_fred(db)
-    _seed_fred(db, "SOFR", value=4.5)
+    _seed_fred(db)  # DGS10 in the legacy tables, FRED lane, closed
+    _seed_economic(db, "sofr", provider_id="nyfed", provider_series_id="SOFR", value=4.5)
 
     response = TestClient(app).get("/api/market/macro?history=max")
 
@@ -104,6 +128,8 @@ def test_gate_is_scoped_to_the_fred_lane_not_the_whole_macro_route(db, monkeypat
     body = response.json()
     assert [item["id"] for item in body["series"]] == ["SOFR"]
     assert body["series"][0]["latest"] == {"date": "2026-08-14", "value": 4.5}
+    assert body["series"][0]["source"]["provider"] == "nyfed"
+    assert body["series"][0]["source"]["provider_name"] == "Federal Reserve Bank of New York"
     # The closed lane is reported as disabled, which is not the same claim as
     # "we never collected this".
     assert "DGS10" in body["disabled"]

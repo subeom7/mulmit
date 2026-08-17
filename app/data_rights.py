@@ -69,10 +69,26 @@ _MACRO_LANES: dict[str, Callable[[], bool]] = {
 }
 
 
+# Row-level verdicts stored on ``economic_series.rights_status``. Only one of
+# them permits publishing values; everything else, including an unrecognised
+# string, withholds them.
+SERVABLE_ROW_RIGHTS = "approved"
+
+
 def macro_lane_enabled(provider_id: str) -> bool:
     """Fail closed for any lane that has not been registered above."""
     gate = _MACRO_LANES.get(provider_id)
     return bool(gate()) if gate is not None else False
+
+
+def series_values_servable(provider_id: str, rights_status: str | None) -> bool:
+    """Both gates must agree before a stored observation may be published.
+
+    The lane answers "may this provider be served at all"; the row answers "may
+    this particular series be". They are different questions: FRED's VIXCLS
+    carries Cboe's rights, so it stays withheld even when the FRED lane is open.
+    """
+    return macro_lane_enabled(provider_id) and rights_status == SERVABLE_ROW_RIGHTS
 
 
 def enabled_macro_lanes() -> list[str]:

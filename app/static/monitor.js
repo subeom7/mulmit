@@ -421,8 +421,10 @@ function dateText(value) {
 }
 
 function sourceInfo(record) {
+  // `provider` is a machine id (`fred`, `nyfed`); `provider_name` is what a
+  // reader should see. Fall back through the older shapes for asset records.
   const source = record?.source || {};
-  return { name: source.provider || source.publisher || record?.provider || (record?._kind === "macro" ? "FRED" : "API"), url: source.url || null };
+  return { name: source.provider_name || source.publisher || source.provider || record?.provider || "API", url: source.url || null };
 }
 
 function recordLabel(record, definition) {
