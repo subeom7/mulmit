@@ -23,6 +23,9 @@ from .base import DataUnavailable, RateLimited
 API_URL = "https://api.hyperliquid.xyz/info"
 REQUEST_TYPE = "metaAndAssetCtxs"
 CANDLE_REQUEST_TYPE = "candleSnapshot"
+# Hyperliquid's own perpetual venue. The API addresses it with an empty dex
+# name; this project spells it out so a blank value is never mistaken for one.
+MAIN_DEX = "main"
 DEFAULT_TIMEOUT = 3.0
 DEFAULT_RETRIES = 1
 DEFAULT_MAX_REQUEST_SECONDS = 7.0
@@ -327,14 +330,21 @@ class HyperliquidProvider:
         raise DataUnavailable(f"Hyperliquid {label} data is unavailable") from last_error
 
     def fetch_dex(self, dex: str) -> dict[str, Any]:
-        """Return one DEX context snapshot, with a recent stale fallback on failure."""
+        """Return one DEX context snapshot, with a recent stale fallback on failure.
+
+        Hyperliquid names its own venue with an empty string, while HIP-3
+        deployments have real names. An empty argument would silently mean
+        "whatever the API defaults to", so callers spell the main venue as
+        :data:`MAIN_DEX` and the translation happens here.
+        """
         normalized_dex = dex.strip().lower()
         if not normalized_dex or not normalized_dex.replace("-", "").isalnum():
             raise ValueError("dex must be a non-empty alphanumeric DEX name")
+        request_dex = "" if normalized_dex == MAIN_DEX else normalized_dex
 
         def load() -> dict[str, Any]:
             raw = self._request(
-                {"type": REQUEST_TYPE, "dex": normalized_dex},
+                {"type": REQUEST_TYPE, "dex": request_dex},
                 f"{normalized_dex!r} market",
             )
             fetched_at = _utc_iso(self._wall_clock())

@@ -19,9 +19,15 @@ from .providers.base import DataUnavailable, RateLimited
 from .providers.hyperliquid import (
     API_URL,
     HYPERLIQUID_INFO_DOCS,
+    HYPERLIQUID_PERP_DOCS,
+    MAIN_DEX,
     REQUEST_TYPE,
     HyperliquidProvider,
 )
+
+# The HIP-3 deployment that lists the synthetic index and equity perpetuals.
+# Hyperliquid's own venue (MAIN_DEX) is a separate listing party.
+PRIMARY_DEX = "xyz"
 
 HISTORY_DAYS = {
     "1y": 366,
@@ -110,18 +116,19 @@ ASSETS = (
     ),
     AssetSpec(
         "bitcoin",
-        None,
+        "BTC",
         "BTC",
         "global",
-        "비트코인",
-        "Bitcoin",
-        "현재 자산 카드 클라이언트는 Hyperliquid 메인 DEX를 조회하지 않아 값을 제공하지 않습니다.",
-        "Unavailable because this asset-card client does not query Hyperliquid's main DEX.",
+        "비트코인 무기한선물",
+        "Bitcoin perpetual",
+        "Hyperliquid 자체 DEX에 상장된 비트코인 무기한선물입니다. 현물 거래소 가격이 아닙니다.",
+        "A bitcoin perpetual listed on Hyperliquid's own DEX; it is not a spot-exchange price.",
         "Bitcoin / USD",
         "USD",
         "U.S. dollars",
         "USD",
-        "crypto_spot_reference",
+        "crypto_perpetual",
+        HYPERLIQUID_PERP_DOCS,
     ),
     AssetSpec(
         "kospi",
@@ -370,6 +377,16 @@ def _liquidity_status(context: dict[str, Any]) -> str:
     return "low"
 
 
+def _dex_for(provider_symbol: str) -> str:
+    """Which venue a symbol lives on.
+
+    HIP-3 deployments prefix their symbols (``xyz:SP500``); Hyperliquid's own
+    listings do not (``BTC``). The prefix is therefore the venue.
+    """
+    prefix, separator, _ = provider_symbol.partition(":")
+    return prefix.strip().lower() if separator else MAIN_DEX
+
+
 def _market_index(snapshot: dict[str, Any]) -> dict[str, dict[str, Any]]:
     markets = snapshot.get("markets")
     if not isinstance(markets, list):
@@ -386,9 +403,15 @@ def _market_index(snapshot: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 def _source(spec: AssetSpec, metadata: dict[str, Any], price_field: str) -> dict[str, Any]:
     annotation = metadata.get("perpAnnotation")
+    dex = _dex_for(spec.provider_symbol or "")
+    # Who listed the contract differs by venue: trade.xyz deploys the HIP-3
+    # synthetics, while Hyperliquid lists its own perpetuals. Crediting the
+    # wrong one would misstate where the number comes from.
+    on_hip3 = dex != MAIN_DEX
     return {
-        "provider": "Hyperliquid HIP-3",
-        "publisher": "trade.xyz",
+        "provider": "Hyperliquid HIP-3" if on_hip3 else "Hyperliquid",
+        "publisher": "trade.xyz" if on_hip3 else "Hyperliquid",
+        "venue": dex,
         "url": f"https://app.hyperliquid.xyz/trade/{quote(spec.provider_symbol or '', safe=':')}",
         "api_url": API_URL,
         "documentation_url": spec.documentation_url,
@@ -574,25 +597,39 @@ def build_asset_snapshot(
         raise ValueError(f"unsupported history: {history}")
 
     client = provider or _DEFAULT_PROVIDER
-    try:
-        snapshot = client.fetch_dex("xyz")
-    except RateLimited:
-        return _empty_snapshot(history, "rate_limited")
-    except DataUnavailable:
-        return _empty_snapshot(history, "unavailable")
+    venues = sorted({_dex_for(spec.provider_symbol) for spec in ASSETS if spec.provider_symbol})
+    snapshots: dict[str, dict[str, Any]] = {}
+    for venue in venues:
+        try:
+            snapshots[venue] = client.fetch_dex(venue)
+        except RateLimited:
+            if venue == PRIMARY_DEX:
+                return _empty_snapshot(history, "rate_limited")
+        except DataUnavailable:
+            if venue == PRIMARY_DEX:
+                return _empty_snapshot(history, "unavailable")
+        # A secondary venue outage only costs its own cards, which then report
+        # as missing rather than taking the whole dashboard down.
 
-    markets = _market_index(snapshot)
+    snapshot = snapshots[PRIMARY_DEX]
+    markets = {
+        symbol: (market, venue)
+        for venue, venue_snapshot in snapshots.items()
+        for symbol, market in _market_index(venue_snapshot).items()
+    }
     assets: list[dict[str, Any]] = []
     missing: list[str] = []
     for spec in ASSETS:
         if spec.provider_symbol is None:
             missing.append(spec.asset_id)
             continue
-        market = markets.get(spec.provider_symbol.casefold())
-        if market is None:
+        found = markets.get(spec.provider_symbol.casefold())
+        if found is None:
             missing.append(spec.asset_id)
             continue
-        payload = _payload(spec, market, snapshot)
+        market, venue = found
+        # Freshness belongs to the venue the quote came from, not to the primary.
+        payload = _payload(spec, market, snapshots[venue])
         if payload is None:
             missing.append(spec.asset_id)
             continue

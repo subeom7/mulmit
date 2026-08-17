@@ -72,7 +72,7 @@ class FixtureProvider:
         }
 
 
-def test_snapshot_uses_one_xyz_context_and_calculates_24h_change():
+def test_snapshot_uses_one_context_request_per_venue_and_calculates_24h_change():
     provider = FixtureProvider(
         [
             ("xyz:SP500", _context("110", "100")),
@@ -84,7 +84,8 @@ def test_snapshot_uses_one_xyz_context_and_calculates_24h_change():
     snapshot = build_asset_snapshot("1y", provider)
     sp500 = next(item for item in snapshot["assets"] if item["id"] == "sp500")
 
-    assert provider.calls == ["xyz"]
+    # One bounded request per venue, never one per asset.
+    assert provider.calls == ["main", "xyz"]
     assert snapshot["history"] == "1y"
     assert snapshot["provider"]["read_path"] == "live_public_info_only"
     assert snapshot["provider"]["request_type"] == "metaAndAssetCtxs"
@@ -225,3 +226,51 @@ def test_asset_endpoint_preserves_public_contract_and_never_needs_network(monkey
     assert response.headers["cache-control"] == "private, max-age=30, stale-while-revalidate=300"
     assert response.headers["x-data-source"] == "Hyperliquid HIP-3"
     assert TestClient(app).get("/api/market/assets?history=forever").status_code == 422
+
+
+def test_bitcoin_comes_from_hyperliquids_own_venue_not_hip3():
+    """BTC is listed by Hyperliquid itself, not by trade.xyz through HIP-3.
+
+    Crediting trade.xyz for it would misstate who published the contract, which
+    is the same class of mistake as calling a synthetic perpetual a spot price.
+    """
+    provider = FixtureProvider([("BTC", _context("63500", "62000"))])
+
+    snapshot = build_asset_snapshot("1y", provider)
+    bitcoin = next(item for item in snapshot["assets"] if item["id"] == "bitcoin")
+
+    assert bitcoin["latest"]["value"] == 63500.0
+    assert bitcoin["source"]["provider"] == "Hyperliquid"
+    assert bitcoin["source"]["publisher"] == "Hyperliquid"
+    assert bitcoin["source"]["venue"] == "main"
+    assert bitcoin["instrument_kind"] == "crypto_perpetual"
+
+
+def test_hip3_assets_still_credit_trade_xyz():
+    provider = FixtureProvider([("xyz:SP500", _context("110", "100"))])
+
+    sp500 = next(
+        item for item in build_asset_snapshot("1y", provider)["assets"] if item["id"] == "sp500"
+    )
+
+    assert sp500["source"]["provider"] == "Hyperliquid HIP-3"
+    assert sp500["source"]["publisher"] == "trade.xyz"
+    assert sp500["source"]["venue"] == "xyz"
+
+
+def test_a_secondary_venue_outage_only_costs_its_own_cards():
+    """Losing Hyperliquid's own venue must not blank the HIP-3 dashboard."""
+
+    class OnlyPrimary(FixtureProvider):
+        def fetch_dex(self, dex):
+            if dex != "xyz":
+                raise DataUnavailable("main venue is down")
+            return super().fetch_dex(dex)
+
+    provider = OnlyPrimary([("xyz:SP500", _context("110", "100"))])
+
+    snapshot = build_asset_snapshot("1y", provider)
+
+    assert [item["id"] for item in snapshot["assets"]] == ["sp500"]
+    assert "bitcoin" in snapshot["missing"]
+    assert snapshot["provider"].get("error") is None
