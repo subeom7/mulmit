@@ -945,6 +945,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | BLS lane 추가(`DS-2026-005`), DOL ETA는 보류 사유 기록 | Claude assisted |
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
+| 2026-08-18 | 한국 24시간 참고가 섹션(`/api/kr/overnight`) 추가 — 기존 세 lane의 결합(HIP-3 마크 × H.10 공식환율 × FSC 기준가), 신규 소스·권리 없음. HIP-3 게이트를 그대로 타고 환율·기준가 날짜를 값과 함께 표기, 김프 조정 없음 명시. 모니터를 한국/미국·글로벌 존으로 재배치, 합성 참고값 카드 2장은 이 섹션이 대체. 계획서 `docs/PLAN_KR_SECTIONS.md` | Claude assisted |
 | 2026-08-18 | Tiingo 재배포 라이선스 **견적 문의 발송** (sales@tiingo.com) | Claude assisted |
 | 2026-08-18 | 미국 EOD 벤더 조사 갱신 — Tiingo·EODHD·Alpha Vantage 약관 원문 확인. 자가결제 재표시 티어 부재 확인, Tiingo 견적 문의 초안 작성 | Claude assisted |
 | 2026-08-17 | Open DART lane 추가(`DS-2026-008`) — 임원·주요주주 소유상황 보고를 국내 종목 분석 옆에 원문 전달. EDGAR 원문 링크를 사람용 뷰로 수정 | Claude assisted |

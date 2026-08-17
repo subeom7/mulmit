@@ -26,6 +26,7 @@ from .insider_filings import (
     InsiderDataDisabled,
     build_insider_report,
 )
+from .kr_overnight import build_kr_overnight
 from .macro_dashboard import MacroDataDisabled, build_macro_series, build_macro_snapshot
 from .market_assets import build_asset_snapshot
 from .market_sectors import build_sector_snapshot
@@ -329,6 +330,20 @@ def kr_index_family(request: Request, response: Response) -> dict:
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "Financial Services Commission (data.go.kr)"
     return payload
+
+
+@app.get("/api/kr/overnight")
+@limiter.limit(config.RATE_LIMIT)
+def kr_overnight(request: Request, response: Response) -> dict:
+    """한국 24시간 참고가: HIP-3 마크 × H.10 공식환율 대 마지막 공식 종가.
+
+    HIP-3 공개 표시 게이트가 닫혀 있으면 응답 전체가 기존 503 계약을 따른다.
+    FSC·H.10 쪽 결손은 카드 안에서 상태 코드와 null로 표현된다.
+    """
+    require_hip3_public_display()
+    response.headers["Cache-Control"] = "private, max-age=15, stale-while-revalidate=300"
+    response.headers["X-Data-Source"] = "Hyperliquid HIP-3 + FSC + Federal Reserve H.10"
+    return build_kr_overnight()
 
 
 @app.get("/api/kr/stock/{code}")
