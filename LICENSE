@@ -1,0 +1,46 @@
+Copyright (c) 2025-2026 Subeom Kwon. All rights reserved.
+
+소스 코드는 열람 목적으로 공개되어 있습니다. 복제, 수정, 재배포, 2차적 저작물
+작성, 상업적 이용은 저작권자의 사전 서면 허락 없이 허용되지 않습니다.
+
+저장소가 공개되어 있다는 사실은 이용 허락이 아닙니다. GitHub 이용약관이 다른
+이용자에게 GitHub 안에서의 열람과 fork를 허용하지만, 그 범위를 넘는 권리는
+이 파일에 적힌 것이 전부입니다.
+
+
+데이터에 관하여
+
+이 라이선스는 **코드에만** 적용됩니다. Mulmit이 표시하는 수치는 저작권자의
+것이 아니며 여기서 재라이선스할 수 있는 대상이 아닙니다. 각 값은 원 발행기관의
+조건을 따르고, 그 조건과 판단 근거는 docs/DATA_SOURCE_REGISTER.md에 공급자별로
+기록되어 있습니다.
+
+이 저장소를 fork하더라도 그 안의 데이터 lane을 사용할 권리는 따라오지 않습니다.
+권리는 코드가 아니라 각 공급자와의 관계에서 나옵니다.
+
+
+보증 없음
+
+본 소프트웨어는 어떠한 보증도 없이 "있는 그대로" 제공됩니다. 표시되는 수치는
+투자 판단의 근거가 아니며, 저작권자는 본 소프트웨어의 사용이나 그로 인해
+발생한 어떠한 손해에 대해서도 책임지지 않습니다.
+
+
+---
+
+Copyright (c) 2025-2026 Subeom Kwon. All rights reserved.
+
+The source is published for reading. Copying, modification, redistribution,
+creation of derivative works, and commercial use are not permitted without the
+prior written permission of the copyright holder. Public visibility of this
+repository is not a grant of any licence beyond what is written here.
+
+This licence covers the code only. The values Mulmit displays are not the
+copyright holder's to license: each one carries the terms of its original
+publisher, recorded per provider in docs/DATA_SOURCE_REGISTER.md. Forking this
+repository does not carry any right to use the data lanes inside it — those
+rights come from a relationship with each provider, not from the code.
+
+The software is provided "as is", without warranty of any kind. Nothing it
+displays is a basis for an investment decision, and the copyright holder
+accepts no liability arising from its use.
