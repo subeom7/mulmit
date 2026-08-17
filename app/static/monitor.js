@@ -421,10 +421,13 @@ function dateText(value) {
 }
 
 function sourceInfo(record) {
-  // `provider` is a machine id (`fred`, `nyfed`); `provider_name` is what a
-  // reader should see. Fall back through the older shapes for asset records.
+  // Macro records carry a machine id in `provider` (`fred`, `nyfed`) plus a
+  // display name in `provider_name`. Asset records predate that split and put
+  // the readable name in `provider` itself ("Hyperliquid HIP-3") with the
+  // instrument's publisher in `publisher`, so `provider` must stay ahead of
+  // `publisher` here.
   const source = record?.source || {};
-  return { name: source.provider_name || source.publisher || source.provider || record?.provider || "API", url: source.url || null };
+  return { name: source.provider_name || source.provider || source.publisher || record?.provider || "API", url: source.url || null };
 }
 
 function recordLabel(record, definition) {
