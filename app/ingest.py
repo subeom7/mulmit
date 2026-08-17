@@ -25,6 +25,16 @@ import time
 from . import config, data, store
 from .market_assets import ASSET_TICKERS, CORRELATION_TICKERS
 from .providers import DataUnavailable, RateLimited, get_provider
+from .providers.fedboard import (
+    FEDBOARD_DDP_TRANSITION_URL,
+    FEDBOARD_DERIVED,
+    FEDBOARD_PROVIDER_ID,
+    FEDBOARD_PUBLISHER,
+    FEDBOARD_PUBLISHER_URL,
+    FEDBOARD_RELEASES,
+    FEDBOARD_SERIES,
+    FedBoardProvider,
+)
 from .providers.fred import (
     FRED_API_TERMS_URL,
     FRED_PROVIDER_ID,
@@ -227,6 +237,78 @@ def refresh_nyfed(*, force: bool = False) -> dict:
     return result
 
 
+def refresh_fedboard(*, force: bool = False) -> dict:
+    """Refresh Board of Governors statistical-release series.
+
+    One archive download serves every series in a release, so the loop asks the
+    provider for each spec and lets it reuse what it already parsed.
+    """
+    if not config.FEDBOARD_ENABLED:
+        return {"skipped": "disabled", "attempted": 0, "updated": 0, "failed": 0}
+
+    keys = [spec.series_key for spec in FEDBOARD_SERIES] + [
+        spec.series_key for spec in FEDBOARD_DERIVED
+    ]
+    targets = (
+        keys
+        if force
+        else [
+            key
+            for key in store.stale_economic_series(keys, config.FEDBOARD_MAX_AGE)
+            if _series_owner(key) in (None, FEDBOARD_PROVIDER_ID)
+        ]
+    )
+    if not targets:
+        return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
+
+    provider = FedBoardProvider(
+        timeout=config.FEDBOARD_TIMEOUT,
+        retries=config.FEDBOARD_RETRIES,
+        request_interval=config.FEDBOARD_REQUEST_INTERVAL,
+    )
+    start = dt.date.today() - dt.timedelta(days=config.FEDBOARD_HISTORY_DAYS)
+    derived = {spec.series_key: spec for spec in FEDBOARD_DERIVED}
+    published = {spec.series_key: spec for spec in FEDBOARD_SERIES}
+    result = {"attempted": 0, "updated": 0, "failed": 0, "rate_limited": 0, "observations": 0}
+
+    # Published series first: a derived one is only meaningful once both of its
+    # inputs have been read out of the same archive.
+    for key in sorted(targets, key=lambda k: k in derived):
+        spec = published.get(key) or derived[key]
+        result["attempted"] += 1
+        try:
+            if key in derived:
+                metadata, observations = provider.fetch_derived(derived[key], start=start)
+            else:
+                metadata, observations = provider.fetch_series(published[key], start=start)
+            count = store.save_economic_series(
+                key,
+                provider_id=FEDBOARD_PROVIDER_ID,
+                provider_series_id=spec.provider_series_id,
+                metadata_fields=metadata,
+                observations=observations,
+                publisher=FEDBOARD_PUBLISHER,
+                publisher_url=FEDBOARD_PUBLISHER_URL,
+                series_url=FEDBOARD_RELEASES[
+                    published[key].release_id if key in published else "H15"
+                ].page_url,
+                rights_status="approved",
+                rights_evidence=FEDBOARD_DDP_TRANSITION_URL,
+            )
+            result["updated"] += 1
+            result["observations"] += count
+            log.info("거시 갱신 %s/%s (%d행)", FEDBOARD_PROVIDER_ID, spec.provider_series_id, count)
+        except RateLimited:
+            result["rate_limited"] += 1
+            log.warning("Fed Board 요청 제한 — 남은 계열은 다음 주기에 재시도")
+            break
+        except Exception as exc:  # noqa: BLE001 - 한 계열 실패가 나머지를 막지 않는다
+            result["failed"] += 1
+            store.mark_economic_error(key, str(exc))
+            log.warning("거시 갱신 실패 %s: %s", key, exc)
+    return result
+
+
 def _series_owner(series_key: str) -> str | None:
     """Which provider last collected this series, if any.
 
@@ -393,9 +475,11 @@ def run_once(tickers: list[str] | None = None) -> dict:
     if not config.LEGACY_PRICE_DATA_ENABLED:
         insider_result = {"skipped": "explicit_price_refresh"}
         nyfed_result = {"skipped": "explicit_price_refresh"}
+        fedboard_result = {"skipped": "explicit_price_refresh"}
         if automatic:
             fred_result = refresh_fred()
             nyfed_result = refresh_nyfed()
+            fedboard_result = refresh_fedboard()
             insider_result = refresh_insider_filings()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
@@ -408,6 +492,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             "purged_reports": purged,
             "fred": fred_result,
             "nyfed": nyfed_result,
+            "fedboard": fedboard_result,
             "insider": insider_result,
             "elapsed": round(time.time() - started, 2),
         }
@@ -421,6 +506,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             # Price-provider backoff must not disable the independent FRED lane.
             fred_result = refresh_fred()
             nyfed_result = refresh_nyfed()
+            fedboard_result = refresh_fedboard()
             insider_result = refresh_insider_filings()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
@@ -476,15 +562,18 @@ def run_once(tickers: list[str] | None = None) -> dict:
     # slow macro-provider outage cannot postpone all ticker updates.
     insider_result = {"skipped": "explicit_price_refresh"}
     nyfed_result = {"skipped": "explicit_price_refresh"}
+    fedboard_result = {"skipped": "explicit_price_refresh"}
     if automatic:
         fred_result = refresh_fred()
         nyfed_result = refresh_nyfed()
+        fedboard_result = refresh_fedboard()
         insider_result = refresh_insider_filings()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged
     result["fred"] = fred_result
     result["nyfed"] = nyfed_result
+    result["fedboard"] = fedboard_result
     result["insider"] = insider_result
     result["elapsed"] = round(time.time() - started, 2)
     log.info("수집 완료: %s", result)

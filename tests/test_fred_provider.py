@@ -27,6 +27,7 @@ def test_dashboard_catalog_contains_the_required_official_series():
         "BAMLH0A0HYM2",
         "STLFSI4",
         "DGS10",
+        "DGS2",
         "M2SL",
         "UNRATE",
         "ICSA",
