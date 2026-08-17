@@ -808,7 +808,7 @@ CNN Fear & Greed는 명칭도 점수도 복제하지 않는다. 그 지수의 7�
 |---|---|---|---|---|
 | Cboe Global Indices (CGI) | 라이선스 **월 USD 1,000부터**(DataShop 안내, 2026-08-17 확인). VIX 값은 CGI 보유자에게 보조 파일로 제공. CGI 없이 받는 Index Quotes는 T+1이며 재배포권 아님 | **예산의 약 28배** — 불가 | 공개 재표시가 정확히 이 라이선스 클래스 | [Global Indices Feed](https://www.cboe.com/data/global-indices-feed/), [DataShop](https://datashop.cboe.com/) |
 | ICE Data Indices | 공개 가격표 없음, 기관 대상 개별 견적 | 예산 내 근거 없음 | 재배포 계약 필요(§3.12) | [ICE Data Indices](https://www.ice.com/market-data/indices) |
-| **Tiingo** | Starter $0·Power $30·내부상업 $50/월 — 전부 "Internal Use Only, may not display or share". **재배포는 sales@tiingo.com 별도 정액 라이선스** — "flat rate, predictable" 문구로 웹·앱 사례를 명시적으로 환영 | 표준 티어는 목적 부적합, 재배포 정액가는 **견적 필요** | 조사 대상 중 재배포에 가장 우호적인 자세. 견적 문의 초안: [`INQUIRY_US_EOD_VENDORS.md`](INQUIRY_US_EOD_VENDORS.md) | [Pricing](https://www.tiingo.com/about/pricing), [ToS](https://app.tiingo.com/tos/) |
+| **Tiingo** | Starter $0·Power $30·내부상업 $50/월 — 전부 "Internal Use Only, may not display or share". **재배포는 sales@tiingo.com 별도 정액 라이선스** — "flat rate, predictable" 문구로 웹·앱 사례를 명시적으로 환영 | 표준 티어는 목적 부적합, 재배포 정액가는 **견적 필요** | **견적 문의 발송 2026-08-18**, 회신 대기. 초안·기록: [`INQUIRY_US_EOD_VENDORS.md`](INQUIRY_US_EOD_VENDORS.md) | [Pricing](https://www.tiingo.com/about/pricing), [ToS](https://app.tiingo.com/tos/) |
 | EODHD | All-World $19.99/월. 비전문 이용자는 "selling, reselling, retransmitting, redistributing, **displaying**" 금지. Professional은 **사전 서면 승인** 요청 가능 | 표준 티어 부적합 | display가 금지 열거에 직접 들어 있음 — 승인 경로는 있으나 문의형 | [Terms](https://eodhd.com/financial-apis/terms-conditions) |
 | Alpha Vantage | 약관(PDF, 2026-08-18 확인): "personal, non-commercial use, **unless you and Alpha Vantage have agreed otherwise in writing**". 타인에게 정보를 제공하는 활동은 상업 이용으로 분류 | 불확실 | 서면 합의 없이는 공개 표시 불가 | [Terms](https://www.alphavantage.co/terms_of_service/) |
 | Twelve Data Business | 외부 표시용 business/venture가 월 USD 149 이상으로 안내됨 | 예산 초과 | business 계약 범위 확인 필요 | [Business pricing](https://twelvedata.com/pricing-business), [Commercial vs personal use](https://support.twelvedata.com/en/articles/5332349-commercial-and-personal-usage) |
@@ -945,6 +945,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | BLS lane 추가(`DS-2026-005`), DOL ETA는 보류 사유 기록 | Claude assisted |
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
+| 2026-08-18 | Tiingo 재배포 라이선스 **견적 문의 발송** (sales@tiingo.com) | Claude assisted |
 | 2026-08-18 | 미국 EOD 벤더 조사 갱신 — Tiingo·EODHD·Alpha Vantage 약관 원문 확인. 자가결제 재표시 티어 부재 확인, Tiingo 견적 문의 초안 작성 | Claude assisted |
 | 2026-08-17 | Open DART lane 추가(`DS-2026-008`) — 임원·주요주주 소유상황 보고를 국내 종목 분석 옆에 원문 전달. EDGAR 원문 링크를 사람용 뷰로 수정 | Claude assisted |
 | 2026-08-17 | STLFSI4 문의 **발송** — FRED 공식 폼, 확인 배너·POST 200 검증. 회신 대기 | Claude assisted |

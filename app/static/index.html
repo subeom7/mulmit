@@ -896,7 +896,9 @@ const I18N = {
   }
 };
 
-let uiLang = localStorage.getItem("locale") || (navigator.language.toLowerCase().startsWith("ko") ? "ko" : "en");
+// 모니터와 같은 키를 읽어야 페이지를 오갈 때 언어가 유지된다 (테마와 동일한 수정).
+let uiLang = localStorage.getItem("monitor.locale") || localStorage.getItem("locale")
+  || (navigator.language.toLowerCase().startsWith("ko") ? "ko" : "en");
 if (!I18N[uiLang]) uiLang = "ko";
 let lastReport = null;
 let heatmapData = null;
@@ -2053,7 +2055,7 @@ themeToggle.addEventListener("click", () => {
 });
 document.getElementById("locale-toggle").addEventListener("click", () => {
   uiLang = uiLang === "ko" ? "en" : "ko";
-  localStorage.setItem("locale", uiLang);
+  localStorage.setItem("monitor.locale", uiLang);
   applyLocale();
 });
 
@@ -2167,6 +2169,16 @@ async function loadKrInsider(code) {
   }
 }
 
+const KRINS_STATUS_EN = {
+  "등기임원": "Registered executive", "비등기임원": "Unregistered executive",
+  "최대주주": "Largest shareholder", "주요주주": "Major shareholder",
+  "특수관계인": "Related party", "특별관계자": "Related party",
+};
+function krinsStatusLabel(value) {
+  if (!value || value === "-") return "";
+  return uiLang === "en" ? (KRINS_STATUS_EN[value] || value) : value;
+}
+
 function renderKrInsider(data) {
   const panel = document.getElementById("kr-insider");
   const state = document.getElementById("kr-insider-state");
@@ -2191,8 +2203,9 @@ function renderKrInsider(data) {
   for (const row of rows) {
     const tr = document.createElement("tr");
     tr.className = row.shares_change > 0 ? "open-market" : "";
-    const position = [row.position, row.executive_status].filter((x) => x && x !== "-").join(" · ")
-      || (row.main_shareholder && row.main_shareholder !== "-" ? row.main_shareholder : NBSP);
+    const position = [row.position === "-" ? "" : row.position, krinsStatusLabel(row.executive_status)]
+      .filter(Boolean).join(" · ")
+      || krinsStatusLabel(row.main_shareholder) || NBSP;
     const cells = [
       ["", formatDate(row.report_date)],
       ["owner", row.reporter || NBSP],
