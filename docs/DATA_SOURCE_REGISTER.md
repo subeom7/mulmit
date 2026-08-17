@@ -2,7 +2,7 @@
 
 작성 기준일: 2026-08-16 (Asia/Seoul)  
 대상 서비스: <https://mulmit.com/>  
-예산 기준: 데이터/API 구독료 월 30,000원 이내, 서버·도메인 비용 제외
+예산 기준: 데이터/API 구독료 월 50,000원 이내(2026-08-17 30,000원에서 상향, 사용자 확인), 서버·도메인 비용 제외
 
 이 문서는 Mulmit이 어떤 데이터를 어디서 받아 어떤 조건으로 표시할 수 있는지 기록하는 운영 원장이다. API가 기술적으로 열려 있다는 사실과 공개 웹 재표시 권리는 별개다. 법률 자문이 아니며, 실제 활성화 결정은 공급자 또는 원 권리자의 서면 답변과 최신 약관을 기준으로 한다.
 
@@ -754,6 +754,8 @@ CNN Fear & Greed는 명칭도 점수도 복제하지 않는다. 그 지수의 7�
 
 | 후보 | 공개 가격/문구 | 월 30,000원 판단 | 재표시 판단 | 공식 근거 |
 |---|---|---|---|---|
+| Cboe Global Indices (CGI) | 라이선스 **월 USD 1,000부터**(DataShop 안내, 2026-08-17 확인). VIX 값은 CGI 보유자에게 보조 파일로 제공. CGI 없이 받는 Index Quotes는 T+1이며 재배포권 아님 | **예산의 약 28배** — 불가 | 공개 재표시가 정확히 이 라이선스 클래스 | [Global Indices Feed](https://www.cboe.com/data/global-indices-feed/), [DataShop](https://datashop.cboe.com/) |
+| ICE Data Indices | 공개 가격표 없음, 기관 대상 개별 견적 | 예산 내 근거 없음 | 재배포 계약 필요(§3.12) | [ICE Data Indices](https://www.ice.com/market-data/indices) |
 | Twelve Data Business | 외부 표시용 business/venture가 월 USD 149 이상으로 안내됨 | 예산 초과 | business 계약 범위 확인 필요 | [Business pricing](https://twelvedata.com/pricing-business), [Commercial vs personal use](https://support.twelvedata.com/en/articles/5332349-commercial-and-personal-usage) |
 | Marketstack | Basic USD 9.99, Commercial Use 문구 | 가격만 보면 가능 | `commercial use`가 공개 재배포를 뜻하는지 서면 확인 전 구매 금지 | [Pricing](https://marketstack.com/pricing) |
 | Alpha Vantage | 개인/표준 API와 commercial 문의 분리 | 불확실 | commercial/public display는 문의 필요 | [Terms](https://www.alphavantage.co/terms_of_service/) |
@@ -764,7 +766,7 @@ CNN Fear & Greed는 명칭도 점수도 복제하지 않는다. 그 지수의 7�
 - 가격이 예산 안이라는 이유만으로 구매하지 않는다.
 - 계약서에 `public display`, `redistribution`, `derived data`, `caching`, `API to end users`가 명시되지 않으면 Mulmit 요구를 충족한 것으로 보지 않는다.
 - 첫 유료 결제 후보는 카드 수를 채우는 공급자가 아니라, 가장 필요한 소수 자산의 공개 표시 권리를 명확히 주는 공급자여야 한다.
-- 현재 데이터 구독비 지출은 0원으로 유지한다.
+- 현재 데이터 구독비 지출은 0원으로 유지한다. 예산이 50,000원으로 상향된 뒤에도 이 표에서 그 금액으로 열리는 재표시 클래스는 없다 — 개인 열람용 싼 티어를 공개 재표시에 쓰는 것은 클래스 착오이며 구매하지 않는다.
 
 ## 7. 공급자 문의 템플릿
 
@@ -885,6 +887,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | Federal Reserve Board lane 추가(`DS-2026-004`). DDP 폐지를 피해 릴리스 페이지 XML 사용 | Claude assisted |
 | 2026-08-17 | H.10 환율, H.4.1 유동성, H.6 통화량 연결 | Claude assisted |
 | 2026-08-17 | BLS lane 추가(`DS-2026-005`), DOL ETA는 보류 사유 기록 | Claude assisted |
+| 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
 | 2026-08-17 | 영구 공석 proxy 카드(코스닥·원달러 합성)를 한국 섹션에서 제거, 개요 타일을 공식 카드로 교체. 데이터·권리 변경 없음 | Claude assisted |
 | 2026-08-17 | HIP-3 문의 **발송** — XYZ Ltd와 Hyperliquid Corp. 양쪽. P0의 마지막 미발송 항목 해소 | Claude assisted |
