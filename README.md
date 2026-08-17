@@ -16,6 +16,7 @@
 
 - **[다음 세션 인수인계](docs/NEXT_SESSION_HANDOFF.md)** — 우선순위, 코드 위치, API 계약, 테스트·배포 완료 기준
 - **[데이터 공급자·권리 등록부](docs/DATA_SOURCE_REGISTER.md)** — 공급자별 공개 표시·캐시·재배포 판정, 예산, 카드 매핑
+- **[HIP-3 권리 문의 초안](docs/INQUIRY_HYPERLIQUID_TRADE_XYZ.md)** — 발송 전. 회신이 자산 카드 차트를 여는 열쇠
 
 공개 화면의 법적 고지는 `/privacy`(개인정보처리방침), `/terms`(이용약관),
 `/disclaimer`(면책 고지)에 있다. 세 페이지 모두 KO/EN 본문을 DOM에 함께 담아

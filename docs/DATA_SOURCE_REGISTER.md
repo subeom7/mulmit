@@ -73,7 +73,9 @@ Mulmit의 `/api/market/*`는 인증 없이 열려 있으므로 누구나 응답 
 HIP3_PUBLIC_DISPLAY_ENABLED=false
 ```
 
-서면 승인 전에는 `/api/market/assets`와 `/api/market/weekend`가 `pending_rights` 또는 구조화된 503을 반환하도록 다음 세션에서 구현한다. 공개 API 접근 자체를 재표시 허가로 기록하지 않는다.
+서면 승인 전에는 `/api/market/assets`와 `/api/market/weekend`가 `pending_rights` 또는 구조화된 503을 반환한다(구현 완료). 공개 API 접근 자체를 재표시 허가로 기록하지 않는다.
+
+문의 초안은 [`docs/INQUIRY_HYPERLIQUID_TRADE_XYZ.md`](INQUIRY_HYPERLIQUID_TRADE_XYZ.md)에 있다. 수신처가 **둘**임에 주의한다 — `xyz:` 상품은 trade.xyz가, 접두사 없는 `BTC`는 Hyperliquid가 상장했다. 양쪽에 각각 보내고 회신을 별도 `decision_id`로 기록한다.
 
 ```yaml
 decision_id: DS-2026-001
