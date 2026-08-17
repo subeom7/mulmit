@@ -376,6 +376,17 @@ class SecEdgarProvider:
         url = f"{folder}/{document}"
         root = self._request_xml(url)
 
+        # The link a person clicks is not the file the parser reads. The raw
+        # XML renders as an unstyled document tree in a browser, so the stored
+        # URL prefers the XSL-rendered view EDGAR itself points at, and falls
+        # back to the filing index page when a filing has no styled twin.
+        if "/" in primary_document:
+            display_url = f"{folder}/{primary_document}"
+        elif document.endswith(".xml"):
+            display_url = f"{folder}/{accession_number}-index.htm"
+        else:
+            display_url = url
+
         owner = root.find("reportingOwner")
         relationship = owner.find("reportingOwnerRelationship") if owner is not None else None
         owner_name = _text(owner, "reportingOwnerId/rptOwnerName")
@@ -390,7 +401,7 @@ class SecEdgarProvider:
             "is_director": _flag(relationship, "isDirector"),
             "is_officer": _flag(relationship, "isOfficer"),
             "is_ten_percent_owner": _flag(relationship, "isTenPercentOwner"),
-            "filing_url": url,
+            "filing_url": display_url,
         }
 
         rows: list[InsiderTransaction] = []

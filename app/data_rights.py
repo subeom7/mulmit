@@ -22,6 +22,7 @@ FRED = "fred"
 HYPERLIQUID_HIP3 = "hyperliquid_hip3"
 LEGACY_PRICE_DATA = "legacy_price_data"
 SEC_EDGAR = "sec_edgar"
+DART = "dart"
 NYFED = "nyfed"
 FEDBOARD = "federal_reserve"
 BLS = "bls"
@@ -70,6 +71,18 @@ KR_STOCK_DISABLED = {
         "The FSC open-data lane is disabled for this deployment, so Korean "
         "listing search and per-stock analysis are withheld."
     ),
+}
+
+KR_INSIDER_DISABLED = {
+    "code": "kr_insider_data_disabled",
+    "status": "disabled",
+    "message": "DART insider-report relay is disabled for this deployment.",
+}
+
+KR_INSIDER_NOT_CONFIGURED = {
+    "code": "kr_insider_not_configured",
+    "status": "not_configured",
+    "message": "DART_API_KEY must be issued by opendart.fss.or.kr before use.",
 }
 
 NO_STORE_HEADERS = {"Cache-Control": "no-store"}
@@ -131,6 +144,17 @@ def hip3_public_display_enabled() -> bool:
     return bool(config.HIP3_PUBLIC_DISPLAY_ENABLED)
 
 
+def dart_serving_enabled() -> bool:
+    """The issued key is part of the permission: DART meters by key."""
+    return bool(config.DART_ENABLED and config.DART_API_KEY)
+
+
+def dart_status() -> str:
+    if not config.DART_ENABLED:
+        return "disabled"
+    return "enabled" if config.DART_API_KEY else "not_configured"
+
+
 def sec_edgar_serving_enabled() -> bool:
     """A declared contact address is part of the permission, not a nicety.
 
@@ -161,6 +185,10 @@ def lane_report() -> dict[str, dict[str, str]]:
         SEC_EDGAR: {
             "status": sec_edgar_status(),
             "gate": "SEC_EDGAR_ENABLED + SEC_EDGAR_USER_AGENT",
+        },
+        DART: {
+            "status": dart_status(),
+            "gate": "DART_ENABLED + DART_API_KEY",
         },
     }
     for provider_id in _MACRO_LANES:

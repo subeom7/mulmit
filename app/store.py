@@ -266,6 +266,17 @@ kr_index_snapshot = sa.Table(
     sa.Column("fetched_at", sa.Float, nullable=False),
 )
 
+# DART 법인코드 매핑. corpCode.xml zip에서 상장사(종목코드 보유)만 담는다.
+dart_corp_codes = sa.Table(
+    "dart_corp_codes",
+    metadata,
+    sa.Column("stock_code", sa.String(12), primary_key=True),
+    sa.Column("corp_code", sa.String(8), nullable=False),
+    sa.Column("corp_name", sa.String(256), nullable=False),
+    sa.Column("modify_date", sa.String(10)),
+    sa.Column("fetched_at", sa.Float, nullable=False),
+)
+
 reports = sa.Table(
     "reports",
     metadata,
@@ -1046,6 +1057,57 @@ def kr_index_snapshot_meta() -> dict[str, Any]:
 
 def kr_index_snapshot_stale(max_age: int) -> bool:
     meta = kr_index_snapshot_meta()
+    if not meta["count"] or meta["fetched_at"] is None:
+        return True
+    return meta["fetched_at"] <= time.time() - max_age
+
+
+def save_dart_corp_codes(rows: Iterable[dict[str, Any]]) -> int:
+    """Replace the listed-company corp-code mapping wholesale."""
+    now = time.time()
+    payload = [
+        {
+            "stock_code": str(row["stock_code"]).strip(),
+            "corp_code": str(row["corp_code"]).strip(),
+            "corp_name": str(row["corp_name"]).strip(),
+            "modify_date": str(row.get("modify_date") or "").strip() or None,
+            "fetched_at": now,
+        }
+        for row in rows
+        if str(row.get("stock_code") or "").strip() and str(row.get("corp_code") or "").strip()
+    ]
+    if not payload:
+        return 0
+    with engine().begin() as conn:
+        conn.execute(dart_corp_codes.delete())
+        conn.execute(dart_corp_codes.insert(), payload)
+    return len(payload)
+
+
+def get_dart_corp_code(stock_code: str) -> dict[str, Any] | None:
+    with engine().connect() as conn:
+        row = conn.execute(
+            sa.select(dart_corp_codes).where(
+                dart_corp_codes.c.stock_code == stock_code.strip().upper()
+            )
+        ).mappings().first()
+        return dict(row) if row else None
+
+
+def dart_corp_codes_meta() -> dict[str, Any]:
+    with engine().connect() as conn:
+        row = conn.execute(
+            sa.select(
+                sa.func.count(dart_corp_codes.c.stock_code),
+                sa.func.max(dart_corp_codes.c.fetched_at),
+            )
+        ).first()
+    count, fetched_at = row or (0, None)
+    return {"count": int(count or 0), "fetched_at": fetched_at}
+
+
+def dart_corp_codes_stale(max_age: int) -> bool:
+    meta = dart_corp_codes_meta()
     if not meta["count"] or meta["fetched_at"] is None:
         return True
     return meta["fetched_at"] <= time.time() - max_age

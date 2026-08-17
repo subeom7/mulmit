@@ -18,7 +18,7 @@ from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from . import __version__, config, data_rights, ingest, kr_stocks, service, store
+from . import __version__, config, data_rights, ingest, kr_insider, kr_stocks, service, store
 from .data import DataUnavailable, RateLimited
 from .insider_filings import (
     DEFAULT_TRANSACTIONS,
@@ -358,6 +358,36 @@ def kr_stock_analysis(code: str, request: Request, response: Response) -> dict:
         ) from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "Financial Services Commission (data.go.kr)"
+    return payload
+
+
+@app.get("/api/kr/insider/{code}")
+@limiter.limit(config.RATE_LIMIT)
+def kr_insider_reports(code: str, request: Request, response: Response) -> dict:
+    """국내 임원·주요주주 소유상황 보고(DART). 캐시 우선, 미스에서만 단발 조회."""
+    code = code.strip().upper()
+    if not (4 <= len(code) <= 12) or not code.isalnum():
+        raise HTTPException(status_code=422, detail="code must be a KRX issue code")
+    try:
+        payload = kr_insider.get_reports(code)
+    except kr_insider.KrInsiderDisabled as exc:
+        detail = (
+            data_rights.KR_INSIDER_NOT_CONFIGURED
+            if exc.reason == "not_configured"
+            else data_rights.KR_INSIDER_DISABLED
+        )
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    except kr_insider.KrInsiderUnknown as exc:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "kr_insider_unknown", "message": f"{code} is not a DART-listed issue"},
+        ) from exc
+    except (DataUnavailable, RateLimited) as exc:
+        raise HTTPException(status_code=503, detail="DART reports unavailable") from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "FSS DART"
     return payload
 
 

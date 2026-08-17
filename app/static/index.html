@@ -245,6 +245,11 @@ ul.notes li::before { content: ""; position: absolute; left: 0; top: 9px; width:
 @media (max-width: 900px) { .kr-two { grid-template-columns: 1fr; } }
 #kr-status.state-block { min-height: 90px; }
 .kr-meta { font-size: 11.5px; color: var(--text-muted); margin: 12px 0 0; line-height: 1.6; }
+#kr-insider { margin-top: 14px; }
+#kr-insider .chg-up { color: var(--positive); }
+#kr-insider .chg-down { color: var(--negative); }
+#kr-insider td.num, #kr-insider th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table-wrap { overflow-x: auto; }
 
 /* --- 차트 ----------------------------------------------------------------- */
 .chart { position: relative; width: 100%; }
@@ -454,6 +459,28 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
       </div>
     </div>
     <p class="kr-meta" id="kr-source"></p>
+
+    <div class="card" id="kr-insider" hidden>
+      <h2 data-i18n="krins.title">임원·주요주주 소유보고</h2>
+      <p class="sub" id="kr-insider-basis"></p>
+      <div id="kr-insider-state" class="state-block" role="status" aria-live="polite" hidden></div>
+      <div class="table-wrap" id="kr-insider-wrap" hidden>
+        <table class="insider-table" id="kr-insider-table">
+          <caption class="sr-only" data-i18n="krins.caption">임원·주요주주 특정증권등 소유상황 보고</caption>
+          <thead><tr>
+            <th scope="col" data-i18n="krins.colDate">보고일</th>
+            <th scope="col" data-i18n="krins.colReporter">보고자</th>
+            <th scope="col" data-i18n="krins.colPosition">직위·관계</th>
+            <th scope="col" class="num" data-i18n="krins.colOwned">소유수량</th>
+            <th scope="col" class="num" data-i18n="krins.colChange">증감</th>
+            <th scope="col" class="num" data-i18n="krins.colRatio">비율</th>
+            <th scope="col" data-i18n="krins.colReport">원문</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="insider-source" id="kr-insider-source"></p>
+    </div>
   </div>
 </section>
 
@@ -660,6 +687,11 @@ const I18N = {
     "kr.kpi.mdd": "최대 낙폭 (5년)", "kr.kpi.range": "52주 범위", "kr.kpi.vol": "연 변동성 (1Y)",
     "kr.asof": "기준 {date}", "kr.retTitle": "기간 수익률",
     "insider.none": "보고 없음",
+    "krins.title": "임원·주요주주 소유보고", "krins.caption": "임원·주요주주 특정증권등 소유상황 보고",
+    "krins.colDate": "보고일", "krins.colReporter": "보고자", "krins.colPosition": "직위·관계",
+    "krins.colOwned": "소유수량", "krins.colChange": "증감", "krins.colRatio": "비율", "krins.colReport": "원문",
+    "krins.none": "수집된 소유상황 보고가 없습니다.", "krins.view": "보기",
+    "krins.source": "{notice} · 최근 {count}건",
     "market.title": "S&P 500 섹터 모니터", "market.tag": "11 SECTOR ETFs · ADJUSTED CLOSE", "market.summaryAria": "섹터 요약",
     "market.lede": "일간·주간·월간·연간 흐름을 전환해 시장의 리더십과 확산도를 빠르게 확인합니다.",
     "pulse.best": "가장 강한 섹터", "pulse.worst": "가장 약한 섹터", "pulse.breadth": "상승 섹터", "pulse.asof": "기준일",
@@ -771,6 +803,11 @@ const I18N = {
     "kr.kpi.mdd": "Max drawdown (5y)", "kr.kpi.range": "52-week range", "kr.kpi.vol": "Volatility (1y, ann.)",
     "kr.asof": "as of {date}", "kr.retTitle": "Period returns",
     "insider.none": "None reported",
+    "krins.title": "Officer & major-shareholder reports", "krins.caption": "Officer and major-shareholder ownership reports",
+    "krins.colDate": "Reported", "krins.colReporter": "Reporter", "krins.colPosition": "Position",
+    "krins.colOwned": "Shares owned", "krins.colChange": "Change", "krins.colRatio": "Ratio", "krins.colReport": "Filing",
+    "krins.none": "No ownership reports collected.", "krins.view": "View",
+    "krins.source": "{notice} · latest {count} reports",
     "market.title": "S&P 500 Sector Monitor", "market.tag": "11 SECTOR ETFs · ADJUSTED CLOSE", "market.summaryAria": "Sector summary",
     "market.lede": "Switch between daily, weekly, monthly and yearly returns to see leadership and market breadth at a glance.",
     "pulse.best": "Strongest sector", "pulse.worst": "Weakest sector", "pulse.breadth": "Sectors up", "pulse.asof": "As of",
@@ -2112,7 +2149,79 @@ function krSelect(item) {
   loadKrStock(item.code, item.name);
 }
 
+let krInsiderController = null;
+
+async function loadKrInsider(code) {
+  const panel = document.getElementById("kr-insider");
+  if (krInsiderController) krInsiderController.abort();
+  const controller = new AbortController();
+  krInsiderController = controller;
+  try {
+    const response = await fetch(`/api/kr/insider/${encodeURIComponent(code)}`, { signal: controller.signal });
+    if (!response.ok) { panel.hidden = true; return; }
+    renderKrInsider(await response.json());
+  } catch (error) {
+    if (error.name !== "AbortError") panel.hidden = true;
+  } finally {
+    if (krInsiderController === controller) krInsiderController = null;
+  }
+}
+
+function renderKrInsider(data) {
+  const panel = document.getElementById("kr-insider");
+  const state = document.getElementById("kr-insider-state");
+  const wrap = document.getElementById("kr-insider-wrap");
+  panel.hidden = false;
+  document.getElementById("kr-insider-basis").textContent =
+    uiLang === "ko" ? (data.basis_ko || "") : (data.basis_en || "");
+
+  const rows = data.reports || [];
+  if (!rows.length) {
+    wrap.hidden = true;
+    state.hidden = false;
+    state.textContent = t("krins.none");
+    document.getElementById("kr-insider-source").textContent = "";
+    return;
+  }
+  state.hidden = true;
+  wrap.hidden = false;
+  const tbody = document.querySelector("#kr-insider-table tbody");
+  tbody.replaceChildren();
+  const num = (v) => v == null ? NBSP : v.toLocaleString();
+  for (const row of rows) {
+    const tr = document.createElement("tr");
+    tr.className = row.shares_change > 0 ? "open-market" : "";
+    const position = [row.position, row.executive_status].filter((x) => x && x !== "-").join(" · ")
+      || (row.main_shareholder && row.main_shareholder !== "-" ? row.main_shareholder : NBSP);
+    const cells = [
+      ["", formatDate(row.report_date)],
+      ["owner", row.reporter || NBSP],
+      ["", position],
+      ["num", num(row.shares_owned)],
+      ["num " + (row.shares_change > 0 ? "chg-up" : row.shares_change < 0 ? "chg-down" : ""),
+        row.shares_change == null ? NBSP : `${row.shares_change > 0 ? "+" : ""}${row.shares_change.toLocaleString()}`],
+      ["num", row.ownership_ratio == null ? NBSP : `${row.ownership_ratio.toFixed(2)}%`],
+    ];
+    for (const [cls, text] of cells) {
+      const td = document.createElement("td");
+      if (cls.trim()) td.className = cls.trim();
+      td.textContent = text;
+      tr.appendChild(td);
+    }
+    const linkTd = document.createElement("td");
+    const link = document.createElement("a");
+    link.href = row.report_url; link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.textContent = t("krins.view");
+    linkTd.appendChild(link);
+    tr.appendChild(linkTd);
+    tbody.appendChild(tr);
+  }
+  document.getElementById("kr-insider-source").textContent =
+    t("krins.source", { notice: (uiLang === "ko" ? data.source?.notice : data.source?.notice_en) || "", count: rows.length });
+}
+
 async function loadKrStock(code, name) {
+  loadKrInsider(code);
   if (krLoadController) krLoadController.abort();
   const controller = new AbortController();
   krLoadController = controller;
