@@ -808,8 +808,11 @@ CNN Fear & Greed는 명칭도 점수도 복제하지 않는다. 그 지수의 7�
 |---|---|---|---|---|
 | Cboe Global Indices (CGI) | 라이선스 **월 USD 1,000부터**(DataShop 안내, 2026-08-17 확인). VIX 값은 CGI 보유자에게 보조 파일로 제공. CGI 없이 받는 Index Quotes는 T+1이며 재배포권 아님 | **예산의 약 28배** — 불가 | 공개 재표시가 정확히 이 라이선스 클래스 | [Global Indices Feed](https://www.cboe.com/data/global-indices-feed/), [DataShop](https://datashop.cboe.com/) |
 | ICE Data Indices | 공개 가격표 없음, 기관 대상 개별 견적 | 예산 내 근거 없음 | 재배포 계약 필요(§3.12) | [ICE Data Indices](https://www.ice.com/market-data/indices) |
+| **Tiingo** | Starter $0·Power $30·내부상업 $50/월 — 전부 "Internal Use Only, may not display or share". **재배포는 sales@tiingo.com 별도 정액 라이선스** — "flat rate, predictable" 문구로 웹·앱 사례를 명시적으로 환영 | 표준 티어는 목적 부적합, 재배포 정액가는 **견적 필요** | 조사 대상 중 재배포에 가장 우호적인 자세. 견적 문의 초안: [`INQUIRY_US_EOD_VENDORS.md`](INQUIRY_US_EOD_VENDORS.md) | [Pricing](https://www.tiingo.com/about/pricing), [ToS](https://app.tiingo.com/tos/) |
+| EODHD | All-World $19.99/월. 비전문 이용자는 "selling, reselling, retransmitting, redistributing, **displaying**" 금지. Professional은 **사전 서면 승인** 요청 가능 | 표준 티어 부적합 | display가 금지 열거에 직접 들어 있음 — 승인 경로는 있으나 문의형 | [Terms](https://eodhd.com/financial-apis/terms-conditions) |
+| Alpha Vantage | 약관(PDF, 2026-08-18 확인): "personal, non-commercial use, **unless you and Alpha Vantage have agreed otherwise in writing**". 타인에게 정보를 제공하는 활동은 상업 이용으로 분류 | 불확실 | 서면 합의 없이는 공개 표시 불가 | [Terms](https://www.alphavantage.co/terms_of_service/) |
 | Twelve Data Business | 외부 표시용 business/venture가 월 USD 149 이상으로 안내됨 | 예산 초과 | business 계약 범위 확인 필요 | [Business pricing](https://twelvedata.com/pricing-business), [Commercial vs personal use](https://support.twelvedata.com/en/articles/5332349-commercial-and-personal-usage) |
-| Marketstack | Basic USD 9.99, Commercial Use 문구 | 가격만 보면 가능 | `commercial use`가 공개 재배포를 뜻하는지 서면 확인 전 구매 금지 | [Pricing](https://marketstack.com/pricing) |
+| Marketstack | Basic USD 9.99. 2026-08-18 재확인: 자체 약관 페이지가 Idera 범용 SaaS 계약으로 리다이렉트되며 데이터 재배포 조항이 명시돼 있지 않음 | 가격만 보면 가능 | 데이터 전용 허락 문구가 없어 서면 확인 전 구매 금지 유지 | [Idera legal](https://www.ideracorp.com/legal/APILayer) |
 | Alpha Vantage | 개인/표준 API와 commercial 문의 분리 | 불확실 | commercial/public display는 문의 필요 | [Terms](https://www.alphavantage.co/terms_of_service/) |
 | Finnhub | 재배포/enterprise는 문의형 | 예산 내 근거 없음 | enterprise 계약 전 사용 금지 | [Pricing](https://finnhub.io/pricing-startups-and-enterprise) |
 
@@ -818,6 +821,7 @@ CNN Fear & Greed는 명칭도 점수도 복제하지 않는다. 그 지수의 7�
 - 가격이 예산 안이라는 이유만으로 구매하지 않는다.
 - 계약서에 `public display`, `redistribution`, `derived data`, `caching`, `API to end users`가 명시되지 않으면 Mulmit 요구를 충족한 것으로 보지 않는다.
 - 첫 유료 결제 후보는 카드 수를 채우는 공급자가 아니라, 가장 필요한 소수 자산의 공개 표시 권리를 명확히 주는 공급자여야 한다.
+- **2026-08-18 조사 결론**: 자가결제 티어로 공개 재표시를 서면 허용하는 벤더는 없다. 전 벤더가 "내부 이용 + 재배포는 별도 문의" 구조다. 유일하게 열려 있는 다음 수는 **Tiingo 재배포 정액 라이선스 견적 문의**(무료)이며, EODHD 서면 승인 경로가 차선이다.
 - 현재 데이터 구독비 지출은 0원으로 유지한다. 예산이 50,000원으로 상향된 뒤에도 이 표에서 그 금액으로 열리는 재표시 클래스는 없다 — 개인 열람용 싼 티어를 공개 재표시에 쓰는 것은 클래스 착오이며 구매하지 않는다.
 
 ## 7. 공급자 문의 템플릿
@@ -941,6 +945,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | BLS lane 추가(`DS-2026-005`), DOL ETA는 보류 사유 기록 | Claude assisted |
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
+| 2026-08-18 | 미국 EOD 벤더 조사 갱신 — Tiingo·EODHD·Alpha Vantage 약관 원문 확인. 자가결제 재표시 티어 부재 확인, Tiingo 견적 문의 초안 작성 | Claude assisted |
 | 2026-08-17 | Open DART lane 추가(`DS-2026-008`) — 임원·주요주주 소유상황 보고를 국내 종목 분석 옆에 원문 전달. EDGAR 원문 링크를 사람용 뷰로 수정 | Claude assisted |
 | 2026-08-17 | STLFSI4 문의 **발송** — FRED 공식 폼, 확인 배너·POST 200 검증. 회신 대기 | Claude assisted |
 | 2026-08-17 | 코스피 지수군 섹션 추가 — 지수 하루 스냅샷(1요청/일, 168지수)으로 대표 지수 10종·코스피 200 섹터 11종의 종가·전일·연초·52주·거래대금 표. 지수명이 시리즈 간 비유일함을 확인해 (이름,분류) 복합키와 KOSPI시리즈 고정 적용. 미확정 52주 최저 0값은 결측 처리 | Claude assisted |
