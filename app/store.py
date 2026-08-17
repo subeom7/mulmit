@@ -467,7 +467,10 @@ def load_macro(key: str, max_age: int | None = None) -> float | None:
         row = conn.execute(stmt).first()
     if row is None:
         return None
-    if max_age is not None and time.time() - row.updated_at > max_age:
+    # `>=`인 이유: 시계 해상도 안에서 저장과 조회가 같은 눈금에 떨어지면 나이가
+    # 정확히 0.0이 된다. `>`면 max_age=0이 "항상 만료"를 뜻하지 못하고 값을 그대로
+    # 돌려준다. Windows에서는 이 충돌이 드물지 않다.
+    if max_age is not None and time.time() - row.updated_at >= max_age:
         return None
     return float(row.value)
 
@@ -816,7 +819,8 @@ def load_report(cache_key: str, ttl: int) -> dict | None:
     )
     with engine().connect() as conn:
         row = conn.execute(stmt).first()
-    if row is None or time.time() - row.created_at > ttl:
+    # load_macro와 같은 이유로 `>=`. ttl=0은 "캐시를 쓰지 않는다"여야 한다.
+    if row is None or time.time() - row.created_at >= ttl:
         return None
     try:
         return json.loads(gzip.decompress(row.payload))
