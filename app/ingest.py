@@ -400,30 +400,18 @@ def refresh_fsc(*, force: bool = False) -> dict:
         log.warning("FSC_ENABLED=true 이지만 FSC_API_KEY가 비어 있어 건너뜁니다")
         return {"skipped": "not_configured", "attempted": 0, "updated": 0, "failed": 0}
 
-    keys = [spec.series_key for spec in FSC_SERIES]
-    targets = (
-        keys
-        if force
-        else [
-            key
-            for key in store.stale_economic_series(keys, config.FSC_MAX_AGE)
-            if _series_owner(key) in (None, FSC_PROVIDER_ID)
-        ]
-    )
-    if not targets:
-        return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
-
     provider = FscProvider(
         config.FSC_API_KEY,
         timeout=config.FSC_TIMEOUT,
         retries=config.FSC_RETRIES,
         request_interval=config.FSC_REQUEST_INTERVAL,
     )
-    start = dt.date.today() - dt.timedelta(days=config.FSC_HISTORY_DAYS)
     result = {"attempted": 0, "updated": 0, "failed": 0, "rate_limited": 0, "observations": 0}
 
     # The Korean listing roster shares this lane: one trading day of the stock
     # dataset is the whole exchange, and name search reads only the local copy.
+    # It runs before the freshness early-return below — fresh cards must not
+    # starve the roster, which is exactly what happened on first deploy.
     if force or store.kr_listings_stale(config.FSC_MAX_AGE):
         try:
             bas_dt, rows = provider.fetch_day_snapshot()
@@ -435,6 +423,22 @@ def refresh_fsc(*, force: bool = False) -> dict:
         except Exception as exc:  # noqa: BLE001 - 로스터 실패가 계열 수집을 막지 않는다
             result["listings_error"] = str(exc)
             log.warning("국내 종목 로스터 갱신 실패: %s", exc)
+
+    keys = [spec.series_key for spec in FSC_SERIES]
+    targets = (
+        keys
+        if force
+        else [
+            key
+            for key in store.stale_economic_series(keys, config.FSC_MAX_AGE)
+            if _series_owner(key) in (None, FSC_PROVIDER_ID)
+        ]
+    )
+    if not targets:
+        result["skipped"] = "fresh"
+        return result
+
+    start = dt.date.today() - dt.timedelta(days=config.FSC_HISTORY_DAYS)
 
     for key in targets:
         spec = FSC_SERIES_BY_KEY[key]
