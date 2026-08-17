@@ -298,7 +298,75 @@ notes: >
 - 게시된 날짜에 금리가 없으면 0이 아니라 결측으로 둔다.
 - 이 lane이 소유한 계열은 FRED가 다시 가져가지 못한다(`_series_owner` 가드).
 
-### 3.7 Yahoo Finance / yfinance
+### 3.7 Federal Reserve Board 통계 릴리스 (H.15 등)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `federal_reserve` |
+| 현재 상태 | `approved` (아래 근거의 성격에 주의) |
+| 코드 위치 | `app/providers/fedboard.py`, `app/ingest.py` |
+| 배포 기본값 | `FEDBOARD_ENABLED=false` |
+| 현재 사용 | H.15 10년물·2년물 국채 금리, 그리고 둘로 계산한 10Y−2Y 스프레드 |
+| 기술 비용 | 무료. API 키 없음 |
+| 접근 경로 | 릴리스 페이지 XML 아카이브 (`/releases/h15/data/FRB_h15_xml.zip`) |
+| attribution | 표준 출처 표기를 `rights.notice`로 함께 전달 |
+| 공식 근거 | [DDP–FRED 전환 공지](https://www.federalreserve.gov/data/data-download-fred-information.htm), [H.15 릴리스](https://www.federalreserve.gov/releases/h15/) |
+
+**NY Fed와 근거의 성격이 다르다.** NY Fed는 저작권을 주장하고 명시적 라이선스를
+부여한다(연방기관이 아니므로). Board of Governors는 **연방기관**이라 그 저작물에
+저작권이 성립하지 않는다(17 U.S.C. §105). 즉 여기서는 "허가를 받았다"가 아니라
+"허가가 필요한 대상이 아니다"가 근거다. 릴리스 페이지에도 이용 제한 문구가 없다.
+법률 자문이 아닌 개발상 판단이며, 그래서 재검토일을 짧게 잡았다.
+
+**폐지 예정 경로를 피했다.** Board는 Data Download Program을 단계적으로 없애고
+FRED로 유도하고 있다.
+
+> the Board plans to remove the "Build Your Package" option from the Data
+> Download Program the week of **November 9, 2026** ... including the eventual
+> **retirement of the DDP**
+
+Mulmit은 FRED 약관 때문에 그 대체 경로를 쓸 수 없다. 다만 같은 공지에 열린 문이
+하나 있고 이 구현은 그쪽을 쓴다.
+
+> **Historical data will remain available for download as XML files on
+> statistical release pages.**
+
+DDP 질의 엔드포인트가 아니라 릴리스 페이지 아카이브를 읽는 이유다. 이 문장이
+철회되면 이 lane 전체가 막히므로 `recheck_at`을 2026-11-01로 잡았다.
+
+```yaml
+decision_id: DS-2026-004
+provider_id: federal_reserve
+status: approved
+reviewed_at: 2026-08-17
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://www.federalreserve.gov/data/data-download-fred-information.htm
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  cache_ttl_seconds: 300
+  stale_seconds: 0
+  historical_storage: true
+  derived_metrics: true       # 10Y−2Y 스프레드를 두 공식 계열로 계산
+  advertising: true
+attribution: "Source: Board of Governors of the Federal Reserve System (US), statistical releases."
+expires_at: null
+recheck_at: 2026-11-01
+notes: >
+  근거는 명시적 라이선스가 아니라 연방기관 저작물에 저작권이 없다는 점이다(17 USC 105).
+  DDP 폐지 일정(2026-11-09 1단계)이 있으므로 릴리스 페이지 XML 경로가 유지되는지
+  recheck_at에 반드시 확인한다. 이 경로가 사라지면 Board 직접 연결은 불가능해진다.
+```
+
+표시 규칙:
+
+- `OBS_STATUS`가 `A`가 아닌 관측치는 버린다. 값이 `-9999`(H.15) 또는 `-999999`(H.4.1) 센티넬이고 날짜는 미국 공휴일이다. 이걸 저장하면 차트가 파괴된다.
+- 10Y−2Y는 **양쪽이 모두 게시한 날짜**로만 계산한다. 한쪽만 있는 날은 이월하지 않고 버린다.
+- 아카이브는 릴리스당 한 번만 내려받아 그 안의 모든 계열에 재사용한다.
+- 좁은 `Accept`(예: `application/zip`)에는 406으로 응답하므로 `*/*`를 보낸다.
+
+### 3.8 Yahoo Finance / yfinance
 
 | 항목 | 기록 |
 |---|---|
@@ -311,7 +379,7 @@ notes: >
 
 yfinance 패키지가 공개 표시·저장·재배포 권리를 부여한다고 해석하지 않는다. 401/429를 스크래핑 엔드포인트로 우회하지 않는다.
 
-### 3.8 Cboe, ICE, IMF
+### 3.9 Cboe, ICE, IMF
 
 | 공급자/권리자 | 대상 | 상태 | 현재 결정 | 공식 근거 |
 |---|---|---|---|---|
@@ -385,9 +453,10 @@ alias를 정리해 proxy와 exact가 서로 다른 카드에 붙도록 먼저 �
 
 | UI key | 기존 ID | 원 발행기관 후보 | 상태 | 메모 |
 |---|---|---|---|---|
-| `yield_curve` | `T10Y2Y` | Fed Board 10Y−2Y 직접 계산 | `pending_review` | 같은 관측일 정렬, 결측일 처리 공개 |
+| `yield_curve` | `RIFLGFCY10_N.B - RIFLGFCY02_N.B` | **Fed Board (계산됨)** | `approved` | 양쪽이 모두 게시한 날짜로만 계산 |
 | `financial_stress` | `STLFSI4` | St. Louis Fed 별도 permission 또는 대체 자체 지수 | `license_required` | FRED 우회 복제 금지 |
-| `treasury_10y` | `DGS10` | Federal Reserve Board H.15 후보 | `pending_review` | 원 단위와 업데이트 일정 검증 |
+| `treasury_10y` | `RIFLGFCY10_N.B` | **Fed Board H.15 (연결됨)** | `approved` | 2001~ 일별. `DS-2026-004` |
+| `treasury_2y`(신규) | `RIFLGFCY02_N.B` | **Fed Board H.15 (연결됨)** | `approved` | 10Y−2Y 계산의 입력이자 자체 카드 |
 | `m2` | `M2SL` | Federal Reserve Board H.6 후보 | `pending_review` | 계절조정·단위 보존 |
 | `unemployment` | `UNRATE` | BLS `LNS14000000` 후보 | `pending_review` | 월간, 계절조정 여부 확인 |
 | `initial_claims` | `ICSA` | DOL ETA | `pending_review` | 주간, revised 값 처리 |
@@ -555,4 +624,5 @@ notes: "No confidential contract language here"
 | 2026-08-16 | 교차검토 반영: 실제 UI key 정정, 공개 JSON 표현 수정, KRX 출처·제3자 제공 조건 명시, ICE/IMF 경로 정정, proxy와 공식값 key 분리, HIP-3 결정 기록 추가 | Claude assisted |
 | 2026-08-17 | SEC EDGAR lane 추가(`DS-2026-002`)와 Form 3/4/5 표시 규칙 기록 | Claude assisted |
 | 2026-08-17 | New York Fed lane 추가(`DS-2026-003`), HIP-3와 Hyperliquid 자체 DEX 상장 주체 구분 | Claude assisted |
+| 2026-08-17 | Federal Reserve Board lane 추가(`DS-2026-004`). DDP 폐지를 피해 릴리스 페이지 XML 사용 | Claude assisted |
 

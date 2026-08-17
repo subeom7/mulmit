@@ -218,6 +218,27 @@ NYFED_ENABLED=false
 한 계열을 두 lane이 이름 붙일 수 있으므로, 행을 가진 공급자가 그 계열을 계속
 소유한다. FRED lane을 켜도 승인된 NY Fed 계열을 덮어쓰지 않는다.
 
+`FEDBOARD_ENABLED`는 Federal Reserve Board의 H.15에서 미국 10년물·2년물 금리를
+직접 받고, 그 둘로 장단기 금리차(10Y−2Y)를 계산한다. 키가 필요 없다.
+
+경로 선택에 이유가 있다. Board는 Data Download Program을 폐지하고 FRED로 유도하는
+중인데(1단계 2026-11-09), Mulmit은 FRED 약관 때문에 그 대체 경로를 쓸 수 없다. 같은
+전환 공지에 "Historical data will remain available for download as XML files on
+statistical release pages"라고 적혀 있어, DDP 질의 엔드포인트가 아니라 **릴리스 페이지
+XML 아카이브**를 읽는다. 이 문장이 철회되면 lane 전체가 막히므로 등록부의 재검토일이
+2026-11-01이다.
+
+```dotenv
+FEDBOARD_ENABLED=false
+```
+
+이 포맷에는 조용히 틀린 숫자를 만드는 함정이 둘 있다. 관측치의 `OBS_STATUS`가 `A`가
+아니면 그 값은 `-9999`(H.15) 같은 센티넬이고 날짜는 미국 공휴일이다. 그리고 아카이브
+하나에 릴리스의 모든 계열이 들어 있으므로 계열마다 받지 않고 한 번만 받아 재사용한다.
+
+10Y−2Y는 **양쪽이 모두 게시한 날짜**로만 계산한다. 한쪽만 있는 날을 이월값과 짝지으면
+없는 관측을 지어내는 셈이다.
+
 `SEC_EDGAR_ENABLED`는 `/analytics`의 내부자거래(Form 3·4·5) 패널을 켠다. EDGAR는
 미국 연방정부 공시 시스템이고 SEC는 누구나 무료로 접근·다운로드할 수 있다고
 안내하지만, 자동 접근에는 연락처가 담긴 User-Agent 선언과 초당 10요청 상한이

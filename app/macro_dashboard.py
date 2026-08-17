@@ -13,6 +13,12 @@ from collections.abc import Callable, Iterable
 from typing import Any
 
 from . import config, data_rights, store
+from .providers.fedboard import (
+    FEDBOARD_ATTRIBUTION,
+    FEDBOARD_DDP_TRANSITION_URL,
+    FEDBOARD_PROVIDER_ID,
+    FEDBOARD_PUBLISHER_URL,
+)
 from .providers.fred import (
     FRED_API_TERMS_URL,
     FRED_GROUPS,
@@ -55,6 +61,7 @@ MAX_PUBLIC_OBSERVATIONS = 2500
 PROVIDER_NAMES = {
     "fred": "FRED®",
     NYFED_PROVIDER_ID: "Federal Reserve Bank of New York",
+    FEDBOARD_PROVIDER_ID: "Federal Reserve Board",
     "bls": "U.S. Bureau of Labor Statistics",
     "eia": "U.S. Energy Information Administration",
     "federal_reserve": "Federal Reserve Board",
@@ -67,6 +74,7 @@ PROVIDER_NAMES = {
 PROVIDER_NOTICES: dict[str, Callable[[], str]] = {
     "fred": lambda: FRED_RIGHTS_NOTICE,
     NYFED_PROVIDER_ID: nyfed_attribution,
+    FEDBOARD_PROVIDER_ID: lambda: FEDBOARD_ATTRIBUTION,
 }
 
 
@@ -124,6 +132,7 @@ def _date_iso(value: dt.date | None) -> str | None:
 PROVIDER_URLS = {
     FRED_PROVIDER_ID: FRED_SITE_BASE,
     NYFED_PROVIDER_ID: NYFED_PUBLISHER_URL,
+    FEDBOARD_PROVIDER_ID: FEDBOARD_PUBLISHER_URL,
 }
 
 # What each lane requires be shown when its values are published.
@@ -141,6 +150,12 @@ PROVIDER_ATTRIBUTION: dict[str, Callable[[], dict[str, str]]] = {
         "name": PROVIDER_NAMES[NYFED_PROVIDER_ID],
         "notice": nyfed_attribution(),
         "terms_url": NYFED_TERMS_URL,
+    },
+    FEDBOARD_PROVIDER_ID: lambda: {
+        "provider": FEDBOARD_PROVIDER_ID,
+        "name": PROVIDER_NAMES[FEDBOARD_PROVIDER_ID],
+        "notice": FEDBOARD_ATTRIBUTION,
+        "terms_url": FEDBOARD_DDP_TRANSITION_URL,
     },
 }
 

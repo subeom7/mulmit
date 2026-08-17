@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 from app import config, data_rights, ingest, store
 from app.macro_dashboard import build_macro_snapshot
 from app.main import app
+from app.providers.fred import FRED_SERIES
 
 OBSERVATIONS = (
     (dt.date(2026, 8, 12), 3.62),
@@ -104,8 +105,9 @@ def test_the_lane_serves_while_fred_stays_shut(db, nyfed):
     served = {item["key"] for item in body["series"]}
     assert served == {"sofr", "effective_fed_funds", "reverse_repo"}
     assert body["lanes"]["enabled"] == ["nyfed"]
-    # Every FRED-sourced card is reported as disabled, not as missing.
-    assert len(body["disabled"]) == 15
+    # Every card sourced from a closed lane is reported as disabled, not missing.
+    assert set(body["disabled"]).isdisjoint({"SOFR", "EFFR", "RRPONTSYD"})
+    assert len(body["disabled"]) == len(FRED_SERIES) - 3
     assert response.headers["x-data-source"] == "NYFED"
 
 

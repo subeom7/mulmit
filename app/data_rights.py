@@ -23,6 +23,7 @@ HYPERLIQUID_HIP3 = "hyperliquid_hip3"
 LEGACY_PRICE_DATA = "legacy_price_data"
 SEC_EDGAR = "sec_edgar"
 NYFED = "nyfed"
+FEDBOARD = "federal_reserve"
 
 # --- structured client contracts --------------------------------------------
 # The frontend keys off ``code``: these are disabled states, not retryable
@@ -68,6 +69,16 @@ NO_STORE_HEADERS = {"Cache-Control": "no-store"}
 _MACRO_LANES: dict[str, Callable[[], bool]] = {
     FRED: lambda: config.FRED_ENABLED,
     NYFED: lambda: config.NYFED_ENABLED,
+    FEDBOARD: lambda: config.FEDBOARD_ENABLED,
+}
+
+# Named rather than derived from the lane id. A provider id and its environment
+# variable do not always match, and /api/status telling an operator to set a
+# variable that does not exist is worse than saying nothing.
+_MACRO_LANE_GATES = {
+    FRED: "FRED_ENABLED",
+    NYFED: "NYFED_ENABLED",
+    FEDBOARD: "FEDBOARD_ENABLED",
 }
 
 
@@ -140,6 +151,6 @@ def lane_report() -> dict[str, dict[str, str]]:
     for provider_id in _MACRO_LANES:
         report[f"macro:{provider_id}"] = {
             "status": "enabled" if macro_lane_enabled(provider_id) else "disabled",
-            "gate": f"{provider_id.upper()}_ENABLED",
+            "gate": _MACRO_LANE_GATES.get(provider_id, f"{provider_id.upper()}_ENABLED"),
         }
     return report

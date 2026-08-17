@@ -112,6 +112,13 @@ FRED_SERIES = (
         public_web=True,
     ),
     FredSeriesSpec(
+        "DGS2", "treasury_2y", "macro", "미국 2년물 금리", "2-Year Treasury Yield",
+        "통화정책 기대를 가장 민감하게 반영하는 단기 국채 금리",
+        "The short-maturity yield most sensitive to policy-rate expectations",
+        _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
         "M2SL", "m2", "macro", "미국 M2", "U.S. M2 Money Stock",
         "현금과 예금 등을 포함한 미국 광의통화", "Broad U.S. money stock including cash and deposits",
         _FED_BOARD, _FED_BOARD_URL,

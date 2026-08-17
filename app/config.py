@@ -52,6 +52,19 @@ FRED_MAX_AGE = _int("FRED_MAX_AGE", 60 * 60 * 6)
 FRED_TIMEOUT = _float("FRED_TIMEOUT", 15.0)
 FRED_RETRIES = _int("FRED_RETRIES", 2)
 FRED_INGEST_DELAY = _float("FRED_INGEST_DELAY", 0.1)
+# Board of Governors statistical releases (H.15 rates, later H.10 FX and more).
+# The Board is retiring its Data Download Program in favour of FRED, which we
+# cannot use, so this reads the release-page XML archives the transition notice
+# says will remain. https://www.federalreserve.gov/data/data-download-fred-information.htm
+FEDBOARD_ENABLED = _bool("FEDBOARD_ENABLED", False)
+FEDBOARD_TIMEOUT = _float("FEDBOARD_TIMEOUT", 30.0)
+FEDBOARD_RETRIES = _int("FEDBOARD_RETRIES", 2)
+FEDBOARD_REQUEST_INTERVAL = _float("FEDBOARD_REQUEST_INTERVAL", 0.5)
+# The archives are multi-megabyte and the releases update daily at most, so a
+# long refresh window keeps one download serving every series in it.
+FEDBOARD_MAX_AGE = _int("FEDBOARD_MAX_AGE", 60 * 60 * 12)
+FEDBOARD_HISTORY_DAYS = _int("FEDBOARD_HISTORY_DAYS", 366 * 25)
+
 # Federal Reserve Bank of New York markets API (SOFR, EFFR, overnight RRP).
 # Their Terms of Use grant automated access plus the right to download, store,
 # copy, distribute and derive from the content for business purposes, on the
