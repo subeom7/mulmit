@@ -13,6 +13,12 @@ from collections.abc import Callable, Iterable
 from typing import Any
 
 from . import config, data_rights, store
+from .providers.bls import (
+    BLS_ATTRIBUTION,
+    BLS_PROVIDER_ID,
+    BLS_PUBLISHER_URL,
+    BLS_TERMS_URL,
+)
 from .providers.fedboard import (
     FEDBOARD_ATTRIBUTION,
     FEDBOARD_DDP_TRANSITION_URL,
@@ -62,7 +68,7 @@ PROVIDER_NAMES = {
     "fred": "FRED®",
     NYFED_PROVIDER_ID: "Federal Reserve Bank of New York",
     FEDBOARD_PROVIDER_ID: "Federal Reserve Board",
-    "bls": "U.S. Bureau of Labor Statistics",
+    BLS_PROVIDER_ID: "U.S. Bureau of Labor Statistics",
     "eia": "U.S. Energy Information Administration",
     "federal_reserve": "Federal Reserve Board",
     "treasury": "U.S. Department of the Treasury",
@@ -75,6 +81,7 @@ PROVIDER_NOTICES: dict[str, Callable[[], str]] = {
     "fred": lambda: FRED_RIGHTS_NOTICE,
     NYFED_PROVIDER_ID: nyfed_attribution,
     FEDBOARD_PROVIDER_ID: lambda: FEDBOARD_ATTRIBUTION,
+    BLS_PROVIDER_ID: lambda: BLS_ATTRIBUTION,
 }
 
 
@@ -133,6 +140,7 @@ PROVIDER_URLS = {
     FRED_PROVIDER_ID: FRED_SITE_BASE,
     NYFED_PROVIDER_ID: NYFED_PUBLISHER_URL,
     FEDBOARD_PROVIDER_ID: FEDBOARD_PUBLISHER_URL,
+    BLS_PROVIDER_ID: BLS_PUBLISHER_URL,
 }
 
 # What each lane requires be shown when its values are published.
@@ -156,6 +164,12 @@ PROVIDER_ATTRIBUTION: dict[str, Callable[[], dict[str, str]]] = {
         "name": PROVIDER_NAMES[FEDBOARD_PROVIDER_ID],
         "notice": FEDBOARD_ATTRIBUTION,
         "terms_url": FEDBOARD_DDP_TRANSITION_URL,
+    },
+    BLS_PROVIDER_ID: lambda: {
+        "provider": BLS_PROVIDER_ID,
+        "name": PROVIDER_NAMES[BLS_PROVIDER_ID],
+        "notice": BLS_ATTRIBUTION,
+        "terms_url": BLS_TERMS_URL,
     },
 }
 

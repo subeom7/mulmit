@@ -70,6 +70,29 @@
       <p class="weekend-disclaimer" id="weekend-disclaimer" data-i18n="weekend.defaultDisclaimer">주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.</p>
     </section>
 
+    <section class="dashboard-section" id="stress-index" aria-labelledby="stress-title">
+      <div class="section-heading">
+        <span class="section-index">S</span>
+        <div><p class="eyebrow" data-i18n="stress.eyebrow">MULMIT COMPOSITE · PUBLISHED METHOD</p><h2 id="stress-title" data-i18n="stress.title">유동성·스트레스 지수</h2></div>
+        <span class="source-pill" data-i18n="stress.own">자체 산출</span>
+      </div>
+      <div class="panel stress-panel">
+        <div id="stress-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
+        <div id="stress-body" hidden>
+          <div class="stress-headline">
+            <div class="stress-score"><strong id="stress-score">—</strong><span id="stress-band"></span></div>
+            <div class="stress-scale" aria-hidden="true"><i id="stress-marker"></i></div>
+            <p class="stress-scale-note" data-i18n="stress.scale">0에 가까울수록 완화, 100에 가까울수록 긴축</p>
+          </div>
+          <div class="table-scroll">
+            <table id="stress-table" class="accessible-table"><caption data-i18n="stress.caption">지수를 구성하는 입력</caption><thead></thead><tbody></tbody></table>
+          </div>
+          <p class="stress-method" id="stress-method"></p>
+          <p class="stress-disclaimer" id="stress-disclaimer"></p>
+        </div>
+      </div>
+    </section>
+
     <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
 
     <div id="deep-sections"></div>

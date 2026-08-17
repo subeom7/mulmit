@@ -30,6 +30,7 @@ from .macro_dashboard import MacroDataDisabled, build_macro_series, build_macro_
 from .market_assets import build_asset_snapshot
 from .market_sectors import build_sector_snapshot
 from .metrics.correlation import correlation_matrix
+from .stress_index import StressIndexUnavailable, build_stress_index
 from .weekend_signals import build_weekend_signals
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -251,6 +252,30 @@ def market_macro_series(
         raise HTTPException(status_code=404, detail="아직 수집된 거시 데이터가 없습니다.")
     response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=3600"
     response.headers["X-Data-Source"] = _macro_data_source()
+    return payload
+
+
+@app.get("/api/market/stress")
+@limiter.limit(config.RATE_LIMIT)
+def market_stress(request: Request, response: Response) -> dict:
+    """Mulmit 자체 유동성·스트레스 지수. 저장소만 읽는다."""
+    try:
+        payload = build_stress_index()
+    except StressIndexUnavailable as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "stress_index_unavailable",
+                "status": "insufficient_inputs",
+                "message": (
+                    f"Only {exc.available} of {exc.required} licensed inputs are "
+                    "available, so no index is published."
+                ),
+            },
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "Mulmit composite"
     return payload
 
 

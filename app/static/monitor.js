@@ -31,6 +31,11 @@ const TEXT = {
     "status.connecting": "연결 중", "status.live": "데이터 연결", "status.partial": "일부 데이터", "status.offline": "연결 오류",
     "status.loading": "불러오는 중", "status.viewport": "화면에 표시되면 불러옵니다", "status.unavailable": "데이터 미연결",
     "status.noSeries": "표시할 시계열이 없습니다", "status.retry": "새로고침 후 다시 시도해 주세요.", "status.staleData": "지연 데이터", "status.legacyDisabled": "라이선스 데이터 전환 중 · 공개 데이터 비활성",
+    "stress.eyebrow": "MULMIT 자체 산출 · 산식 공개", "stress.title": "유동성·스트레스 지수", "stress.own": "자체 산출",
+    "stress.scale": "0에 가까울수록 완화, 100에 가까울수록 긴축", "stress.caption": "지수를 구성하는 입력",
+    "stress.colInput": "입력", "stress.colValue": "값", "stress.colPct": "5년 내 백분위", "stress.colScore": "스트레스 점수", "stress.colDir": "방향",
+    "stress.inverted": "낮을수록 스트레스", "stress.direct": "높을수록 스트레스",
+    "stress.unavailable": "공개 가능한 입력이 부족해 지수를 산출하지 않습니다",
     "status.disabled": "표시 비활성", "status.macroDisabled": "승인된 거시 데이터 공급자가 없어 표시하지 않습니다", "status.rightsPending": "표시 권리 확인 중 · 값을 공개하지 않습니다",
     "theme.toggle": "테마 전환", "hero.kicker": "GLOBAL MARKET INTELLIGENCE", "hero.title": "한눈에 읽는 시장의 온도.",
     "hero.copy": "가격, 위험, 유동성, 거시경제를 같은 시간축에서 확인합니다. 연결되지 않은 데이터는 추정하지 않습니다.",
@@ -57,6 +62,11 @@ const TEXT = {
     "status.connecting": "Connecting", "status.live": "Data live", "status.partial": "Partial data", "status.offline": "Connection error",
     "status.loading": "Loading", "status.viewport": "Loads when scrolled into view", "status.unavailable": "Data not connected",
     "status.noSeries": "No series available", "status.retry": "Refresh and try again.", "status.staleData": "Stale data", "status.legacyDisabled": "Public data disabled during licensed-provider migration",
+    "stress.eyebrow": "MULMIT COMPOSITE · PUBLISHED METHOD", "stress.title": "Liquidity & Stress Index", "stress.own": "Own composite",
+    "stress.scale": "Lower is looser, higher is tighter", "stress.caption": "Inputs that make up the index",
+    "stress.colInput": "Input", "stress.colValue": "Value", "stress.colPct": "5-year percentile", "stress.colScore": "Stress score", "stress.colDir": "Direction",
+    "stress.inverted": "Lower means more stress", "stress.direct": "Higher means more stress",
+    "stress.unavailable": "Too few publishable inputs to compose the index",
     "status.disabled": "Display disabled", "status.macroDisabled": "No approved macro data provider is enabled", "status.rightsPending": "Display rights unconfirmed · values withheld",
     "theme.toggle": "Toggle theme", "hero.kicker": "GLOBAL MARKET INTELLIGENCE", "hero.title": "Read the market in one view.",
     "hero.copy": "Track prices, risk, liquidity and macro conditions on a shared timeline. Missing data is never estimated.",
@@ -255,6 +265,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
+  stress: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -337,6 +348,7 @@ const DISABLED_CODES = {
   legacy_price_data_disabled: "status.legacyDisabled",
   macro_data_disabled: "status.macroDisabled",
   hip3_public_display_pending_rights: "status.rightsPending",
+  stress_index_unavailable: "stress.unavailable",
 };
 
 // Which endpoint would have filled a card. Only consulted when the card is
@@ -646,7 +658,7 @@ function renderAttribution() {
   }
   // Say out loud which lanes are switched off. Otherwise a page full of blank
   // cards looks like a broken site rather than a deliberate rights decision.
-  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation"]
+  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation", "stress"]
     .map(disabledText).filter(Boolean))];
   if (laneReasons.length) {
     const title = document.createElement("p"); title.textContent = t("notice.disabledLanes"); host.append(title);
@@ -703,17 +715,19 @@ function endpointHealth(key) {
 async function loadCore() {
   $("#refresh-button").setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
-  const [macro, assets, sectors, weekend] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress] = await Promise.all([
     fetchJson("/api/market/macro?history=3y", "macro"), fetchJson("/api/market/assets?history=3y", "assets"),
     fetchJson("/api/market/sectors", "sectors"), fetchJson("/api/market/weekend", "weekend"),
+    fetchJson("/api/market/stress", "stress"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
+  state.stress = stress;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets");
   renderAll(); $("#refresh-button").removeAttribute("aria-busy");
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex();
   $$(".lazy-comparison[data-visible='1']").forEach((card) => renderComparison(Number(card.dataset.comparison)));
   const times = [state.macro?.generated_at, state.assets?.generated_at, state.sectors?.generated_at, state.sectors?.as_of, state.weekend?.generated_at].filter(Boolean);
   $("#updated-at").textContent = times.length ? dateText(times.sort().at(-1)) : "—";
@@ -851,6 +865,50 @@ function renderWeekend() {
     host.append(card);
   });
   const baseDisclaimer = localValue(payload.disclaimer, state.lang) || t("weekend.defaultDisclaimer"); $("#weekend-disclaimer").textContent = `${baseDisclaimer} ${t("weekend.samsungPerp")}`;
+}
+
+function renderStressIndex() {
+  const stateNode = $("#stress-state"), body = $("#stress-body"), data = state.stress;
+  if (!data) {
+    const disabled = disabledText("stress");
+    stateNode.hidden = false; stateNode.classList.toggle("disabled", Boolean(disabled)); body.hidden = true;
+    stateNode.textContent = disabled || `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+  stateNode.hidden = true; stateNode.classList.remove("disabled"); body.hidden = false;
+  const locale = state.lang === "ko" ? "ko-KR" : "en-US";
+  const num = (value, digits = 1) => new Intl.NumberFormat(locale, { maximumFractionDigits: digits }).format(value);
+
+  $("#stress-score").textContent = num(data.score);
+  $("#stress-band").textContent = `${localValue(data.band, state.lang)} · ${t("date.asof")} ${dateText(data.as_of)}`;
+  $("#stress-marker").style.left = `calc(${Math.max(0, Math.min(100, data.score))}% - 1.5px)`;
+
+  const table = $("#stress-table");
+  const heads = ["stress.colInput", "stress.colValue", "stress.colPct", "stress.colScore", "stress.colDir"];
+  $("thead", table).innerHTML = `<tr>${heads.map((key) => `<th scope="col">${t(key)}</th>`).join("")}</tr>`;
+  const tbody = $("tbody", table); tbody.replaceChildren();
+  for (const item of data.components || []) {
+    const row = document.createElement("tr");
+    const cells = [
+      localValue(item.label, state.lang),
+      num(item.value, 2),
+      num(item.percentile),
+      num(item.score),
+      t(item.inverted ? "stress.inverted" : "stress.direct"),
+    ];
+    cells.forEach((text, index) => {
+      const cell = document.createElement("td");
+      if (index >= 1 && index <= 3) cell.className = "num";
+      cell.textContent = text;
+      // The direction of each input is the part a reader most needs explained.
+      if (index === 0) cell.title = localValue(item.rationale, state.lang);
+      row.append(cell);
+    });
+    tbody.append(row);
+  }
+  $("#stress-method").textContent = localValue(
+    { ko: data.method?.summary_ko, en: data.method?.summary_en }, state.lang);
+  $("#stress-disclaimer").textContent = localValue(data.disclaimer, state.lang);
 }
 
 function renderTradingView() {

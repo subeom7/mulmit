@@ -25,6 +25,15 @@ import time
 from . import config, data, store
 from .market_assets import ASSET_TICKERS, CORRELATION_TICKERS
 from .providers import DataUnavailable, RateLimited, get_provider
+from .providers.bls import (
+    BLS_PROVIDER_ID,
+    BLS_PUBLISHER,
+    BLS_PUBLISHER_URL,
+    BLS_SERIES,
+    BLS_SERIES_BY_KEY,
+    BLS_TERMS_URL,
+    BlsProvider,
+)
 from .providers.fedboard import (
     FEDBOARD_DDP_TRANSITION_URL,
     FEDBOARD_DERIVED,
@@ -309,6 +318,64 @@ def refresh_fedboard(*, force: bool = False) -> dict:
     return result
 
 
+def refresh_bls(*, force: bool = False) -> dict:
+    """Refresh the BLS labour series.
+
+    A key is optional. Without one the daily allowance is 25 queries over a ten
+    year window, which is ample for one monthly series.
+    """
+    if not config.BLS_ENABLED:
+        return {"skipped": "disabled", "attempted": 0, "updated": 0, "failed": 0}
+
+    keys = [spec.series_key for spec in BLS_SERIES]
+    targets = (
+        keys
+        if force
+        else [
+            key
+            for key in store.stale_economic_series(keys, config.BLS_MAX_AGE)
+            if _series_owner(key) in (None, BLS_PROVIDER_ID)
+        ]
+    )
+    if not targets:
+        return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
+
+    provider = BlsProvider(
+        config.BLS_API_KEY, timeout=config.BLS_TIMEOUT, retries=config.BLS_RETRIES
+    )
+    result = {"attempted": 0, "updated": 0, "failed": 0, "rate_limited": 0, "observations": 0}
+
+    for key in targets:
+        spec = BLS_SERIES_BY_KEY[key]
+        result["attempted"] += 1
+        try:
+            metadata, observations = provider.fetch_series(spec)
+            count = store.save_economic_series(
+                spec.series_key,
+                provider_id=BLS_PROVIDER_ID,
+                provider_series_id=spec.provider_series_id,
+                metadata_fields=metadata,
+                observations=observations,
+                publisher=BLS_PUBLISHER,
+                publisher_url=BLS_PUBLISHER_URL,
+                series_url=spec.series_url,
+                rights_status="approved",
+                rights_evidence=BLS_TERMS_URL,
+            )
+            result["updated"] += 1
+            result["observations"] += count
+            log.info("거시 갱신 %s/%s (%d행)", BLS_PROVIDER_ID, spec.provider_series_id, count)
+        except RateLimited:
+            result["rate_limited"] += 1
+            log.warning("BLS 일일 조회 한도 — 다음 주기에 재시도")
+            break
+        except Exception as exc:  # noqa: BLE001 - 한 계열 실패가 나머지를 막지 않는다
+            result["failed"] += 1
+            store.mark_economic_error(spec.series_key, str(exc))
+            log.warning("거시 갱신 실패 %s: %s", spec.provider_series_id, exc)
+    return result
+
+
 def _series_owner(series_key: str) -> str | None:
     """Which provider last collected this series, if any.
 
@@ -476,10 +543,12 @@ def run_once(tickers: list[str] | None = None) -> dict:
         insider_result = {"skipped": "explicit_price_refresh"}
         nyfed_result = {"skipped": "explicit_price_refresh"}
         fedboard_result = {"skipped": "explicit_price_refresh"}
+        bls_result = {"skipped": "explicit_price_refresh"}
         if automatic:
             fred_result = refresh_fred()
             nyfed_result = refresh_nyfed()
             fedboard_result = refresh_fedboard()
+            bls_result = refresh_bls()
             insider_result = refresh_insider_filings()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
@@ -493,6 +562,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             "fred": fred_result,
             "nyfed": nyfed_result,
             "fedboard": fedboard_result,
+            "bls": bls_result,
             "insider": insider_result,
             "elapsed": round(time.time() - started, 2),
         }
@@ -507,6 +577,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             fred_result = refresh_fred()
             nyfed_result = refresh_nyfed()
             fedboard_result = refresh_fedboard()
+            bls_result = refresh_bls()
             insider_result = refresh_insider_filings()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
@@ -563,10 +634,12 @@ def run_once(tickers: list[str] | None = None) -> dict:
     insider_result = {"skipped": "explicit_price_refresh"}
     nyfed_result = {"skipped": "explicit_price_refresh"}
     fedboard_result = {"skipped": "explicit_price_refresh"}
+    bls_result = {"skipped": "explicit_price_refresh"}
     if automatic:
         fred_result = refresh_fred()
         nyfed_result = refresh_nyfed()
         fedboard_result = refresh_fedboard()
+        bls_result = refresh_bls()
         insider_result = refresh_insider_filings()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
@@ -574,6 +647,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     result["fred"] = fred_result
     result["nyfed"] = nyfed_result
     result["fedboard"] = fedboard_result
+    result["bls"] = bls_result
     result["insider"] = insider_result
     result["elapsed"] = round(time.time() - started, 2)
     log.info("수집 완료: %s", result)
