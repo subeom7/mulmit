@@ -29,7 +29,11 @@ the wrong one is the single most common way this API fails, with an
 authentication error that says nothing about encoding. :func:`_normalized_key`
 accepts either.
 
-Only :mod:`app.ingest` constructs this. Request handlers read the database.
+:mod:`app.ingest` constructs this for scheduled refreshes. :mod:`app.kr_stocks`
+also constructs it for user-initiated cache misses — a stock someone just
+searched for cannot wait for the hourly batch — under a process-wide lock and
+the same throttle, writing straight back to the store so every later request
+reads the database.
 """
 
 from __future__ import annotations
@@ -152,6 +156,28 @@ FSC_SERIES: tuple[FscSeriesSpec, ...] = (
 )
 
 FSC_SERIES_BY_KEY = {spec.series_key: spec for spec in FSC_SERIES}
+
+KR_STOCK_KEY_PREFIX = "kr_stock_"
+
+
+def stock_series_spec(code: str, name: str = "") -> FscSeriesSpec:
+    """Spec for one arbitrary listed stock, keyed ``kr_stock_<code>``.
+
+    The catalogue above is for cards the dashboard always shows; this is for
+    whatever the user searched. Same dataset, same parser, same rights.
+    """
+    code = code.strip().upper()
+    if not (4 <= len(code) <= 12) or not code.isalnum():
+        raise ValueError("code must be a short alphanumeric KRX issue code")
+    return FscSeriesSpec(
+        series_key=f"{KR_STOCK_KEY_PREFIX}{code}",
+        dataset="stock",
+        provider_series_id=code,
+        title=(name.strip() or code),
+        units="KRW",
+        units_short="원",
+        series_url=FSC_STOCK_DATASET_URL,
+    )
 
 HttpGet = Callable[[Request, float], bytes]
 
@@ -422,6 +448,60 @@ class FscProvider:
                 f"{window['beginBasDt']} and {window['endBasDt']}"
             )
 
+        return self._series_result(spec, rows, observations, window)
+
+    def fetch_day_snapshot(
+        self, *, max_probe_days: int = 10
+    ) -> tuple[str, list[dict[str, Any]]]:
+        """Return ``(bas_dt, rows)`` for the most recent published trading day.
+
+        One day of the stock dataset is the whole exchange — every listed
+        issue's code, name, market, close and market cap — which doubles as the
+        search roster. The latest day is probed rather than assumed because
+        publication is T+1 13:00 KST and holidays stretch the gap.
+        """
+        day = _kst_today()
+        for _ in range(max_probe_days):
+            probe = self._get(
+                STOCK_ENDPOINT,
+                {"basDt": day.strftime("%Y%m%d"), "numOfRows": "1", "pageNo": "1"},
+            )
+            total = _parse_number(probe.get("totalCount"))
+            if total and total > 0:
+                break
+            day -= dt.timedelta(days=1)
+        else:
+            raise DataUnavailable(
+                f"FSC published no trading day in the last {max_probe_days} days"
+            )
+
+        rows = self._paged_rows(STOCK_ENDPOINT, {"basDt": day.strftime("%Y%m%d")})
+        snapshot = []
+        for row in rows:
+            code = str(row.get("srtnCd") or "").strip()
+            name = str(row.get("itmsNm") or "").strip()
+            if not code or not name:
+                continue
+            snapshot.append({
+                "srtn_cd": code,
+                "itms_nm": name,
+                "mrkt_ctg": str(row.get("mrktCtg") or "").strip(),
+                "isin_cd": str(row.get("isinCd") or "").strip(),
+                "clpr": _parse_number(row.get("clpr")),
+                "flt_rt": _parse_number(row.get("fltRt")),
+                "mrkt_tot_amt": _parse_number(row.get("mrktTotAmt")),
+            })
+        if not snapshot:
+            raise DataUnavailable("FSC day snapshot parsed to zero usable rows")
+        return day.strftime("%Y-%m-%d"), snapshot
+
+    def _series_result(
+        self,
+        spec: FscSeriesSpec,
+        rows: list[dict[str, Any]],
+        observations: tuple[tuple[dt.date, float], ...],
+        window: dict[str, str],
+    ) -> tuple[dict[str, Any], tuple[tuple[dt.date, float], ...]]:
         # Names come from the data rather than the spec where the data has them,
         # so a renamed listing shows up instead of being papered over.
         latest_row = next(

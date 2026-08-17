@@ -63,6 +63,15 @@ INSIDER_NOT_CONFIGURED = {
     ),
 }
 
+KR_STOCK_DISABLED = {
+    "code": "kr_stock_data_disabled",
+    "status": "disabled",
+    "message": (
+        "The FSC open-data lane is disabled for this deployment, so Korean "
+        "listing search and per-stock analysis are withheld."
+    ),
+}
+
 NO_STORE_HEADERS = {"Cache-Control": "no-store"}
 
 # Macro lanes and the flag that decides whether their stored rows may be served.

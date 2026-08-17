@@ -422,6 +422,20 @@ def refresh_fsc(*, force: bool = False) -> dict:
     start = dt.date.today() - dt.timedelta(days=config.FSC_HISTORY_DAYS)
     result = {"attempted": 0, "updated": 0, "failed": 0, "rate_limited": 0, "observations": 0}
 
+    # The Korean listing roster shares this lane: one trading day of the stock
+    # dataset is the whole exchange, and name search reads only the local copy.
+    if force or store.kr_listings_stale(config.FSC_MAX_AGE):
+        try:
+            bas_dt, rows = provider.fetch_day_snapshot()
+            result["listings"] = store.save_kr_listings(rows, bas_dt)
+            log.info("국내 종목 로스터 갱신: %s일자 %d종목", bas_dt, result["listings"])
+        except RateLimited:
+            result["rate_limited"] += 1
+            log.warning("data.go.kr 일일 호출 한도 — 로스터는 다음 주기에")
+        except Exception as exc:  # noqa: BLE001 - 로스터 실패가 계열 수집을 막지 않는다
+            result["listings_error"] = str(exc)
+            log.warning("국내 종목 로스터 갱신 실패: %s", exc)
+
     for key in targets:
         spec = FSC_SERIES_BY_KEY[key]
         result["attempted"] += 1
