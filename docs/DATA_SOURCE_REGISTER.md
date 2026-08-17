@@ -629,7 +629,7 @@ Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로
 | `gold` | `gold`, `xauusd` | `xyz:GOLD` | 합성 proxy | 승인 범위 확인 |
 | `bitcoin` | `bitcoin`, `btc` | 없음 | missing | HIP-3 main DEX BTC 경로와 외부 표시 권리를 함께 검토 |
 | `kospi` | `kospi`, `^ks11` | `xyz:KR200` | KOSPI 200 대용 합성값 | 공식 종가는 `kospi_exact`로 **연결됨**(`DS-2026-006`). 이 카드는 그대로 둔다 |
-| `kosdaq` | `kosdaq`, `^kq11` | 없음 | missing | HIP-3 대용값이 없다. 공식 종가는 `kosdaq_exact`로 **연결됨** |
+| `kosdaq` | `kosdaq`, `^kq11` | 없음 | missing | HIP-3 대용값이 없다. 공식 종가는 `kosdaq_exact`로 **연결됨**. 영구 공석이라 섹션에서 카드 제거(METRICS 정의는 유지) |
 | `samsung` | `samsung`, `005930.ks` | `xyz:SMSN` | USD/USDC 환산 합성 무기한선물 | alias `005930` **제거됨**. 그 코드는 이제 `samsung_exact`(원화 공식 종가)를 식별하므로 두 카드가 한 레코드를 집으면 안 된다 |
 | `usdkrw` | `usdkrw`, `krw=x` | `xyz:KRW` **상장폐지** | missing | 공식 환율은 아래 `fx_usdkrw`로 연결됨 |
 | `ewz` | `ewz`, `brazil` | `xyz:EWZ` | ETF-linked 합성값 | 권리 승인 전 gate |
@@ -885,6 +885,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | Federal Reserve Board lane 추가(`DS-2026-004`). DDP 폐지를 피해 릴리스 페이지 XML 사용 | Claude assisted |
 | 2026-08-17 | H.10 환율, H.4.1 유동성, H.6 통화량 연결 | Claude assisted |
 | 2026-08-17 | BLS lane 추가(`DS-2026-005`), DOL ETA는 보류 사유 기록 | Claude assisted |
+| 2026-08-17 | 영구 공석 proxy 카드(코스닥·원달러 합성)를 한국 섹션에서 제거, 개요 타일을 공식 카드로 교체. 데이터·권리 변경 없음 | Claude assisted |
 | 2026-08-17 | HIP-3 문의 **발송** — XYZ Ltd와 Hyperliquid Corp. 양쪽. P0의 마지막 미발송 항목 해소 | Claude assisted |
 | 2026-08-17 | HIP-3 문의 초안 개정: XYZ Ltd·Hyperliquid Corp. 약관 정독 결과 반영, 연락처 확정, 기초 자산 원 권리자 질문을 최우선으로 이동. §4.1 문의 대기 목록 신설 | Claude assisted |
 | 2026-08-17 | Fed Board 교역가중 달러지수 3종 연결(H.10, 기존 lane). Cboe 지수값 서면허가 조항 원문 인용 | Claude assisted |
