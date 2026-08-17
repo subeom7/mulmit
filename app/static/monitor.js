@@ -245,7 +245,7 @@ const INSIGHTS = {
 
 const OVERVIEW = [
   { id: "global", label: LABEL("글로벌 자산", "Global assets"), keys: ["sp500", "nasdaq", "gold", "bitcoin"] },
-  { id: "korea", label: LABEL("한국 자산", "Korean assets"), keys: ["kospi", "kosdaq", "samsung", "usdkrw"] },
+  { id: "korea", label: LABEL("한국 자산", "Korean assets"), keys: ["kospi_exact", "kosdaq_exact", "samsung_exact", "fx_usdkrw"] },
   { id: "emerging", label: LABEL("글로벌 ETF", "Global ETFs"), keys: ["ewz", "inda", "vnm", "ewj"] },
   { id: "risk", label: LABEL("시장 위험", "Market risk"), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread"] },
   { id: "fx", label: LABEL("환율", "Exchange rates"), keys: ["fx_usdkrw", "fx_usdjpy", "fx_eurusd", "fx_usdcny"] },
@@ -256,7 +256,7 @@ const OVERVIEW = [
 
 const SECTIONS = [
   { id: "global-assets", eyebrow: "GLOBAL PRICES", title: LABEL("글로벌 자산", "Global assets"), copy: LABEL("전고점 대비 위치와 최근 가격 흐름을 함께 봅니다.", "View recent prices alongside distance from prior highs."), keys: ["sp500", "nasdaq", "gold", "bitcoin"] },
-  { id: "korean-assets", eyebrow: "KOREA", title: LABEL("한국 자산", "Korean assets"), copy: LABEL("한국 주식과 환율을 같은 화면에서 비교합니다.", "Compare Korean equities and the won on one screen."), keys: ["kospi", "kosdaq", "samsung", "usdkrw"] },
+  { id: "korean-assets", eyebrow: "KOREA · SYNTHETIC", title: LABEL("한국 합성 참고값", "Korean synthetic references"), copy: LABEL("USD 환산 합성 무기한선물 참고값입니다. 공식 원화 종가는 아래 섹션에 있습니다.", "USD-converted synthetic perpetual references. Official won closes are in the section below."), keys: ["kospi", "samsung"] },
   { id: "korea-official", eyebrow: "KOREA · OFFICIAL CLOSE", title: LABEL("한국 공식 종가", "Korean official closes"), copy: LABEL("한국거래소 장 마감 확정값입니다. 금융위원회가 공공데이터로 개방한 자료로, 기준일 다음 영업일에 공개됩니다. 위의 합성 지표와 같은 값이 아닙니다.", "Confirmed Korea Exchange closes, opened as public data by the Financial Services Commission and published the next business day. These are not the synthetic values above."), keys: ["kospi_exact", "kosdaq_exact", "samsung_exact", "sk_hynix_exact"] },
   { id: "global-etfs", eyebrow: "CROSS-BORDER ETFs", title: LABEL("글로벌 지역 ETF", "Regional ETFs"), copy: LABEL("미국 상장 ETF를 통해 지역별 위험선호를 확인합니다.", "Use US-listed ETFs to compare regional risk appetite."), keys: ["ewz", "inda", "vnm", "ewj"] },
   { id: "market-risk", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("시장심리·변동성·금리곡선·신용스프레드·금융스트레스를 나란히 봅니다.", "Compare sentiment, volatility, the yield curve, credit spread and financial stress."), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread", "financial_stress"] },
