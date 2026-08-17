@@ -46,7 +46,7 @@ const TEXT = {
     "period.label": "기간", "method.title": "숫자를 다루는 원칙", "method.one.title": "출처를 함께 표시", "method.one.copy": "각 수치는 공급자, 기준일, 신선도를 함께 보여줍니다.",
     "method.two.title": "단위를 추측하지 않음", "method.two.copy": "API가 제공한 단위와 배율만 사용합니다.", "method.three.title": "미연결은 미연결로",
     "method.three.copy": "라이선스나 API가 없는 지표는 숫자 대신 상태를 표시합니다.", "badge.fresh": "최신", "badge.stale": "지연", "badge.missing": "미연결",
-    "badge.licensed": "라이선스 필요", "badge.pendingRights": "권리 확인 중", "badge.disabled": "비활성", "badge.rights": "표시권리 확인", "badge.sourceTerms": "출처 조건", "badge.synthetic": "합성 무기한선물", "badge.proxyAlternative": "제한 지표의 대체 참고값", "notice.market": "자산 데이터 표시 조건", "date.asof": "기준", "change.previous": "직전 관측치 대비", "chart.normalized": "각 시계열 시작값 = 100으로 정규화",
+    "badge.licensed": "라이선스 필요", "badge.pendingRights": "권리 확인 중", "badge.disabled": "비활성", "badge.rights": "표시권리 확인", "badge.sourceTerms": "출처 조건", "badge.synthetic": "합성 무기한선물", "badge.perpetual": "무기한선물", "badge.proxyAlternative": "제한 지표의 대체 참고값", "notice.market": "자산 데이터 표시 조건", "date.asof": "기준", "change.previous": "직전 관측치 대비", "chart.normalized": "각 시계열 시작값 = 100으로 정규화",
     "legal.privacy": "개인정보처리방침", "legal.terms": "이용약관", "legal.disclaimer": "면책 고지",
     "legal.notAdvice": "Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.",
     "options.copy": "정확한 지수 표시는 원 제공자의 외부 표시 권한이 필요합니다. 계약 전에는 값을 제공하지 않습니다.", "license.copy": "원 데이터 소유자의 외부 표시 권한이 필요한 지표입니다. 허가 전에는 값과 시계열을 공개하지 않습니다.",
@@ -72,7 +72,7 @@ const TEXT = {
     "period.label": "Period", "method.title": "How we handle numbers", "method.one.title": "Show the source", "method.one.copy": "Every value carries its provider, observation date and freshness.",
     "method.two.title": "Never guess units", "method.two.copy": "Only API-supplied units and scales are used.", "method.three.title": "Missing stays missing",
     "method.three.copy": "Unlicensed or disconnected indicators show a state instead of an invented number.", "badge.fresh": "Fresh", "badge.stale": "Stale", "badge.missing": "Not connected",
-    "badge.licensed": "License required", "badge.pendingRights": "Rights pending", "badge.disabled": "Disabled", "badge.rights": "Display rights", "badge.sourceTerms": "Source terms", "badge.synthetic": "Synthetic perpetual", "badge.proxyAlternative": "Alternative to restricted series", "notice.market": "Asset-data display terms", "date.asof": "As of", "change.previous": "vs previous observation", "chart.normalized": "Each series rebased to 100 at start",
+    "badge.licensed": "License required", "badge.pendingRights": "Rights pending", "badge.disabled": "Disabled", "badge.rights": "Display rights", "badge.sourceTerms": "Source terms", "badge.synthetic": "Synthetic perpetual", "badge.perpetual": "Perpetual", "badge.proxyAlternative": "Alternative to restricted series", "notice.market": "Asset-data display terms", "date.asof": "As of", "change.previous": "vs previous observation", "chart.normalized": "Each series rebased to 100 at start",
     "legal.privacy": "Privacy policy", "legal.terms": "Terms of use", "legal.disclaimer": "Disclaimer",
     "legal.notAdvice": "Mulmit is an information service, not investment advice or a solicitation to trade.",
     "options.copy": "Official index display requires the owner's external-display rights. No values are shown before licensing.", "license.copy": "This indicator requires external-display rights from the data owner. Values and history remain hidden until licensed.",
@@ -439,6 +439,13 @@ function isAssetDerivative(record) {
   return record?._kind === "assets" && (kind.includes("perpetual") || kind.includes("synthetic") || kind.includes("proxy"));
 }
 
+// A HIP-3 deployment lists synthetics that reference an outside market; the
+// main venue lists Hyperliquid's own contracts. Calling a real BTC perpetual
+// "synthetic" would be as wrong as calling a synthetic one spot.
+function derivativeBadgeKey(record) {
+  return record?.source?.venue === "main" ? "badge.perpetual" : "badge.synthetic";
+}
+
 function localizedRightsNotice(record) {
   return String(localValue(record?.rights?.notice_localized, state.lang)
     || (state.lang === "ko" ? record?.rights?.notice_ko : record?.rights?.notice_en)
@@ -511,7 +518,7 @@ function renderSummary() {
     const meta = $(".summary-meta", card); const metaParts = [];
     if (record?.freshness?.status === "stale") metaParts.push(t("badge.stale"));
     if (record?._restrictedSeries) metaParts.push(t("badge.proxyAlternative"));
-    if (isAssetDerivative(record)) metaParts.push(t("badge.synthetic"));
+    if (isAssetDerivative(record)) metaParts.push(t(derivativeBadgeKey(record)));
     if (record) metaParts.push(sourceInfo(record).name, `${t("date.asof")} ${dateText(recent.date)}`);
     meta.textContent = info.badge || (metaParts.length ? metaParts.join(" · ") : t("badge.missing"));
   });
@@ -529,7 +536,7 @@ function renderMetricCards() {
     const info = cardState(key, record, definition); const withheld = Boolean(info.badge);
     badge.className = `status-badge ${withheld ? "warn" : freshness === "stale" ? "stale" : record ? "fresh" : "error"}`;
     badge.textContent = info.badge || (record ? t(freshness === "stale" ? "badge.stale" : "badge.fresh") : t("badge.missing")); badges.append(badge);
-    if (isAssetDerivative(record)) { const instrument = document.createElement("span"); instrument.className = "status-badge info"; instrument.textContent = t("badge.synthetic"); instrument.title = String(record.instrument_kind || ""); badges.append(instrument); }
+    if (isAssetDerivative(record)) { const instrument = document.createElement("span"); instrument.className = "status-badge info"; instrument.textContent = t(derivativeBadgeKey(record)); instrument.title = String(record.instrument_kind || ""); badges.append(instrument); }
     if (record?._restrictedSeries) { const alternative = document.createElement("span"); alternative.className = "status-badge warn"; alternative.textContent = t("badge.proxyAlternative"); alternative.title = `${recordLabel(record._restrictedSeries, definition)} · ${t("badge.licensed")}`; badges.append(alternative); }
     const rightsNotice = localizedRightsNotice(record);
     if (record?.rights?.copyrighted || rightsNotice) { const rights = document.createElement("span"); rights.className = "status-badge warn"; rights.textContent = t(record?.rights?.copyrighted ? "badge.rights" : "badge.sourceTerms"); rights.title = rightsNotice; badges.append(rights); }
@@ -593,10 +600,20 @@ function renderComparison(index) {
 
 function renderAttribution() {
   const host = $("#attribution"); host.replaceChildren(); const attr = state.macro?.attribution;
-  if (attr?.notice) { const notice = document.createElement("p"); notice.textContent = attr.notice; host.append(notice); }
-  if (attr) {
-    [[attr.terms_url, "FRED Terms"], [attr.api_terms_url, "FRED API Terms"]].forEach(([url, label]) => { if (!url) return; const link = document.createElement("a"); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = label; host.append(link, document.createTextNode(" ")); });
-    if (attr.user_terms) { const termsNotice = document.createElement("p"); termsNotice.textContent = attr.user_terms; host.append(termsNotice); }
+  // Each serving lane states its own required notice and term links. Hardcoding
+  // one provider's name here would credit it for another's data.
+  const providers = Array.isArray(attr?.providers) && attr.providers.length
+    ? attr.providers
+    : (attr?.notice ? [{ name: attr.name || "", ...attr }] : []);
+  for (const entry of providers) {
+    if (entry.notice) { const notice = document.createElement("p"); notice.textContent = entry.notice; host.append(notice); }
+    [[entry.terms_url, "Terms"], [entry.api_terms_url, "API Terms"]].forEach(([url, suffix]) => {
+      if (!url) return;
+      const link = document.createElement("a"); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer";
+      link.textContent = entry.name ? `${entry.name} ${suffix}` : suffix;
+      host.append(link, document.createTextNode(" "));
+    });
+    if (entry.user_terms) { const termsNotice = document.createElement("p"); termsNotice.textContent = entry.user_terms; host.append(termsNotice); }
   }
   const notices = new Set([
     localValue(state.assets?.rights?.notice_localized, state.lang) || state.assets?.rights?.notice,

@@ -28,7 +28,7 @@ from .providers.fred import (
     FredSeriesSpec,
     rights_status_for,
 )
-from .providers.nyfed import NYFED_PROVIDER_ID
+from .providers.nyfed import NYFED_PROVIDER_ID, NYFED_PUBLISHER_URL, NYFED_TERMS_URL
 from .providers.nyfed import attribution as nyfed_attribution
 
 HISTORY_DAYS = {
@@ -121,21 +121,68 @@ def _date_iso(value: dt.date | None) -> str | None:
     return value.isoformat() if value else None
 
 
-def provider_metadata() -> dict[str, str]:
-    return {
-        "id": "fred",
-        "name": "FRED®",
-        "url": FRED_SITE_BASE,
-    }
+PROVIDER_URLS = {
+    FRED_PROVIDER_ID: FRED_SITE_BASE,
+    NYFED_PROVIDER_ID: NYFED_PUBLISHER_URL,
+}
 
-
-def attribution_metadata() -> dict[str, str]:
-    return {
+# What each lane requires be shown when its values are published.
+PROVIDER_ATTRIBUTION: dict[str, Callable[[], dict[str, str]]] = {
+    FRED_PROVIDER_ID: lambda: {
+        "provider": FRED_PROVIDER_ID,
+        "name": PROVIDER_NAMES[FRED_PROVIDER_ID],
         "notice": FRED_REQUIRED_NOTICE,
         "terms_url": FRED_TERMS_URL,
         "api_terms_url": FRED_API_TERMS_URL,
         "user_terms": FRED_USER_TERMS,
+    },
+    NYFED_PROVIDER_ID: lambda: {
+        "provider": NYFED_PROVIDER_ID,
+        "name": PROVIDER_NAMES[NYFED_PROVIDER_ID],
+        "notice": nyfed_attribution(),
+        "terms_url": NYFED_TERMS_URL,
+    },
+}
+
+
+def provider_metadata() -> dict[str, str]:
+    """Name the lanes actually serving, not the one that used to.
+
+    Attributing New York Fed rates to FRED would credit an aggregator that is
+    switched off for data it never supplied.
+    """
+    lanes = data_rights.enabled_macro_lanes()
+    if len(lanes) == 1:
+        lane = lanes[0]
+        return {
+            "id": lane,
+            "name": PROVIDER_NAMES.get(lane, lane),
+            "url": PROVIDER_URLS.get(lane, ""),
+        }
+    if not lanes:
+        return {"id": "none", "name": "", "url": ""}
+    return {
+        "id": "multi-source",
+        "name": " + ".join(PROVIDER_NAMES.get(lane, lane) for lane in lanes),
+        "url": "",
     }
+
+
+def attribution_metadata() -> dict[str, Any]:
+    """Every serving lane's required notice, in one place.
+
+    ``providers`` is the list the UI should render. The flat keys are kept for
+    the single-lane case the published contract already described.
+    """
+    entries = [
+        build()
+        for lane, build in PROVIDER_ATTRIBUTION.items()
+        if data_rights.macro_lane_enabled(lane)
+    ]
+    payload: dict[str, Any] = {"providers": entries}
+    if entries:
+        payload.update({key: value for key, value in entries[0].items() if key != "provider"})
+    return payload
 
 
 def _history_start(history: str) -> dt.date | None:
