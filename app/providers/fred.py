@@ -236,6 +236,31 @@ FRED_SERIES = (
         "International Monetary Fund", "https://www.imf.org/",
         public_web=False,
     ),
+    # The Federal Reserve Board's own trade-weighted dollar indexes. The `dxy`
+    # card above is ICE's index and stays license_required; these measure the
+    # same idea on a different basket and base, so they are separate cards and
+    # are never presented as DXY.
+    FredSeriesSpec(
+        "JRXWTFB_N.B", "dollar_index_broad", "fx", "광의 달러지수", "Broad Dollar Index",
+        "연준이 교역량으로 가중한 광의 달러지수. ICE 달러지수(DXY)와 구성·기준이 달라 값을 비교할 수 없습니다",
+        "The Federal Reserve's trade-weighted broad dollar index — a different basket and base from ICE's DXY, so the levels are not comparable",
+        _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "JRXWTFN_N.B", "dollar_index_afe", "fx", "선진국 달러지수", "AFE Dollar Index",
+        "선진 교역상대국 통화 대비 달러의 교역가중 지수",
+        "The dollar against advanced foreign economies, trade-weighted",
+        _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "JRXWTFO_N.B", "dollar_index_eme", "fx", "신흥국 달러지수", "EME Dollar Index",
+        "신흥 교역상대국 통화 대비 달러의 교역가중 지수",
+        "The dollar against emerging market economies, trade-weighted",
+        _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
     # Korean official closes, published as open data by the Financial Services
     # Commission. These are separate cards from the HIP-3 proxies `kospi`,
     # `kosdaq` and `samsung` on purpose: an exchange close in won and a synthetic

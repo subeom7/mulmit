@@ -245,6 +245,10 @@ H10_XML = """<?xml version="1.0" encoding="UTF-8"?>
     <kf:Series SERIES_NAME="RXI$US_N.B.EU" CURRENCY="EUR">
       <frb:Obs TIME_PERIOD="2026-08-07" OBS_VALUE="1.1559" OBS_STATUS="A"/>
     </kf:Series>
+    <kf:Series SERIES_NAME="JRXWTFB_N.B">
+      <frb:Obs TIME_PERIOD="2026-08-06" OBS_VALUE="118.7412" OBS_STATUS="A"/>
+      <frb:Obs TIME_PERIOD="2026-08-07" OBS_VALUE="119.0649" OBS_STATUS="A"/>
+    </kf:Series>
   </frb:DataSet>
 </message:MessageGroup>
 """
@@ -280,3 +284,38 @@ def test_fx_series_are_read_from_the_h10_archive():
     # One archive, both currencies.
     assert len(transport.requests) == 1
     assert "h10" in transport.requests[0].full_url.lower()
+
+
+def test_the_boards_own_dollar_index_rides_the_same_h10_archive():
+    """A publishable dollar index exists in a release this project already reads."""
+    transport = Transport(_archive(member="H10_data.xml", body=H10_XML))
+    provider = make_provider(transport)
+
+    metadata, rows = provider.fetch_series(FEDBOARD_SERIES_BY_KEY["dollar_index_broad"])
+
+    assert dict(rows)[dt.date(2026, 8, 7)] == 119.0649
+    assert metadata["units"] == "Index, Jan 2006 = 100"
+
+
+def test_the_broad_dollar_index_is_never_presented_as_dxy():
+    """Different basket and a 2006 base: same idea, not the same number."""
+    import pathlib
+
+    from app.providers.fred import FRED_SERIES_BY_KEY
+
+    board = FRED_SERIES_BY_KEY["dollar_index_broad"]
+
+    assert board.key != "dxy"
+    assert "dxy" not in board.label_en.lower()
+    assert "DXY" not in board.label_ko
+    # The description has to say outright that the levels are not comparable,
+    # because a reader who knows DXY will otherwise assume they are.
+    assert "비교할 수 없" in board.description_ko
+    assert "not comparable" in board.description_en
+
+    # And they stay two cards on the screen, not one card that swapped source.
+    monitor = (
+        pathlib.Path(__file__).resolve().parents[1] / "app" / "static" / "monitor.js"
+    ).read_text(encoding="utf-8")
+    assert "\n  dxy: {" in monitor
+    assert "\n  dollar_index_broad: {" in monitor
