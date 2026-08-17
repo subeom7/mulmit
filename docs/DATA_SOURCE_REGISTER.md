@@ -75,7 +75,32 @@ HIP3_PUBLIC_DISPLAY_ENABLED=false
 
 서면 승인 전에는 `/api/market/assets`와 `/api/market/weekend`가 `pending_rights` 또는 구조화된 503을 반환한다(구현 완료). 공개 API 접근 자체를 재표시 허가로 기록하지 않는다.
 
-문의 초안은 [`docs/INQUIRY_HYPERLIQUID_TRADE_XYZ.md`](INQUIRY_HYPERLIQUID_TRADE_XYZ.md)에 있다. 수신처가 **둘**임에 주의한다 — `xyz:` 상품은 trade.xyz가, 접두사 없는 `BTC`는 Hyperliquid가 상장했다. 양쪽에 각각 보내고 회신을 별도 `decision_id`로 기록한다.
+문의 초안은 [`docs/INQUIRY_HYPERLIQUID_TRADE_XYZ.md`](INQUIRY_HYPERLIQUID_TRADE_XYZ.md)에 있다. 수신처가 **둘**임에 주의한다 — `xyz:` 상품은 trade.xyz가, 접두사 없는 `BTC`는 Hyperliquid가 상장했다. 양쪽에 각각 보내고 회신을 별도 `decision_id`로 기록한다. 확인된 주소는 XYZ Ltd `legal@xyzltd.xyz`(Terms §7.3·§9.3·§10.6), Hyperliquid Corp. `support@hyperliquid.zendesk.com`(Terms §11.3)다.
+
+**2026-08-17 약관 정독 결과 — 위험의 위치가 바뀌었다.** 양쪽 약관을 실제로 읽어
+보니 규율 대상이 **인터페이스**이고 프로토콜 데이터가 아니다.
+
+- XYZ Ltd Terms §7.1: “the Protocol is not subject to our control, and
+  accordingly, **no intellectual property rights are granted to the Protocol**”
+- XYZ Ltd Terms §4.1.5: 스크래핑 금지의 대상이 “content or information **from
+  the Interface**”다. Mulmit은 `app.trade.xyz` 화면이 아니라
+  `api.hyperliquid.xyz/info`를 호출한다
+- Hyperliquid Corp. Terms §1.1–1.2: “**does not own, control, or operate
+  Hyperliquid**”, HIP-3 시장은 “not reviewed, verified, or approved by the
+  Company”
+
+즉 두 약관 모두 데이터 재배포를 **금지하지 않는다.** 동시에 **허가하지도 않는다.**
+침묵을 허가로 읽지 않는다는 이 등록부의 원칙은 그대로다.
+
+바뀐 것은 우선순위다. 실제 위험은 두 회사가 아니라 **기초 자산의 원 권리자** 쪽에
+있다. XYZ Ltd Terms §1.4가 “data partners, oracles”를 Third-Party Service로
+명시하고 “owned by their respective licensors … comply with all terms”를 요구하는데,
+`xyz:KR200`·`xyz:SMSN`의 기초는 한국 주식·지수다. 문의 본문에서 이 질문을 0번으로
+올린 이유다.
+
+`HIP3_PUBLIC_DISPLAY_ENABLED=true`라는 현재 결정은 유지한다. 이 정독이 근거를
+약화시키지 않고 오히려 명시적 금지가 없음을 확인했지만, 그것이 승인은 아니므로
+`recheck_at: 2026-09-16`도 그대로다.
 
 ```yaml
 decision_id: DS-2026-001
@@ -532,6 +557,21 @@ yfinance 패키지가 공개 표시·저장·재배포 권리를 부여한다고
 | ICE Data Indices / BofA | High Yield OAS (`BAMLH0A0HYM2`의 원 권리자) | `license_required` | 값·차트 비공개 | [ICE Data Indices](https://www.ice.com/market-data/indices), [ICE Data Services](https://www.ice.com/market-data) |
 | IMF | 정확한 구리 계열 (Primary Commodity Price System) | `pending_review` | HIP-3 copper proxy와 분리, IMF 직접 배포처의 이용조건 확인 | [IMF Primary Commodity Prices](https://www.imf.org/en/Research/commodity-prices), [IMF Data](https://data.imf.org/), [Copyright and Usage](https://www.imf.org/en/about/copyright-and-terms) |
 
+2026-08-17 재확인. Cboe는 지수값을 콕 집어 서면 허가 대상으로 적어 두었다. “값이
+공개 웹에 보인다”와 “재게시해도 된다”가 다르다는 것을 공급자가 직접 쓴 사례다.
+
+> No data, values, or other content contained in this document (**including
+> without limitation, index values or information**, ratings, credit-related
+> analyses and data, research, valuations, strategies, methodologies, and
+> models) or any part thereof may be modified, reverse-engineered, reproduced,
+> or **distributed in any form or by any means**, or stored in a database or
+> retrieval system, **without the prior written permission of Cboe**.
+>
+> — <https://www.cboe.com/us_disclaimers/>
+
+따라서 VIX·SKEW·VVIX·OVX·Put/Call은 우회 경로를 찾지 않는다. 무료 CSV가 열려
+있다는 사실도 근거가 아니다. 이 다섯은 계약 전까지 계속 빈 카드로 둔다.
+
 `BAMLH0A0HYM2`의 원 권리자는 ICE Data Indices, LLC다. `ice.com/iba`는 ICE Benchmark
 Administration(LIBOR·ICE Swap Rate 등) 페이지로 지수 라이선스 창구가 아니다.
 문의는 ICE Data Indices/ICE Data Services 쪽으로 보낸다.
@@ -558,6 +598,22 @@ System 원본에서 직접 받는 경로만 검토한다. IMF 자료도 무조�
 
 Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로 신규 구현 시 종료 일정과 공식 대체 경로를 다시 확인한다. 특정 FRED series ID를 그대로 복제하는 것이 아니라 원 발행기관의 원 series와 단위를 검증한다.
 
+### 4.1 서면 문의 대기 목록
+
+코드로 풀 수 없고 회신이 있어야 열리는 항목만 모았다. 우선순위는 회신이 열어 주는
+화면의 크기 순이다.
+
+| 수신처 | 막고 있는 것 | 상태 | 초안 |
+|---|---|---|---|
+| trade.xyz **및** Hyperliquid (수신처 2곳) | 자산 카드 전체의 역사 차트. `historical_storage: false`라 현재는 최신값만 보인다 | 미발송. `DS-2026-001`, `recheck_at: 2026-09-16` | [`INQUIRY_HYPERLIQUID_TRADE_XYZ.md`](INQUIRY_HYPERLIQUID_TRADE_XYZ.md) |
+| Federal Reserve Bank of St. Louis | `financial_stress`(STLFSI4). 뉴욕 연준과 같은 구조 — 연방기관이 아니라 저작권을 주장하지만, 명시적 이용허락을 주는지가 관건이다. FRED 경유 복제는 하지 않는다 | 초안 없음 | — |
+| 한국거래소 | 실시간 시세와 KRX 통계정보 전체(§3.4). 장 마감값은 §3.9로 이미 해결됨 | 초안 없음. 우선순위 낮아짐 | — |
+| Cboe | VIX·SKEW·VVIX·OVX·Put/Call | 서면 허가가 명시적으로 필요하고 월 예산 안의 근거가 없어 **문의하지 않기로** 결정 | — |
+
+뉴욕 연준 사례가 이 목록의 근거다. 약관을 실제로 읽기 전에는 “연준 계열이니
+공개겠지”와 “저작권을 주장하니 못 쓰겠지” 둘 다 추측이었고, 실제 약관은 저작권을
+주장하면서 동시에 우리가 필요한 범위를 명시적으로 허락하고 있었다.
+
 ## 5. 카드별 source 계획
 
 `UI key`는 `app/static/monitor.js`의 `METRICS` 항목 키와 정확히 같은 문자열이다.
@@ -580,7 +636,7 @@ Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로
 | `inda` | `inda`, `india` | `xyz:NIFTY` 가능 시 | INDA가 아닌 NIFTY 50 대용값 | 카드 라벨이 현재 `인도 INDA`이므로 NIFTY 대용값을 붙이면 라벨부터 고친다 |
 | `vnm` | `vnm`, `vietnam` | 없음 | missing | 승인 소스 전 비워 둠 |
 | `ewj` | `ewj`, `japan` | `xyz:EWJ` | ETF-linked 합성값 | 권리 승인 전 gate |
-| `dxy` | `dxy`, `dollar_index` | 상품 활성 여부에 따라 missing | 공식 ICE DXY 아님 | exact DXY는 ICE 권리 필요 |
+| `dxy` | `dxy`, `dollar_index` | 상품 활성 여부에 따라 missing | 공식 ICE DXY 아님 | exact DXY는 ICE 권리 필요. 표시 가능한 대안으로 `dollar_index_broad`(Fed Board)를 **연결함** — 대체가 아니라 다른 지수다 |
 | `usdjpy` | `usdjpy`, `jpy=x` | `xyz:JPY` | 합성 FX reference | 방향·통화 단위 검증 유지 |
 | `vix` | `vix`, `vixcls` | `xyz:VIX` 가능 시 | 공식 Cboe VIX 아님 | 공식값은 별도 lane에서 계속 `license_required` |
 | `wti` | `wti`, `dcoilwtico`, `cl=f` | `xyz:CL` | 공식 현물/결제값 아님 | EIA 공식값이 붙으면 `wti_exact` 신규 key로 분리 |
@@ -599,7 +655,10 @@ alias를 정리해 proxy와 exact가 서로 다른 카드에 붙도록 먼저 �
 | UI key | 기존 ID | 원 발행기관 후보 | 상태 | 메모 |
 |---|---|---|---|---|
 | `yield_curve` | `RIFLGFCY10_N.B - RIFLGFCY02_N.B` | **Fed Board (계산됨)** | `approved` | 양쪽이 모두 게시한 날짜로만 계산 |
-| `financial_stress` | `STLFSI4` | St. Louis Fed 별도 permission 또는 대체 자체 지수 | `license_required` | FRED 우회 복제 금지 |
+| `financial_stress` | `STLFSI4` | St. Louis Fed 별도 permission 또는 대체 자체 지수 | `license_required` | FRED 우회 복제 금지. 문의 대상(§4.1) |
+| `dollar_index_broad` | `JRXWTFB_N.B` | **Fed Board H.10 (연결됨)** | `approved` | 교역가중 광의 달러지수, 2006=100. ICE `dxy`와 별도 카드이며 값 비교 불가 |
+| `dollar_index_afe` | `JRXWTFN_N.B` | **Fed Board H.10 (연결됨)** | `approved` | 선진 교역상대국 |
+| `dollar_index_eme` | `JRXWTFO_N.B` | **Fed Board H.10 (연결됨)** | `approved` | 신흥 교역상대국 |
 | `treasury_10y` | `RIFLGFCY10_N.B` | **Fed Board H.15 (연결됨)** | `approved` | 2001~ 일별. `DS-2026-004` |
 | `treasury_2y`(신규) | `RIFLGFCY02_N.B` | **Fed Board H.15 (연결됨)** | `approved` | 10Y−2Y 계산의 입력이자 자체 카드 |
 | `m2` | `M2.M` | **Fed Board H.6 (연결됨)** | `approved` | 계절조정 월간, **십억 달러** 단위 |
@@ -826,6 +885,8 @@ notes: "No confidential contract language here"
 | 2026-08-17 | Federal Reserve Board lane 추가(`DS-2026-004`). DDP 폐지를 피해 릴리스 페이지 XML 사용 | Claude assisted |
 | 2026-08-17 | H.10 환율, H.4.1 유동성, H.6 통화량 연결 | Claude assisted |
 | 2026-08-17 | BLS lane 추가(`DS-2026-005`), DOL ETA는 보류 사유 기록 | Claude assisted |
+| 2026-08-17 | HIP-3 문의 초안 개정: XYZ Ltd·Hyperliquid Corp. 약관 정독 결과 반영, 연락처 확정, 기초 자산 원 권리자 질문을 최우선으로 이동. §4.1 문의 대기 목록 신설 | Claude assisted |
+| 2026-08-17 | Fed Board 교역가중 달러지수 3종 연결(H.10, 기존 lane). Cboe 지수값 서면허가 조항 원문 인용 | Claude assisted |
 | 2026-08-17 | 금융위원회 공공데이터 lane 추가(`DS-2026-006`). 코스피·코스닥·삼성전자·SK하이닉스 공식 종가를 KRX 승인과 별개 근거로 연결. `samsung` alias에서 `005930` 제거 | Claude assisted |
 | 2026-08-17 | `Mulmit 유동성·스트레스 지수` 도입. CNN Fear & Greed 복제 대신 자체 산식 | Claude assisted |
 
