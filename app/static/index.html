@@ -259,6 +259,7 @@ button.primary:disabled { opacity: .55; cursor: default; }
 /* 재조회 중에는 이전 결과를 흐리게 유지 — 스켈레톤 깜빡임 없이 레이아웃 유지 */
 body[data-loading="1"] #result { opacity: .45; transition: opacity .12s; }
 #result[hidden] { display: none; }
+[hidden] { display: none !important; }
 
 /* --- 카드 ----------------------------------------------------------------- */
 .card {
@@ -697,6 +698,11 @@ const I18N = {
     "app.tagline": "Market intelligence · risk first", "app.live": "LIVE DATA",
     "intro.eyebrow": "MULMIT MARKET MONITOR", "intro.title": "시장의 흐름과 종목의 위험을 한 화면에서.",
     "intro.copy": "S&P 500 섹터 강약을 먼저 읽고, 원하는 종목의 수익률·낙폭·CAPM·미래 MDD 분포까지 같은 맥락에서 분석하세요.",
+    "mode.insiderTitle": "내부자거래 공시 조회", "mode.insiderTag": "SEC EDGAR · FORM 3·4·5",
+    "mode.insiderLede": "티커를 입력하면 임원·이사·10% 주주의 Form 3·4·5 보고 내역을 EDGAR 원문 그대로 보여줍니다.",
+    "mode.introTitle": "미국 상장사 내부자거래를 원문 그대로.",
+    "mode.introCopy": "가격·유동성·거시 흐름은 시장 모니터에서 보고, 여기서는 SEC EDGAR 지분 공시를 조회합니다. 가격 분석 기능은 승인된 가격 데이터 공급자가 연결되면 다시 열립니다.",
+    "form.lookup": "조회", "example.msft": "마이크로소프트", "example.googl": "알파벳",
     "market.title": "S&P 500 섹터 모니터", "market.tag": "11 SECTOR ETFs · ADJUSTED CLOSE", "market.summaryAria": "섹터 요약",
     "market.lede": "일간·주간·월간·연간 흐름을 전환해 시장의 리더십과 확산도를 빠르게 확인합니다.",
     "pulse.best": "가장 강한 섹터", "pulse.worst": "가장 약한 섹터", "pulse.breadth": "상승 섹터", "pulse.asof": "기준일",
@@ -788,6 +794,11 @@ const I18N = {
     "app.tagline": "Market intelligence · risk first", "app.live": "LIVE DATA",
     "intro.eyebrow": "MULMIT MARKET MONITOR", "intro.title": "Market leadership and stock risk, in one view.",
     "intro.copy": "Read S&P 500 sector strength first, then analyze returns, drawdowns, CAPM and the forward MDD distribution for any ticker in the same context.",
+    "mode.insiderTitle": "Insider filings lookup", "mode.insiderTag": "SEC EDGAR · FORM 3·4·5",
+    "mode.insiderLede": "Enter a ticker to see officer, director and 10% owner transactions relayed verbatim from EDGAR Forms 3, 4 and 5.",
+    "mode.introTitle": "US insider filings, straight from the source.",
+    "mode.introCopy": "Prices, liquidity and macro live on the market monitor; this page looks up SEC EDGAR ownership filings. Price analytics return when a licensed price provider is connected.",
+    "form.lookup": "Look up", "example.msft": "Microsoft", "example.googl": "Alphabet",
     "market.title": "S&P 500 Sector Monitor", "market.tag": "11 SECTOR ETFs · ADJUSTED CLOSE", "market.summaryAria": "Sector summary",
     "market.lede": "Switch between daily, weekly, monthly and yearly returns to see leadership and market breadth at a glance.",
     "pulse.best": "Strongest sector", "pulse.worst": "Weakest sector", "pulse.breadth": "Sectors up", "pulse.asof": "As of",
@@ -1943,6 +1954,13 @@ async function load(push) {
   // Deliberately not awaited and not inside the try below: the insider lane is
   // independent, so it must still render when /api/metrics is gated off.
   loadInsider(params.get("ticker"));
+  if (insiderOnly) {
+    // Launch mode: the price lane is disabled deployment-wide, so there is no
+    // metrics call to make and no retryable error to show.
+    if (push) history.replaceState(null, "", `?ticker=${encodeURIComponent(params.get("ticker"))}`);
+    setStatus("");
+    return;
+  }
   const controller = new AbortController();
   metricsController = controller;
 
@@ -1988,7 +2006,7 @@ filters.addEventListener("submit", (event) => {
   document.getElementById(id).addEventListener("change", () => load(true));
 });
 
-const EXAMPLES = [
+let EXAMPLES = [
   ["AAPL", "example.aapl"], ["NVDA", "example.nvda"], ["005930.KS", "example.samsung"],
   ["SPY", "example.spy"], ["TSLA", "example.tsla"], ["BTC-USD", "example.btc"],
 ];
@@ -2038,9 +2056,50 @@ for (const key of ["ticker", "horizon", "drift", "lookback"]) {
 applyLocale();
 syncPeriodButtons();
 updateThemeControl();
-loadHeatmap();
-load(false);
-setInterval(() => { if (!document.hidden) loadHeatmap(false); }, 30 * 60 * 1000);
+
+/* 가격 lane이 배포 전체에서 꺼져 있으면 이 페이지는 내부자 공시 조회로 동작한다.
+   섹터 모니터·위험 분석은 오류가 아니라 비활성이므로, 재시도 UI 대신 숨긴다.
+   lane이 다시 열리면(승인된 가격 공급자 연결) 이 분기가 저절로 원상복구한다. */
+let insiderOnly = false;
+function applyInsiderMode() {
+  document.querySelector('[aria-labelledby="market-section-title"]').hidden = true;
+  const analysis = document.querySelector(".analysis-block");
+  analysis.querySelector(".section-num").textContent = "01";
+  analysis.querySelector(".section-title").dataset.i18n = "mode.insiderTitle";
+  analysis.querySelector(".section-tag").dataset.i18n = "mode.insiderTag";
+  analysis.querySelector(".section-lede").dataset.i18n = "mode.insiderLede";
+  document.getElementById("intro-title").dataset.i18n = "mode.introTitle";
+  document.querySelector(".intro-copy").dataset.i18n = "mode.introCopy";
+  document.getElementById("go").dataset.i18n = "form.lookup";
+  for (const id of ["horizon", "drift", "lookback"]) {
+    document.getElementById(id).closest(".field").hidden = true;
+  }
+  // The section heading now announces the card, so its own title would repeat it.
+  document.getElementById("insider-title").hidden = true;
+  document.querySelector("#insider .sub").hidden = true;
+  EXAMPLES = [
+    ["AAPL", "example.aapl"], ["MSFT", "example.msft"], ["NVDA", "example.nvda"],
+    ["GOOGL", "example.googl"], ["TSLA", "example.tsla"],
+  ];
+  applyLocale();
+}
+
+(async () => {
+  try {
+    const response = await fetch("/api/status", { headers: { Accept: "application/json" } });
+    const status = await response.json();
+    insiderOnly = status?.data_lanes?.legacy_price_data?.status !== "enabled";
+  } catch (_) {
+    insiderOnly = false; // 판별 불가면 기존 화면 그대로
+  }
+  if (insiderOnly) {
+    applyInsiderMode();
+  } else {
+    loadHeatmap();
+    setInterval(() => { if (!document.hidden) loadHeatmap(false); }, 30 * 60 * 1000);
+  }
+  load(false);
+})();
 </script>
 </body>
 </html>
