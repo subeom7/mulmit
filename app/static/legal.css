@@ -1,0 +1,124 @@
+/* 법적 고지 페이지 공용 스타일.
+   monitor.css의 토큰을 그대로 다시 선언한다. 이 페이지들은 대시보드 JS를
+   전혀 싣지 않으므로(스크립트 없이도 읽혀야 한다) 의존성을 만들지 않는다. */
+
+:root {
+  color-scheme: dark;
+  --bg: #080a0b;
+  --panel: #0f1214;
+  --ink: #f3f6f8;
+  --muted: #929ba3;
+  --faint: #5f6870;
+  --line: #242a2f;
+  --accent: #42a5ff;
+  --amber: #f5b942;
+  --sans: Inter, Pretendard, system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4f5f3;
+  --panel: #ffffff;
+  --ink: #101316;
+  --muted: #5f6870;
+  --faint: #8c949a;
+  --line: #dce0e2;
+  --accent: #0878d1;
+  --amber: #a96600;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+.skip-link {
+  position: absolute; left: -9999px; top: 0; padding: 10px 14px;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line); z-index: 10;
+}
+.skip-link:focus { left: 8px; top: 8px; }
+
+.masthead {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--panel);
+}
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+.brand-mark {
+  display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px;
+  background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+}
+.brand strong { display: block; font-size: 15px; letter-spacing: -0.01em; }
+.brand small { display: block; font-size: 10px; letter-spacing: .14em; color: var(--faint); font-family: var(--mono); }
+.mast-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+.mast-actions { margin-left: auto; display: flex; gap: 6px; }
+.nav-chip, .icon-button {
+  padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line);
+  background: transparent; color: var(--muted); font-size: 12.5px;
+  text-decoration: none; cursor: pointer; font-family: inherit;
+}
+.nav-chip:hover, .icon-button:hover { color: var(--ink); border-color: var(--accent); }
+.nav-chip.active { color: var(--ink); border-color: var(--accent); }
+
+main { max-width: 780px; margin: 0 auto; padding: 40px 20px 80px; }
+
+.doc-kicker {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .16em;
+  color: var(--accent); margin: 0 0 8px;
+}
+h1 { font-size: 30px; line-height: 1.25; letter-spacing: -0.02em; margin: 0 0 10px; }
+.doc-meta { color: var(--faint); font-size: 12.5px; margin: 0 0 8px; font-family: var(--mono); }
+.doc-lede { color: var(--muted); margin: 0 0 34px; }
+
+h2 {
+  font-size: 18px; letter-spacing: -0.01em; margin: 40px 0 12px;
+  padding-top: 22px; border-top: 1px solid var(--line);
+}
+h3 { font-size: 15px; margin: 24px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 7px; }
+a { color: var(--accent); }
+code {
+  font-family: var(--mono); font-size: 12.5px; padding: 1px 5px;
+  border-radius: 5px; background: var(--panel); border: 1px solid var(--line);
+}
+strong { font-weight: 640; }
+
+.callout {
+  border: 1px solid var(--line); border-left: 3px solid var(--amber);
+  background: var(--panel); border-radius: 10px; padding: 16px 18px; margin: 0 0 20px;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.table-scroll { overflow-x: auto; margin: 0 0 18px; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 480px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-size: 12px; font-weight: 600; }
+
+footer.doc-footer {
+  margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
+  color: var(--faint); font-size: 12.5px;
+}
+footer.doc-footer a { margin-right: 14px; }
+
+/* KO/EN은 DOM에 함께 두고 전환한다. 긴 산문은 JS 사전보다 이 편이 정확하고,
+   스크립트가 실패해도 최소한 한 언어는 반드시 읽힌다.
+   전환은 클래스로만 한다. `[lang="en"]`을 그대로 쓰면 토글이 <html lang="en">에도
+   걸려 문서 전체가 사라진다. lang 속성은 스크린리더를 위해 그대로 둔다. */
+.lang-en { display: none; }
+html[data-lang="en"] .lang-ko { display: none; }
+html[data-lang="en"] .lang-en { display: revert; }
+
+@media (max-width: 640px) {
+  main { padding: 28px 16px 60px; }
+  h1 { font-size: 24px; }
+  .masthead { padding: 12px 14px; }
+}

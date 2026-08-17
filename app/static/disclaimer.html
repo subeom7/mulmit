@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ko" data-theme="dark" data-lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Mulmit 면책 고지 — 표시되는 값이 무엇이고 무엇이 아닌지">
+  <meta name="doc-title-ko" content="면책 고지 · Mulmit">
+  <meta name="doc-title-en" content="Disclaimer · Mulmit">
+  <title>면책 고지 · Mulmit</title>
+  <link rel="stylesheet" href="/static/legal.css?v=20260817-1">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Mulmit home">
+      <span class="brand-mark" aria-hidden="true">M</span>
+      <span><strong>Mulmit</strong><small>MARKET SIGNAL CONSOLE</small></span>
+    </a>
+    <nav class="mast-nav" aria-label="Primary">
+      <a class="nav-chip" href="/">시장 모니터</a>
+      <a class="nav-chip" href="/analytics">종목 분석</a>
+    </nav>
+    <div class="mast-actions">
+      <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
+      <button class="icon-button" id="theme-toggle" type="button" aria-label="테마 전환">◐</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <p class="doc-kicker">DISCLAIMER</p>
+
+    <div class="lang-ko" lang="ko">
+      <h1>면책 고지</h1>
+      <p class="doc-meta">최종 개정 2026-08-17</p>
+      <p class="doc-lede">
+        Mulmit은 공개된 시장 데이터를 모아 보여주는 정보 서비스입니다. 투자 자문이 아니며,
+        어떤 종목을 사거나 팔라고 권유하지 않습니다.
+      </p>
+
+      <div class="callout">
+        <p>
+          <strong>가장 중요한 것</strong> — 이 화면의 숫자는 <strong>투자 판단의 근거로 삼기에 충분하지
+          않습니다.</strong> 실제 매매 전에는 반드시 거래소, 증권사, 원 발행기관의 공식 자료로 값을 다시
+          확인하세요. Mulmit을 보고 내린 결정의 결과는 전적으로 이용자 본인의 책임입니다.
+        </p>
+      </div>
+
+      <h2>1. 투자 자문이 아닙니다</h2>
+      <p>
+        Mulmit은 금융투자업자가 아니며, 투자자문업·투자일임업·유사투자자문업 등 어떤 형태의 인허가나
+        신고도 받지 않았습니다. 이 사이트는 다음을 제공하지 않습니다.
+      </p>
+      <ul>
+        <li>매수·매도·보유 추천이나 목표가 제시</li>
+        <li>개별 이용자의 상황에 맞춘 자문</li>
+        <li>수익률 보장이나 예측</li>
+        <li>포트폴리오 운용이나 자산 관리</li>
+      </ul>
+      <p>
+        화면에 나타나는 해석 문구(예: 특정 지표의 일반적인 참고 구간)는 지표를 읽는 방법에 대한 일반적인
+        설명이며, 특정 시점의 매매 신호가 아닙니다.
+      </p>
+
+      <h2>2. 표시되는 값이 무엇인지</h2>
+      <p>
+        Mulmit은 데이터의 출처와 성격을 숨기지 않습니다. 특히 다음 구분은 반드시 이해하고 보셔야 합니다.
+      </p>
+
+      <h3>합성 무기한선물은 현물 가격이 아닙니다</h3>
+      <p>
+        현재 자산 카드와 주말 신호의 값은 trade.xyz가 Hyperliquid HIP-3에 상장한
+        <strong>합성 무기한선물(synthetic perpetual)의 참고값</strong>입니다. 다음을 뜻하지 않습니다.
+      </p>
+      <ul>
+        <li><code>xyz:SP500</code>은 S&amp;P 500 지수의 공식 종가가 아닙니다.</li>
+        <li><code>xyz:XYZ100</code>은 나스닥 종합지수나 공식 Nasdaq-100이 아닙니다.</li>
+        <li><code>xyz:KR200</code>은 KOSPI나 KOSPI 200의 공식 종가가 아닙니다.</li>
+        <li><code>xyz:SMSN</code>은 삼성전자의 원화 현물 종가가 아니라 USD 환산 파생상품입니다.</li>
+        <li><code>xyz:CL</code>은 WTI 현물이나 거래소 공식 결제가격이 아닙니다.</li>
+      </ul>
+      <p>
+        이 시장은 유동성이 얕을 수 있고 펀딩비와 레버리지의 영향을 받습니다. 마크 가격과 오라클 가격이
+        벌어질 수 있으며, 실제 기초자산과 상당한 차이가 날 수 있습니다.
+      </p>
+
+      <h3>주말 신호는 월요일 예측이 아닙니다</h3>
+      <p>
+        주말에 표시되는 신호는 정규장이 닫힌 동안 파생시장에서 형성된 참고 가격입니다. 거래량이 매우
+        적을 수 있고, <strong>다음 거래일의 시가나 방향을 예측하지 않습니다.</strong>
+      </p>
+
+      <h3>공시는 원문 그대로, 요약하지 않습니다</h3>
+      <p>
+        내부자거래 화면은 미국 증권거래위원회 EDGAR의 Form 3·4·5 원문에 보고된 항목을 그대로 옮깁니다.
+        Mulmit은 이를 매수·매도 신호로 재해석하지 않습니다. 특히 임직원 보상으로 받은 주식 부여(A),
+        스톡옵션·RSU 행사(M), 세금 원천징수를 위한 주식 상계(F)는 본인의 시장 매매 결정이 아니므로
+        시장 매수(P)·매도(S) 합계에 넣지 않습니다. 다른 서비스의 "내부자 순매수" 숫자와 다르게 보일 수
+        있는데, 이는 오류가 아니라 의도한 구분입니다.
+      </p>
+
+      <h3>연결되지 않은 값은 비워 둡니다</h3>
+      <p>
+        데이터 공급자와의 표시 권리가 확인되지 않았거나 아직 연결되지 않은 지표는 숫자를 만들어 채우지
+        않고 <code>미연결</code>, <code>권리 확인 중</code>, <code>라이선스 필요</code>, <code>비활성</code> 같은
+        상태로 표시합니다. 화면이 비어 있다면 그 값을 아직 신뢰할 수 없다는 뜻입니다.
+        각 데이터 경로의 현재 상태는 <a href="/api/status">/api/status</a>에서 확인할 수 있습니다.
+      </p>
+
+      <h2>3. 정확성과 지연</h2>
+      <p>
+        Mulmit은 데이터의 정확성, 완전성, 적시성을 보증하지 않습니다. 값은 지연될 수 있고, 공급자 장애나
+        수집 실패로 오래된 값이 남아 있을 수 있습니다. 화면에는 기준 시각과 신선도를 함께 표시하니 반드시
+        확인하세요. 과거의 성과는 미래의 결과를 보장하지 않습니다.
+      </p>
+      <p>
+        확률 분포나 시뮬레이션 결과가 표시되는 경우, 이는 과거 데이터에 특정 가정을 적용해 계산한
+        <strong>참고 범위</strong>이며 미래에 대한 예측이 아닙니다. 가정이 바뀌면 결과도 바뀝니다.
+      </p>
+
+      <h2>4. 원 제공자의 조건</h2>
+      <p>
+        각 데이터에는 원 발행기관이나 공급자의 이용 조건이 적용될 수 있습니다. 화면과 API 응답에는
+        출처와 관련 조건 링크를 함께 표시합니다. Mulmit의 공개 API로 값을 받아 재사용하려는 경우,
+        그 재사용에 대한 권리는 이용자가 직접 원 제공자에게 확인해야 합니다.
+      </p>
+
+      <h2>5. 책임의 한계</h2>
+      <p>
+        Mulmit은 비상업적 개인 프로젝트로 <strong>있는 그대로(as-is)</strong> 제공되며, 서비스의 중단 없는
+        제공이나 오류 없는 동작을 보장하지 않습니다. 관련 법령이 허용하는 범위에서, Mulmit의 정보를
+        이용하거나 이용할 수 없어서 발생한 손실이나 손해에 대해 책임지지 않습니다.
+      </p>
+    </div>
+
+    <div class="lang-en" lang="en">
+      <h1>Disclaimer</h1>
+      <p class="doc-meta">Last revised 2026-08-17</p>
+      <p class="doc-lede">
+        Mulmit is an information service that gathers and displays public market data. It is not
+        investment advice and does not recommend buying or selling anything.
+      </p>
+
+      <div class="callout">
+        <p>
+          <strong>The important part</strong> — the numbers on this site are
+          <strong>not sufficient grounds for an investment decision.</strong> Verify any figure against
+          the exchange, your broker or the original publisher before you trade. Decisions you make
+          after reading Mulmit are entirely your own responsibility.
+        </p>
+      </div>
+
+      <h2>1. Not investment advice</h2>
+      <p>
+        Mulmit is not a licensed financial firm and holds no registration or authorisation as an
+        investment adviser or discretionary manager. This site does not provide:
+      </p>
+      <ul>
+        <li>Buy, sell or hold recommendations, or price targets</li>
+        <li>Advice tailored to any individual's circumstances</li>
+        <li>Guaranteed or forecast returns</li>
+        <li>Portfolio management or asset management</li>
+      </ul>
+      <p>
+        Interpretation notes shown beside indicators describe how a measure is generally read. They
+        are not trading signals for any particular moment.
+      </p>
+
+      <h2>2. What the figures actually are</h2>
+      <p>Mulmit does not hide the origin or nature of its data. These distinctions matter:</p>
+
+      <h3>Synthetic perpetuals are not spot prices</h3>
+      <p>
+        Asset cards and weekend signals currently show reference values from
+        <strong>synthetic perpetual futures</strong> listed by trade.xyz through Hyperliquid HIP-3.
+        They do not mean:
+      </p>
+      <ul>
+        <li><code>xyz:SP500</code> is not the official S&amp;P 500 close.</li>
+        <li><code>xyz:XYZ100</code> is neither the Nasdaq Composite nor the official Nasdaq-100.</li>
+        <li><code>xyz:KR200</code> is not the official KOSPI or KOSPI 200 close.</li>
+        <li><code>xyz:SMSN</code> is a USD-denominated derivative, not Samsung Electronics' won-denominated spot close.</li>
+        <li><code>xyz:CL</code> is not WTI spot or an exchange settlement price.</li>
+      </ul>
+      <p>
+        These markets can be thin and are affected by funding rates and leverage. Mark and oracle
+        prices can diverge, and both can differ materially from the underlying asset.
+      </p>
+
+      <h3>Weekend signals are not Monday forecasts</h3>
+      <p>
+        Signals shown at the weekend are reference prices formed in derivative markets while regular
+        sessions are closed. Volume can be very low, and they
+        <strong>do not predict the next session's open or direction.</strong>
+      </p>
+
+      <h3>Filings are relayed, not summarised</h3>
+      <p>
+        The insider view relays what was reported in SEC EDGAR Forms 3, 4 and 5. Mulmit does not
+        reinterpret those lines as buy or sell signals. Compensation events — share grants (A),
+        option or RSU exercises (M) and shares surrendered for tax withholding (F) — are not
+        open-market decisions, so they are excluded from the open-market purchase (P) and sale (S)
+        totals. Figures here may therefore differ from another site's "net insider buying". That is a
+        deliberate distinction, not an error.
+      </p>
+
+      <h3>Unavailable values stay blank</h3>
+      <p>
+        Indicators whose display rights are unconfirmed, or which are not yet connected, are never
+        filled with an invented number. They show a state instead:
+        <code>not connected</code>, <code>rights pending</code>, <code>license required</code> or
+        <code>disabled</code>. A blank card means the value is not yet trustworthy. The current state
+        of each data lane is visible at <a href="/api/status">/api/status</a>.
+      </p>
+
+      <h2>3. Accuracy and delay</h2>
+      <p>
+        Mulmit makes no warranty as to accuracy, completeness or timeliness. Values may be delayed,
+        and a provider outage can leave a stale figure on screen. Each value is shown with its
+        as-of time and freshness — please read them. Past performance does not guarantee future results.
+      </p>
+      <p>
+        Where probability distributions or simulations appear, they are
+        <strong>reference ranges</strong> computed by applying stated assumptions to historical data,
+        not predictions. Change the assumptions and the output changes.
+      </p>
+
+      <h2>4. Original providers' terms</h2>
+      <p>
+        Each dataset may carry terms from its publisher or provider. Sources and the relevant terms
+        links are shown alongside the values and in the API responses. If you intend to reuse values
+        obtained through Mulmit's public API, you are responsible for confirming that reuse directly
+        with the original provider.
+      </p>
+
+      <h2>5. Limitation of liability</h2>
+      <p>
+        Mulmit is a non-commercial personal project provided <strong>as is</strong>, with no guarantee
+        of uninterrupted or error-free operation. To the extent permitted by law, no liability is
+        accepted for loss or damage arising from use of, or inability to use, the information here.
+      </p>
+    </div>
+
+    <footer class="doc-footer">
+      <a href="/privacy">개인정보처리방침 / Privacy</a>
+      <a href="/terms">이용약관 / Terms</a>
+      <a href="/">시장 모니터 / Monitor</a>
+    </footer>
+  </main>
+
+  <script src="/static/legal.js?v=20260817-1" defer></script>
+</body>
+</html>

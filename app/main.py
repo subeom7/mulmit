@@ -142,6 +142,21 @@ def stock_analytics() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "index.html")
 
 
+@app.get("/privacy", include_in_schema=False)
+def privacy_policy() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "privacy.html")
+
+
+@app.get("/terms", include_in_schema=False)
+def terms_of_use() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "terms.html")
+
+
+@app.get("/disclaimer", include_in_schema=False)
+def disclaimer() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "disclaimer.html")
+
+
 @app.get("/api/health")
 def health() -> dict:
     """로드밸런서·배포 스크립트용. DB까지 확인해야 의미가 있다."""

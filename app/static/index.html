@@ -251,6 +251,18 @@ body[data-loading="1"] #result { opacity: .45; transition: opacity .12s; }
 }
 .card > p.sub { font-size: 12.5px; color: var(--text-muted); margin: 0 0 18px; }
 
+/* --- 법적 고지 링크 -------------------------------------------------------- */
+.site-footer {
+  max-width: 1180px; margin: 40px auto 0; padding: 22px 24px 28px;
+  border-top: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+}
+.site-footer nav { display: flex; flex-wrap: wrap; gap: 16px; }
+.site-footer a { color: var(--text-muted); font-size: 12.5px; text-decoration: none; }
+.site-footer a:hover { color: var(--text-primary); text-decoration: underline; }
+.site-footer p { margin: 0; margin-left: auto; color: var(--text-muted); font-size: 11.5px; }
+@media (max-width: 640px) { .site-footer p { margin-left: 0; } }
+
 /* --- 내부자거래 ----------------------------------------------------------- */
 .insider-card .state-block {
   padding: 14px 0; font-size: 13px; color: var(--text-muted);
@@ -638,6 +650,15 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
 </div>
 
 </section>
+
+<footer class="site-footer">
+  <nav aria-label="Legal">
+    <a href="/privacy" data-i18n="legal.privacy">개인정보처리방침</a>
+    <a href="/terms" data-i18n="legal.terms">이용약관</a>
+    <a href="/disclaimer" data-i18n="legal.disclaimer">면책 고지</a>
+  </nav>
+  <p data-i18n="legal.notAdvice">Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.</p>
+</footer>
 </main>
 </div>
 
@@ -671,6 +692,8 @@ const I18N = {
     "horizon.3m": "3개월", "horizon.6m": "6개월", "horizon.1y": "1년", "horizon.3y": "3년",
     "lookback.5y": "최근 5년", "lookback.10y": "최근 10년", "lookback.20y": "최근 20년",
     "drift.historical": "과거 추세 유지", "drift.zero": "0% (보수적)", "drift.capm": "CAPM 기대수익률",
+    "legal.privacy": "개인정보처리방침", "legal.terms": "이용약관", "legal.disclaimer": "면책 고지",
+    "legal.notAdvice": "Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.",
     "insider.title": "내부자거래 공시", "insider.sub": "SEC EDGAR Form 3·4·5 원문에서 임원·이사·10% 주주의 보고 내역을 그대로 옮깁니다.",
     "insider.tableCaption": "보고된 내부자 거래 내역", "insider.loading": "{ticker} 공시를 불러오는 중입니다.",
     "insider.queued": "{ticker}는 아직 수집되지 않았습니다. 다음 수집 주기에 포함되며, 잠시 뒤 다시 조회하면 표시됩니다.",
@@ -759,6 +782,8 @@ const I18N = {
     "horizon.3m": "3 months", "horizon.6m": "6 months", "horizon.1y": "1 year", "horizon.3y": "3 years",
     "lookback.5y": "Last 5 years", "lookback.10y": "Last 10 years", "lookback.20y": "Last 20 years",
     "drift.historical": "Continue historical trend", "drift.zero": "0% (conservative)", "drift.capm": "CAPM expected return",
+    "legal.privacy": "Privacy policy", "legal.terms": "Terms of use", "legal.disclaimer": "Disclaimer",
+    "legal.notAdvice": "Mulmit is an information service, not investment advice or a solicitation to trade.",
     "insider.title": "Insider filings", "insider.sub": "Officer, director and 10% owner transactions relayed verbatim from SEC EDGAR Forms 3, 4 and 5.",
     "insider.tableCaption": "Reported insider transactions", "insider.loading": "Loading filings for {ticker}.",
     "insider.queued": "{ticker} has not been collected yet. It is queued for the next ingest cycle — check back shortly.",
