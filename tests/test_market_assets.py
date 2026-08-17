@@ -212,7 +212,7 @@ def test_provider_failure_returns_null_coverage_without_fake_values():
     assert snapshot["as_of"] is None
 
 
-def test_asset_endpoint_preserves_public_contract_and_never_needs_network(monkeypatch):
+def test_asset_endpoint_preserves_public_contract_and_never_needs_network(monkeypatch, hip3_public_display):
     payload = build_asset_snapshot(
         "3y", FixtureProvider([("xyz:DXY", _context("97", "96", volume="0"))])
     )

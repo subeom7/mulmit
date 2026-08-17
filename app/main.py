@@ -18,9 +18,9 @@ from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from . import __version__, config, ingest, service, store
+from . import __version__, config, data_rights, ingest, service, store
 from .data import DataUnavailable, RateLimited
-from .macro_dashboard import build_macro_series, build_macro_snapshot
+from .macro_dashboard import MacroDataDisabled, build_macro_series, build_macro_snapshot
 from .market_assets import build_asset_snapshot
 from .market_sectors import build_sector_snapshot
 from .metrics.correlation import correlation_matrix
@@ -57,6 +57,30 @@ _LEGACY_PRICE_DATA_DISABLED = {
 def require_legacy_price_data() -> None:
     if not config.LEGACY_PRICE_DATA_ENABLED:
         raise HTTPException(status_code=503, detail=_LEGACY_PRICE_DATA_DISABLED)
+
+
+def require_hip3_public_display() -> None:
+    """Withhold Hyperliquid HIP-3 values until redistribution rights are confirmed."""
+    if not data_rights.hip3_public_display_enabled():
+        raise HTTPException(
+            status_code=503,
+            detail=data_rights.HIP3_PENDING_RIGHTS,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        )
+
+
+def _macro_data_source() -> str:
+    """Name the lanes that actually produced the response, not a fixed provider."""
+    return ",".join(lane.upper() for lane in data_rights.enabled_macro_lanes())
+
+
+def macro_disabled_response() -> HTTPException:
+    """A disabled lane must never be cached by a proxy as if it were content."""
+    return HTTPException(
+        status_code=503,
+        detail=data_rights.MACRO_DATA_DISABLED,
+        headers=dict(data_rights.NO_STORE_HEADERS),
+    )
 
 
 @asynccontextmanager
@@ -131,6 +155,9 @@ def status() -> dict:
         "provider": config.PROVIDER if legacy_enabled else "disabled",
         "legacy_provider": config.PROVIDER,
         "legacy_price_data_enabled": legacy_enabled,
+        # Row counts alone hide the important fact: stored rows from a closed
+        # lane are never served, so operators need both numbers side by side.
+        "data_lanes": data_rights.lane_report(),
         **store.stats(),
     }
 
@@ -151,6 +178,7 @@ def market_assets(
     history: str = Query("3y", pattern="^(1y|2y|3y|5y|max)$"),
 ) -> dict:
     """Live global and Korean synthetic-perpetual proxies from Hyperliquid HIP-3."""
+    require_hip3_public_display()
     response.headers["Cache-Control"] = "private, max-age=30, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "Hyperliquid HIP-3"
     return build_asset_snapshot(history)
@@ -160,6 +188,7 @@ def market_assets(
 @limiter.limit(config.RATE_LIMIT)
 def market_weekend(request: Request, response: Response) -> dict:
     """Hyperliquid HIP-3 synthetic-perpetual weekend price-discovery signals."""
+    require_hip3_public_display()
     response.headers["Cache-Control"] = "private, max-age=15, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "Hyperliquid HIP-3"
     return build_weekend_signals()
@@ -172,10 +201,14 @@ def market_macro(
     response: Response,
     history: str = Query("3y", pattern="^(1y|2y|3y|5y|10y|max)$"),
 ) -> dict:
-    """FRED 거시·유동성·스트레스 카드와 차트. 저장소만 읽는다."""
+    """거시·유동성·스트레스 카드와 차트. 승인된 lane의 저장소만 읽는다."""
+    try:
+        payload = build_macro_snapshot(history)
+    except MacroDataDisabled as exc:
+        raise macro_disabled_response() from exc
     response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=3600"
-    response.headers["X-Data-Source"] = "FRED"
-    return build_macro_snapshot(history)
+    response.headers["X-Data-Source"] = _macro_data_source()
+    return payload
 
 
 @app.get("/api/market/macro/{series_id}")
@@ -186,15 +219,17 @@ def market_macro_series(
     response: Response,
     history: str = Query("3y", pattern="^(1y|2y|3y|5y|10y|max)$"),
 ) -> dict:
-    """단일 FRED 시계열 상세. 공급자 네트워크 호출은 하지 않는다."""
+    """단일 거시 시계열 상세. 공급자 네트워크 호출은 하지 않는다."""
     try:
         payload = build_macro_series(series_id, history)
+    except MacroDataDisabled as exc:
+        raise macro_disabled_response() from exc
     except KeyError as exc:
-        raise HTTPException(status_code=404, detail="지원하지 않는 FRED 시계열입니다.") from exc
+        raise HTTPException(status_code=404, detail="지원하지 않는 거시 시계열입니다.") from exc
     if payload is None:
-        raise HTTPException(status_code=404, detail="아직 수집된 FRED 데이터가 없습니다.")
+        raise HTTPException(status_code=404, detail="아직 수집된 거시 데이터가 없습니다.")
     response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=3600"
-    response.headers["X-Data-Source"] = "FRED"
+    response.headers["X-Data-Source"] = _macro_data_source()
     return payload
 
 

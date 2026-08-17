@@ -31,6 +31,7 @@ const TEXT = {
     "status.connecting": "연결 중", "status.live": "데이터 연결", "status.partial": "일부 데이터", "status.offline": "연결 오류",
     "status.loading": "불러오는 중", "status.viewport": "화면에 표시되면 불러옵니다", "status.unavailable": "데이터 미연결",
     "status.noSeries": "표시할 시계열이 없습니다", "status.retry": "새로고침 후 다시 시도해 주세요.", "status.staleData": "지연 데이터", "status.legacyDisabled": "라이선스 데이터 전환 중 · 공개 데이터 비활성",
+    "status.disabled": "표시 비활성", "status.macroDisabled": "승인된 거시 데이터 공급자가 없어 표시하지 않습니다", "status.rightsPending": "표시 권리 확인 중 · 값을 공개하지 않습니다",
     "theme.toggle": "테마 전환", "hero.kicker": "GLOBAL MARKET INTELLIGENCE", "hero.title": "한눈에 읽는 시장의 온도.",
     "hero.copy": "가격, 위험, 유동성, 거시경제를 같은 시간축에서 확인합니다. 연결되지 않은 데이터는 추정하지 않습니다.",
     "hero.updated": "마지막 갱신", "action.refresh": "새로고침", "overview.eyebrow": "MARKET TAPE", "overview.title": "시장 요약",
@@ -45,14 +46,16 @@ const TEXT = {
     "period.label": "기간", "method.title": "숫자를 다루는 원칙", "method.one.title": "출처를 함께 표시", "method.one.copy": "각 수치는 공급자, 기준일, 신선도를 함께 보여줍니다.",
     "method.two.title": "단위를 추측하지 않음", "method.two.copy": "API가 제공한 단위와 배율만 사용합니다.", "method.three.title": "미연결은 미연결로",
     "method.three.copy": "라이선스나 API가 없는 지표는 숫자 대신 상태를 표시합니다.", "badge.fresh": "최신", "badge.stale": "지연", "badge.missing": "미연결",
-    "badge.licensed": "라이선스 필요", "badge.rights": "표시권리 확인", "badge.sourceTerms": "출처 조건", "badge.synthetic": "합성 무기한선물", "badge.proxyAlternative": "제한 지표의 대체 참고값", "notice.market": "자산 데이터 표시 조건", "date.asof": "기준", "change.previous": "직전 관측치 대비", "chart.normalized": "각 시계열 시작값 = 100으로 정규화",
+    "badge.licensed": "라이선스 필요", "badge.pendingRights": "권리 확인 중", "badge.disabled": "비활성", "badge.rights": "표시권리 확인", "badge.sourceTerms": "출처 조건", "badge.synthetic": "합성 무기한선물", "badge.proxyAlternative": "제한 지표의 대체 참고값", "notice.market": "자산 데이터 표시 조건", "date.asof": "기준", "change.previous": "직전 관측치 대비", "chart.normalized": "각 시계열 시작값 = 100으로 정규화",
     "options.copy": "정확한 지수 표시는 원 제공자의 외부 표시 권한이 필요합니다. 계약 전에는 값을 제공하지 않습니다.", "license.copy": "원 데이터 소유자의 외부 표시 권한이 필요한 지표입니다. 허가 전에는 값과 시계열을 공개하지 않습니다.",
+    "pendingRights.copy": "공급자의 공개 표시 권리를 서면으로 확인하는 중입니다. 확인 전까지 값과 시계열을 공개하지 않습니다.", "notice.disabledLanes": "현재 비활성인 데이터 공급 경로",
   },
   en: {
     "brand.tagline": "MARKET SIGNAL CONSOLE", "nav.analytics": "Stock analytics", "nav.monitor": "Market monitor",
     "status.connecting": "Connecting", "status.live": "Data live", "status.partial": "Partial data", "status.offline": "Connection error",
     "status.loading": "Loading", "status.viewport": "Loads when scrolled into view", "status.unavailable": "Data not connected",
     "status.noSeries": "No series available", "status.retry": "Refresh and try again.", "status.staleData": "Stale data", "status.legacyDisabled": "Public data disabled during licensed-provider migration",
+    "status.disabled": "Display disabled", "status.macroDisabled": "No approved macro data provider is enabled", "status.rightsPending": "Display rights unconfirmed · values withheld",
     "theme.toggle": "Toggle theme", "hero.kicker": "GLOBAL MARKET INTELLIGENCE", "hero.title": "Read the market in one view.",
     "hero.copy": "Track prices, risk, liquidity and macro conditions on a shared timeline. Missing data is never estimated.",
     "hero.updated": "Last updated", "action.refresh": "Refresh", "overview.eyebrow": "MARKET TAPE", "overview.title": "Market overview",
@@ -67,8 +70,9 @@ const TEXT = {
     "period.label": "Period", "method.title": "How we handle numbers", "method.one.title": "Show the source", "method.one.copy": "Every value carries its provider, observation date and freshness.",
     "method.two.title": "Never guess units", "method.two.copy": "Only API-supplied units and scales are used.", "method.three.title": "Missing stays missing",
     "method.three.copy": "Unlicensed or disconnected indicators show a state instead of an invented number.", "badge.fresh": "Fresh", "badge.stale": "Stale", "badge.missing": "Not connected",
-    "badge.licensed": "License required", "badge.rights": "Display rights", "badge.sourceTerms": "Source terms", "badge.synthetic": "Synthetic perpetual", "badge.proxyAlternative": "Alternative to restricted series", "notice.market": "Asset-data display terms", "date.asof": "As of", "change.previous": "vs previous observation", "chart.normalized": "Each series rebased to 100 at start",
+    "badge.licensed": "License required", "badge.pendingRights": "Rights pending", "badge.disabled": "Disabled", "badge.rights": "Display rights", "badge.sourceTerms": "Source terms", "badge.synthetic": "Synthetic perpetual", "badge.proxyAlternative": "Alternative to restricted series", "notice.market": "Asset-data display terms", "date.asof": "As of", "change.previous": "vs previous observation", "chart.normalized": "Each series rebased to 100 at start",
     "options.copy": "Official index display requires the owner's external-display rights. No values are shown before licensing.", "license.copy": "This indicator requires external-display rights from the data owner. Values and history remain hidden until licensed.",
+    "pendingRights.copy": "Written confirmation of the provider's public-display rights is pending. Values and history stay hidden until it arrives.", "notice.disabledLanes": "Currently disabled data lanes",
   },
 };
 
@@ -304,6 +308,50 @@ function licenseRequired(record, definition) {
   return Boolean(definition?.licensed || record?.status === "license_required" || record?.rights?.status === "license_required");
 }
 
+// Rights are still being confirmed with the provider. That is not the same as
+// "no contract exists" (license_required) or "no provider is wired up"
+// (missing), so it gets its own badge and copy.
+function pendingRights(record) {
+  return record?.status === "pending_rights" || record?.rights?.status === "pending_rights";
+}
+
+// Endpoint-level states the server reports on purpose. None of them are worth
+// a "refresh and try again" prompt.
+const DISABLED_CODES = {
+  legacy_price_data_disabled: "status.legacyDisabled",
+  macro_data_disabled: "status.macroDisabled",
+  hip3_public_display_pending_rights: "status.rightsPending",
+};
+
+// Which endpoint would have filled a card. Only consulted when the card is
+// empty: a record that did arrive already carries its own `_kind`. Without this
+// an entire gated-off lane would read as "not connected", which is a different
+// and misleading statement.
+const CARD_LANES = new Map([
+  ...["sp500", "nasdaq", "gold", "bitcoin", "kospi", "kosdaq", "samsung", "usdkrw", "ewz", "inda",
+    "vnm", "ewj", "dxy", "usdjpy", "vix", "wti", "copper"].map((key) => [key, "assets"]),
+  ...["yield_curve", "high_yield_spread", "financial_stress", "treasury_10y", "unemployment",
+    "initial_claims", "fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account",
+    "m2", "retail_money_market_funds", "sofr", "effective_fed_funds", "reserve_interest"].map((key) => [key, "macro"]),
+]);
+
+// One place decides why a card shows no number, so the summary tile and the
+// detail card can never disagree about it.
+function cardState(key, record, definition) {
+  if (licenseRequired(record, definition)) return { kind: "licensed", badge: t("badge.licensed"), copy: t("license.copy") };
+  if (pendingRights(record)) return { kind: "pending", badge: t("badge.pendingRights"), copy: t("pendingRights.copy") };
+  if (record) return { kind: "ok", badge: null, copy: null };
+  const lane = CARD_LANES.get(key);
+  const code = lane ? disabledCode(lane) : null;
+  if (!code) return { kind: "missing", badge: null, copy: null };
+  const pending = code === "hip3_public_display_pending_rights";
+  return {
+    kind: pending ? "pending" : "disabled",
+    badge: t(pending ? "badge.pendingRights" : "badge.disabled"),
+    copy: t(DISABLED_CODES[code]),
+  };
+}
+
 function sourceDollarScale(record) {
   const units = [record?.units?.long, record?.units?.short, record?.unit_long, record?.unit_short, record?.unit]
     .filter(Boolean).join(" ").toLowerCase();
@@ -442,20 +490,21 @@ function renderJumpNav() {
 function renderSummary() {
   $$(".summary-card").forEach((card) => {
     const key = card.dataset.metric; const definition = METRICS[key]; const record = state.records.get(key); const recent = latest(record); const dd = drawdownValue(record);
-    const licensed = licenseRequired(record, definition); const useDd = !licensed && definition.preferDrawdown && dd !== null; const value = licensed ? null : useDd ? (Math.abs(dd) <= 1 ? dd * 100 : dd) : recent.value;
+    const info = cardState(key, record, definition); const withheld = Boolean(info.badge);
+    const useDd = !withheld && definition.preferDrawdown && dd !== null; const value = withheld ? null : useDd ? (Math.abs(dd) <= 1 ? dd * 100 : dd) : recent.value;
     $(".summary-label", card).textContent = recordLabel(record, definition);
-    card.title = localValue(record?.description, state.lang) || localValue(definition.description, state.lang) || "";
+    card.title = info.copy || localValue(record?.description, state.lang) || localValue(definition.description, state.lang) || "";
     card.classList.toggle("unavailable", !record || value === null);
     card.classList.toggle("stale", record?.freshness?.status === "stale");
     $(".summary-value", card).textContent = useDd ? formatSigned(value) : formatNumber(value, definition, record, true);
-    const delta = change(record); const changeNode = $(".summary-change", card); changeNode.className = `summary-change ${changeClass(delta.percent)}`;
-    changeNode.textContent = licensed ? t("badge.licensed") : delta.percent === null ? (record ? t("change.previous") : t("status.unavailable")) : `${formatSigned(delta.percent)} · ${t("change.previous")}`;
+    const delta = change(record); const changeNode = $(".summary-change", card); changeNode.className = `summary-change ${withheld ? "" : changeClass(delta.percent)}`;
+    changeNode.textContent = info.badge || (delta.percent === null ? (record ? t("change.previous") : t("status.unavailable")) : `${formatSigned(delta.percent)} · ${t("change.previous")}`);
     const meta = $(".summary-meta", card); const metaParts = [];
     if (record?.freshness?.status === "stale") metaParts.push(t("badge.stale"));
     if (record?._restrictedSeries) metaParts.push(t("badge.proxyAlternative"));
     if (isAssetDerivative(record)) metaParts.push(t("badge.synthetic"));
     if (record) metaParts.push(sourceInfo(record).name, `${t("date.asof")} ${dateText(recent.date)}`);
-    meta.textContent = licensed ? t("badge.licensed") : metaParts.length ? metaParts.join(" · ") : t("badge.missing");
+    meta.textContent = info.badge || (metaParts.length ? metaParts.join(" · ") : t("badge.missing"));
   });
 }
 
@@ -468,19 +517,19 @@ function renderMetricCards() {
     const badges = $(".badge-row", card); badges.replaceChildren();
     const badge = document.createElement("span");
     const freshness = record?.freshness?.status;
-    const licensed = licenseRequired(record, definition);
-    badge.className = `status-badge ${licensed ? "warn" : freshness === "stale" ? "stale" : record ? "fresh" : "error"}`;
-    badge.textContent = licensed ? t("badge.licensed") : record ? t(freshness === "stale" ? "badge.stale" : "badge.fresh") : t("badge.missing"); badges.append(badge);
+    const info = cardState(key, record, definition); const withheld = Boolean(info.badge);
+    badge.className = `status-badge ${withheld ? "warn" : freshness === "stale" ? "stale" : record ? "fresh" : "error"}`;
+    badge.textContent = info.badge || (record ? t(freshness === "stale" ? "badge.stale" : "badge.fresh") : t("badge.missing")); badges.append(badge);
     if (isAssetDerivative(record)) { const instrument = document.createElement("span"); instrument.className = "status-badge info"; instrument.textContent = t("badge.synthetic"); instrument.title = String(record.instrument_kind || ""); badges.append(instrument); }
     if (record?._restrictedSeries) { const alternative = document.createElement("span"); alternative.className = "status-badge warn"; alternative.textContent = t("badge.proxyAlternative"); alternative.title = `${recordLabel(record._restrictedSeries, definition)} · ${t("badge.licensed")}`; badges.append(alternative); }
     const rightsNotice = localizedRightsNotice(record);
     if (record?.rights?.copyrighted || rightsNotice) { const rights = document.createElement("span"); rights.className = "status-badge warn"; rights.textContent = t(record?.rights?.copyrighted ? "badge.rights" : "badge.sourceTerms"); rights.title = rightsNotice; badges.append(rights); }
-    $(".metric-primary strong", card).textContent = formatNumber(licensed ? null : recent.value, definition, record);
-    $(".metric-unit", card).textContent = unitFor(record, definition);
-    const changeNode = $(".metric-change", card); changeNode.className = `metric-change ${changeClass(delta.percent)}`;
-    changeNode.textContent = licensed || delta.percent === null ? "—" : `${formatSigned(delta.percent)} · ${t("change.previous")}`;
+    $(".metric-primary strong", card).textContent = formatNumber(withheld ? null : recent.value, definition, record);
+    $(".metric-unit", card).textContent = withheld ? "" : unitFor(record, definition);
+    const changeNode = $(".metric-change", card); changeNode.className = `metric-change ${withheld ? "" : changeClass(delta.percent)}`;
+    changeNode.textContent = withheld || delta.percent === null ? "—" : `${formatSigned(delta.percent)} · ${t("change.previous")}`;
     const insight = INSIGHTS[key];
-    $(".metric-description", card).textContent = licensed ? t("license.copy") : localValue(record?.description, state.lang) || localValue(definition.description, state.lang) || localValue(insight?.description, state.lang) || t("status.unavailable");
+    $(".metric-description", card).textContent = info.copy || localValue(record?.description, state.lang) || localValue(definition.description, state.lang) || localValue(insight?.description, state.lang) || t("status.unavailable");
     const hints = $(".metric-hints", card); hints.replaceChildren(); hints.setAttribute("aria-label", state.lang === "ko" ? "해석 참고" : "Interpretation guide");
     (insight?.hints || []).forEach((hint) => { const chip = document.createElement("span"); chip.className = "hint-chip"; chip.textContent = localValue(hint, state.lang); hints.append(chip); });
     const footer = $("footer", card); footer.replaceChildren(); const source = sourceInfo(record);
@@ -509,8 +558,10 @@ function lineChart(series, color = null, normalize = false) {
 }
 
 function renderMetricChart(card) {
-  const slot = $(".chart-slot", card); const record = state.records.get(card.dataset.metric); const definition = METRICS[card.dataset.metric]; const chart = licenseRequired(record, definition) ? null : lineChart(observations(record)); slot.replaceChildren();
-  if (licenseRequired(record, definition)) { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = t("badge.licensed"); slot.append(empty); return; }
+  const key = card.dataset.metric; const slot = $(".chart-slot", card); const record = state.records.get(key); const definition = METRICS[key];
+  const info = cardState(key, record, definition); slot.replaceChildren();
+  if (info.badge) { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = info.badge; slot.append(empty); return; }
+  const chart = lineChart(observations(record));
   if (chart) slot.append(chart); else { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = t("status.noSeries"); slot.append(empty); }
 }
 
@@ -548,6 +599,14 @@ function renderAttribution() {
     const title = document.createElement("p"); title.textContent = t("notice.market"); host.append(title);
     const list = document.createElement("ul"); notices.forEach((value) => { const item = document.createElement("li"); item.textContent = value; list.append(item); }); host.append(list);
   }
+  // Say out loud which lanes are switched off. Otherwise a page full of blank
+  // cards looks like a broken site rather than a deliberate rights decision.
+  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation"]
+    .map(disabledText).filter(Boolean))];
+  if (laneReasons.length) {
+    const title = document.createElement("p"); title.textContent = t("notice.disabledLanes"); host.append(title);
+    const list = document.createElement("ul"); laneReasons.forEach((value) => { const item = document.createElement("li"); item.textContent = value; list.append(item); }); host.append(list);
+  }
   host.hidden = !host.childNodes.length;
 }
 
@@ -574,15 +633,16 @@ async function fetchJson(url, key) {
 }
 
 function errorCode(key) { return state.errors[key]?.code || state.errors[key]?.detail?.code || null; }
-function legacyDisabled(key) { return errorCode(key) === "legacy_price_data_disabled"; }
+function disabledCode(key) { const code = errorCode(key); return code && DISABLED_CODES[code] ? code : null; }
+function disabledText(key) { const code = disabledCode(key); return code ? t(DISABLED_CODES[code]) : null; }
 
 function endpointHealth(key) {
-  if (legacyDisabled(key)) return "disabled";
+  if (disabledCode(key)) return "disabled";
   const payload = state[key];
   if (!payload) return "missing";
   let usable = [];
   if (key === "macro") {
-    usable = (Array.isArray(payload.series) ? payload.series : []).filter((record) => record?.status !== "license_required" && latest(record).value !== null);
+    usable = (Array.isArray(payload.series) ? payload.series : []).filter((record) => !licenseRequired(record) && !pendingRights(record) && latest(record).value !== null);
   } else if (key === "assets") {
     usable = (Array.isArray(payload.assets) ? payload.assets : []).filter((record) => latest(record).value !== null);
   } else if (key === "weekend") {
@@ -613,17 +673,23 @@ function renderAll() {
   const times = [state.macro?.generated_at, state.assets?.generated_at, state.sectors?.generated_at, state.sectors?.as_of, state.weekend?.generated_at].filter(Boolean);
   $("#updated-at").textContent = times.length ? dateText(times.sort().at(-1)) : "—";
   const health = ["macro", "assets", "sectors", "weekend"].map(endpointHealth); const badge = $("#connection-badge");
-  const usable = health.filter((value) => value === "usable").length; const stale = health.filter((value) => value === "stale").length;
-  const fullyLive = usable === health.length; const onlyStale = !usable && stale > 0;
-  badge.className = `connection-badge ${fullyLive ? "ok" : onlyStale ? "stale" : usable || stale ? "" : "error"}`;
-  $("span", badge).textContent = t(fullyLive ? "status.live" : onlyStale ? "status.staleData" : usable || stale ? "status.partial" : "status.offline");
+  const count = (value) => health.filter((item) => item === value).length;
+  const usable = count("usable"); const stale = count("stale"); const disabled = count("disabled");
+  // A lane the operator switched off is not a connection failure, so it must
+  // never render as "offline".
+  const key = usable === health.length ? "status.live"
+    : usable || stale ? (usable ? "status.partial" : "status.staleData")
+    : disabled === health.length ? "status.disabled"
+    : disabled ? "status.partial" : "status.offline";
+  badge.className = `connection-badge ${key === "status.live" ? "ok" : key === "status.staleData" ? "stale" : key === "status.offline" ? "error" : ""}`;
+  $("span", badge).textContent = t(key);
   $("#overview-source").textContent = [state.assets?.provider?.name || state.assets?.provider?.id, state.macro?.provider?.name || state.macro?.provider?.id].filter(Boolean).join(" + ") || "API";
 }
 
 function renderSectors() {
   $$("#sector-period button").forEach((button) => { const active = button.dataset.period === state.sectorPeriod; button.classList.toggle("active", active); button.setAttribute("aria-pressed", String(active)); });
   const payload = state.sectors; const stateNode = $("#sector-state"), bars = $("#sector-bars");
-  if (!payload) { const disabled = legacyDisabled("sectors"); stateNode.hidden = false; stateNode.classList.toggle("disabled", disabled); stateNode.textContent = disabled ? t("status.legacyDisabled") : `${t("status.unavailable")} · ${t("status.retry")}`; bars.hidden = true; return; }
+  if (!payload) { const disabled = disabledText("sectors"); stateNode.hidden = false; stateNode.classList.toggle("disabled", Boolean(disabled)); stateNode.textContent = disabled || `${t("status.unavailable")} · ${t("status.retry")}`; bars.hidden = true; return; }
   stateNode.classList.remove("disabled");
   const returnMultiplier = payload.basis?.return_unit === "decimal" ? 100 : 1;
   const sectors = Array.isArray(payload.sectors) ? payload.sectors : []; const rows = sectors.map((sector) => ({ sector, value: safeNumber(sector.returns?.[state.sectorPeriod] ?? sector[state.sectorPeriod]) }));
@@ -704,8 +770,13 @@ function formatWeekendValue(value, signal) {
 
 function renderWeekend() {
   const host = $("#weekend-grid"), status = $("#weekend-state"), payload = state.weekend;
-  if (!payload) { host.hidden = true; status.hidden = false; status.textContent = `${t("status.unavailable")} · ${t("status.retry")}`; $("#weekend-disclaimer").textContent = t("weekend.defaultDisclaimer"); return; }
-  status.hidden = true; host.hidden = false; host.replaceChildren(); const signals = Array.isArray(payload.signals) ? payload.signals : [];
+  if (!payload) {
+    const disabled = disabledText("weekend");
+    host.hidden = true; status.hidden = false; status.classList.toggle("disabled", Boolean(disabled));
+    status.textContent = disabled || `${t("status.unavailable")} · ${t("status.retry")}`;
+    $("#weekend-disclaimer").textContent = t("weekend.defaultDisclaimer"); return;
+  }
+  status.classList.remove("disabled"); status.hidden = true; host.hidden = false; host.replaceChildren(); const signals = Array.isArray(payload.signals) ? payload.signals : [];
   const bySymbol = new Map(signals.map((signal) => [String(signal.symbol || signal.id).toLowerCase(), signal]));
   WEEKEND_CARDS.forEach((definition) => {
     const composite = definition.composite ? payload.composites?.[definition.composite] : null; const signal = definition.composite ? null : definition.symbols.map((symbol) => bySymbol.get(symbol)).find(Boolean); const record = composite || signal;
@@ -753,7 +824,7 @@ function correlationColor(value) {
 async function loadCorrelation() {
   state.correlationLoaded = true; const stateNode = $("#corr-state"), wrap = $("#corr-table-wrap"); stateNode.hidden = false; stateNode.classList.remove("disabled"); stateNode.textContent = t("status.loading"); wrap.hidden = true;
   const payload = await fetchJson(`/api/correlation?tickers=${encodeURIComponent("SPY,TLT,GLD,UUP,USO,BTC-USD")}&period=${encodeURIComponent($("#corr-period").value)}`, "correlation");
-  if (!payload?.matrix || !Array.isArray(payload.tickers)) { const disabled = legacyDisabled("correlation"); stateNode.classList.toggle("disabled", disabled); stateNode.textContent = disabled ? t("status.legacyDisabled") : `${t("status.unavailable")} · ${t("status.retry")}`; return; }
+  if (!payload?.matrix || !Array.isArray(payload.tickers)) { const disabled = disabledText("correlation"); stateNode.classList.toggle("disabled", Boolean(disabled)); stateNode.textContent = disabled || `${t("status.unavailable")} · ${t("status.retry")}`; return; }
   const table = document.createElement("table"); table.className = "accessible-table corr-table"; const caption = document.createElement("caption"); caption.textContent = t("corr.title"); table.append(caption); const thead = document.createElement("thead"); const hr = document.createElement("tr"); ["", ...payload.tickers].forEach((name) => { const th = document.createElement("th"); th.scope = "col"; th.textContent = name; hr.append(th); }); thead.append(hr); table.append(thead); const tbody = document.createElement("tbody");
   payload.tickers.forEach((row) => { const tr = document.createElement("tr"); const th = document.createElement("th"); th.scope = "row"; th.textContent = row; tr.append(th); payload.tickers.forEach((col) => { const td = document.createElement("td"); const value = safeNumber(payload.matrix[row]?.[col]); td.textContent = value === null ? "—" : value.toFixed(2); if (value !== null) { td.className = "corr-cell"; td.style.background = correlationColor(value); } tr.append(td); }); tbody.append(tr); }); table.append(tbody); wrap.replaceChildren(table); stateNode.hidden = true; wrap.hidden = false;
 }

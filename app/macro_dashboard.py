@@ -6,7 +6,7 @@ import datetime as dt
 import time
 from typing import Any
 
-from . import config, store
+from . import config, data_rights, store
 from .providers.fred import (
     FRED_API_TERMS_URL,
     FRED_GROUPS,
@@ -37,6 +37,20 @@ _OBSERVATION_GRACE_DAYS = {
     "A": 550,
 }
 MAX_PUBLIC_OBSERVATIONS = 2500
+
+
+class MacroDataDisabled(RuntimeError):
+    """Raised when no macro provider lane may currently be served publicly."""
+
+
+def _lane_for(_spec: FredSeriesSpec) -> str:
+    """Every catalog entry is still FRED-sourced.
+
+    P1 replaces this with the ``provider_id`` column on ``economic_series``.
+    Keeping the lookup behind one function means that migration changes the
+    mapping, not every call site.
+    """
+    return data_rights.FRED
 
 
 def _utc_iso(epoch: float | None = None) -> str:
@@ -152,6 +166,11 @@ def _series_payload(
     record: dict,
     history: str,
 ) -> dict[str, Any] | None:
+    # Second line of defence. Callers already filter by lane, but this reader is
+    # the only place that turns stored rows into public values, so it refuses on
+    # its own rather than trusting whoever called it.
+    if not data_rights.macro_lane_enabled(_lane_for(spec)):
+        return None
     all_observations = store.load_fred_observations(
         spec.series_id,
         start=_history_start(history),
@@ -245,14 +264,22 @@ def _series_payload(
 
 def build_macro_snapshot(history: str = "3y") -> dict[str, Any]:
     _history_start(history)  # validate even when the database is empty
+    servable = [spec for spec in FRED_SERIES if data_rights.macro_lane_enabled(_lane_for(spec))]
+    servable_ids = {spec.series_id for spec in servable}
+    disabled = [spec.series_id for spec in FRED_SERIES if spec.series_id not in servable_ids]
+    if not servable:
+        # Every lane is closed, so there is nothing to shape a 200 around. The
+        # route turns this into a structured 503 with no public cache headers.
+        raise MacroDataDisabled(", ".join(sorted({_lane_for(spec) for spec in FRED_SERIES})))
+
     records = {
         record["series_id"]: record
-        for record in store.list_fred_series(spec.series_id for spec in FRED_SERIES)
+        for record in store.list_fred_series(spec.series_id for spec in servable)
     }
     payloads: list[dict[str, Any]] = []
     missing: list[str] = []
     restricted: list[str] = []
-    for spec in FRED_SERIES:
+    for spec in servable:
         record = records.get(spec.series_id)
         if _requires_license(spec, record):
             payloads.append(_license_required_payload(spec))
@@ -275,12 +302,16 @@ def build_macro_snapshot(history: str = "3y") -> dict[str, Any]:
         "history": history,
         "provider": provider_metadata(),
         "attribution": attribution_metadata(),
+        "lanes": {
+            "enabled": data_rights.enabled_macro_lanes(),
+            "disabled_series": disabled,
+        },
         "groups": [
             {
                 "id": group.group_id,
                 "label": {"ko": group.label_ko, "en": group.label_en},
                 "series_ids": [
-                    spec.series_id for spec in FRED_SERIES if spec.group == group.group_id
+                    spec.series_id for spec in servable if spec.group == group.group_id
                 ],
             }
             for group in FRED_GROUPS
@@ -288,6 +319,7 @@ def build_macro_snapshot(history: str = "3y") -> dict[str, Any]:
         "series": payloads,
         "missing": missing,
         "restricted": restricted,
+        "disabled": disabled,
     }
 
 
@@ -296,6 +328,8 @@ def build_macro_series(series_id: str, history: str = "3y") -> dict[str, Any] | 
     spec = FRED_SERIES_BY_ID.get(series_id.strip().upper())
     if spec is None:
         raise KeyError(series_id)
+    if not data_rights.macro_lane_enabled(_lane_for(spec)):
+        raise MacroDataDisabled(_lane_for(spec))
     record = store.get_fred_series(spec.series_id)
     if _requires_license(spec, record):
         return {

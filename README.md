@@ -11,6 +11,12 @@
 따라서 `/analytics`의 계산 API, 저장된 섹터 ETF 스냅샷과 상관관계 API는
 `LEGACY_PRICE_DATA_ENABLED=true`로 명시적으로 허용한 사설 환경에서만 열린다.
 
+다음 세션에서 라이선스 연결과 미연결 카드를 이어서 작업할 때는 아래 두 문서를
+먼저 읽는다.
+
+- **[다음 세션 인수인계](docs/NEXT_SESSION_HANDOFF.md)** — 우선순위, 코드 위치, API 계약, 테스트·배포 완료 기준
+- **[데이터 공급자·권리 등록부](docs/DATA_SOURCE_REGISTER.md)** — 공급자별 공개 표시·캐시·재배포 판정, 예산, 카드 매핑
+
 이름은 **언더워터(underwater)** 에서 왔다. 낙폭 분석에서 전고점 아래에 잠겨 있는
 구간을 부르는 말이고, 이 서비스의 핵심 차트가 그 언더워터 곡선이다.
 "얼마나 올랐나"가 아니라 **"얼마나 잠겨 있었고, 앞으로 얼마나 잠길 수 있나"** 를
@@ -158,15 +164,27 @@ EC2 한 대 + GitHub Actions. SSH를 열지 않고 SSM으로 배포한다.
 
 FRED 어댑터는 현행 API 약관이 API 콘텐츠의 저장·캐시·제3자 제공을 제한하므로
 공개 배포에서 켜지 않는다. 서면 허가나 동일 지표의 허용된 원발행기관 피드를
-확보한 사설 환경에서만 검토한다. `/api/market/macro`는 DB가 비어 있으면 값을
-만들지 않고 미연결 상태를 표시한다.
+확보한 사설 환경에서만 검토한다.
+
+권리 플래그는 수집뿐 아니라 **서빙까지** 결정한다. `FRED_ENABLED=false`면 과거에
+적재된 FRED 행이 DB에 남아 있어도 `/api/market/macro`가 값을 반환하지 않고
+`macro_data_disabled` 503과 `Cache-Control: no-store`를 돌려준다. 판정은
+`app/data_rights.py`에서 공급자 lane 단위로 하므로, 이후 승인된 NY Fed·BLS·EIA
+lane을 추가해도 FRED lane은 닫힌 채로 남는다.
 
 ```dotenv
 FRED_ENABLED=false
 FRED_API_KEY=
 FRED_MAX_AGE=21600
 LEGACY_PRICE_DATA_ENABLED=false
+HIP3_PUBLIC_DISPLAY_ENABLED=false
 ```
+
+`HIP3_PUBLIC_DISPLAY_ENABLED`는 Hyperliquid HIP-3 / trade.xyz 값의 공개 표시
+게이트다. API가 키 없이 열려 있다는 사실은 재표시 권리가 아니므로 코드 기본값은
+false이고, 서면 확인 전 현행 화면을 유지하려면 서버 `.env`에서 명시적으로 켠 뒤
+그 결정을 [데이터 공급자·권리 등록부](docs/DATA_SOURCE_REGISTER.md)에 기록한다.
+현재 lane 상태는 `GET /api/status`의 `data_lanes`에서 확인한다.
 
 KRX OPEN API 어댑터와 테스트는 준비돼 있지만 공개 대시보드 이용·재배포 승인을
 받지 않았으므로 기본값은 `KRX_ENABLED=false`다. 키 발급만으로 제3자 공개 권리가
@@ -270,11 +288,15 @@ t일 수익률에는 S&P500의 t-1일 뉴스가 반영된다. 당일 회귀로�
   조회한 trade.xyz 합성 무기한선물 참고값이다. 삼성전자는 원화 현물 종가가
   아니라 USD/USDC 환산 파생상품이며, 어떤 값도 현물가격·공식 지수 종가·월요일
   시초가 예측이 아니다. 유동성, 펀딩, 마크-오라클 괴리 때문에 크게 왜곡될 수
-  있고 공급자 및 기초 데이터 조건이 별도로 적용될 수 있다.
+  있고 공급자 및 기초 데이터 조건이 별도로 적용될 수 있다. 외부 표시 권리는
+  서면으로 확인하는 중이라 `HIP3_PUBLIC_DISPLAY_ENABLED` 게이트 뒤에 있고,
+  꺼져 있으면 `/api/market/assets`와 `/api/market/weekend`가 `pending_rights`
+  503을 반환한다.
 - 거시·유동성 API 구조에는 FRED 어댑터가 남아 있지만 공개 배포에서는
   `FRED_ENABLED=false`다. 현행 [FRED API 이용 약관](https://fred.stlouisfed.org/docs/api/terms_of_use.html)이
   API 콘텐츠의 저장·캐시·제3자 제공을 제한하므로, 서면 허가나 허용된
-  원발행기관 피드로 교체하기 전에는 값을 수집·공개하지 않는다.
+  원발행기관 피드로 교체하기 전에는 값을 수집·공개하지 않는다. 플래그가 false면
+  수집과 서빙이 모두 막혀 과거 DB 행도 공개되지 않는다.
 - `VIXCLS`, `BAMLH0A0HYM2`, `PCOPPUSDM`은 현재 공개 화면에서
   `license_required`다. [FRED API 이용 약관](https://fred.stlouisfed.org/docs/api/terms_of_use.html)과
   각 원 제공자의 조건을 확인해야 한다.

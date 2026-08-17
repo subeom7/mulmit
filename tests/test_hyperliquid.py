@@ -706,7 +706,7 @@ def test_samsung_uses_documented_smsn_market_and_stays_null_when_missing():
     assert samsung["liquidity_status"] == "high"
 
 
-def test_weekend_endpoint_exposes_cache_and_source_headers(monkeypatch):
+def test_weekend_endpoint_exposes_cache_and_source_headers(monkeypatch, hip3_public_display):
     payload = {
         "generated_at": "2026-08-16T00:00:00Z",
         "calendar_day_type": "weekend",
