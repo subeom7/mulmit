@@ -18,7 +18,7 @@ from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from . import __version__, config, data_rights, ingest, service, store
+from . import __version__, config, data_rights, ingest, kr_stocks, service, store
 from .data import DataUnavailable, RateLimited
 from .insider_filings import (
     DEFAULT_TRANSACTIONS,
@@ -276,6 +276,65 @@ def market_stress(request: Request, response: Response) -> dict:
         ) from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "Mulmit composite"
+    return payload
+
+
+@app.get("/api/kr/search")
+@limiter.limit(config.RATE_LIMIT)
+def kr_stock_search(
+    request: Request,
+    response: Response,
+    q: str = Query(..., min_length=1, max_length=40),
+    limit: int = Query(10, ge=1, le=25),
+) -> dict:
+    """국내 상장 종목 이름·코드 검색. 로컬 로스터만 읽는다.
+
+    로스터는 금융위원회 주식시세정보의 하루치 스냅샷이며, 타이핑마다 외부
+    API를 부르지 않는다. 최초 부팅 직후 로스터가 비어 있을 때만 한 번 채운다.
+    """
+    try:
+        payload = kr_stocks.search(q, limit)
+    except kr_stocks.KrStockDisabled as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=data_rights.KR_STOCK_DISABLED,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    except (DataUnavailable, RateLimited) as exc:
+        # 최초 로스터 수집이 실패한 극히 드문 경우. 다음 요청이 다시 시도한다.
+        raise HTTPException(status_code=503, detail="listing roster unavailable") from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "Financial Services Commission (data.go.kr)"
+    return payload
+
+
+@app.get("/api/kr/stock/{code}")
+@limiter.limit(config.RATE_LIMIT)
+def kr_stock_analysis(code: str, request: Request, response: Response) -> dict:
+    """국내 종목 하나의 종가 이력과 낙폭·변동성 통계.
+
+    저장소를 먼저 읽고, 미수집 종목만 잠금 아래에서 한 번 즉시 수집한다 —
+    시간당 배치를 기다리게 하면 검색이 죽은 기능이 되기 때문이다. 이후의
+    모든 요청은 DB 읽기다.
+    """
+    code = code.strip().upper()
+    if not (4 <= len(code) <= 12) or not code.isalnum():
+        raise HTTPException(status_code=422, detail="code must be a KRX issue code")
+    try:
+        payload = kr_stocks.get_analysis(code)
+    except kr_stocks.KrStockDisabled as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=data_rights.KR_STOCK_DISABLED,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    except kr_stocks.KrStockUnknown as exc:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "kr_stock_unknown", "message": f"{code} is not a known KRX issue"},
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "Financial Services Commission (data.go.kr)"
     return payload
 
 

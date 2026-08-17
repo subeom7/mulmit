@@ -467,7 +467,7 @@ notes: >
 | 현재 상태 | `approved` |
 | 코드 위치 | `app/providers/fsc.py`, `app/ingest.py`, `tests/test_fsc_provider.py` |
 | 배포 기본값 | `FSC_ENABLED=false`, `FSC_API_KEY=` |
-| 현재 사용 | 코스피·코스닥 지수 종가, 삼성전자 `005930`·SK하이닉스 `000660` 종가 |
+| 현재 사용 | 코스피·코스닥 지수 종가, 삼성전자·SK하이닉스 카드, **전 종목 하루 스냅샷**(검색 로스터, 일 1회), **요청 기반 개별 종목 5년 종가**(`/api/kr/*` 분석) |
 | 기술 비용 | 무료. data.go.kr 활용신청으로 키 발급 |
 | 갱신 | 일 1회. 기준일 **다음 영업일 13시(KST) 이후** 공개. 실시간 아님 |
 | attribution | `출처: 금융위원회 (공공데이터포털 data.go.kr)`. `rights.notice`로 전달 |
@@ -514,7 +514,12 @@ notes: >
   제한하지 않는다. 다만 개방 자료는 T+1 장 마감값이므로 실시간이라고 표기하지
   않는다. LIKE 계열 필터(likeSrtnCd)는 요청 전송량을 줄이는 용도이고, 저장 전에
   srtnCd/idxNm을 정확히 재확인한다. 같은 식별자·같은 날짜에 서로 다른 종가가
-  둘 이상 오면 하나를 고르지 않고 그 계열을 실패시킨다.
+  둘 이상 오면 하나를 고르지 않고 그 계열을 실패시킨다. 예외적으로 이 lane은
+  요청 경로에서도 provider를 부른다(app/kr_stocks.py) — 사용자가 방금 검색한
+  종목이 시간당 배치를 기다릴 수 없기 때문이며, 프로세스 전역 잠금과 실패
+  메모, 동일 스로틀 아래 캐시 미스에서만 단발 조회하고 결과는 store에 저장해
+  이후 요청은 전부 DB 읽기다. 파생 통계(수익률·낙폭·MDD·변동성)는
+  approved_scope.derived_metrics: true 범위 안이다.
 ```
 
 ### 3.10 DOL ETA 신규 실업수당 — **보류**
@@ -889,6 +894,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | BLS lane 추가(`DS-2026-005`), DOL ETA는 보류 사유 기록 | Claude assisted |
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
+| 2026-08-17 | 국내 종목 검색·분석 추가 — FSC 전 종목 스냅샷 로스터 + 요청 기반 5년 종가, 낙폭·MDD·변동성 파생 통계. 야후 시절 단일종목 분석의 한국판을 승인 lane 위에 재구축 | Claude assisted |
 | 2026-08-17 | 공개 준비 정리: 레거시 lane 섹션(섹터 모니터·상관관계·종목 위험 분석)을 오류 표시 대신 숨김, analytics는 내부자 공시 조회 모드로 전환, 레코드 없는 라이선스·예약 카드 숨김. 데이터·권리 변경 없음 — lane이 열리면 화면이 저절로 복원된다 | Claude assisted |
 | 2026-08-17 | 영구 공석 proxy 카드(코스닥·원달러 합성)를 한국 섹션에서 제거, 개요 타일을 공식 카드로 교체. 데이터·권리 변경 없음 | Claude assisted |
 | 2026-08-17 | HIP-3 문의 **발송** — XYZ Ltd와 Hyperliquid Corp. 양쪽. P0의 마지막 미발송 항목 해소 | Claude assisted |

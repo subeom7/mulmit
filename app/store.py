@@ -223,6 +223,24 @@ insider_transactions = sa.Table(
 
 # 조립된 응답 캐시. RANDOM_SEED가 고정이라 (티커, 파라미터, 마지막 거래일)이
 # 같으면 결과 JSON이 바이트 단위로 같다. 그래서 통째로 캐시해도 안전하다.
+# 국내 상장 종목 로스터. 금융위원회 주식시세정보의 하루치 스냅샷(전 종목의
+# 코드·이름·시장·종가)을 통째로 갈아끼운다. 이름 검색은 이 테이블만 읽으므로
+# 타이핑마다 외부 API를 부르지 않는다.
+kr_listings = sa.Table(
+    "kr_listings",
+    metadata,
+    sa.Column("srtn_cd", sa.String(12), primary_key=True),
+    sa.Column("itms_nm", sa.String(256), nullable=False),
+    sa.Column("mrkt_ctg", sa.String(24), nullable=False),
+    sa.Column("isin_cd", sa.String(24)),
+    sa.Column("clpr", sa.Float),
+    sa.Column("flt_rt", sa.Float),
+    sa.Column("mrkt_tot_amt", sa.Float),
+    sa.Column("bas_dt", sa.String(10), nullable=False),
+    sa.Column("fetched_at", sa.Float, nullable=False),
+    sa.Index("ix_kr_listings_name", "itms_nm"),
+)
+
 reports = sa.Table(
     "reports",
     metadata,
@@ -871,6 +889,92 @@ def stale_economic_series(series_keys: Iterable[str], max_age: int) -> list[str]
         or fetched[key][0] <= cutoff
         or fetched[key][1] != "ok"
     ]
+
+
+def save_kr_listings(rows: Iterable[dict[str, Any]], bas_dt: str) -> int:
+    """Replace the whole Korean listing roster with one trading day's snapshot.
+
+    A replace rather than an upsert: delistings must disappear from search, and
+    the snapshot is small enough (~3k rows) that atomicity is worth more than
+    the delta.
+    """
+    now = time.time()
+    payload = [
+        {
+            "srtn_cd": str(row["srtn_cd"]).strip(),
+            "itms_nm": str(row["itms_nm"]).strip(),
+            "mrkt_ctg": str(row.get("mrkt_ctg") or "").strip(),
+            "isin_cd": str(row.get("isin_cd") or "").strip() or None,
+            "clpr": row.get("clpr"),
+            "flt_rt": row.get("flt_rt"),
+            "mrkt_tot_amt": row.get("mrkt_tot_amt"),
+            "bas_dt": bas_dt,
+            "fetched_at": now,
+        }
+        for row in rows
+        if str(row.get("srtn_cd") or "").strip() and str(row.get("itms_nm") or "").strip()
+    ]
+    if not payload:
+        return 0
+    with engine().begin() as conn:
+        conn.execute(kr_listings.delete())
+        conn.execute(kr_listings.insert(), payload)
+    return len(payload)
+
+
+def search_kr_listings(query: str, limit: int = 10) -> list[dict[str, Any]]:
+    """Name or code search over the local roster, biggest companies first.
+
+    A name-prefix match outranks a substring match so 삼성전자 beats 호텔삼성
+    for the query 삼성, and the exact code always wins.
+    """
+    term = query.strip()
+    if not term:
+        return []
+    like = f"%{term}%"
+    prefix = f"{term}%"
+    rank = sa.case(
+        (kr_listings.c.srtn_cd == term.upper(), 0),
+        (kr_listings.c.itms_nm == term, 1),
+        (kr_listings.c.itms_nm.like(prefix), 2),
+        else_=3,
+    )
+    stmt = (
+        sa.select(kr_listings)
+        .where(sa.or_(kr_listings.c.itms_nm.like(like), kr_listings.c.srtn_cd.like(prefix.upper())))
+        .order_by(rank, sa.desc(sa.func.coalesce(kr_listings.c.mrkt_tot_amt, 0.0)))
+        .limit(max(1, min(int(limit), 25)))
+    )
+    with engine().connect() as conn:
+        return [dict(row) for row in conn.execute(stmt).mappings()]
+
+
+def get_kr_listing(code: str) -> dict[str, Any] | None:
+    with engine().connect() as conn:
+        row = conn.execute(
+            sa.select(kr_listings).where(kr_listings.c.srtn_cd == code.strip().upper())
+        ).mappings().first()
+        return dict(row) if row else None
+
+
+def kr_listings_meta() -> dict[str, Any]:
+    with engine().connect() as conn:
+        row = conn.execute(
+            sa.select(
+                sa.func.count(kr_listings.c.srtn_cd),
+                sa.func.max(kr_listings.c.bas_dt),
+                sa.func.max(kr_listings.c.fetched_at),
+            )
+        ).first()
+    count, bas_dt, fetched_at = row or (0, None, None)
+    return {"count": int(count or 0), "bas_dt": bas_dt, "fetched_at": fetched_at}
+
+
+def kr_listings_stale(max_age: int) -> bool:
+    meta = kr_listings_meta()
+    if not meta["count"] or meta["fetched_at"] is None:
+        return True
+    return meta["fetched_at"] <= time.time() - max_age
 
 
 def migrate_fred_series_to_economic(

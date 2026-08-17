@@ -229,6 +229,23 @@ ul.notes li::before { content: ""; position: absolute; left: 0; top: 9px; width:
 .kpi .v { font-size: 23px; font-weight: 620; letter-spacing: -0.02em; }
 .kpi .d { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
 
+/* --- 국내 종목 검색 드롭다운 --------------------------------------------- */
+.kr-search-field { position: relative; min-width: 280px; flex: 1 1 320px; }
+.kr-suggest {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 40;
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: var(--shadow); max-height: 320px; overflow-y: auto;
+}
+.kr-suggest [role="option"] { display: flex; gap: 10px; align-items: baseline; padding: 9px 12px; cursor: pointer; font-size: 13px; }
+.kr-suggest [role="option"].active, .kr-suggest [role="option"]:hover { background: var(--wash); }
+.kr-suggest .nm { font-weight: 650; }
+.kr-suggest .cd { color: var(--text-muted); font: 11px/1 var(--mono); }
+.kr-suggest .px { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.kr-two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 900px) { .kr-two { grid-template-columns: 1fr; } }
+#kr-status.state-block { min-height: 90px; }
+.kr-meta { font-size: 11.5px; color: var(--text-muted); margin: 12px 0 0; line-height: 1.6; }
+
 /* --- 차트 ----------------------------------------------------------------- */
 .chart { position: relative; width: 100%; }
 .chart svg { display: block; width: 100%; }
@@ -396,6 +413,47 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
       <span id="heatmap-coverage"></span>
       <span class="legend"><span data-i18n="legend.down">하락</span><span class="legend-bar" aria-hidden="true"></span><span data-i18n="legend.up">상승</span></span>
     </div>
+  </div>
+</section>
+
+<section class="dashboard-section" id="kr-section" hidden aria-labelledby="kr-section-title">
+  <div class="section-heading">
+    <span class="section-index" aria-hidden="true" id="kr-section-num">01</span>
+    <div>
+      <p class="eyebrow" data-i18n="kr.tag">금융위원회 공공데이터 · T+1 종가</p>
+      <h2 id="kr-section-title" data-i18n="kr.title">국내 종목 분석</h2>
+    </div>
+  </div>
+  <p class="section-copy" data-i18n="kr.lede">회사명이나 종목코드로 검색하면 공식 종가 5년치로 수익률·낙폭·변동성을 계산합니다. 장 마감 기준값이며 실시간 시세가 아닙니다.</p>
+
+  <form class="filters" id="kr-form" autocomplete="off">
+    <div class="field kr-search-field">
+      <label for="kr-query" data-i18n="kr.searchLabel">회사명 또는 종목코드</label>
+      <input id="kr-query" placeholder="삼성전자" spellcheck="false"
+             role="combobox" aria-expanded="false" aria-controls="kr-suggest" aria-autocomplete="list">
+      <div id="kr-suggest" class="kr-suggest" role="listbox" hidden></div>
+    </div>
+    <button class="primary" type="submit" data-i18n="kr.submit">분석</button>
+    <div class="examples" id="kr-examples"></div>
+  </form>
+
+  <div id="kr-status" class="state-block" role="status" aria-live="polite" hidden></div>
+  <div id="kr-result" hidden>
+    <div class="kpis" id="kr-kpis"></div>
+    <div class="kpis" id="kr-returns"></div>
+    <div class="kr-two">
+      <div class="card">
+        <h2 id="kr-price-title">—</h2>
+        <p class="sub" id="kr-price-sub"></p>
+        <div class="chart" id="kr-c-price"></div>
+      </div>
+      <div class="card">
+        <h2 data-i18n="kr.underwaterTitle">전고점 대비 낙폭</h2>
+        <p class="sub" data-i18n="kr.underwaterSub">고점을 새로 쓸 때마다 0에서 다시 시작하는 수중 곡선입니다.</p>
+        <div class="chart" id="kr-c-dd"></div>
+      </div>
+    </div>
+    <p class="kr-meta" id="kr-source"></p>
   </div>
 </section>
 
@@ -587,6 +645,21 @@ const I18N = {
     "mode.introTitle": "미국 상장사 내부자거래를 원문 그대로.",
     "mode.introCopy": "가격·유동성·거시 흐름은 시장 모니터에서 보고, 여기서는 SEC EDGAR 지분 공시를 조회합니다. 가격 분석 기능은 승인된 가격 데이터 공급자가 연결되면 다시 열립니다.",
     "form.lookup": "조회", "example.msft": "마이크로소프트", "example.googl": "알파벳",
+    "mode.introTitleKr": "공식 데이터로 읽는 종목의 위험.",
+    "mode.introCopyKr": "국내 상장 종목은 금융위원회 공식 종가 5년치로 수익률·낙폭·변동성을 분석하고, 미국 상장사는 SEC EDGAR 내부자거래 공시를 원문 그대로 조회합니다.",
+    "kr.tag": "금융위원회 공공데이터 · T+1 종가", "kr.title": "국내 종목 분석",
+    "kr.lede": "회사명이나 종목코드로 검색하면 공식 종가 5년치로 수익률·낙폭·변동성을 계산합니다. 장 마감 기준값이며 실시간 시세가 아닙니다.",
+    "kr.searchLabel": "회사명 또는 종목코드", "kr.submit": "분석",
+    "kr.loading": "{name} 종가 이력을 불러오는 중입니다. 처음 조회하는 종목은 수 초 걸릴 수 있습니다.",
+    "kr.unknown": "{code}에 해당하는 상장 종목을 찾지 못했습니다.",
+    "kr.noResults": "검색 결과가 없습니다.",
+    "kr.error": "데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "kr.underwaterTitle": "전고점 대비 낙폭", "kr.underwaterSub": "고점을 새로 쓸 때마다 0에서 다시 시작하는 수중 곡선입니다.",
+    "kr.priceSub": "{start} ~ {end} · 공식 종가 (로그 축)",
+    "kr.kpi.close": "종가", "kr.kpi.change": "전일 대비", "kr.kpi.dd": "전고점 대비",
+    "kr.kpi.mdd": "최대 낙폭 (5년)", "kr.kpi.range": "52주 범위", "kr.kpi.vol": "연 변동성 (1Y)",
+    "kr.asof": "기준 {date}", "kr.retTitle": "기간 수익률",
+    "insider.none": "보고 없음",
     "market.title": "S&P 500 섹터 모니터", "market.tag": "11 SECTOR ETFs · ADJUSTED CLOSE", "market.summaryAria": "섹터 요약",
     "market.lede": "일간·주간·월간·연간 흐름을 전환해 시장의 리더십과 확산도를 빠르게 확인합니다.",
     "pulse.best": "가장 강한 섹터", "pulse.worst": "가장 약한 섹터", "pulse.breadth": "상승 섹터", "pulse.asof": "기준일",
@@ -683,6 +756,21 @@ const I18N = {
     "mode.introTitle": "US insider filings, straight from the source.",
     "mode.introCopy": "Prices, liquidity and macro live on the market monitor; this page looks up SEC EDGAR ownership filings. Price analytics return when a licensed price provider is connected.",
     "form.lookup": "Look up", "example.msft": "Microsoft", "example.googl": "Alphabet",
+    "mode.introTitleKr": "Stock risk, from official data.",
+    "mode.introCopyKr": "Korean listings get returns, drawdowns and volatility from five years of official FSC closes; US companies get SEC EDGAR insider filings relayed verbatim.",
+    "kr.tag": "FSC OPEN DATA · T+1 CLOSES", "kr.title": "Korean stock analysis",
+    "kr.lede": "Search by company name or issue code to compute returns, drawdowns and volatility from five years of official closes. End-of-day values, not live quotes.",
+    "kr.searchLabel": "Company name or code", "kr.submit": "Analyze",
+    "kr.loading": "Loading closes for {name}. A first-time lookup can take a few seconds.",
+    "kr.unknown": "No listed issue matches {code}.",
+    "kr.noResults": "No matches.",
+    "kr.error": "Could not load the data. Please try again shortly.",
+    "kr.underwaterTitle": "Drawdown from peak", "kr.underwaterSub": "The underwater curve restarts at zero whenever a new high is set.",
+    "kr.priceSub": "{start} – {end} · official closes (log scale)",
+    "kr.kpi.close": "Close", "kr.kpi.change": "vs previous", "kr.kpi.dd": "From peak",
+    "kr.kpi.mdd": "Max drawdown (5y)", "kr.kpi.range": "52-week range", "kr.kpi.vol": "Volatility (1y, ann.)",
+    "kr.asof": "as of {date}", "kr.retTitle": "Period returns",
+    "insider.none": "None reported",
     "market.title": "S&P 500 Sector Monitor", "market.tag": "11 SECTOR ETFs · ADJUSTED CLOSE", "market.summaryAria": "Sector summary",
     "market.lede": "Switch between daily, weekly, monthly and yearly returns to see leadership and market breadth at a glance.",
     "pulse.best": "Strongest sector", "pulse.worst": "Weakest sector", "pulse.breadth": "Sectors up", "pulse.asof": "As of",
@@ -1706,7 +1794,9 @@ function renderInsider(payload) {
     const bucket = stat.bucket || { filings: 0, shares: 0, value: 0 };
     const box = el("div", `insider-stat ${stat.cls}`);
     box.appendChild(el("span", "k", t(stat.key)));
-    box.appendChild(el("span", "v", bucket.value ? formatUsd(bucket.value, { compact: true }) : NBSP));
+    // 0은 "미연결"이 아니라 "이 기간 보고된 시장 거래가 없다"는 사실이다.
+    box.appendChild(el("span", "v", bucket.value ? formatUsd(bucket.value, { compact: true })
+      : (bucket.filings ? NBSP : t("insider.none"))));
     box.appendChild(el("span", "n",
       `${t("insider.filingsCount", { count: bucket.filings || 0 })} · ${t("insider.sharesCount", { shares: formatShares(bucket.shares || 0) })}`));
     host.appendChild(box);
@@ -1940,19 +2030,233 @@ applyLocale();
 syncPeriodButtons();
 updateThemeControl();
 
+/* =========================================================================
+   국내 종목 분석 — FSC lane
+   검색은 서버의 로컬 로스터를 읽고, 종목 선택 시 5년 종가 통계를 받아 그린다.
+   ========================================================================= */
+const KR_EXAMPLES = [
+  ["005930", "삼성전자"], ["000660", "SK하이닉스"], ["005380", "현대차"],
+  ["035420", "NAVER"], ["035720", "카카오"],
+];
+let lastKr = null;
+let krSuggestItems = [];
+let krActiveIndex = -1;
+let krSearchTimer = null;
+let krSearchController = null;
+let krLoadController = null;
+
+function krStatus(key, vars = {}, { loading = false } = {}) {
+  const node = document.getElementById("kr-status");
+  node.hidden = false;
+  node.classList.toggle("loading", loading);
+  node.textContent = t(key, vars);
+  document.getElementById("kr-result").hidden = true;
+}
+
+function krHideSuggest() {
+  const list = document.getElementById("kr-suggest");
+  list.hidden = true;
+  list.replaceChildren();
+  krSuggestItems = [];
+  krActiveIndex = -1;
+  document.getElementById("kr-query").setAttribute("aria-expanded", "false");
+}
+
+function krRenderSuggest(results) {
+  const list = document.getElementById("kr-suggest");
+  list.replaceChildren();
+  krSuggestItems = results;
+  krActiveIndex = results.length ? 0 : -1;
+  if (!results.length) { krHideSuggest(); return; }
+  results.forEach((item, index) => {
+    const row = el("div", index === 0 ? "active" : "");
+    row.setAttribute("role", "option");
+    row.appendChild(el("span", "nm", item.name));
+    row.appendChild(el("span", "cd", `${item.code} · ${item.market || ""}`));
+    row.appendChild(el("span", "px", item.close != null ? price(item.close, "KRW") : ""));
+    row.addEventListener("mousedown", (event) => { event.preventDefault(); krSelect(item); });
+    list.appendChild(row);
+  });
+  list.hidden = false;
+  document.getElementById("kr-query").setAttribute("aria-expanded", "true");
+}
+
+function krMoveActive(delta) {
+  if (!krSuggestItems.length) return;
+  krActiveIndex = (krActiveIndex + delta + krSuggestItems.length) % krSuggestItems.length;
+  [...document.getElementById("kr-suggest").children].forEach((node, index) => {
+    node.classList.toggle("active", index === krActiveIndex);
+  });
+}
+
+async function krSearch(query) {
+  if (krSearchController) krSearchController.abort();
+  const controller = new AbortController();
+  krSearchController = controller;
+  try {
+    const response = await fetch(`/api/kr/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+    if (!response.ok) { krHideSuggest(); return null; }
+    const body = await response.json();
+    return body.results || [];
+  } catch (error) {
+    if (error.name !== "AbortError") krHideSuggest();
+    return null;
+  } finally {
+    if (krSearchController === controller) krSearchController = null;
+  }
+}
+
+function krSelect(item) {
+  document.getElementById("kr-query").value = item.name;
+  krHideSuggest();
+  loadKrStock(item.code, item.name);
+}
+
+async function loadKrStock(code, name) {
+  if (krLoadController) krLoadController.abort();
+  const controller = new AbortController();
+  krLoadController = controller;
+  krStatus("kr.loading", { name: name || code }, { loading: true });
+  try {
+    const response = await fetch(`/api/kr/stock/${encodeURIComponent(code)}`, { signal: controller.signal });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      krStatus(response.status === 404 ? "kr.unknown" : "kr.error", { code });
+      return;
+    }
+    lastKr = body;
+    renderKrStock(body);
+  } catch (error) {
+    if (error.name !== "AbortError") krStatus("kr.error");
+  } finally {
+    if (krLoadController === controller) krLoadController = null;
+  }
+}
+
+function renderKrStock(data) {
+  document.getElementById("kr-status").hidden = true;
+  document.getElementById("kr-result").hidden = false;
+
+  const pctText = (v, digits = 2) => v == null ? NBSP : `${v > 0 ? "+" : ""}${v.toFixed(digits)}%`;
+  const won = (v) => v == null ? NBSP : price(v, "KRW");
+  const kpis = [
+    { k: t("kr.kpi.close"), v: won(data.latest?.value), d: t("kr.asof", { date: data.latest?.date || "" }) },
+    { k: t("kr.kpi.change"), v: pctText(data.change?.percent), d: data.change?.value != null ? won(data.change.value) : "" },
+    { k: t("kr.kpi.dd"), v: pctText(data.drawdown_current), d: "" },
+    { k: t("kr.kpi.mdd"), v: pctText(data.mdd?.value), d: data.mdd?.peak_date ? `${data.mdd.peak_date} → ${data.mdd.trough_date}` : "" },
+    { k: t("kr.kpi.range"), v: data.low_52w != null ? `${won(data.low_52w)} ~ ${won(data.high_52w)}` : NBSP, d: "" },
+    { k: t("kr.kpi.vol"), v: data.volatility_1y != null ? `${data.volatility_1y.toFixed(1)}%` : NBSP, d: "" },
+  ];
+  const kpiBox = document.getElementById("kr-kpis");
+  kpiBox.replaceChildren();
+  for (const item of kpis) {
+    const box = el("div", "kpi");
+    box.appendChild(el("div", "k", item.k));
+    box.appendChild(el("div", "v", item.v));
+    box.appendChild(el("div", "d", item.d));
+    kpiBox.appendChild(box);
+  }
+
+  const returnsBox = document.getElementById("kr-returns");
+  returnsBox.replaceChildren();
+  for (const [label, value] of Object.entries(data.returns || {})) {
+    const box = el("div", "kpi");
+    box.appendChild(el("div", "k", `${t("kr.retTitle")} ${label.toUpperCase()}`));
+    box.appendChild(el("div", "v", pctText(value)));
+    returnsBox.appendChild(box);
+  }
+
+  const observations = data.observations || [];
+  const dates = observations.map((o) => o.date);
+  const closes = observations.map((o) => o.close);
+  const drawdowns = observations.map((o) => o.drawdown);
+  document.getElementById("kr-price-title").textContent = `${data.name} (${data.code})`;
+  document.getElementById("kr-price-sub").textContent = t("kr.priceSub", {
+    start: dates[0] || "", end: dates[dates.length - 1] || "",
+  });
+  drawTimeSeries(document.getElementById("kr-c-price"), {
+    dates, values: closes, height: 260, logScale: true, negative: false,
+    yFmt: (v) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(Math.round(v)),
+    fmt: (v) => price(v, "KRW"), label: `${data.name} close`,
+  });
+  drawTimeSeries(document.getElementById("kr-c-dd"), {
+    dates, values: drawdowns, height: 220, logScale: false, negative: true,
+    yFmt: (v) => `${Math.round(v)}%`, fmt: (v) => `${v.toFixed(2)}%`, label: t("kr.underwaterTitle"),
+  });
+
+  const source = data.source || {};
+  const basis = uiLang === "ko" ? source.basis_ko : source.basis_en;
+  document.getElementById("kr-source").textContent =
+    `${source.notice || ""} ${basis || ""} ${uiLang === "ko" ? (data.disclaimer_ko || "") : (data.disclaimer_en || "")}`.trim();
+}
+
+function renderKrExamples() {
+  const host = document.getElementById("kr-examples");
+  host.replaceChildren();
+  for (const [code, name] of KR_EXAMPLES) {
+    const button = el("button", null, `${name}`);
+    button.type = "button";
+    button.addEventListener("click", () => {
+      document.getElementById("kr-query").value = name;
+      loadKrStock(code, name);
+    });
+    host.appendChild(button);
+  }
+}
+
+function setupKrSection() {
+  const section = document.getElementById("kr-section");
+  section.hidden = false;
+  const input = document.getElementById("kr-query");
+  renderKrExamples();
+
+  input.addEventListener("input", () => {
+    clearTimeout(krSearchTimer);
+    const query = input.value.trim();
+    if (!query) { krHideSuggest(); return; }
+    krSearchTimer = setTimeout(async () => {
+      const results = await krSearch(query);
+      if (results) krRenderSuggest(results.slice(0, 8));
+    }, 220);
+  });
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown") { event.preventDefault(); krMoveActive(1); }
+    else if (event.key === "ArrowUp") { event.preventDefault(); krMoveActive(-1); }
+    else if (event.key === "Escape") krHideSuggest();
+  });
+  input.addEventListener("blur", () => setTimeout(krHideSuggest, 140));
+
+  document.getElementById("kr-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (krActiveIndex >= 0 && krSuggestItems[krActiveIndex]) {
+      krSelect(krSuggestItems[krActiveIndex]);
+      return;
+    }
+    const query = input.value.trim();
+    if (!query) return;
+    if (/^[0-9A-Z]{4,12}$/i.test(query) && /\d/.test(query)) {
+      loadKrStock(query.toUpperCase(), query.toUpperCase());
+      return;
+    }
+    const results = await krSearch(query);
+    if (results && results.length) krSelect(results[0]);
+    else krStatus("kr.noResults");
+  });
+}
+
 /* 가격 lane이 배포 전체에서 꺼져 있으면 이 페이지는 내부자 공시 조회로 동작한다.
    섹터 모니터·위험 분석은 오류가 아니라 비활성이므로, 재시도 UI 대신 숨긴다.
    lane이 다시 열리면(승인된 가격 공급자 연결) 이 분기가 저절로 원상복구한다. */
 let insiderOnly = false;
-function applyInsiderMode() {
+function applyInsiderMode(fscOn = false) {
   document.querySelector('[aria-labelledby="market-section-title"]').hidden = true;
   const analysis = document.querySelector(".analysis-block");
   analysis.querySelector(".section-index").textContent = "01";
   analysis.querySelector(".section-heading h2").dataset.i18n = "mode.insiderTitle";
   analysis.querySelector(".section-heading .eyebrow").dataset.i18n = "mode.insiderTag";
   analysis.querySelector(".section-copy").dataset.i18n = "mode.insiderLede";
-  document.getElementById("intro-title").dataset.i18n = "mode.introTitle";
-  document.querySelector(".intro-copy").dataset.i18n = "mode.introCopy";
+  document.getElementById("intro-title").dataset.i18n = fscOn ? "mode.introTitleKr" : "mode.introTitle";
+  document.querySelector(".intro-copy").dataset.i18n = fscOn ? "mode.introCopyKr" : "mode.introCopy";
   document.getElementById("go").dataset.i18n = "form.lookup";
   for (const id of ["horizon", "drift", "lookback"]) {
     document.getElementById(id).closest(".field").hidden = true;
@@ -1968,18 +2272,29 @@ function applyInsiderMode() {
 }
 
 (async () => {
+  let status = null;
   try {
     const response = await fetch("/api/status", { headers: { Accept: "application/json" } });
-    const status = await response.json();
+    status = await response.json();
     insiderOnly = status?.data_lanes?.legacy_price_data?.status !== "enabled";
   } catch (_) {
     insiderOnly = false; // 판별 불가면 기존 화면 그대로
   }
+  const fscOn = status?.data_lanes?.["macro:fsc"]?.status === "enabled";
   if (insiderOnly) {
-    applyInsiderMode();
+    applyInsiderMode(fscOn);
   } else {
     loadHeatmap();
     setInterval(() => { if (!document.hidden) loadHeatmap(false); }, 30 * 60 * 1000);
+  }
+  if (fscOn) setupKrSection();
+  // 보이는 섹션 순서대로 번호를 다시 붙인다. 숨은 섹션이 번호를 차지하면
+  // 화면이 03부터 시작하는 것처럼 보인다.
+  let sectionNumber = 0;
+  for (const section of document.querySelectorAll(".dashboard-section")) {
+    if (section.hidden) continue;
+    const badge = section.querySelector(".section-index");
+    if (badge) badge.textContent = String(++sectionNumber).padStart(2, "0");
   }
   load(false);
 })();
