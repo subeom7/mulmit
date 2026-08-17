@@ -14,6 +14,10 @@ env/
 .env
 deploy/certs/
 
+# 에이전트 도구의 로컬 설정. 이 PC에서는 전역 ignore가 막고 있었지만 그건
+# 저장소가 아니라 머신 설정이라, 다른 곳에서 클론하면 그대로 커밋된다.
+.claude/
+
 .idea/
 .vscode/
 .DS_Store
