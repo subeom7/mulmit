@@ -2,7 +2,11 @@
 
 작성일: 2026-08-17  
 관련 결정: `docs/DATA_SOURCE_REGISTER.md`의 `DS-2026-001`  
-상태: **발송 전.** 저장소 소유자가 발송하고, 회신을 받으면 등록부에 기록한다.
+상태: **발송 완료 (2026-08-17).** subeomkwon@gmail.com에서 두 곳에 각각 발송했다 —
+XYZ Ltd `legal@xyzltd.xyz` (Gmail id `1a00f59e15dff0f7`), Hyperliquid Corp.
+`support@hyperliquid.zendesk.com` (Gmail id `1a00f5a1f54ac947`). 회신을 받으면
+등록부에 별도 `decision_id`로 기록한다. 무응답 시 `recheck_at: 2026-09-16`에
+`HIP3_PUBLIC_DISPLAY_ENABLED=false`로 되돌리는 방침은 그대로다.
 
 ## 보내기 전에 확인할 것
 
