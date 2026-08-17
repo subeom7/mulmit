@@ -48,6 +48,10 @@ const TEXT = {
     "kridx.title": "코스피 지수군", "kridx.copy": "대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 52주 범위까지 한 표에서 봅니다.",
     "kridx.colName": "지수", "kridx.colClose": "종가", "kridx.colDay": "전일", "kridx.colYtd": "연초 대비", "kridx.colRange": "52주 범위", "kridx.colValue": "거래대금",
     "kridx.asof": "기준 {date} · 다음 영업일 13시 이후 갱신",
+    "zone.kr": "한국 시장", "zone.us": "미국·글로벌 시장",
+    "kro.title": "한국 주식, 장 밖에서는", "kro.copy": "장이 닫혀 있어도 합성 무기한선물은 24시간 움직입니다. 마크가격을 공식환율로 환산해 마지막 공식 종가와 비교합니다. 현물 호가나 시초가 예측이 아닙니다.",
+    "kro.fxOfficial": "공식환율 환산 · 실시간 환율 아님", "kro.vsClose": "{date} 종가 대비", "kro.mark": "마크", "kro.official": "공식 종가", "kro.fx": "환산 환율",
+    "kro.noFx": "환율 미확보 · 환산 보류", "kro.noClose": "공식 종가 미확보", "kro.noMarket": "표시할 시장 없음", "kro.session": "주말 내부 가격발견 중",
     "sector.title": "섹터 자금 흐름", "sector.caption": "S&P 500 섹터 ETF 기간 수익률", "sector.name": "섹터", "sector.return": "수익률", "sector.interpretation": "플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.",
     "tv.title": "S&P 500 종목 히트맵", "tv.embed": "외부 위젯", "tv.notice": "이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.",
     "tv.terms": "데이터·표시 조건은 제공자 정책을 따릅니다.", "corr.title": "자산군 상관관계", "corr.note": "서로 다른 시장 시간대는 동시 일간 수익률 상관을 왜곡할 수 있습니다.", "corr.scale": "+1은 같은 방향, 0은 약한 선형 관계, −1은 반대 방향입니다. 상관은 인과관계가 아닙니다.",
@@ -82,6 +86,10 @@ const TEXT = {
     "kridx.title": "KOSPI index family", "kridx.copy": "Confirmed closes for the headline indices and KOSPI 200 sectors, with YTD and the 52-week range in one table.",
     "kridx.colName": "Index", "kridx.colClose": "Close", "kridx.colDay": "Day", "kridx.colYtd": "YTD", "kridx.colRange": "52w range", "kridx.colValue": "Value traded",
     "kridx.asof": "As of {date} · updates after 13:00 KST the next business day",
+    "zone.kr": "Korea markets", "zone.us": "US & global markets",
+    "kro.title": "Korean stocks, after hours", "kro.copy": "Synthetic perpetuals keep trading around the clock. Marks are converted at the official exchange rate and compared with the last official close. Not spot quotes, not an open forecast.",
+    "kro.fxOfficial": "Official-rate conversion · not a live FX rate", "kro.vsClose": "vs {date} close", "kro.mark": "Mark", "kro.official": "Official close", "kro.fx": "FX applied",
+    "kro.noFx": "No official FX yet · conversion withheld", "kro.noClose": "Official close unavailable", "kro.noMarket": "No live market", "kro.session": "Weekend internal price discovery",
     "sector.title": "Sector flow", "sector.caption": "S&P 500 sector ETF period returns", "sector.name": "Sector", "sector.return": "Return", "sector.interpretation": "Broader positive participation can confirm a wider advance. ETF returns are not the same thing as fund-flow dollars.",
     "tv.title": "S&P 500 constituent heatmap", "tv.embed": "Third-party widget", "tv.notice": "TradingView serves this embed directly; it is not Mulmit API data.",
     "tv.terms": "Provider data and display terms apply.", "corr.title": "Cross-asset correlation", "corr.note": "Different market hours can distort same-day return correlations.", "corr.scale": "+1 moves together, 0 indicates a weak linear link, and −1 moves oppositely. Correlation is not causation.",
@@ -96,7 +104,11 @@ const TEXT = {
   },
 };
 
-const t = (key) => TEXT[state.lang]?.[key] || TEXT.ko[key] || key;
+const t = (key, params) => {
+  let text = TEXT[state.lang]?.[key] || TEXT.ko[key] || key;
+  if (params) for (const [name, value] of Object.entries(params)) text = text.replaceAll(`{${name}}`, String(value));
+  return text;
+};
 const LABEL = (ko, en) => ({ ko, en });
 
 const METRICS = {
@@ -262,9 +274,10 @@ const OVERVIEW = [
 ];
 
 const SECTIONS = [
+  // korea-official leads: it renders into the deep flow with the others, then
+  // the whole section is moved up into the Korea zone beside #kr-overnight.
+  { id: "korea-official", eyebrow: "KOREA · OFFICIAL CLOSE", title: LABEL("한국 공식 종가", "Korean official closes"), copy: LABEL("한국거래소 장 마감 확정값입니다. 금융위원회가 공공데이터로 개방한 자료로, 기준일 다음 영업일에 공개됩니다. 위의 24시간 참고가와 같은 값이 아닙니다.", "Confirmed Korea Exchange closes, opened as public data by the Financial Services Commission and published the next business day. These are not the around-the-clock references above."), keys: ["kospi_exact", "kosdaq_exact", "samsung_exact", "sk_hynix_exact"] },
   { id: "global-assets", eyebrow: "GLOBAL PRICES", title: LABEL("글로벌 자산", "Global assets"), copy: LABEL("전고점 대비 위치와 최근 가격 흐름을 함께 봅니다.", "View recent prices alongside distance from prior highs."), keys: ["sp500", "nasdaq", "gold", "bitcoin"] },
-  { id: "korean-assets", eyebrow: "KOREA · SYNTHETIC", title: LABEL("한국 합성 참고값", "Korean synthetic references"), copy: LABEL("USD 환산 합성 무기한선물 참고값입니다. 공식 원화 종가는 아래 섹션에 있습니다.", "USD-converted synthetic perpetual references. Official won closes are in the section below."), keys: ["kospi", "samsung"] },
-  { id: "korea-official", eyebrow: "KOREA · OFFICIAL CLOSE", title: LABEL("한국 공식 종가", "Korean official closes"), copy: LABEL("한국거래소 장 마감 확정값입니다. 금융위원회가 공공데이터로 개방한 자료로, 기준일 다음 영업일에 공개됩니다. 위의 합성 지표와 같은 값이 아닙니다.", "Confirmed Korea Exchange closes, opened as public data by the Financial Services Commission and published the next business day. These are not the synthetic values above."), keys: ["kospi_exact", "kosdaq_exact", "samsung_exact", "sk_hynix_exact"] },
   { id: "global-etfs", eyebrow: "CROSS-BORDER ETFs", title: LABEL("글로벌 지역 ETF", "Regional ETFs"), copy: LABEL("미국 상장 ETF를 통해 지역별 위험선호를 확인합니다.", "Use US-listed ETFs to compare regional risk appetite."), keys: ["ewz", "inda", "vnm", "ewj"] },
   { id: "market-risk", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("시장심리·변동성·금리곡선·신용스프레드·금융스트레스를 나란히 봅니다.", "Compare sentiment, volatility, the yield curve, credit spread and financial stress."), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread", "financial_stress"] },
   { id: "macro-regime", eyebrow: "MACRO REGIME", title: LABEL("매크로 환경", "Macro regime"), copy: LABEL("달러·금리·원자재·고용의 방향을 확인합니다.", "Track the dollar, rates, commodities and labor conditions."), keys: ["dollar_index_broad", "dxy", "usdjpy", "treasury_10y", "wti", "copper", "unemployment", "initial_claims"] },
@@ -284,7 +297,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null,
+  stress: null, krOvernight: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -520,6 +533,10 @@ function renderSkeleton() {
   }));
 
   const deep = $("#deep-sections"); deep.replaceChildren();
+  // A previous skeleton pass may have moved #korea-official out of the deep
+  // container, where replaceChildren cannot reach it; a fresh copy is about to
+  // be built, so the stray one must go first or the id would duplicate.
+  document.getElementById("korea-official")?.remove();
   SECTIONS.forEach((section, index) => {
     const block = document.createElement("section"); block.className = "dashboard-section"; block.id = section.id;
     block.innerHTML = `<div class="section-heading"><span class="section-index">${String(index + 1).padStart(2, "0")}</span><div><p class="eyebrow">${section.eyebrow}</p><h2></h2></div></div><p class="section-copy"></p><div class="metric-grid"></div>`;
@@ -536,6 +553,10 @@ function renderSkeleton() {
     $("h3", card).textContent = localValue(item.title, state.lang); $("p", card).textContent = localValue(item.copy, state.lang); $(".comparison-grid", compare).append(card);
   });
   deep.append(compare);
+  // The official-close cards belong in the Korea zone, between the 24-hour
+  // references and the index-family table, not in the middle of the deep flow.
+  const koreaOfficial = $("#korea-official"), krIndicesSection = $("#kr-indices");
+  if (koreaOfficial && krIndicesSection) krIndicesSection.insertAdjacentElement("beforebegin", koreaOfficial);
   renderJumpNav(); setupLazyCharts();
 }
 
@@ -579,10 +600,13 @@ function pruneEmpty() {
 
 function renderJumpNav() {
   const nav = $("#jump-nav"); nav.replaceChildren();
-  [{ id: "constituent-heatmap", text: t("tv.title") },
-    ...SECTIONS.map((section, index) => ({ id: section.id, text: `${String(index + 1).padStart(2, "0")} ${localValue(section.title, state.lang)}` })),
-    { id: "liquidity-comparisons", text: `${String(SECTIONS.length + 1).padStart(2, "0")} ${state.lang === "ko" ? "유동성 비교" : "Comparisons"}` },
+  // Mirrors the page: Korea zone first, then the US & global flow.
+  [{ id: "kr-overnight", text: t("kro.title") },
+    { id: SECTIONS[0].id, text: `01 ${localValue(SECTIONS[0].title, state.lang)}` },
     { id: "kr-indices", text: t("kridx.title") },
+    { id: "constituent-heatmap", text: t("tv.title") },
+    ...SECTIONS.slice(1).map((section, index) => ({ id: section.id, text: `${String(index + 2).padStart(2, "0")} ${localValue(section.title, state.lang)}` })),
+    { id: "liquidity-comparisons", text: `${String(SECTIONS.length + 1).padStart(2, "0")} ${state.lang === "ko" ? "유동성 비교" : "Comparisons"}` },
     { id: "sector-flow", text: t("sector.title") }, { id: "correlation", text: t("corr.title") }]
     .filter((item) => !document.getElementById(item.id)?.hidden)
     .forEach((item) => { const link = document.createElement("a"); link.href = `#${item.id}`; link.textContent = item.text; nav.append(link); });
@@ -758,6 +782,8 @@ function endpointHealth(key) {
     usable = (Array.isArray(payload.assets) ? payload.assets : []).filter((record) => latest(record).value !== null);
   } else if (key === "weekend") {
     usable = (Array.isArray(payload.signals) ? payload.signals : []).filter((record) => safeNumber(record?.mark ?? record?.oracle) !== null);
+  } else if (key === "krOvernight") {
+    usable = (Array.isArray(payload.cards) ? payload.cards : []).filter((record) => safeNumber(record?.perp?.mark) !== null);
   } else if (key === "sectors") {
     usable = (Array.isArray(payload.sectors) ? payload.sectors : []).filter((record) => Object.values(record?.returns || {}).some((value) => safeNumber(value) !== null));
   }
@@ -769,19 +795,20 @@ function endpointHealth(key) {
 async function loadCore() {
   $("#refresh-button").setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
-  const [macro, assets, sectors, weekend, stress, krIndices] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight] = await Promise.all([
     fetchJson("/api/market/macro?history=3y", "macro"), fetchJson("/api/market/assets?history=3y", "assets"),
     fetchJson("/api/market/sectors", "sectors"), fetchJson("/api/market/weekend", "weekend"),
     fetchJson("/api/market/stress", "stress"), fetchJson("/api/kr/indices", "krIndices"),
+    fetchJson("/api/kr/overnight", "krOvernight"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
-  state.stress = stress; state.krIndices = krIndices;
+  state.stress = stress; state.krIndices = krIndices; state.krOvernight = krOvernight;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets");
   renderAll(); $("#refresh-button").removeAttribute("aria-busy");
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
   // not failing — they are absent by decision, so they are hidden rather than
@@ -798,7 +825,7 @@ function renderAll() {
   // A deliberately disabled lane is absence by decision, not degraded service.
   // It leaves the health calculation entirely: with the legacy price lane off,
   // the badge would otherwise read "partial data" forever on a healthy site.
-  const health = ["macro", "assets", "sectors", "weekend"].map(endpointHealth)
+  const health = ["macro", "assets", "sectors", "weekend", "krOvernight"].map(endpointHealth)
     .filter((item) => item !== "disabled");
   const badge = $("#connection-badge");
   const count = (value) => health.filter((item) => item === value).length;
@@ -822,11 +849,6 @@ function formatKrw(value) {
 function renderKrIndices() {
   const section = $("#kr-indices");
   if (!section) return;
-  // The table belongs beside the Korean official closes, which render
-  // dynamically; the static section is moved there once both exist.
-  const anchor = $("#korea-official");
-  if (anchor && section.previousElementSibling !== anchor) anchor.insertAdjacentElement("afterend", section);
-
   const payload = state.krIndices;
   if (!payload || !Array.isArray(payload.groups)) { section.hidden = true; return; }
   const rows = payload.groups.flatMap((group) => group.rows || []);
@@ -879,6 +901,98 @@ function renderKrIndices() {
   const note = document.createElement("span");
   note.textContent = `${t("kridx.asof", { date: dateText(payload.as_of) })}`;
   $("#kridx-footer").append(link, note);
+}
+
+// Compact month/day for the overnight cards, where the full year is noise.
+function kroDate(iso) {
+  if (!iso) return "—";
+  const date = new Date(String(iso).length === 10 ? `${iso}T00:00:00` : iso);
+  if (Number.isNaN(date.valueOf())) return String(iso);
+  return new Intl.DateTimeFormat(state.lang === "ko" ? "ko-KR" : "en-US", { month: "numeric", day: "numeric" }).format(date);
+}
+
+function kroMoney(value, kind) {
+  if (value === null || !isFinite(value)) return "—";
+  if (kind === "index") return `${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} pt`;
+  return `₩${Math.round(value).toLocaleString("en-US")}`;
+}
+
+function renderKrOvernight() {
+  const section = $("#kr-overnight");
+  if (!section) return;
+  const stateNode = $("#kro-state"), grid = $("#kro-grid"), footer = $("#kro-footer");
+  const payload = state.krOvernight;
+  if (!payload || !Array.isArray(payload.cards)) {
+    // The HIP-3 gate being off is absence by decision, same as the other
+    // gated lanes: the section disappears instead of asking for a retry.
+    if (disabledCode("krOvernight")) { section.hidden = true; return; }
+    section.hidden = false; grid.hidden = true; footer.hidden = true;
+    stateNode.hidden = false; stateNode.textContent = `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+  const cards = payload.cards.filter((card) => card && card.perp);
+  if (!cards.length) {
+    section.hidden = false; grid.hidden = true; footer.hidden = true;
+    stateNode.hidden = false; stateNode.textContent = t("kro.noMarket");
+    return;
+  }
+  section.hidden = false; stateNode.hidden = true; grid.hidden = false; footer.hidden = false;
+
+  grid.replaceChildren(...cards.map((card) => {
+    const percent = safeNumber(card.implied?.vs_official_percent);
+    const mark = safeNumber(card.perp?.mark);
+    const change24h = safeNumber(card.perp?.change_24h_percent);
+    const implied = safeNumber(card.implied?.value);
+    const officialClose = safeNumber(card.official?.close);
+    const article = document.createElement("article");
+    article.className = `kro-card ${changeClass(percent)}`;
+
+    const header = document.createElement("header");
+    const title = document.createElement("h3"); title.textContent = localValue(card.label, state.lang);
+    const symbol = document.createElement("a");
+    symbol.className = "kro-sym"; symbol.textContent = String(card.symbol || "").toUpperCase();
+    if (card.perp?.source_url) { symbol.href = card.perp.source_url; symbol.target = "_blank"; symbol.rel = "noopener noreferrer"; }
+    header.append(title, symbol);
+
+    const price = document.createElement("div"); price.className = "kro-price";
+    const markUsd = mark === null ? "—" : `$${mark.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    price.textContent = implied !== null ? kroMoney(implied, card.kind) : markUsd;
+
+    const vs = document.createElement("div"); vs.className = `kro-vs ${changeClass(percent)}`;
+    if (percent !== null) vs.textContent = `${formatSigned(percent)} · ${t("kro.vsClose", { date: kroDate(card.official?.date) })}`;
+    else if (card.status === "no_fx") vs.textContent = t("kro.noFx");
+    else vs.textContent = t("kro.noClose");
+
+    const meta = document.createElement("dl"); meta.className = "kro-meta";
+    const row = (labelText, valueText) => {
+      const wrap = document.createElement("div");
+      const dt = document.createElement("dt"); dt.textContent = labelText;
+      const dd = document.createElement("dd"); dd.textContent = valueText;
+      wrap.append(dt, dd); return wrap;
+    };
+    meta.append(row(t("kro.mark"), `${markUsd}${change24h === null ? "" : ` · 24h ${formatSigned(change24h)}`}`));
+    meta.append(row(t("kro.official"), officialClose === null ? "—" : `${kroMoney(officialClose, card.kind)} · ${kroDate(card.official?.date)}`));
+    if (card.kind !== "index" && payload.fx?.status === "ok") {
+      meta.append(row(t("kro.fx"), `${payload.fx.rate.toLocaleString("en-US", { maximumFractionDigits: 2 })} · ${kroDate(payload.fx.date)} H.10`));
+    }
+
+    const badges = document.createElement("div"); badges.className = "kro-badges";
+    const badge = (text, cls = "warn") => { const span = document.createElement("span"); span.className = `status-badge ${cls}`; span.textContent = text; badges.append(span); };
+    if (card.perp?.stale) badge(t("badge.stale"));
+    if (card.perp?.liquidity_status === "low") badge(t("weekend.liquidity"));
+    if (payload.session?.active) badge(t("kro.session"), "info");
+
+    article.append(header, price, vs, meta);
+    if (badges.childElementCount) article.append(badges);
+    return article;
+  }));
+
+  footer.replaceChildren();
+  const method = document.createElement("p"); method.className = "kro-method";
+  method.textContent = localValue(payload.methodology, state.lang);
+  const disclaimer = document.createElement("p"); disclaimer.className = "kro-disclaimer";
+  disclaimer.textContent = localValue(payload.disclaimer, state.lang);
+  footer.append(method, disclaimer);
 }
 
 function renderSectors() {

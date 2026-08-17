@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark light">
   <meta name="description" content="Mulmit 글로벌 자산·거시경제·유동성 모니터">
   <title>Market Monitor · Mulmit</title>
-  <link rel="stylesheet" href="/static/monitor.css?v=20260816-7">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260818-1">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -52,18 +52,32 @@
       <div id="overview-groups" class="overview-groups" aria-live="polite"></div>
     </section>
 
-    <section class="dashboard-section" id="constituent-heatmap" aria-labelledby="tv-title">
+    <div class="zone-divider" id="zone-korea"><span data-i18n="zone.kr">한국 시장</span><small>KOREA</small></div>
+
+    <section class="dashboard-section" id="kr-overnight" aria-labelledby="kro-title">
       <div class="section-heading">
-        <div><p class="eyebrow">TRADINGVIEW · THIRD-PARTY EMBED</p><h2 id="tv-title" data-i18n="tv.title">S&amp;P 500 종목 히트맵</h2></div>
-        <div class="segmented" id="tv-period" role="group" aria-label="Heatmap performance period">
-          <button type="button" data-period="1d">1D</button><button type="button" data-period="1w">1W</button>
-          <button type="button" data-period="1m">1M</button><button type="button" data-period="1y">1Y</button>
-        </div>
+        <div><p class="eyebrow">KOREA · 24H PERP × OFFICIAL CLOSE</p><h2 id="kro-title" data-i18n="kro.title">한국 주식, 장 밖에서는</h2></div>
+        <span class="source-pill">HIP-3 × FSC × H.10</span>
       </div>
-      <div class="panel tv-panel">
-        <div class="notice-line"><span class="status-badge info" data-i18n="tv.embed">외부 위젯</span><span data-i18n="tv.notice">이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.</span></div>
-        <div id="tradingview-host" class="tradingview-host lazy-host" data-lazy="tradingview"><div class="state-block" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div></div>
-        <footer class="panel-footer"><a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView</a><span data-i18n="tv.terms">데이터·표시 조건은 제공자 정책을 따릅니다.</span></footer>
+      <p class="section-copy" data-i18n="kro.copy">장이 닫혀 있어도 합성 무기한선물은 24시간 움직입니다. 마크가격을 공식환율로 환산해 마지막 공식 종가와 비교합니다. 현물 호가나 시초가 예측이 아닙니다.</p>
+      <div class="risk-strip" role="note">
+        <span class="status-badge warn" data-i18n="weekend.notSpot">현물가격 아님</span>
+        <span class="status-badge warn" data-i18n="weekend.syntheticPerp">USD 환산 합성 무기한선물</span>
+        <span class="status-badge warn" data-i18n="kro.fxOfficial">공식환율 환산 · 실시간 환율 아님</span>
+      </div>
+      <div id="kro-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="kro-grid" class="kro-grid" hidden></div>
+      <footer class="kro-footer" id="kro-footer" hidden></footer>
+    </section>
+
+    <section class="dashboard-section" id="kr-indices" hidden aria-labelledby="kridx-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">KOREA · FSC OPEN DATA · T+1</p><h2 id="kridx-title" data-i18n="kridx.title">코스피 지수군</h2></div>
+      </div>
+      <div class="panel">
+        <p class="section-copy" data-i18n="kridx.copy" style="margin:0 0 12px">대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 52주 범위까지 한 표에서 봅니다.</p>
+        <div id="kridx-body"></div>
+        <footer class="panel-footer" id="kridx-footer"></footer>
       </div>
     </section>
 
@@ -83,6 +97,23 @@
       <div id="weekend-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
       <div id="weekend-grid" class="weekend-grid" hidden></div>
       <p class="weekend-disclaimer" id="weekend-disclaimer" data-i18n="weekend.defaultDisclaimer">주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.</p>
+    </section>
+
+    <div class="zone-divider" id="zone-us"><span data-i18n="zone.us">미국·글로벌 시장</span><small>US · GLOBAL</small></div>
+
+    <section class="dashboard-section" id="constituent-heatmap" aria-labelledby="tv-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">TRADINGVIEW · THIRD-PARTY EMBED</p><h2 id="tv-title" data-i18n="tv.title">S&amp;P 500 종목 히트맵</h2></div>
+        <div class="segmented" id="tv-period" role="group" aria-label="Heatmap performance period">
+          <button type="button" data-period="1d">1D</button><button type="button" data-period="1w">1W</button>
+          <button type="button" data-period="1m">1M</button><button type="button" data-period="1y">1Y</button>
+        </div>
+      </div>
+      <div class="panel tv-panel">
+        <div class="notice-line"><span class="status-badge info" data-i18n="tv.embed">외부 위젯</span><span data-i18n="tv.notice">이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.</span></div>
+        <div id="tradingview-host" class="tradingview-host lazy-host" data-lazy="tradingview"><div class="state-block" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div></div>
+        <footer class="panel-footer"><a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView</a><span data-i18n="tv.terms">데이터·표시 조건은 제공자 정책을 따릅니다.</span></footer>
+      </div>
     </section>
 
     <section class="dashboard-section" id="stress-index" aria-labelledby="stress-title">
@@ -111,17 +142,6 @@
     <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
 
     <div id="deep-sections"></div>
-
-    <section class="dashboard-section" id="kr-indices" hidden aria-labelledby="kridx-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">KOREA · FSC OPEN DATA · T+1</p><h2 id="kridx-title" data-i18n="kridx.title">코스피 지수군</h2></div>
-      </div>
-      <div class="panel">
-        <p class="section-copy" data-i18n="kridx.copy" style="margin:0 0 12px">대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 52주 범위까지 한 표에서 봅니다.</p>
-        <div id="kridx-body"></div>
-        <footer class="panel-footer" id="kridx-footer"></footer>
-      </div>
-    </section>
 
     <section class="dashboard-section" id="sector-flow" aria-labelledby="sector-flow-title">
       <div class="section-heading">
@@ -186,6 +206,6 @@
       <footer></footer>
     </article>
   </template>
-  <script src="/static/monitor.js?v=20260816-7" defer></script>
+  <script src="/static/monitor.js?v=20260818-1" defer></script>
 </body>
 </html>
