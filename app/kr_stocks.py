@@ -241,6 +241,109 @@ def _stats(observations: list[tuple[dt.date, float]]) -> dict[str, Any]:
     }
 
 
+# --- 코스피 지수군 ------------------------------------------------------------
+#
+# The curated family, with names exactly as the dataset publishes them.
+# Ordering here is display ordering. Every row of the table comes from the
+# daily snapshot — no per-index history is collected for this section.
+KR_INDEX_CLASS = "KOSPI시리즈"
+KR_INDEX_HEADLINE: tuple[str, ...] = (
+    "코스피",
+    "코스피 200",
+    "코스피 100",
+    "코스피 50",
+    "코스피 대형주",
+    "코스피 중형주",
+    "코스피 소형주",
+    "코스피 200 중소형주",
+    "코스피 200 초대형제외 지수",
+    "코스피200제외 코스피지수",
+)
+KR_INDEX_SECTORS: tuple[str, ...] = (
+    "코스피 200 커뮤니케이션서비스",
+    "코스피 200 건설",
+    "코스피 200 중공업",
+    "코스피 200 철강/소재",
+    "코스피 200 에너지/화학",
+    "코스피 200 정보기술",
+    "코스피 200 금융",
+    "코스피 200 생활소비재",
+    "코스피 200 경기소비재",
+    "코스피 200 산업재",
+    "코스피 200 헬스케어",
+)
+
+
+class KrIndexUnavailable(RuntimeError):
+    """No index snapshot has been collected yet."""
+
+
+def _ensure_index_snapshot() -> dict[str, Any]:
+    meta = store.kr_index_snapshot_meta()
+    if meta["count"]:
+        return meta
+    if not config.FSC_API_KEY:
+        raise KrIndexUnavailable
+    with _fetch_lock:
+        meta = store.kr_index_snapshot_meta()
+        if meta["count"]:
+            return meta
+        bas_dt, rows = _provider().fetch_index_day_snapshot()
+        store.save_kr_index_snapshot(rows, bas_dt)
+        log.info("국내 지수 스냅샷 최초 수집: %s일자 %d지수", bas_dt, len(rows))
+        return store.kr_index_snapshot_meta()
+
+
+def _index_row(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "name": row["idx_nm"],
+        "close": row.get("clpr"),
+        "change": row.get("vs"),
+        "change_percent": row.get("flt_rt"),
+        "ytd_percent": row.get("ls_yr_flt_rt"),
+        "high_52w": row.get("yr_hgst"),
+        "high_52w_date": row.get("yr_hgst_dt"),
+        "low_52w": row.get("yr_lwst"),
+        "low_52w_date": row.get("yr_lwst_dt"),
+        "volume": row.get("trqu"),
+        "value": row.get("tr_prc"),
+        "market_cap": row.get("lstg_mrkt_tot_amt"),
+    }
+
+
+def index_family() -> dict[str, Any]:
+    """The KOSPI index family table, straight from the daily snapshot."""
+    _require_lane()
+    meta = _ensure_index_snapshot()
+    wanted = list(KR_INDEX_HEADLINE) + list(KR_INDEX_SECTORS)
+    # 분류 고정이 필수다: "IT 서비스"처럼 KOSPI와 KOSDAQ 시리즈에 같은 이름으로
+    # 존재하는 지수가 있어, 이름만 보면 다른 시장의 지수를 집을 수 있다.
+    by_name = {
+        row["idx_nm"]: row
+        for row in store.load_kr_index_snapshot(wanted, idx_csf=KR_INDEX_CLASS)
+    }
+
+    def rows_for(names: tuple[str, ...]) -> list[dict[str, Any]]:
+        return [_index_row(by_name[name]) for name in names if name in by_name]
+
+    return {
+        "as_of": meta["bas_dt"],
+        "groups": [
+            {
+                "id": "headline",
+                "label": {"ko": "대표 지수", "en": "Headline indices"},
+                "rows": rows_for(KR_INDEX_HEADLINE),
+            },
+            {
+                "id": "kospi200-sectors",
+                "label": {"ko": "코스피 200 섹터", "en": "KOSPI 200 sectors"},
+                "rows": rows_for(KR_INDEX_SECTORS),
+            },
+        ],
+        "source": _source_block(),
+    }
+
+
 def get_analysis(code: str) -> dict[str, Any]:
     """DB-first analysis for one code; a cache miss fetches synchronously."""
     _require_lane()

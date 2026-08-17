@@ -424,6 +424,20 @@ def refresh_fsc(*, force: bool = False) -> dict:
             result["listings_error"] = str(exc)
             log.warning("국내 종목 로스터 갱신 실패: %s", exc)
 
+    # The index family table reads a second daily snapshot: one request covers
+    # every index with its day change, YTD change, 52-week range and turnover.
+    if force or store.kr_index_snapshot_stale(config.FSC_MAX_AGE):
+        try:
+            bas_dt, rows = provider.fetch_index_day_snapshot()
+            result["indices"] = store.save_kr_index_snapshot(rows, bas_dt)
+            log.info("국내 지수 스냅샷 갱신: %s일자 %d지수", bas_dt, result["indices"])
+        except RateLimited:
+            result["rate_limited"] += 1
+            log.warning("data.go.kr 일일 호출 한도 — 지수 스냅샷은 다음 주기에")
+        except Exception as exc:  # noqa: BLE001
+            result["indices_error"] = str(exc)
+            log.warning("국내 지수 스냅샷 갱신 실패: %s", exc)
+
     keys = [spec.series_key for spec in FSC_SERIES]
     targets = (
         keys

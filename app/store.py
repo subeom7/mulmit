@@ -241,6 +241,31 @@ kr_listings = sa.Table(
     sa.Index("ix_kr_listings_name", "itms_nm"),
 )
 
+# 국내 지수 하루치 스냅샷. 지수 데이터셋은 하루 한 번의 요청으로 전 지수의
+# 종가·전일대비·연초대비·52주 최고/최저·거래량·거래대금을 모두 주므로,
+# 지수군 표는 이 테이블만 읽는다.
+kr_index_snapshot = sa.Table(
+    "kr_index_snapshot",
+    metadata,
+    # 지수명은 분류를 넘어 유일하지 않다 — "IT 서비스"와 "화학"은 KOSPI와
+    # KOSDAQ 시리즈에 같은 이름으로 존재한다. 이름만 키로 쓰면 둘이 충돌한다.
+    sa.Column("idx_nm", sa.String(128), primary_key=True),
+    sa.Column("idx_csf", sa.String(64), primary_key=True),
+    sa.Column("clpr", sa.Float),
+    sa.Column("vs", sa.Float),
+    sa.Column("flt_rt", sa.Float),
+    sa.Column("ls_yr_flt_rt", sa.Float),
+    sa.Column("yr_hgst", sa.Float),
+    sa.Column("yr_hgst_dt", sa.String(10)),
+    sa.Column("yr_lwst", sa.Float),
+    sa.Column("yr_lwst_dt", sa.String(10)),
+    sa.Column("trqu", sa.Float),
+    sa.Column("tr_prc", sa.Float),
+    sa.Column("lstg_mrkt_tot_amt", sa.Float),
+    sa.Column("bas_dt", sa.String(10), nullable=False),
+    sa.Column("fetched_at", sa.Float, nullable=False),
+)
+
 reports = sa.Table(
     "reports",
     metadata,
@@ -972,6 +997,55 @@ def kr_listings_meta() -> dict[str, Any]:
 
 def kr_listings_stale(max_age: int) -> bool:
     meta = kr_listings_meta()
+    if not meta["count"] or meta["fetched_at"] is None:
+        return True
+    return meta["fetched_at"] <= time.time() - max_age
+
+
+def save_kr_index_snapshot(rows: Iterable[dict[str, Any]], bas_dt: str) -> int:
+    """Replace the whole index snapshot with one trading day's rows."""
+    now = time.time()
+    payload = [
+        {**row, "bas_dt": bas_dt, "fetched_at": now}
+        for row in rows
+        if str(row.get("idx_nm") or "").strip()
+    ]
+    if not payload:
+        return 0
+    with engine().begin() as conn:
+        conn.execute(kr_index_snapshot.delete())
+        conn.execute(kr_index_snapshot.insert(), payload)
+    return len(payload)
+
+
+def load_kr_index_snapshot(
+    names: Iterable[str] | None = None, *, idx_csf: str | None = None
+) -> list[dict[str, Any]]:
+    stmt = sa.select(kr_index_snapshot)
+    wanted = [str(n).strip() for n in names] if names is not None else None
+    if wanted:
+        stmt = stmt.where(kr_index_snapshot.c.idx_nm.in_(wanted))
+    if idx_csf:
+        stmt = stmt.where(kr_index_snapshot.c.idx_csf == idx_csf)
+    with engine().connect() as conn:
+        return [dict(row) for row in conn.execute(stmt).mappings()]
+
+
+def kr_index_snapshot_meta() -> dict[str, Any]:
+    with engine().connect() as conn:
+        row = conn.execute(
+            sa.select(
+                sa.func.count(kr_index_snapshot.c.idx_nm),
+                sa.func.max(kr_index_snapshot.c.bas_dt),
+                sa.func.max(kr_index_snapshot.c.fetched_at),
+            )
+        ).first()
+    count, bas_dt, fetched_at = row or (0, None, None)
+    return {"count": int(count or 0), "bas_dt": bas_dt, "fetched_at": fetched_at}
+
+
+def kr_index_snapshot_stale(max_age: int) -> bool:
+    meta = kr_index_snapshot_meta()
     if not meta["count"] or meta["fetched_at"] is None:
         return True
     return meta["fetched_at"] <= time.time() - max_age
