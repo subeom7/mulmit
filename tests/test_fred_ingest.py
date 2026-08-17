@@ -59,7 +59,20 @@ def test_fred_ingest_persists_then_skips_fresh_series(db, monkeypatch):
     }
     assert second["skipped"] == "fresh"
     assert fake.calls == ["DGS10"]
-    assert db.get_fred_series("DGS10")["status"] == "ok"
+    # Written to the provider-neutral tables under the internal key, with the
+    # provider's own id and rights verdict recorded alongside.
+    stored = db.get_economic_series("treasury_10y")
+    assert stored["status"] == "ok"
+    assert stored["provider_id"] == "fred"
+    assert stored["provider_series_id"] == "DGS10"
+    assert stored["rights_status"] == "approved"
+    assert stored["units"] == "Percent"
+    assert db.load_economic_observations("treasury_10y") == [
+        (dt.date(2026, 8, 13), 4.21),
+        (dt.date(2026, 8, 14), 4.19),
+    ]
+    # The legacy table is no longer written to.
+    assert db.get_fred_series("DGS10") is None
 
 
 def test_fred_ingest_failure_isolated_and_retryable(db, monkeypatch):
@@ -70,8 +83,9 @@ def test_fred_ingest_failure_isolated_and_retryable(db, monkeypatch):
 
     assert result["failed"] == 1
     assert result["updated"] == 0
-    assert db.get_fred_series("DGS10")["status"] == "error"
-    assert db.stale_fred_series(["DGS10"], 3600) == ["DGS10"]
+    # Nothing was ever stored for this key, so there is no row to mark.
+    assert db.get_economic_series("treasury_10y") is None
+    assert db.stale_economic_series(["treasury_10y"], 3600) == ["treasury_10y"]
 
 
 def test_fred_missing_key_does_not_disable_price_ingestion(db, monkeypatch):

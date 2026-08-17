@@ -116,6 +116,60 @@ fred_observations = sa.Table(
     sa.Index("ix_fred_observations_date", "date"),
 )
 
+# 공급자 중립 거시 시계열. 위의 fred_* 테이블을 대체한다.
+#
+# 이름과 메타데이터가 FRED에 묶여 있으면 NY Fed·BLS·EIA를 직접 연결할 때마다
+# 스키마를 다시 손대야 한다. 여기서는 내부 안정 키(series_key)와 공급자 원본
+# ID(provider_series_id)를 분리하고, 권리 상태를 행에 함께 저장한다.
+#
+# 권리 상태를 행에 두는 이유: lane 게이트(app/data_rights.py)는 "이 공급자를
+# 서빙해도 되는가"를 답하지만, 같은 공급자 안에서도 계열별로 조건이 다르다.
+# FRED의 VIXCLS는 Cboe 권리라 FRED lane이 열려도 값을 내보내면 안 된다.
+economic_series = sa.Table(
+    "economic_series",
+    metadata,
+    # 내부 안정 키. 공급자를 바꿔도 카드가 따라오도록 UI key와 같은 문자열을 쓴다.
+    sa.Column("series_key", sa.String(64), primary_key=True),
+    sa.Column("provider_id", sa.String(32), nullable=False),
+    sa.Column("provider_series_id", sa.String(64), nullable=False),
+    sa.Column("title", sa.String(512), nullable=False),
+    # 공급자가 준 원 단위를 그대로 보관한다. UI가 $B/$T를 추정하지 않게 하려면
+    # 여기 값이 유일한 근거여야 한다.
+    sa.Column("units", sa.String(256)),
+    sa.Column("units_short", sa.String(128)),
+    sa.Column("frequency", sa.String(128)),
+    sa.Column("frequency_short", sa.String(32)),
+    sa.Column("seasonal_adjustment", sa.String(128)),
+    sa.Column("seasonal_adjustment_short", sa.String(32)),
+    sa.Column("publisher", sa.String(256)),
+    sa.Column("publisher_url", sa.String(512)),
+    sa.Column("series_url", sa.String(512), nullable=False),
+    # approved | pending | license_required | disabled. 기본값은 fail-closed다.
+    sa.Column("rights_status", sa.String(24), nullable=False, server_default="pending"),
+    sa.Column("rights_evidence", sa.Text),
+    sa.Column("notes", sa.Text),
+    sa.Column("observation_start", sa.Date),
+    sa.Column("observation_end", sa.Date),
+    sa.Column("provider_last_updated", sa.String(64)),
+    sa.Column("observation_count", sa.Integer, nullable=False, server_default="0"),
+    sa.Column("last_observation_date", sa.Date),
+    sa.Column("fetched_at", sa.Float),
+    sa.Column("last_attempted_at", sa.Float),
+    sa.Column("status", sa.String(16), nullable=False, server_default="ok"),
+    sa.Column("error", sa.Text),
+    sa.Index("ix_economic_series_provider", "provider_id", "rights_status"),
+    sa.Index("ix_economic_series_freshness", "status", "fetched_at"),
+)
+
+economic_observations = sa.Table(
+    "economic_observations",
+    metadata,
+    sa.Column("series_key", sa.String(64), primary_key=True),
+    sa.Column("date", sa.Date, primary_key=True),
+    sa.Column("value", sa.Float, nullable=False),
+    sa.Index("ix_economic_observations_date", "date"),
+)
+
 # SEC EDGAR 지분공시(Form 3/4/5). 공시는 한 번 제출되면 바뀌지 않고 정정은
 # 새 accession으로 올라오므로, 배치는 최근 N건만 받아 upsert하고 이미 받은
 # 과거 공시는 그대로 쌓아 둔다.
@@ -645,6 +699,224 @@ def load_fred_observations(
         return [(row.date, float(row.value)) for row in conn.execute(stmt)]
 
 
+# --- 공급자 중립 거시 시계열 -------------------------------------------------
+
+
+def save_economic_series(
+    series_key: str,
+    *,
+    provider_id: str,
+    provider_series_id: str,
+    metadata_fields: dict[str, Any],
+    observations: Iterable[tuple[dt.date, float]],
+    publisher: str,
+    publisher_url: str,
+    series_url: str,
+    rights_status: str = "pending",
+    rights_evidence: str | None = None,
+) -> int:
+    """Replace one series atomically with its current vintage.
+
+    Providers that hand back the whole series each time (FRED, NY Fed CSV) can
+    revise or withdraw past observations, so a replace is the only way to stay
+    faithful to the current vintage. The swap only happens when the values
+    actually differ, which keeps a no-op refresh from rewriting the table.
+    """
+    series_key = series_key.strip()
+    if not series_key:
+        raise ValueError("series_key must not be empty")
+    values = sorted({date: float(value) for date, value in observations}.items())
+    if not values:
+        raise ValueError(f"{series_key} observations must not be empty")
+
+    now = time.time()
+    row = {
+        "series_key": series_key,
+        "provider_id": provider_id,
+        "provider_series_id": provider_series_id,
+        "title": str(metadata_fields.get("title") or provider_series_id),
+        "units": metadata_fields.get("units"),
+        "units_short": metadata_fields.get("units_short"),
+        "frequency": metadata_fields.get("frequency"),
+        "frequency_short": metadata_fields.get("frequency_short"),
+        "seasonal_adjustment": metadata_fields.get("seasonal_adjustment"),
+        "seasonal_adjustment_short": metadata_fields.get("seasonal_adjustment_short"),
+        "publisher": publisher,
+        "publisher_url": publisher_url,
+        "series_url": series_url,
+        "rights_status": rights_status,
+        "rights_evidence": rights_evidence,
+        "notes": str(metadata_fields.get("notes") or ""),
+        "observation_start": _optional_date(metadata_fields.get("observation_start")),
+        "observation_end": _optional_date(metadata_fields.get("observation_end")),
+        "provider_last_updated": metadata_fields.get("last_updated"),
+        "observation_count": len(values),
+        "last_observation_date": values[-1][0],
+        "fetched_at": now,
+        "last_attempted_at": now,
+        "status": "ok",
+        "error": None,
+    }
+    observation_rows = [
+        {"series_key": series_key, "date": date, "value": value} for date, value in values
+    ]
+
+    with engine().begin() as conn:
+        existing = [
+            (item.date, float(item.value))
+            for item in conn.execute(
+                sa.select(economic_observations.c.date, economic_observations.c.value)
+                .where(economic_observations.c.series_key == series_key)
+                .order_by(economic_observations.c.date)
+            )
+        ]
+        conn.execute(
+            _upsert(economic_series, [row], [key for key in row if key != "series_key"])
+        )
+        if existing == values:
+            return len(values)
+        conn.execute(
+            sa.delete(economic_observations).where(
+                economic_observations.c.series_key == series_key
+            )
+        )
+        for start in range(0, len(observation_rows), 1000):
+            conn.execute(
+                sa.insert(economic_observations), observation_rows[start : start + 1000]
+            )
+    return len(values)
+
+
+def mark_economic_error(series_key: str, message: str) -> None:
+    """Record a failure without discarding the last known-good observations."""
+    series_key = series_key.strip()
+    now = time.time()
+    with engine().begin() as conn:
+        updated = conn.execute(
+            sa.update(economic_series)
+            .where(economic_series.c.series_key == series_key)
+            .values(status="error", error=message[:1000], last_attempted_at=now)
+        ).rowcount
+        if not updated:
+            log.warning("알 수 없는 시계열의 오류를 기록하지 않는다: %s", series_key)
+
+
+def get_economic_series(series_key: str) -> dict | None:
+    stmt = sa.select(economic_series).where(economic_series.c.series_key == series_key.strip())
+    with engine().connect() as conn:
+        row = conn.execute(stmt).mappings().first()
+    return dict(row) if row else None
+
+
+def list_economic_series(
+    series_keys: Iterable[str] | None = None,
+    *,
+    provider_id: str | None = None,
+) -> list[dict]:
+    stmt = sa.select(economic_series)
+    if series_keys is not None:
+        keys = [key.strip() for key in series_keys]
+        if not keys:
+            return []
+        stmt = stmt.where(economic_series.c.series_key.in_(keys))
+    if provider_id is not None:
+        stmt = stmt.where(economic_series.c.provider_id == provider_id)
+    stmt = stmt.order_by(economic_series.c.series_key)
+    with engine().connect() as conn:
+        return [dict(row) for row in conn.execute(stmt).mappings()]
+
+
+def load_economic_observations(
+    series_key: str,
+    *,
+    start: dt.date | None = None,
+    end: dt.date | None = None,
+) -> list[tuple[dt.date, float]]:
+    stmt = sa.select(economic_observations.c.date, economic_observations.c.value).where(
+        economic_observations.c.series_key == series_key.strip()
+    )
+    if start is not None:
+        stmt = stmt.where(economic_observations.c.date >= start)
+    if end is not None:
+        stmt = stmt.where(economic_observations.c.date <= end)
+    stmt = stmt.order_by(economic_observations.c.date)
+    with engine().connect() as conn:
+        return [(row.date, float(row.value)) for row in conn.execute(stmt)]
+
+
+def stale_economic_series(series_keys: Iterable[str], max_age: int) -> list[str]:
+    """Keys never fetched successfully, or older than ``max_age``."""
+    ordered = list(dict.fromkeys(key.strip() for key in series_keys))
+    if not ordered:
+        return []
+    cutoff = time.time() - max_age
+    stmt = sa.select(
+        economic_series.c.series_key,
+        economic_series.c.fetched_at,
+        economic_series.c.status,
+    ).where(economic_series.c.series_key.in_(ordered))
+    with engine().connect() as conn:
+        fetched = {row.series_key: (row.fetched_at, row.status) for row in conn.execute(stmt)}
+    return [
+        key
+        for key in ordered
+        if key not in fetched
+        or fetched[key][0] is None
+        or fetched[key][0] < cutoff
+        or fetched[key][1] != "ok"
+    ]
+
+
+def migrate_fred_series_to_economic(
+    mapping: Iterable[tuple[str, str, str, str]],
+) -> dict[str, int]:
+    """Copy legacy ``fred_*`` rows into the neutral tables.
+
+    ``mapping`` yields ``(series_id, series_key, provider_id, rights_status)``.
+    Explicit rather than automatic on boot: a migration that runs itself during
+    a deploy is one nobody reviews, and the production database currently holds
+    no FRED rows at all. The legacy tables are left untouched so this can be
+    re-run or abandoned.
+    """
+    moved = {"series": 0, "observations": 0, "skipped": 0}
+    for series_id, series_key, provider_id, rights_status in mapping:
+        record = get_fred_series(series_id)
+        if record is None:
+            moved["skipped"] += 1
+            continue
+        observations = load_fred_observations(series_id)
+        if not observations:
+            moved["skipped"] += 1
+            continue
+        count = save_economic_series(
+            series_key,
+            provider_id=provider_id,
+            provider_series_id=series_id,
+            metadata_fields={
+                "title": record.get("title"),
+                "units": record.get("units"),
+                "units_short": record.get("units_short"),
+                "frequency": record.get("frequency"),
+                "frequency_short": record.get("frequency_short"),
+                "seasonal_adjustment": record.get("seasonal_adjustment"),
+                "seasonal_adjustment_short": record.get("seasonal_adjustment_short"),
+                "observation_start": record.get("observation_start"),
+                "observation_end": record.get("observation_end"),
+                "last_updated": record.get("provider_last_updated"),
+                "notes": record.get("notes"),
+            },
+            observations=observations,
+            publisher=record.get("publisher") or "",
+            publisher_url=record.get("publisher_url") or "",
+            series_url=record.get("series_url") or "",
+            rights_status=rights_status,
+            rights_evidence="migrated from legacy fred_series",
+        )
+        moved["series"] += 1
+        moved["observations"] += count
+    return moved
+
+
 # --- SEC EDGAR 지분공시 ------------------------------------------------------
 
 
@@ -872,6 +1144,15 @@ def stats() -> dict:
             ).scalar_one(),
             "last_fred_ingest": conn.execute(
                 sa.select(sa.func.max(fred_series.c.fetched_at))
+            ).scalar(),
+            "economic_series": conn.execute(
+                sa.select(sa.func.count()).select_from(economic_series)
+            ).scalar_one(),
+            "economic_observations": conn.execute(
+                sa.select(sa.func.count()).select_from(economic_observations)
+            ).scalar_one(),
+            "last_economic_ingest": conn.execute(
+                sa.select(sa.func.max(economic_series.c.fetched_at))
             ).scalar(),
             "insider_companies": conn.execute(
                 sa.select(sa.func.count()).select_from(sec_companies)

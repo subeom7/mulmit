@@ -24,7 +24,13 @@ import time
 from . import config, data, store
 from .market_assets import ASSET_TICKERS, CORRELATION_TICKERS
 from .providers import DataUnavailable, RateLimited, get_provider
-from .providers.fred import FRED_SERIES, FredProvider
+from .providers.fred import (
+    FRED_API_TERMS_URL,
+    FRED_PROVIDER_ID,
+    FRED_SERIES,
+    FredProvider,
+    rights_status_for,
+)
 from .providers.sec_edgar import SecEdgarProvider
 
 log = logging.getLogger(__name__)
@@ -86,7 +92,10 @@ def refresh_fred(*, force: bool = False) -> dict:
     # but never download them for the public dashboard without a separate
     # licensed feed.
     ids = [spec.series_id for spec in FRED_SERIES if spec.public_web]
-    targets = ids if force else store.stale_fred_series(ids, config.FRED_MAX_AGE)
+    keys = [spec.key for spec in FRED_SERIES if spec.public_web]
+    stale_keys = set(store.stale_economic_series(keys, config.FRED_MAX_AGE))
+    by_key = {spec.key: spec.series_id for spec in FRED_SERIES}
+    targets = ids if force else [by_key[key] for key in keys if key in stale_keys]
     if not targets:
         return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
 
@@ -111,25 +120,48 @@ def refresh_fred(*, force: bool = False) -> dict:
         spec = specs[series_id]
         try:
             fetched = provider.fetch_series(series_id)
-            count = store.save_fred_series(
-                series_id,
-                fetched.metadata,
-                fetched.observations,
+            # Written to the provider-neutral tables. The legacy fred_* tables
+            # are no longer updated; the reader still falls back to them for
+            # rows collected before this change.
+            count = store.save_economic_series(
+                spec.key,
+                provider_id=FRED_PROVIDER_ID,
+                provider_series_id=series_id,
+                metadata_fields=fetched.metadata,
+                observations=fetched.observations,
                 publisher=spec.publisher,
                 publisher_url=spec.publisher_url,
                 series_url=spec.series_url,
+                rights_status=rights_status_for(spec),
+                rights_evidence=FRED_API_TERMS_URL,
             )
             result["updated"] += 1
             result["observations"] += count
-            log.info("FRED 갱신 %s (%d행)", series_id, count)
+            log.info("거시 갱신 %s/%s (%d행)", FRED_PROVIDER_ID, series_id, count)
         except RateLimited:
             result["rate_limited"] += 1
             log.warning("FRED 레이트리밋 — 남은 시리즈는 다음 주기에 재시도")
             break
         except Exception as exc:  # 한 시리즈 오류가 나머지 수집을 막지 않는다
             result["failed"] += 1
-            store.mark_fred_error(series_id, str(exc))
-            log.warning("FRED 갱신 실패 %s: %s", series_id, exc)
+            store.mark_economic_error(spec.key, str(exc))
+            log.warning("거시 갱신 실패 %s: %s", series_id, exc)
+    return result
+
+
+def migrate_macro_store() -> dict:
+    """Copy legacy ``fred_*`` rows into the provider-neutral tables.
+
+    Run explicitly (``python -m app.ingest --migrate-macro``), not on boot. The
+    reader already falls back to the legacy tables, so nothing breaks while this
+    is pending, and the legacy rows are left in place afterwards.
+    """
+    store.init_db()
+    result = store.migrate_fred_series_to_economic(
+        (spec.series_id, spec.key, FRED_PROVIDER_ID, rights_status_for(spec))
+        for spec in FRED_SERIES
+    )
+    log.info("거시 저장소 마이그레이션: %s", result)
     return result
 
 
@@ -395,7 +427,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="가격 데이터 수집 배치")
     parser.add_argument("tickers", nargs="*", help="지정하면 이 티커만 갱신")
     parser.add_argument("--loop", action="store_true", help="상주하며 반복 실행")
+    parser.add_argument(
+        "--migrate-macro",
+        action="store_true",
+        help="레거시 fred_* 행을 공급자 중립 economic_* 테이블로 복사하고 종료",
+    )
     args = parser.parse_args()
+
+    if args.migrate_macro:
+        print(migrate_macro_store())
+        return 0
 
     if args.loop:
         run_forever()
