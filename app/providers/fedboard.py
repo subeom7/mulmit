@@ -91,6 +91,20 @@ FEDBOARD_RELEASES: dict[str, FedBoardRelease] = {
         data_member="H10_data.xml",
         page_url=f"{FEDBOARD_SITE_BASE}/releases/h10/",
     ),
+    "H41": FedBoardRelease(
+        release_id="H41",
+        name="H.4.1 Factors Affecting Reserve Balances",
+        archive_url=f"{FEDBOARD_SITE_BASE}/releases/h41/data/FRB_h41_xml.zip",
+        data_member="H41_data.xml",
+        page_url=f"{FEDBOARD_SITE_BASE}/releases/h41/",
+    ),
+    "H6": FedBoardRelease(
+        release_id="H6",
+        name="H.6 Money Stock Measures",
+        archive_url=f"{FEDBOARD_SITE_BASE}/releases/h6/data/FRB_h6_xml.zip",
+        data_member="H6_data.xml",
+        page_url=f"{FEDBOARD_SITE_BASE}/releases/h6/",
+    ),
 }
 
 # H.10 quotes in two directions and the series name is the only signal. A name
@@ -165,6 +179,63 @@ FEDBOARD_SERIES: tuple[FedBoardSeriesSpec, ...] = (
         "US dollars per euro", "USD/EUR"),
     _fx("fx_gbpusd", "RXI$US_N.B.UK", "US dollars per British pound",
         "US dollars per British pound", "USD/GBP"),
+
+    # H.4.1 reports in millions. The `_Fnn` suffix is a Reserve district, not a
+    # line item, so the aggregate is the bare name with DISTRIBUTION=TOT — the
+    # Treasury account sits entirely in District 2, which makes F02 look like
+    # the total until a series that is split across districts proves otherwise.
+    FedBoardSeriesSpec(
+        series_key="fed_assets",
+        release_id="H41",
+        provider_series_id="RESPPA_N.WW",
+        title="Total assets of the Federal Reserve banks",
+        units="Millions of US dollars",
+        units_short="$M",
+        frequency="Weekly, Wednesday level",
+        frequency_short="W",
+    ),
+    FedBoardSeriesSpec(
+        series_key="reserve_balances",
+        release_id="H41",
+        provider_series_id="RESH4R_N.WW",
+        title="Reserve balances with Federal Reserve Banks",
+        units="Millions of US dollars",
+        units_short="$M",
+        frequency="Weekly, Wednesday level",
+        frequency_short="W",
+    ),
+    FedBoardSeriesSpec(
+        series_key="treasury_general_account",
+        release_id="H41",
+        provider_series_id="RESPPLLDT_N.WW",
+        title="U.S. Treasury, General Account, deposits with Federal Reserve Banks",
+        units="Millions of US dollars",
+        units_short="$M",
+        frequency="Weekly, Wednesday level",
+        frequency_short="W",
+    ),
+    # H.6 reports in billions, not millions. Storing either as the other would
+    # be off by a factor of a thousand while still looking like a number.
+    FedBoardSeriesSpec(
+        series_key="m2",
+        release_id="H6",
+        provider_series_id="M2.M",
+        title="M2 money stock, seasonally adjusted",
+        units="Billions of US dollars",
+        units_short="$B",
+        frequency="Monthly",
+        frequency_short="M",
+    ),
+    FedBoardSeriesSpec(
+        series_key="retail_money_market_funds",
+        release_id="H6",
+        provider_series_id="MMFGB.M",
+        title="Retail money market funds, seasonally adjusted",
+        units="Billions of US dollars",
+        units_short="$B",
+        frequency="Monthly",
+        frequency_short="M",
+    ),
 )
 
 FEDBOARD_SERIES_BY_KEY = {spec.series_key: spec for spec in FEDBOARD_SERIES}

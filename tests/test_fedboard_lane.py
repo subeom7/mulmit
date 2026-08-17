@@ -179,3 +179,46 @@ def test_two_lanes_can_serve_together(db, fedboard, monkeypatch):
         "nyfed",
         "federal_reserve",
     }
+
+
+def test_liquidity_series_keep_each_release_own_unit_scale(db, fedboard):
+    """H.4.1 reports in millions and H.6 in billions.
+
+    Normalising one to the other would be off by a thousand while still looking
+    like a number, and the frontend scales to $B/$T from the units text alone.
+    """
+    from app.providers.fedboard import FEDBOARD_SERIES_BY_KEY
+
+    assert FEDBOARD_SERIES_BY_KEY["fed_assets"].units == "Millions of US dollars"
+    assert FEDBOARD_SERIES_BY_KEY["m2"].units == "Billions of US dollars"
+
+
+def test_the_treasury_account_uses_the_national_total_not_a_district(db, fedboard):
+    """H.4.1's _Fnn suffix is a Reserve district, not a line item.
+
+    The Treasury account sits entirely in District 2, so RESPPLLDT_F02 equals
+    the total today and would silently stop doing so if that ever changed.
+    """
+    from app.providers.fedboard import FEDBOARD_SERIES_BY_KEY
+
+    tga = FEDBOARD_SERIES_BY_KEY["treasury_general_account"]
+    assert tga.provider_series_id == "RESPPLLDT_N.WW"
+    assert "_F0" not in tga.provider_series_id
+
+
+def test_every_series_key_is_unique_across_releases():
+    from app.providers.fedboard import FEDBOARD_DERIVED, FEDBOARD_SERIES
+
+    keys = [spec.series_key for spec in FEDBOARD_SERIES] + [
+        spec.series_key for spec in FEDBOARD_DERIVED
+    ]
+    assert len(keys) == len(set(keys))
+
+
+def test_one_download_per_release_not_per_series():
+    """Four releases now back thirteen series."""
+    from app.providers.fedboard import FEDBOARD_RELEASES, FEDBOARD_SERIES
+
+    used = {spec.release_id for spec in FEDBOARD_SERIES}
+    assert used <= set(FEDBOARD_RELEASES)
+    assert len(FEDBOARD_SERIES) > len(used)
