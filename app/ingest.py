@@ -22,7 +22,7 @@ import logging
 import threading
 import time
 
-from . import config, data, kr_pension, store, us_ptr
+from . import config, data, kr_pension, store, us_fundamentals, us_ptr
 from .market_assets import ASSET_TICKERS, CORRELATION_TICKERS
 from .providers import DataUnavailable, RateLimited, get_provider
 from .providers.bls import (
@@ -549,6 +549,48 @@ def refresh_kr_pension(*, force: bool = False) -> dict:
         return {"failed": str(exc)}
 
 
+def refresh_us_fundamentals(*, force: bool = False) -> dict:
+    """내부자 수집이 끝난 티커들의 재무 패널을 같은 lane 조건으로 채운다."""
+    if not config.SEC_EDGAR_ENABLED:
+        return {"skipped": "disabled"}
+    if not config.SEC_EDGAR_USER_AGENT:
+        return {"skipped": "not_configured"}
+
+    companies = store.list_insider_companies()
+    targets = [
+        row for row in companies
+        if force or store.load_report(
+            us_fundamentals.cache_key(row["ticker"]), config.SEC_EDGAR_MAX_AGE
+        ) is None
+    ]
+    if not targets:
+        return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
+
+    provider = SecEdgarProvider(
+        config.SEC_EDGAR_USER_AGENT,
+        timeout=config.SEC_EDGAR_TIMEOUT,
+        retries=config.SEC_EDGAR_RETRIES,
+        request_interval=config.SEC_EDGAR_REQUEST_INTERVAL,
+    )
+    result = {"attempted": 0, "updated": 0, "failed": 0, "rate_limited": 0}
+    for row in targets[: config.SEC_EDGAR_BATCH_SIZE]:
+        result["attempted"] += 1
+        try:
+            stats = us_fundamentals.refresh_for(
+                provider, row["ticker"], row["cik"], row.get("name") or row["ticker"]
+            )
+            result["updated"] += 1
+            log.info("재무 갱신 %s (연간 %d·분기 %d)", row["ticker"], stats["annual"], stats["quarterly"])
+        except RateLimited:
+            result["rate_limited"] += 1
+            log.warning("EDGAR 요청 제한 — 남은 재무 티커는 다음 주기에")
+            break
+        except Exception as exc:  # noqa: BLE001 - 한 티커 실패가 나머지를 막지 않는다
+            result["failed"] += 1
+            log.warning("재무 갱신 실패 %s: %s", row["ticker"], exc)
+    return result
+
+
 def refresh_us_ptr(*, force: bool = False) -> dict:
     """미 하원 PTR 갱신. 인덱스 zip + 신규 PDF 상세라 배치 전용이다."""
     if not config.US_PTR_ENABLED:
@@ -711,6 +753,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         fsc_result = {"skipped": "explicit_price_refresh"}
         pension_result = {"skipped": "explicit_price_refresh"}
         ptr_result = {"skipped": "explicit_price_refresh"}
+        fund_result = {"skipped": "explicit_price_refresh"}
         if automatic:
             fred_result = refresh_fred()
             nyfed_result = refresh_nyfed()
@@ -720,6 +763,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             insider_result = refresh_insider_filings()
             pension_result = refresh_kr_pension()
             ptr_result = refresh_us_ptr()
+            fund_result = refresh_us_fundamentals()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
             "skipped": "legacy_price_data_disabled",
@@ -737,6 +781,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             "insider": insider_result,
             "kr_pension": pension_result,
             "us_ptr": ptr_result,
+            "us_fundamentals": fund_result,
             "elapsed": round(time.time() - started, 2),
         }
         log.info("레거시 가격 수집 비활성화: %s", result)
@@ -755,6 +800,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             insider_result = refresh_insider_filings()
             pension_result = refresh_kr_pension()
             refresh_us_ptr()
+            refresh_us_fundamentals()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
                 "skipped": "backoff",
@@ -815,6 +861,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     fsc_result = {"skipped": "explicit_price_refresh"}
     pension_result = {"skipped": "explicit_price_refresh"}
     ptr_result = {"skipped": "explicit_price_refresh"}
+    fund_result = {"skipped": "explicit_price_refresh"}
     if automatic:
         fred_result = refresh_fred()
         nyfed_result = refresh_nyfed()
@@ -824,6 +871,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         insider_result = refresh_insider_filings()
         pension_result = refresh_kr_pension()
         ptr_result = refresh_us_ptr()
+        fund_result = refresh_us_fundamentals()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged
@@ -835,6 +883,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     result["insider"] = insider_result
     result["kr_pension"] = pension_result
     result["us_ptr"] = ptr_result
+    result["us_fundamentals"] = fund_result
     result["elapsed"] = round(time.time() - started, 2)
     log.info("수집 완료: %s", result)
     return result

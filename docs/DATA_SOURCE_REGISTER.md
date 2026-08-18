@@ -235,9 +235,9 @@ key로 저장한다. 같은 카드 안에서 두 값을 번갈아 채우거나 �
 |---|---|
 | 내부 ID | `sec_edgar` |
 | 현재 상태 | `approved` (아래 승인 범위 한정) |
-| 코드 위치 | `app/providers/sec_edgar.py`, `app/insider_filings.py`, `app/store.py`, `app/ingest.py` |
+| 코드 위치 | `app/providers/sec_edgar.py`, `app/insider_filings.py`, `app/us_fundamentals.py`, `app/store.py`, `app/ingest.py` |
 | 배포 기본값 | `SEC_EDGAR_ENABLED=false`, `SEC_EDGAR_USER_AGENT=` (미설정이면 lane이 닫힘) |
-| 현재 사용 | 티커→CIK 매핑, 회사 submissions, Form 3/4/5 원본 XML의 보고 항목 |
+| 현재 사용 | 티커→CIK 매핑, 회사 submissions, Form 3/4/5 원본 XML의 보고 항목, **XBRL companyconcept 재무제표**(`/api/us/fundamentals/{ticker}` — 10-K·10-Q의 매출·영업이익·순이익·EPS·자산·자본) |
 | 기술 비용 | 무료. API 키 없음 |
 | 접근 조건 | 연락처가 담긴 User-Agent 선언 필수, 초당 10요청 상한(사용자 단위, 기기 수 무관) |
 | 표시 경계 | 공시된 값을 가공 없이 전달. 부여(A)·파생 행사(M)·세금 상계(F)를 시장 매수(P)·매도(S)와 합산하지 않음 |
@@ -282,6 +282,20 @@ notes: >
 - `P`(시장 매수)와 `S`(시장 매도)만 합계에 넣는다. `A`(부여), `M`(파생 행사), `F`(세금 원천징수 상계)는 개별 행으로만 보여 준다. 이걸 합치면 RSU 베스팅 한 건이 거대한 매매 신호처럼 보인다.
 - 단가가 없는 공시(무상 부여 등)의 금액은 0이 아니라 빈 값이다.
 - 요청 경로에서 EDGAR를 호출하지 않는다. 수집되지 않은 티커는 `queued`로 답하고 다음 배치가 가져간다.
+
+재무제표(2026-08-19 추가) 표시 규칙:
+
+- 회사마다 같은 항목의 XBRL 태그가 다르고 **갈아타기도 한다**(실측: NVIDIA는
+  RevenueFromContractWithCustomer…를 2022년에 끊음). 태그 사다리에서 "가장 최신
+  보고 기간을 가진" 태그를 고르고, 실제 사용 태그를 응답 `concepts_used`에 싣는다.
+- 10-Q의 흐름 항목은 분기값과 YTD가 섞여 온다. 보고 기간 길이로 분류하고
+  (분기 75~105일, 연간 340~380일) YTD는 어느 표에도 넣지 않는다. 같은 기간의
+  정정 공시는 최신 제출분이 이긴다.
+- 파생값은 마진 둘뿐이다(영업·순이익 ÷ 매출, 같은 보고서의 두 값) — 위
+  `derived_metrics` 범위("공시된 값의 합계까지") 안이며 산식을 basis로 응답에
+  명시한다. 가격 의존 지표(PER 등)는 미국 가격 표시 권리가 없어 만들지 않는다.
+- 매출 개념이 없는 제출사(IFRS 등)는 캐시하지 않고 실패로 남겨 재시도한다 —
+  빈 표가 12시간 캐시를 차지하면 안 된다.
 
 ### 3.6 New York Fed markets API (SOFR·EFFR·역레포)
 
@@ -1025,6 +1039,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
 | 2026-08-18 | 한국 24시간 참고가 섹션(`/api/kr/overnight`) 추가 — 기존 세 lane의 결합(HIP-3 마크 × H.10 공식환율 × FSC 기준가), 신규 소스·권리 없음. HIP-3 게이트를 그대로 타고 환율·기준가 날짜를 값과 함께 표기, 김프 조정 없음 명시. 모니터를 한국/미국·글로벌 존으로 재배치, 합성 참고값 카드 2장은 이 섹션이 대체. 계획서 `docs/PLAN_KR_SECTIONS.md` | Claude assisted |
+| 2026-08-19 | EDGAR 재무제표 추가(`/api/us/fundamentals/{ticker}`, §3.5 확장) — XBRL companyconcept, 내부자 lane과 같은 티커 큐·게이트. 태그 사다리는 최신 보고 기간 기준(NVIDIA 태그 전환 실측), YTD 배제·정정 우선, 파생은 마진 2종뿐 | Claude assisted |
 | 2026-08-18 | 미 하원 PTR lane 추가(`DS` §3.14, `/api/us/ptr`) — STOCK Act 공시 원문 전달, EIGA §105(c) 분석·고지 동봉, 엄격 파서(불일치는 원문 링크로 강등), 상원 eFD는 봇 차단으로 **보류(우회 안 함)** | Claude assisted |
 | 2026-08-18 | ETF 보드(`/api/kr/etf`) 추가 — 금융위원회_증권상품시세정보 활용신청 승인(자동승인, 만료 2028-08-18) 후 기존 FSC lane·키로 하루 스냅샷 수집. 괴리율 = 종가÷NAV−1, 같은 기준일 공표값 두 개에서만 계산·NAV 0은 결측. 채권·일반상품시세정보도 함께 승인(미사용 보관) | Claude assisted |
 | 2026-08-18 | 모니터를 랜딩·`/kr`·`/us` 세 페이지로 분리(P1) — 데이터·권리 변경 없음, 페이지 구성 레이어. React 전환 보류 판정은 `docs/ROADMAP.md` | Claude assisted |

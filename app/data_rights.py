@@ -97,6 +97,18 @@ KR_PENSION_NOT_CONFIGURED = {
     "message": "DART_API_KEY must be issued by opendart.fss.or.kr before use.",
 }
 
+US_FUNDAMENTALS_DISABLED = {
+    "code": "us_fundamentals_disabled",
+    "status": "disabled",
+    "message": "The SEC EDGAR lane is disabled for this deployment.",
+}
+
+US_FUNDAMENTALS_NOT_CONFIGURED = {
+    "code": "us_fundamentals_not_configured",
+    "status": "not_configured",
+    "message": "SEC_EDGAR_USER_AGENT must declare a contact before EDGAR use.",
+}
+
 US_PTR_DISABLED = {
     "code": "us_ptr_disabled",
     "status": "disabled",

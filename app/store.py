@@ -1390,6 +1390,15 @@ def _select_companies() -> list[dict]:
         return [dict(row) for row in conn.execute(sa.select(sec_companies)).mappings()]
 
 
+def list_insider_companies(status: str = "ok") -> list[dict]:
+    """수집이 끝나 CIK가 붙은 회사들. 재무 배치가 같은 티커 집합을 탄다."""
+    stmt = sa.select(sec_companies).where(
+        sec_companies.c.status == status, sec_companies.c.cik.is_not(None)
+    )
+    with engine().connect() as conn:
+        return [dict(row) for row in conn.execute(stmt).mappings()]
+
+
 # --- 응답 캐시 ---------------------------------------------------------------
 
 
