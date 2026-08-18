@@ -467,6 +467,16 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
     <p class="kr-meta" id="kr-source"></p>
 
     <div class="card" id="kr-insider" hidden>
+    "krfund.title": "연간 재무제표 (DART)", "krfund.sub": "사업보고서 주요계정을 그대로 옮깁니다(연결 우선). 마진은 같은 보고서의 이익 ÷ 매출이며, 분기 손익은 누적 구분이 없어 다루지 않습니다. 금액 단위 KRW.",
+    "krfund.caption": "연간 주요 재무계정", "krfund.colYear": "사업연도", "krfund.colRevenue": "매출", "krfund.colOpInc": "영업이익", "krfund.colNetInc": "순이익",
+    "krfund.colOpMargin": "영업이익률", "krfund.colNetMargin": "순이익률", "krfund.colEquity": "자본총계",
+    "krfund.loading": "재무제표를 불러오는 중입니다.", "krfund.none": "표시할 재무 데이터가 없습니다.", "krfund.error": "재무제표를 불러오지 못했습니다.",
+    "krfund.statement": "{statement} 기준", "krfund.revenueAccount": "매출 계정: {name}",
+    "krfund.title": "Annual financials (DART)", "krfund.sub": "Key accounts from annual reports, relayed as filed (consolidated preferred). Margins are income ÷ revenue from the same filing; quarterly income lines are omitted because cumulative and in-quarter figures are not distinguished. Amounts in KRW.",
+    "krfund.caption": "Annual key accounts", "krfund.colYear": "Fiscal year", "krfund.colRevenue": "Revenue", "krfund.colOpInc": "Operating income", "krfund.colNetInc": "Net income",
+    "krfund.colOpMargin": "Op. margin", "krfund.colNetMargin": "Net margin", "krfund.colEquity": "Total equity",
+    "krfund.loading": "Loading financial statements.", "krfund.none": "No financial data to display.", "krfund.error": "Failed to load financial statements.",
+    "krfund.statement": "Basis: {statement}", "krfund.revenueAccount": "Revenue account: {name}",
       <h2 data-i18n="krins.title">임원·주요주주 소유보고</h2>
       <p class="sub" id="kr-insider-basis"></p>
       <div id="kr-insider-state" class="state-block" role="status" aria-live="polite" hidden></div>
@@ -486,6 +496,28 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
         </table>
       </div>
       <p class="insider-source" id="kr-insider-source"></p>
+    </div>
+
+    <div class="card" id="kr-fund" hidden>
+      <h2 data-i18n="krfund.title">연간 재무제표 (DART)</h2>
+      <p class="sub" data-i18n="krfund.sub">사업보고서 주요계정을 그대로 옮깁니다(연결 우선). 마진은 같은 보고서의 이익 ÷ 매출이며, 분기 손익은 누적 구분이 없어 다루지 않습니다. 금액 단위 KRW.</p>
+      <div id="kr-fund-state" class="state-block" role="status" aria-live="polite" hidden></div>
+      <div class="table-wrap" id="kr-fund-wrap" hidden>
+        <table class="insider-table" id="kr-fund-table">
+          <caption class="sr-only" data-i18n="krfund.caption">연간 주요 재무계정</caption>
+          <thead><tr>
+            <th scope="col" data-i18n="krfund.colYear">사업연도</th>
+            <th scope="col" class="num" data-i18n="krfund.colRevenue">매출</th>
+            <th scope="col" class="num" data-i18n="krfund.colOpInc">영업이익</th>
+            <th scope="col" class="num" data-i18n="krfund.colNetInc">순이익</th>
+            <th scope="col" class="num" data-i18n="krfund.colOpMargin">영업이익률</th>
+            <th scope="col" class="num" data-i18n="krfund.colNetMargin">순이익률</th>
+            <th scope="col" class="num" data-i18n="krfund.colEquity">자본총계</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="insider-source" id="kr-fund-source"></p>
     </div>
   </div>
 </section>
@@ -2297,6 +2329,76 @@ function krSelect(item) {
   loadKrStock(item.code, item.name);
 }
 
+let krFundController = null;
+const krFundWon = (value) => value == null ? "—"
+  : Math.abs(value) >= 1e12 ? `${(value / 1e12).toLocaleString(localeCode(), { maximumFractionDigits: 1 })}조`
+  : Math.abs(value) >= 1e8 ? `${Math.round(value / 1e8).toLocaleString(localeCode())}억`
+  : `₩${Math.round(value).toLocaleString(localeCode())}`;
+
+function krFundState(key) {
+  const node = document.getElementById("kr-fund-state");
+  node.hidden = false; node.textContent = t(key);
+  document.getElementById("kr-fund-wrap").hidden = true;
+  document.getElementById("kr-fund-source").textContent = "";
+}
+
+async function loadKrFundamentals(code) {
+  const panel = document.getElementById("kr-fund");
+  if (!code) { panel.hidden = true; return; }
+  panel.hidden = false;
+  if (krFundController) krFundController.abort();
+  const controller = new AbortController();
+  krFundController = controller;
+  krFundState("krfund.loading");
+  try {
+    const response = await fetch(`/api/kr/fundamentals/${encodeURIComponent(code)}`, { signal: controller.signal });
+    if (!response.ok) { panel.hidden = true; return; }
+    renderKrFund(await response.json());
+  } catch (error) {
+    if (error.name !== "AbortError") panel.hidden = true;
+  } finally {
+    if (krFundController === controller) krFundController = null;
+  }
+}
+
+function renderKrFund(data) {
+  const rows = data.annual || [];
+  if (!rows.length) { krFundState("krfund.none"); return; }
+  document.getElementById("kr-fund-state").hidden = true;
+  document.getElementById("kr-fund-wrap").hidden = false;
+  const tbody = document.querySelector("#kr-fund-table tbody");
+  tbody.replaceChildren();
+  const pct = (value) => value == null ? "—" : `${value.toFixed(1)}%`;
+  for (const row of rows) {
+    const tr = document.createElement("tr");
+    const cells = [
+      ["", String(row.year)],
+      ["num", krFundWon(row.revenue)],
+      ["num" + (row.operating_income != null && row.operating_income < 0 ? " chg-down" : ""), krFundWon(row.operating_income)],
+      ["num" + (row.net_income != null && row.net_income < 0 ? " chg-down" : ""), krFundWon(row.net_income)],
+      ["num", pct(row.operating_margin)],
+      ["num", pct(row.net_margin)],
+      ["num", krFundWon(row.equity)],
+    ];
+    for (const [cls, textValue] of cells) {
+      const td = document.createElement("td");
+      if (cls) td.className = cls;
+      td.textContent = textValue;
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  }
+  const notice = (uiLang === "ko" ? data.source?.notice : data.source?.notice_en) || "";
+  const parts = [
+    `${data.company || data.code}`,
+    t("krfund.statement", { statement: data.statement || "" }),
+  ];
+  const revenueAccount = rows[0]?.revenue_account;
+  if (revenueAccount && revenueAccount !== "매출액") parts.push(t("krfund.revenueAccount", { name: revenueAccount }));
+  parts.push(notice);
+  document.getElementById("kr-fund-source").textContent = parts.filter(Boolean).join(" · ");
+}
+
 let krInsiderController = null;
 
 async function loadKrInsider(code) {
@@ -2381,6 +2483,7 @@ function renderKrInsider(data) {
 
 async function loadKrStock(code, name) {
   loadKrInsider(code);
+  loadKrFundamentals(code);
   if (krLoadController) krLoadController.abort();
   const controller = new AbortController();
   krLoadController = controller;

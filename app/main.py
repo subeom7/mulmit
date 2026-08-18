@@ -23,6 +23,7 @@ from . import (
     config,
     data_rights,
     ingest,
+    kr_fundamentals,
     kr_insider,
     kr_pension,
     kr_stocks,
@@ -443,6 +444,36 @@ def kr_insider_reports(code: str, request: Request, response: Response) -> dict:
         ) from exc
     except (DataUnavailable, RateLimited) as exc:
         raise HTTPException(status_code=503, detail="DART reports unavailable") from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "FSS DART"
+    return payload
+
+
+@app.get("/api/kr/fundamentals/{code}")
+@limiter.limit(config.RATE_LIMIT)
+def kr_fundamentals_report(code: str, request: Request, response: Response) -> dict:
+    """국내 종목 연간 재무제표(DART 주요계정). 캐시 우선, 미스에서만 단발 조회."""
+    code = code.strip().upper()
+    if not (4 <= len(code) <= 12) or not code.isalnum():
+        raise HTTPException(status_code=422, detail="code must be a KRX issue code")
+    try:
+        payload = kr_fundamentals.get_report(code)
+    except kr_fundamentals.KrFundamentalsDisabled as exc:
+        detail = (
+            data_rights.KR_FUNDAMENTALS_NOT_CONFIGURED
+            if exc.reason == "not_configured"
+            else data_rights.KR_FUNDAMENTALS_DISABLED
+        )
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    except kr_fundamentals.KrFundamentalsUnknown as exc:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "kr_fundamentals_unknown", "message": f"{code} is not a DART-listed issue"},
+        ) from exc
+    except (DataUnavailable, RateLimited) as exc:
+        raise HTTPException(status_code=503, detail="DART fundamentals unavailable") from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "FSS DART"
     return payload

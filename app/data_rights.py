@@ -97,6 +97,18 @@ KR_PENSION_NOT_CONFIGURED = {
     "message": "DART_API_KEY must be issued by opendart.fss.or.kr before use.",
 }
 
+KR_FUNDAMENTALS_DISABLED = {
+    "code": "kr_fundamentals_disabled",
+    "status": "disabled",
+    "message": "DART financial-statement relay is disabled for this deployment.",
+}
+
+KR_FUNDAMENTALS_NOT_CONFIGURED = {
+    "code": "kr_fundamentals_not_configured",
+    "status": "not_configured",
+    "message": "DART_API_KEY must be issued by opendart.fss.or.kr before use.",
+}
+
 US_FUNDAMENTALS_DISABLED = {
     "code": "us_fundamentals_disabled",
     "status": "disabled",
