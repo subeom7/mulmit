@@ -173,10 +173,14 @@ acceptable, 금지 용도 목록 준수. ② 접근은 FRED API로. ③ 지정 �
 무료 접근이며(광고는 조건과 무관하게 허용됨), 연은 로고·마크는 쓰지 않고 텍스트
 출처 표기만 한다.
 
-lane을 켜면 실제로 새로 서빙되는 계열은 셋이다: `STLFSI4`(이번 허가),
-`ICSA`(DOL ETA, 미 연방정부 저작물), `DCOILWTICO`(EIA, 미 연방정부 저작물) —
-나머지는 owner guard(연준 이사회·NY Fed·BLS lane이 이미 소유) 또는
-`license_required`로 막혀 있다.
+lane을 켠 뒤 실측(2026-08-18 운영 반영): fred 소유로 새로 서빙된 계열은
+**넷** — `STLFSI4`(이번 허가), `ICSA`(DOL ETA), `DCOILWTICO`(EIA), 그리고
+`IORB`(연준 이사회 데이터 — 어느 lane에도 저장분이 없어 owner guard가 비어
+있었고, 미 연방정부 저작물이라 권리 문제 없음). 나머지는 owner guard(연준
+이사회 16·NY Fed 3·BLS 1·FSC 4 계열 소유 유지)로 막혔다. 부수 효과: FRED
+카탈로그의 `license_required` 플레이스홀더 3장(VIXCLS·BAMLH0A0HYM2·PCOPPUSDM)이
+값 없는 "라이선스 필요" 카드로 노출된다 — 값·관측치는 계속 비어 있으며, 이는
+§5.5의 의도된 표시다.
 
 즉시 필요한 수정:
 
