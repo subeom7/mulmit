@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark light">
-  <meta name="description" content="Mulmit 글로벌 자산·거시경제·유동성 모니터">
-  <title>Market Monitor · Mulmit</title>
+  <meta name="description" content="S&P 500 종목 히트맵, 유동성·스트레스 지수, 미국 매크로와 연준 유동성, 공식 환율 — 미국·글로벌 시장 대시보드">
+  <title>미국·글로벌 시장 — S&amp;P 500 히트맵 · 매크로 | Mulmit</title>
   <link rel="stylesheet" href="/static/monitor.css?v=20260818-3">
 </head>
 <body>
@@ -18,7 +18,7 @@
     <nav class="view-switch" aria-label="View">
       <a class="view-tab" href="/" data-i18n="nav.home">홈</a>
       <a class="view-tab" href="/kr" data-i18n="nav.kr">한국</a>
-      <a class="view-tab" href="/us" data-i18n="nav.us">미국·글로벌</a>
+      <a class="view-tab active" href="/us" aria-current="page" data-i18n="nav.us">미국·글로벌</a>
       <a class="view-tab" href="/analytics" data-i18n="nav.analytics">종목 분석</a>
     </nav>
     <nav class="mast-nav" aria-label="Secondary">
@@ -34,9 +34,9 @@
   <main id="main" class="shell">
     <section class="hero" aria-labelledby="hero-title">
       <div>
-        <p class="kicker" data-i18n="hero.kicker">GLOBAL MARKET INTELLIGENCE</p>
-        <h1 id="hero-title" data-i18n="hero.title">한눈에 읽는 시장의 온도.</h1>
-        <p class="hero-copy" data-i18n="hero.copy">가격, 위험, 유동성, 거시경제를 같은 시간축에서 확인합니다. 연결되지 않은 데이터는 추정하지 않습니다.</p>
+        <p class="kicker" data-i18n="uspage.kicker">US &amp; GLOBAL MARKETS</p>
+        <h1 id="hero-title" data-i18n="uspage.title">미국·글로벌 시장.</h1>
+        <p class="hero-copy" data-i18n="uspage.copy">S&amp;P 500 히트맵, 스트레스 지수, 매크로, 유동성, 공식 환율을 한 페이지에서 봅니다.</p>
       </div>
       <aside class="hero-meta" aria-live="polite">
         <span data-i18n="hero.updated">마지막 갱신</span>
@@ -53,67 +53,6 @@
       </div>
       <div id="overview-groups" class="overview-groups" aria-live="polite"></div>
     </section>
-
-    <div class="zone-divider" id="zone-korea"><span data-i18n="zone.kr">한국 시장</span><small>KOREA</small></div>
-
-    <section class="dashboard-section" id="kr-overnight" aria-labelledby="kro-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">KOREA · 24H PERP × OFFICIAL CLOSE</p><h2 id="kro-title" data-i18n="kro.title">한국 주식, 장 밖에서는</h2></div>
-        <span class="source-pill">HIP-3 × FSC × H.10</span>
-      </div>
-      <p class="section-copy" data-i18n="kro.copy">장이 닫혀 있어도 합성 무기한선물은 24시간 움직입니다. 마크가격을 공식환율로 환산해 마지막 공식 종가와 비교합니다. 현물 호가나 시초가 예측이 아닙니다.</p>
-      <div class="risk-strip" role="note">
-        <span class="status-badge warn" data-i18n="weekend.notSpot">현물가격 아님</span>
-        <span class="status-badge warn" data-i18n="weekend.syntheticPerp">USD 환산 합성 무기한선물</span>
-        <span class="status-badge warn" data-i18n="kro.fxOfficial">공식환율 환산 · 실시간 환율 아님</span>
-      </div>
-      <div id="kro-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
-      <div id="kro-grid" class="kro-grid" hidden></div>
-      <footer class="kro-footer" id="kro-footer" hidden></footer>
-    </section>
-
-    <section class="dashboard-section" id="kr-indices" hidden aria-labelledby="kridx-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">KOREA · FSC OPEN DATA · T+1</p><h2 id="kridx-title" data-i18n="kridx.title">코스피 지수군</h2></div>
-      </div>
-      <div class="panel">
-        <p class="section-copy" data-i18n="kridx.copy" style="margin:0 0 12px">대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 52주 범위까지 한 표에서 봅니다.</p>
-        <div id="kridx-body"></div>
-        <footer class="panel-footer" id="kridx-footer"></footer>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="kr-pension" hidden aria-labelledby="krp-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">KOREA · NPS 5% FILINGS · DART</p><h2 id="krp-title" data-i18n="krp.title">국민연금 5% 공시</h2></div>
-        <span class="source-pill">DART</span>
-      </div>
-      <div class="panel">
-        <p class="section-copy" data-i18n="krp.copy" style="margin:0 0 12px">주식등의 대량보유 상황보고(5% 룰) 중 국민연금공단 제출분입니다. 보고서 단위의 보유비율 변동이며, 통상 한 달치가 월초에 일괄 공시됩니다. 일별 매매가 아닙니다.</p>
-        <div id="krp-body"></div>
-        <footer class="panel-footer" id="krp-footer"></footer>
-      </div>
-    </section>
-
-    <section class="weekend-pulse" id="weekend-pulse" aria-labelledby="weekend-title">
-      <div class="section-heading compact">
-        <span class="section-index">W</span>
-        <div><p class="eyebrow">HYPERLIQUID HIP-3 · WEEKEND REFERENCE</p><h2 id="weekend-title" data-i18n="weekend.title">Weekend Pulse · 주말 참고 신호</h2></div>
-        <span class="source-pill">HIP-3</span>
-      </div>
-      <div class="risk-strip" role="note">
-        <span class="status-badge warn" data-i18n="weekend.notSpot">현물가격 아님</span>
-        <span class="status-badge warn" data-i18n="weekend.leverage">레버리지 파생</span>
-        <span class="status-badge warn" data-i18n="weekend.syntheticPerp">USD 환산 합성 무기한선물</span>
-        <span class="status-badge warn" data-i18n="weekend.liquidity">저유동성 가능</span>
-        <span class="status-badge warn" data-i18n="weekend.noPromise">월요일 방향 보장 안 됨</span>
-      </div>
-      <div id="weekend-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
-      <div id="weekend-grid" class="weekend-grid" hidden></div>
-      <p class="weekend-disclaimer" id="weekend-disclaimer" data-i18n="weekend.defaultDisclaimer">주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.</p>
-    </section>
-
-    <div class="zone-divider" id="zone-us"><span data-i18n="zone.us">미국·글로벌 시장</span><small>US · GLOBAL</small></div>
 
     <section class="dashboard-section" id="constituent-heatmap" aria-labelledby="tv-title">
       <div class="section-heading">
@@ -220,6 +159,7 @@
       <footer></footer>
     </article>
   </template>
+  <script>window.MULMIT_PAGE = "us";</script>
   <script src="/static/monitor.js?v=20260818-3" defer></script>
 </body>
 </html>

@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark light">
-  <meta name="description" content="Mulmit 글로벌 자산·거시경제·유동성 모니터">
-  <title>Market Monitor · Mulmit</title>
+  <meta name="description" content="삼성전자·SK하이닉스·현대차 24시간 참고가, 코스피 공식 종가와 지수군, 국민연금 대량보유(5%) 공시 — 한국 시장 대시보드">
+  <title>한국 시장 — 24시간 참고가 · 코스피 지수군 | Mulmit</title>
   <link rel="stylesheet" href="/static/monitor.css?v=20260818-3">
 </head>
 <body>
@@ -17,7 +17,7 @@
     </a>
     <nav class="view-switch" aria-label="View">
       <a class="view-tab" href="/" data-i18n="nav.home">홈</a>
-      <a class="view-tab" href="/kr" data-i18n="nav.kr">한국</a>
+      <a class="view-tab active" href="/kr" aria-current="page" data-i18n="nav.kr">한국</a>
       <a class="view-tab" href="/us" data-i18n="nav.us">미국·글로벌</a>
       <a class="view-tab" href="/analytics" data-i18n="nav.analytics">종목 분석</a>
     </nav>
@@ -34,9 +34,9 @@
   <main id="main" class="shell">
     <section class="hero" aria-labelledby="hero-title">
       <div>
-        <p class="kicker" data-i18n="hero.kicker">GLOBAL MARKET INTELLIGENCE</p>
-        <h1 id="hero-title" data-i18n="hero.title">한눈에 읽는 시장의 온도.</h1>
-        <p class="hero-copy" data-i18n="hero.copy">가격, 위험, 유동성, 거시경제를 같은 시간축에서 확인합니다. 연결되지 않은 데이터는 추정하지 않습니다.</p>
+        <p class="kicker" data-i18n="krpage.kicker">KOREA MARKETS</p>
+        <h1 id="hero-title" data-i18n="krpage.title">한국 주식, 장 밖에서도 한눈에.</h1>
+        <p class="hero-copy" data-i18n="krpage.copy">24시간 참고가, 공식 종가, 코스피 지수군, 국민연금 대량보유 공시를 한 페이지에서 봅니다.</p>
       </div>
       <aside class="hero-meta" aria-live="polite">
         <span data-i18n="hero.updated">마지막 갱신</span>
@@ -44,17 +44,6 @@
         <button class="refresh-button" id="refresh-button" type="button"><span aria-hidden="true">↻</span> <span data-i18n="action.refresh">새로고침</span></button>
       </aside>
     </section>
-
-    <section class="overview" aria-labelledby="overview-title">
-      <div class="section-heading compact">
-        <span class="section-index">00</span>
-        <div><p class="eyebrow" data-i18n="overview.eyebrow">MARKET TAPE</p><h2 id="overview-title" data-i18n="overview.title">시장 요약</h2></div>
-        <span class="source-pill" id="overview-source">API</span>
-      </div>
-      <div id="overview-groups" class="overview-groups" aria-live="polite"></div>
-    </section>
-
-    <div class="zone-divider" id="zone-korea"><span data-i18n="zone.kr">한국 시장</span><small>KOREA</small></div>
 
     <section class="dashboard-section" id="kr-overnight" aria-labelledby="kro-title">
       <div class="section-heading">
@@ -113,80 +102,7 @@
       <p class="weekend-disclaimer" id="weekend-disclaimer" data-i18n="weekend.defaultDisclaimer">주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.</p>
     </section>
 
-    <div class="zone-divider" id="zone-us"><span data-i18n="zone.us">미국·글로벌 시장</span><small>US · GLOBAL</small></div>
-
-    <section class="dashboard-section" id="constituent-heatmap" aria-labelledby="tv-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">TRADINGVIEW · THIRD-PARTY EMBED</p><h2 id="tv-title" data-i18n="tv.title">S&amp;P 500 종목 히트맵</h2></div>
-        <div class="segmented" id="tv-period" role="group" aria-label="Heatmap performance period">
-          <button type="button" data-period="1d">1D</button><button type="button" data-period="1w">1W</button>
-          <button type="button" data-period="1m">1M</button><button type="button" data-period="1y">1Y</button>
-        </div>
-      </div>
-      <div class="panel tv-panel">
-        <div class="notice-line"><span class="status-badge info" data-i18n="tv.embed">외부 위젯</span><span data-i18n="tv.notice">이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.</span></div>
-        <div id="tradingview-host" class="tradingview-host lazy-host" data-lazy="tradingview"><div class="state-block" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div></div>
-        <footer class="panel-footer"><a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView</a><span data-i18n="tv.terms">데이터·표시 조건은 제공자 정책을 따릅니다.</span></footer>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="stress-index" aria-labelledby="stress-title">
-      <div class="section-heading">
-        <span class="section-index">S</span>
-        <div><p class="eyebrow" data-i18n="stress.eyebrow">MULMIT COMPOSITE · PUBLISHED METHOD</p><h2 id="stress-title" data-i18n="stress.title">유동성·스트레스 지수</h2></div>
-        <span class="source-pill" data-i18n="stress.own">자체 산출</span>
-      </div>
-      <div class="panel stress-panel">
-        <div id="stress-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
-        <div id="stress-body" hidden>
-          <div class="stress-headline">
-            <div class="stress-score"><strong id="stress-score">—</strong><span id="stress-band"></span></div>
-            <div class="stress-scale" aria-hidden="true"><i id="stress-marker"></i></div>
-            <p class="stress-scale-note" data-i18n="stress.scale">0에 가까울수록 완화, 100에 가까울수록 긴축</p>
-          </div>
-          <div class="table-scroll">
-            <table id="stress-table" class="accessible-table"><caption data-i18n="stress.caption">지수를 구성하는 입력</caption><thead></thead><tbody></tbody></table>
-          </div>
-          <p class="stress-method" id="stress-method"></p>
-          <p class="stress-disclaimer" id="stress-disclaimer"></p>
-        </div>
-      </div>
-    </section>
-
-    <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
-
     <div id="deep-sections"></div>
-
-    <section class="dashboard-section" id="sector-flow" aria-labelledby="sector-flow-title">
-      <div class="section-heading">
-        <span class="section-index">30</span>
-        <div><p class="eyebrow">S&amp;P 500 · SECTOR ETFs</p><h2 id="sector-flow-title" data-i18n="sector.title">섹터 자금 흐름</h2></div>
-        <div class="segmented" id="sector-period" role="group" aria-label="Sector return period">
-          <button type="button" data-period="1d">1D</button><button type="button" data-period="1w">1W</button>
-          <button type="button" data-period="1m">1M</button><button type="button" data-period="1y">1Y</button>
-        </div>
-      </div>
-      <div class="panel sector-panel">
-        <div id="sector-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
-        <div id="sector-bars" class="sector-bars" hidden aria-hidden="true"></div>
-        <div class="table-scroll"><table id="sector-table" class="accessible-table"><caption data-i18n="sector.caption">S&amp;P 500 섹터 ETF 기간 수익률</caption><thead></thead><tbody></tbody></table></div>
-        <footer class="panel-footer" id="sector-footer"></footer>
-        <p class="interpretation-note" data-i18n="sector.interpretation">플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.</p>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="correlation" aria-labelledby="corr-title">
-      <div class="section-heading">
-        <span class="section-index">32</span>
-        <div><p class="eyebrow">DAILY RETURNS · PEARSON</p><h2 id="corr-title" data-i18n="corr.title">자산군 상관관계</h2></div>
-        <label class="select-label"><span data-i18n="period.label">기간</span><select id="corr-period"><option value="3mo">3M</option><option value="6mo">6M</option><option value="1y" selected>1Y</option><option value="2y">2Y</option></select></label>
-      </div>
-      <div class="panel correlation-panel lazy-host" data-lazy="correlation">
-        <div id="corr-state" class="state-block" role="status" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div>
-        <div id="corr-table-wrap" class="table-scroll" hidden></div>
-        <footer class="panel-footer"><span data-i18n="corr.note">서로 다른 시장 시간대는 동시 일간 수익률 상관을 왜곡할 수 있습니다.</span><span data-i18n="corr.scale">+1은 같은 방향, 0은 약한 선형 관계, −1은 반대 방향입니다. 상관은 인과관계가 아닙니다.</span></footer>
-      </div>
-    </section>
 
     <section class="methodology" aria-labelledby="method-title">
       <p class="eyebrow">DATA POLICY</p>
@@ -220,6 +136,7 @@
       <footer></footer>
     </article>
   </template>
+  <script>window.MULMIT_PAGE = "kr";</script>
   <script src="/static/monitor.js?v=20260818-3" defer></script>
 </body>
 </html>

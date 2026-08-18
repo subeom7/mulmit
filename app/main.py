@@ -141,11 +141,22 @@ if config.STATIC_DIR.is_dir():
 
 @app.get("/", include_in_schema=False)
 def index() -> FileResponse:
-    return FileResponse(config.STATIC_DIR / "monitor.html")
+    return FileResponse(config.STATIC_DIR / "landing.html")
+
+
+@app.get("/kr", include_in_schema=False)
+def korea_page() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "kr.html")
+
+
+@app.get("/us", include_in_schema=False)
+def us_page() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "us.html")
 
 
 @app.get("/monitor", include_in_schema=False)
 def market_monitor() -> FileResponse:
+    """분리 전의 통합 모니터. 페이지 레이어의 기준 구현으로 남겨 둔다."""
     return FileResponse(config.STATIC_DIR / "monitor.html")
 
 

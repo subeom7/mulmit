@@ -6,14 +6,24 @@ from app import config, ingest
 from app.main import app
 
 
-def test_public_default_serves_monitor_and_keeps_analytics_route(db):
+def test_public_default_serves_split_pages_and_keeps_analytics_route(db):
     client = TestClient(app)
 
     root = client.get("/")
+    korea = client.get("/kr")
+    us = client.get("/us")
+    legacy = client.get("/monitor")
     analytics = client.get("/analytics")
 
     assert root.status_code == 200
-    assert "Market Monitor · Mulmit" in root.text
+    assert 'window.MULMIT_PAGE = "landing"' in root.text
+    assert korea.status_code == 200
+    assert 'window.MULMIT_PAGE = "kr"' in korea.text
+    assert us.status_code == 200
+    assert 'window.MULMIT_PAGE = "us"' in us.text
+    # The pre-split combined monitor stays as the page layer's reference.
+    assert legacy.status_code == 200
+    assert "MULMIT_PAGE" not in legacy.text
     assert analytics.status_code == 200
     assert 'id="ticker"' in analytics.text
 
