@@ -489,11 +489,12 @@ notes: >
 | 현재 상태 | `approved` |
 | 코드 위치 | `app/providers/fsc.py`, `app/ingest.py`, `tests/test_fsc_provider.py` |
 | 배포 기본값 | `FSC_ENABLED=false`, `FSC_API_KEY=` |
-| 현재 사용 | 코스피·코스닥 지수 종가, 삼성전자·SK하이닉스 카드, **전 종목 하루 스냅샷**(검색 로스터, 일 1회), **요청 기반 개별 종목 5년 종가**(`/api/kr/*` 분석) |
+| 현재 사용 | 코스피·코스닥 지수 종가, 삼성전자·SK하이닉스 카드, **전 종목 하루 스냅샷**(검색 로스터, 일 1회), **요청 기반 개별 종목 5년 종가**(`/api/kr/*` 분석), **ETF 하루 스냅샷**(`/api/kr/etf` 보드 — 종가·NAV·괴리율, 일 1회) |
 | 기술 비용 | 무료. data.go.kr 활용신청으로 키 발급 |
 | 갱신 | 일 1회. 기준일 **다음 영업일 13시(KST) 이후** 공개. 실시간 아님 |
 | attribution | `출처: 금융위원회 (공공데이터포털 data.go.kr)`. `rights.notice`로 전달 |
-| 공식 근거 | [주식시세정보](https://www.data.go.kr/data/15094808/openapi.do), [지수시세정보](https://www.data.go.kr/data/15094807/openapi.do), [KRX상장종목정보](https://www.data.go.kr/data/15094775/openapi.do) |
+| 공식 근거 | [주식시세정보](https://www.data.go.kr/data/15094808/openapi.do), [지수시세정보](https://www.data.go.kr/data/15094807/openapi.do), [KRX상장종목정보](https://www.data.go.kr/data/15094775/openapi.do), [증권상품시세정보](https://www.data.go.kr/data/15094806/openapi.do) |
+| 예비 승인분 | 금융위원회_채권시세정보·금융위원회_일반상품시세정보 — 2026-08-18 활용신청 승인(만료 2028-08-18), 아직 미사용. 국고채·금현물 카드 후보(구현 시 데이터셋 URL·스펙 검증 후 이 표에 승격) |
 
 **§3.4의 KRX lane과 혼동하지 않는다.** 원 데이터는 같은 거래소에서 나오지만 허락의
 근거가 다르다. KRX OPEN API 약관은 비상업 이용으로 한정하고 제3자 제공을 금지하며,
@@ -969,6 +970,8 @@ notes: "No confidential contract language here"
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
 | 2026-08-18 | 한국 24시간 참고가 섹션(`/api/kr/overnight`) 추가 — 기존 세 lane의 결합(HIP-3 마크 × H.10 공식환율 × FSC 기준가), 신규 소스·권리 없음. HIP-3 게이트를 그대로 타고 환율·기준가 날짜를 값과 함께 표기, 김프 조정 없음 명시. 모니터를 한국/미국·글로벌 존으로 재배치, 합성 참고값 카드 2장은 이 섹션이 대체. 계획서 `docs/PLAN_KR_SECTIONS.md` | Claude assisted |
+| 2026-08-18 | ETF 보드(`/api/kr/etf`) 추가 — 금융위원회_증권상품시세정보 활용신청 승인(자동승인, 만료 2028-08-18) 후 기존 FSC lane·키로 하루 스냅샷 수집. 괴리율 = 종가÷NAV−1, 같은 기준일 공표값 두 개에서만 계산·NAV 0은 결측. 채권·일반상품시세정보도 함께 승인(미사용 보관) | Claude assisted |
+| 2026-08-18 | 모니터를 랜딩·`/kr`·`/us` 세 페이지로 분리(P1) — 데이터·권리 변경 없음, 페이지 구성 레이어. React 전환 보류 판정은 `docs/ROADMAP.md` | Claude assisted |
 | 2026-08-18 | **St. Louis Fed STLFSI4 서면 승인 수신** — FRED API 경유, 지정 인용문+접근일, 접근 유료화 금지, 로고·보증 금지(§3.3). `rights.citation` 구현, FRED lane 운영 활성화 결정. 동승 계열은 ICSA·DCOILWTICO(미 연방정부 저작물)뿐, 제3자 계열은 `license_required` 유지 | Claude assisted |
 | 2026-08-18 | **Hyperliquid 지원팀 회신** — 플랫폼 permissionless·공개 API 안내, HIP-3 피드는 xyz에 문의 안내. 명시적 허락 아님, xyz 회신 대기·재검토일 유지(§4.1) | Claude assisted |
 | 2026-08-18 | **Tiingo 견적 회신** — 재배포 최저 월 $150(Bootstrap Pilot), $30 티어는 공개 표시 불가. 예산 초과로 미국 EOD 재표시 보류 확정(§6) | Claude assisted |

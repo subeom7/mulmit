@@ -34,6 +34,7 @@ from . import config, data_rights, store
 from .providers.base import DataError, DataUnavailable, RateLimited
 from .providers.fsc import (
     FSC_ATTRIBUTION,
+    FSC_ETF_DATASET_URL,
     FSC_PROVIDER_ID,
     FSC_PUBLISHER,
     FSC_PUBLISHER_URL,
@@ -341,6 +342,69 @@ def index_family() -> dict[str, Any]:
             },
         ],
         "source": _source_block(),
+    }
+
+
+class KrEtfUnavailable(RuntimeError):
+    """The ETF snapshot is empty and cannot be filled right now."""
+
+
+ETF_BOARD_LIMIT = 20
+
+
+def _ensure_etf_snapshot() -> dict[str, Any]:
+    meta = store.kr_etf_snapshot_meta()
+    if meta["count"]:
+        return meta
+    if not config.FSC_API_KEY:
+        raise KrEtfUnavailable
+    with _fetch_lock:
+        meta = store.kr_etf_snapshot_meta()
+        if meta["count"]:
+            return meta
+        bas_dt, rows = _provider().fetch_etf_day_snapshot()
+        store.save_kr_etf_snapshot(rows, bas_dt)
+        log.info("국내 ETF 스냅샷 최초 수집: %s일자 %d종목", bas_dt, len(rows))
+        return store.kr_etf_snapshot_meta()
+
+
+def _etf_row(row: dict[str, Any]) -> dict[str, Any]:
+    close, nav = row.get("clpr"), row.get("nav")
+    # 괴리율 = 종가 ÷ NAV − 1. 같은 기준일의 공표값 두 개에서만 계산하고,
+    # 어느 한쪽이 없으면 null로 둔다 — 채워 넣지 않는다.
+    premium = round((close / nav - 1) * 100, 2) if close is not None and nav else None
+    return {
+        "code": row["srtn_cd"],
+        "name": row["itms_nm"],
+        "close": close,
+        "change": row.get("vs"),
+        "change_percent": row.get("flt_rt"),
+        "nav": nav,
+        "premium_percent": premium,
+        "index_name": row.get("bss_idx_idx_nm"),
+        "volume": row.get("trqu"),
+        "value": row.get("tr_prc"),
+        "market_cap": row.get("mrkt_tot_amt"),
+        "net_assets": row.get("n_ppt_tot_amt"),
+    }
+
+
+def etf_board() -> dict[str, Any]:
+    """The ETF board: the day's most-traded funds with NAV premium/discount."""
+    _require_lane()
+    meta = _ensure_etf_snapshot()
+    rows = store.load_kr_etf_snapshot()
+    rows.sort(key=lambda row: row.get("tr_prc") or 0.0, reverse=True)
+    return {
+        "as_of": meta["bas_dt"],
+        "total_listed": len(rows),
+        "ranking": {"ko": "거래대금 상위", "en": "Top by traded value"},
+        "rows": [_etf_row(row) for row in rows[:ETF_BOARD_LIMIT]],
+        "premium_note": {
+            "ko": "괴리율 = 종가 ÷ NAV − 1. 같은 기준일에 공표된 두 값에서 계산하며, NAV가 없으면 비웁니다.",
+            "en": "Premium = close ÷ NAV − 1, from two values published for the same date; blank when NAV is absent.",
+        },
+        "source": {**_source_block(), "url": FSC_ETF_DATASET_URL},
     }
 
 

@@ -63,6 +63,8 @@ FSC_PORTAL_URL = "https://www.data.go.kr/"
 FSC_STOCK_DATASET_URL = "https://www.data.go.kr/data/15094808/openapi.do"
 FSC_INDEX_DATASET_URL = "https://www.data.go.kr/data/15094807/openapi.do"
 FSC_LISTED_DATASET_URL = "https://www.data.go.kr/data/15094775/openapi.do"
+# 증권상품시세정보(ETF·ETN·ELW). 같은 lane·키·약관 등급 — 활용신청 2026-08-18 승인.
+FSC_ETF_DATASET_URL = "https://www.data.go.kr/data/15094806/openapi.do"
 FSC_TERMS_URL = FSC_STOCK_DATASET_URL
 
 # Attribution is not demanded by the "no restriction" tier, but naming the
@@ -79,6 +81,7 @@ PUBLICATION_HOUR_KST = 13
 STOCK_ENDPOINT = "GetStockSecuritiesInfoService/getStockPriceInfo"
 INDEX_ENDPOINT = "GetMarketIndexInfoService/getStockMarketIndex"
 LISTED_ENDPOINT = "GetKrxListedInfoService/getItemInfo"
+ETF_ENDPOINT = "GetSecuritiesProductInfoService/getETFPriceInfo"
 
 SUCCESS_CODE = "00"
 # Reported inside a 200 body, not as an HTTP status.
@@ -549,6 +552,58 @@ class FscProvider:
             })
         if not snapshot:
             raise DataUnavailable("FSC index snapshot parsed to zero usable rows")
+        return day.strftime("%Y-%m-%d"), snapshot
+
+    def fetch_etf_day_snapshot(
+        self, *, max_probe_days: int = 10
+    ) -> tuple[str, list[dict[str, Any]]]:
+        """Return ``(bas_dt, rows)`` for every listed ETF on the latest trading day.
+
+        One day of the securities-product dataset is the whole ETF board —
+        close, day change, NAV, traded value, market cap and the underlying
+        index name — so a premium/discount against NAV can be shown from two
+        published same-day values without collecting any history.
+        """
+        day = _kst_today()
+        for _ in range(max_probe_days):
+            probe = self._get(
+                ETF_ENDPOINT,
+                {"basDt": day.strftime("%Y%m%d"), "numOfRows": "1", "pageNo": "1"},
+            )
+            total = _parse_number(probe.get("totalCount"))
+            if total and total > 0:
+                break
+            day -= dt.timedelta(days=1)
+        else:
+            raise DataUnavailable(
+                f"FSC published no ETF trading day in the last {max_probe_days} days"
+            )
+
+        rows = self._paged_rows(ETF_ENDPOINT, {"basDt": day.strftime("%Y%m%d")})
+        snapshot = []
+        for row in rows:
+            code = str(row.get("srtnCd") or "").strip()
+            name = str(row.get("itmsNm") or "").strip()
+            if not code or not name:
+                continue
+            snapshot.append({
+                "srtn_cd": code,
+                "itms_nm": name,
+                "clpr": _parse_number(row.get("clpr")),
+                "vs": _parse_number(row.get("vs")),
+                "flt_rt": _parse_number(row.get("fltRt")),
+                # NAV가 아직 산출되지 않은 신규 상장분은 0으로 온다. 0 NAV는
+                # 값이 아니므로 결측으로 다룬다 — 괴리율이 무한대가 되면 안 된다.
+                "nav": _positive_or_none(_parse_number(row.get("nav"))),
+                "trqu": _parse_number(row.get("trqu")),
+                "tr_prc": _parse_number(row.get("trPrc")),
+                "mrkt_tot_amt": _parse_number(row.get("mrktTotAmt")),
+                "n_ppt_tot_amt": _parse_number(row.get("nPptTotAmt")),
+                "bss_idx_idx_nm": str(row.get("bssIdxIdxNm") or "").strip() or None,
+                "bss_idx_clpr": _parse_number(row.get("bssIdxClpr")),
+            })
+        if not snapshot:
+            raise DataUnavailable("FSC ETF snapshot parsed to zero usable rows")
         return day.strftime("%Y-%m-%d"), snapshot
 
     def _series_result(

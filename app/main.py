@@ -353,6 +353,25 @@ def kr_index_family(request: Request, response: Response) -> dict:
     return payload
 
 
+@app.get("/api/kr/etf")
+@limiter.limit(config.RATE_LIMIT)
+def kr_etf_board(request: Request, response: Response) -> dict:
+    """ETF 보드: 거래대금 상위와 NAV 괴리율. 하루치 스냅샷만 읽는다."""
+    try:
+        payload = kr_stocks.etf_board()
+    except kr_stocks.KrStockDisabled as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=data_rights.KR_STOCK_DISABLED,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    except (kr_stocks.KrEtfUnavailable, DataUnavailable, RateLimited) as exc:
+        raise HTTPException(status_code=503, detail="ETF snapshot unavailable") from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "Financial Services Commission (data.go.kr)"
+    return payload
+
+
 @app.get("/api/kr/overnight")
 @limiter.limit(config.RATE_LIMIT)
 def kr_overnight(request: Request, response: Response) -> dict:

@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark light">
   <meta name="description" content="삼성전자·SK하이닉스·현대차 24시간 참고가, 코스피 공식 종가와 지수군, 국민연금 대량보유(5%) 공시 — 한국 시장 대시보드">
   <title>한국 시장 — 24시간 참고가 · 코스피 지수군 | Mulmit</title>
-  <link rel="stylesheet" href="/static/monitor.css?v=20260818-3">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260818-4">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -69,6 +69,17 @@
         <p class="section-copy" data-i18n="kridx.copy" style="margin:0 0 12px">대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 52주 범위까지 한 표에서 봅니다.</p>
         <div id="kridx-body"></div>
         <footer class="panel-footer" id="kridx-footer"></footer>
+      </div>
+    </section>
+
+    <section class="dashboard-section" id="kr-etf" hidden aria-labelledby="kre-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">KOREA · ETF BOARD · T+1</p><h2 id="kre-title" data-i18n="kre.title">ETF 보드</h2></div>
+      </div>
+      <div class="panel">
+        <p class="section-copy" data-i18n="kre.copy" style="margin:0 0 12px">거래대금 상위 ETF의 종가·NAV·괴리율입니다. 장 마감 확정값이며 실시간이 아닙니다.</p>
+        <div id="kre-body"></div>
+        <footer class="panel-footer" id="kre-footer"></footer>
       </div>
     </section>
 
@@ -137,6 +148,6 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "kr";</script>
-  <script src="/static/monitor.js?v=20260818-3" defer></script>
+  <script src="/static/monitor.js?v=20260818-4" defer></script>
 </body>
 </html>
