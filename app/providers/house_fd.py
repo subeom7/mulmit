@@ -139,6 +139,10 @@ def parse_ptr_text(text: str) -> tuple[list[dict[str, Any]], int]:
     누적된 텍스트에서 온다. 자산명이 비었거나 날짜·금액이 섞여 있으면 그
     거래는 싣지 않는다 — 개수 차이는 호출자가 상태로 보고한다.
     """
+    # pypdf 버전에 따라 추출 텍스트에 NUL 등 제어문자가 끼어든다(운영 실측:
+    # "P\x00\x00 T\x00…"). \s에 잡히지 않아 모든 스크럽을 비껴가므로 먼저 지운다.
+    text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", " ", text)
+
     transactions: list[dict[str, Any]] = []
     signatures = 0
     asset_parts: list[str] = []
