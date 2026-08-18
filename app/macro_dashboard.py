@@ -307,6 +307,30 @@ def _license_required_payload(spec: FredSeriesSpec) -> dict[str, Any]:
     }
 
 
+_MONTHS_EN = (
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+)
+
+
+def _citation_for(
+    spec: FredSeriesSpec, provider_id: str, fetched_at: float | None
+) -> str | None:
+    """The publisher-prescribed citation, dated to when the data was retrieved.
+
+    St. Louis Fed's written reply (2026-08-18) asks that the suggested citation
+    accompany the series with the access date, because economic series are
+    revised and the retrieval date is part of the reference.
+    """
+    if not spec.citation or provider_id != FRED_PROVIDER_ID:
+        return None
+    moment = (
+        dt.datetime.fromtimestamp(fetched_at, dt.UTC) if fetched_at else dt.datetime.now(dt.UTC)
+    )
+    date_text = f"{_MONTHS_EN[moment.month - 1]} {moment.day}, {moment.year}"
+    return spec.citation.format(date=date_text)
+
+
 def _requires_license(spec: FredSeriesSpec, record: dict[str, Any] | None = None) -> bool:
     """Fail closed unless the effective rights verdict is an explicit approval."""
     return _rights_status_for(spec, record) != data_rights.SERVABLE_ROW_RIGHTS
@@ -441,6 +465,7 @@ def _series_payload(
             "copyrighted": bool(record.get("copyrighted")),
             "public_display": True,
             "notice": _provider_notice(provider_id),
+            "citation": _citation_for(spec, provider_id, fetched_at),
             "provider": provider_id,
             "series_notes": str(record.get("notes") or "")[:2000],
         },

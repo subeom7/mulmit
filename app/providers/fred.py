@@ -57,6 +57,9 @@ class FredSeriesSpec:
     publisher_url: str
     # Fail closed: every publicly redistributed series must opt in explicitly.
     public_web: bool = False
+    # Publisher-prescribed citation, with ``{date}`` for the retrieval date.
+    # Present only where the owner asked for a specific form in writing.
+    citation: str | None = None
 
     @property
     def series_url(self) -> str:
@@ -102,12 +105,21 @@ FRED_SERIES = (
         "ICE Data Indices, LLC", "https://www.ice.com/market-data/indices",
         public_web=False,
     ),
+    # St. Louis Fed granted public display in writing (2026-08-18): FRED API
+    # access, the suggested citation with retrieval date (revisions make the
+    # access date part of the reference), no charging for access to the series,
+    # no Bank marks or implied endorsement.
     FredSeriesSpec(
         "STLFSI4", "financial_stress", "market", "금융스트레스지수",
         "Financial Stress Index", "미국 금융시장 전반의 스트레스 수준",
         "Broad stress conditions in U.S. financial markets", _ST_LOUIS_FED,
         _ST_LOUIS_FED_URL,
         public_web=True,
+        citation=(
+            "Federal Reserve Bank of St. Louis, St. Louis Fed Financial Stress "
+            "Index [STLFSI4], retrieved from FRED, Federal Reserve Bank of "
+            "St. Louis; https://fred.stlouisfed.org/series/STLFSI4, {date}."
+        ),
     ),
     FredSeriesSpec(
         "DGS10", "treasury_10y", "macro", "미국 10년물 금리", "10-Year Treasury Yield",

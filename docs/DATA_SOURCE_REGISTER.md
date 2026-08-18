@@ -153,12 +153,30 @@ notes: >
 | 항목 | 기록 |
 |---|---|
 | 내부 ID | `fred_legacy_adapter` |
-| 현재 상태 | `disabled` |
+| 현재 상태 | **조건부 승인 — 2026-08-18 활성화 결정** (아래 서면 회신) |
 | 코드 위치 | `app/providers/fred.py`, `app/macro_dashboard.py`, `app/store.py`, `app/ingest.py` |
-| 배포 기본값 | `FRED_ENABLED=false` |
-| 현재 위험 | 수집 플래그가 false여도 DB에 과거 행이 있으면 macro route가 읽어 공개할 수 있음 |
-| 공개 결정 | 서면 허가 전 FRED 경유 수집·저장·캐시·제3자 제공을 하지 않음 |
-| 공식 근거 | [FRED API Terms](https://fred.stlouisfed.org/docs/api/terms_of_use.html), [FRED Terms](https://fred.stlouisfed.org/legal/terms/) |
+| 배포 기본값 | `FRED_ENABLED=false` (운영은 .env에서 명시적으로 켠다) |
+| 현재 위험 | 수집 플래그가 false여도 DB에 과거 행이 있으면 macro route가 읽어 공개할 수 있음 — `data_rights` lane 게이트로 해소됨 |
+| 공개 결정 | STLFSI4 서면 허가 수신(2026-08-18). `public_web=True` 계열만 수집·서빙, 제3자 권리 계열(VIXCLS·BAMLH0A0HYM2·PCOPPUSDM)은 `license_required` 유지 |
+| 공식 근거 | [FRED API Terms](https://fred.stlouisfed.org/docs/api/terms_of_use.html), [FRED Terms](https://fred.stlouisfed.org/legal/terms/), [금지 용도](https://fred.stlouisfed.org/legal#prohibitions) |
+
+**서면 회신 (2026-08-18, FRED Team, 이메일 원문은 운영자 메일함에 보관 —
+회신 자체를 인용·공표하지 않는다는 푸터 조건에 따라 여기엔 요지만 적는다):**
+2026-08-17 발송한 STLFSI4 공개 표시 문의에 대한 답. ① 우리 사용 방식은
+acceptable, 금지 용도 목록 준수. ② 접근은 FRED API로. ③ 지정 인용문을 접근일과
+함께 표기 — 경제 시계열은 개정되므로 접근일이 인용의 일부다. ④ **이 시리즈에
+대한 접근을 유료화할 수 없다**(광고·스폰서 유무와 무관). ⑤ 세인트루이스 연은의
+로고·상표 사용 금지, 보증·추천 암시 금지.
+
+구현 반영: `FredSeriesSpec.citation`(STLFSI4)이 접근일을 채워
+`rights.citation`으로 나가고, 모니터 attribution 블록이 이를 표기한다. Mulmit은
+무료 접근이며(광고는 조건과 무관하게 허용됨), 연은 로고·마크는 쓰지 않고 텍스트
+출처 표기만 한다.
+
+lane을 켜면 실제로 새로 서빙되는 계열은 셋이다: `STLFSI4`(이번 허가),
+`ICSA`(DOL ETA, 미 연방정부 저작물), `DCOILWTICO`(EIA, 미 연방정부 저작물) —
+나머지는 owner guard(연준 이사회·NY Fed·BLS lane이 이미 소유) 또는
+`license_required`로 막혀 있다.
 
 즉시 필요한 수정:
 
@@ -657,8 +675,8 @@ Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로
 
 | 수신처 | 막고 있는 것 | 상태 | 초안 |
 |---|---|---|---|
-| trade.xyz **및** Hyperliquid (수신처 2곳) | 자산 카드 전체의 역사 차트. `historical_storage: false`라 현재는 최신값만 보인다 | **발송 완료 2026-08-17** (양쪽 각각). 회신 대기. `DS-2026-001`, `recheck_at: 2026-09-16` | [`INQUIRY_HYPERLIQUID_TRADE_XYZ.md`](INQUIRY_HYPERLIQUID_TRADE_XYZ.md) |
-| Federal Reserve Bank of St. Louis | `financial_stress`(STLFSI4). 뉴욕 연준과 같은 구조 — 연방기관이 아니라 저작권을 주장하지만, 명시적 이용허락을 주는지가 관건이다. 시리즈 태그가 "Copyrighted: Citation Required"(2026-08-17 확인)라 인용이 완결 조건인지 서면으로 묻는다. FRED 경유 복제는 하지 않는다 | **발송 완료 2026-08-17** (FRED 문의 폼, Permissions to use the Data). 회신 대기 | [`INQUIRY_STLOUISFED_STLFSI.md`](INQUIRY_STLOUISFED_STLFSI.md) |
+| trade.xyz **및** Hyperliquid (수신처 2곳) | 자산 카드 전체의 역사 차트. `historical_storage: false`라 현재는 최신값만 보인다 | **Hyperliquid 지원팀 회신 2026-08-18**: 플랫폼은 permissionless이며 공개 API 조회는 누구나 가능, 기술 문의는 Discord, **HIP-3 피드 관련은 xyz 팀에 직접 문의하라고 안내** — 권리 판단을 바꾸는 명시적 허락은 아니다. **xyz 회신 대기 유지**. `DS-2026-001`, `recheck_at: 2026-09-16` | [`INQUIRY_HYPERLIQUID_TRADE_XYZ.md`](INQUIRY_HYPERLIQUID_TRADE_XYZ.md) |
+| Federal Reserve Bank of St. Louis | `financial_stress`(STLFSI4). 뉴욕 연준과 같은 구조 — 연방기관이 아니라 저작권을 주장하지만, 명시적 이용허락을 주는지가 관건이다. 시리즈 태그가 "Copyrighted: Citation Required"(2026-08-17 확인)라 인용이 완결 조건인지 서면으로 묻는다. FRED 경유 복제는 하지 않는다 | **회신 수신 2026-08-18 — 조건부 승인** (조건과 구현은 §3.3에 기록). 이 항목은 종결 | [`INQUIRY_STLOUISFED_STLFSI.md`](INQUIRY_STLOUISFED_STLFSI.md) |
 | 한국거래소 | 실시간 시세와 KRX 통계정보 전체(§3.4). 장 마감값은 §3.9로 이미 해결됨 | 초안 없음. 우선순위 낮아짐 | — |
 | Cboe | VIX·SKEW·VVIX·OVX·Put/Call | 서면 허가가 명시적으로 필요하고 월 예산 안의 근거가 없어 **문의하지 않기로** 결정 | — |
 
@@ -707,7 +725,7 @@ alias를 정리해 proxy와 exact가 서로 다른 카드에 붙도록 먼저 �
 | UI key | 기존 ID | 원 발행기관 후보 | 상태 | 메모 |
 |---|---|---|---|---|
 | `yield_curve` | `RIFLGFCY10_N.B - RIFLGFCY02_N.B` | **Fed Board (계산됨)** | `approved` | 양쪽이 모두 게시한 날짜로만 계산 |
-| `financial_stress` | `STLFSI4` | St. Louis Fed 별도 permission 또는 대체 자체 지수 | `license_required` | FRED 우회 복제 금지. 문의 대상(§4.1) |
+| `financial_stress` | `STLFSI4` | **St. Louis Fed 서면 허가 (2026-08-18)** | `approved` | FRED API 경유 수집, 지정 인용문+접근일 표기, 접근 유료화 금지, 로고·보증 암시 금지 (§3.3) |
 | `dollar_index_broad` | `JRXWTFB_N.B` | **Fed Board H.10 (연결됨)** | `approved` | 교역가중 광의 달러지수, 2006=100. ICE `dxy`와 별도 카드이며 값 비교 불가 |
 | `dollar_index_afe` | `JRXWTFN_N.B` | **Fed Board H.10 (연결됨)** | `approved` | 선진 교역상대국 |
 | `dollar_index_eme` | `JRXWTFO_N.B` | **Fed Board H.10 (연결됨)** | `approved` | 신흥 교역상대국 |
@@ -808,7 +826,7 @@ CNN Fear & Greed는 명칭도 점수도 복제하지 않는다. 그 지수의 7�
 |---|---|---|---|---|
 | Cboe Global Indices (CGI) | 라이선스 **월 USD 1,000부터**(DataShop 안내, 2026-08-17 확인). VIX 값은 CGI 보유자에게 보조 파일로 제공. CGI 없이 받는 Index Quotes는 T+1이며 재배포권 아님 | **예산의 약 28배** — 불가 | 공개 재표시가 정확히 이 라이선스 클래스 | [Global Indices Feed](https://www.cboe.com/data/global-indices-feed/), [DataShop](https://datashop.cboe.com/) |
 | ICE Data Indices | 공개 가격표 없음, 기관 대상 개별 견적 | 예산 내 근거 없음 | 재배포 계약 필요(§3.12) | [ICE Data Indices](https://www.ice.com/market-data/indices) |
-| **Tiingo** | Starter $0·Power $30·내부상업 $50/월 — 전부 "Internal Use Only, may not display or share". **재배포는 sales@tiingo.com 별도 정액 라이선스** — "flat rate, predictable" 문구로 웹·앱 사례를 명시적으로 환영 | 표준 티어는 목적 부적합, 재배포 정액가는 **견적 필요** | **견적 문의 발송 2026-08-18**, 회신 대기. 초안·기록: [`INQUIRY_US_EOD_VENDORS.md`](INQUIRY_US_EOD_VENDORS.md) | [Pricing](https://www.tiingo.com/about/pricing), [ToS](https://app.tiingo.com/tos/) |
+| **Tiingo** | **견적 회신 2026-08-18 (CEO Rishi Singh)**: 재배포 라이선스 최저 티어는 비공개 "Bootstrap Pilot" **월 $150** (5인 미만 인디 프로젝트, 사용자당·거래소 수수료 $0, 광고 유무 무관 정액). Individual Power $30/월은 약관상 개인·내부 연구 전용 — 공개 사이트의 가격 차트·역사 테이블·종가 표시 **불가** | **월 예산(50,000원 ≈ $36)의 4배 초과 — 불가** | 재배포 최저가 확인으로 조사 종결. 예산 상향 시 재문의 환영 문구 있음. 기록: [`INQUIRY_US_EOD_VENDORS.md`](INQUIRY_US_EOD_VENDORS.md) | [Pricing](https://www.tiingo.com/about/pricing), [ToS](https://app.tiingo.com/tos/) |
 | EODHD | All-World $19.99/월. 비전문 이용자는 "selling, reselling, retransmitting, redistributing, **displaying**" 금지. Professional은 **사전 서면 승인** 요청 가능 | 표준 티어 부적합 | display가 금지 열거에 직접 들어 있음 — 승인 경로는 있으나 문의형 | [Terms](https://eodhd.com/financial-apis/terms-conditions) |
 | Alpha Vantage | 약관(PDF, 2026-08-18 확인): "personal, non-commercial use, **unless you and Alpha Vantage have agreed otherwise in writing**". 타인에게 정보를 제공하는 활동은 상업 이용으로 분류 | 불확실 | 서면 합의 없이는 공개 표시 불가 | [Terms](https://www.alphavantage.co/terms_of_service/) |
 | Twelve Data Business | 외부 표시용 business/venture가 월 USD 149 이상으로 안내됨 | 예산 초과 | business 계약 범위 확인 필요 | [Business pricing](https://twelvedata.com/pricing-business), [Commercial vs personal use](https://support.twelvedata.com/en/articles/5332349-commercial-and-personal-usage) |
@@ -822,6 +840,7 @@ CNN Fear & Greed는 명칭도 점수도 복제하지 않는다. 그 지수의 7�
 - 계약서에 `public display`, `redistribution`, `derived data`, `caching`, `API to end users`가 명시되지 않으면 Mulmit 요구를 충족한 것으로 보지 않는다.
 - 첫 유료 결제 후보는 카드 수를 채우는 공급자가 아니라, 가장 필요한 소수 자산의 공개 표시 권리를 명확히 주는 공급자여야 한다.
 - **2026-08-18 조사 결론**: 자가결제 티어로 공개 재표시를 서면 허용하는 벤더는 없다. 전 벤더가 "내부 이용 + 재배포는 별도 문의" 구조다. 유일하게 열려 있는 다음 수는 **Tiingo 재배포 정액 라이선스 견적 문의**(무료)이며, EODHD 서면 승인 경로가 차선이다.
+- **2026-08-18 견적 회신로 확정**: 미국 EOD 재표시의 실측 최저가는 Tiingo **월 $150**이다. 현 예산으로 열리는 재표시 클래스는 없다는 결론이 견적으로 확인됐다. ADR 괴리율 등 미국 EOD 의존 기능은 예산이 월 $150 이상으로 상향되기 전까지 보류하며, 개인 열람용 티어($30)를 공개 재표시에 쓰는 클래스 착오는 하지 않는다.
 - 현재 데이터 구독비 지출은 0원으로 유지한다. 예산이 50,000원으로 상향된 뒤에도 이 표에서 그 금액으로 열리는 재표시 클래스는 없다 — 개인 열람용 싼 티어를 공개 재표시에 쓰는 것은 클래스 착오이며 구매하지 않는다.
 
 ## 7. 공급자 문의 템플릿
@@ -946,6 +965,9 @@ notes: "No confidential contract language here"
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
 | 2026-08-18 | 한국 24시간 참고가 섹션(`/api/kr/overnight`) 추가 — 기존 세 lane의 결합(HIP-3 마크 × H.10 공식환율 × FSC 기준가), 신규 소스·권리 없음. HIP-3 게이트를 그대로 타고 환율·기준가 날짜를 값과 함께 표기, 김프 조정 없음 명시. 모니터를 한국/미국·글로벌 존으로 재배치, 합성 참고값 카드 2장은 이 섹션이 대체. 계획서 `docs/PLAN_KR_SECTIONS.md` | Claude assisted |
+| 2026-08-18 | **St. Louis Fed STLFSI4 서면 승인 수신** — FRED API 경유, 지정 인용문+접근일, 접근 유료화 금지, 로고·보증 금지(§3.3). `rights.citation` 구현, FRED lane 운영 활성화 결정. 동승 계열은 ICSA·DCOILWTICO(미 연방정부 저작물)뿐, 제3자 계열은 `license_required` 유지 | Claude assisted |
+| 2026-08-18 | **Hyperliquid 지원팀 회신** — 플랫폼 permissionless·공개 API 안내, HIP-3 피드는 xyz에 문의 안내. 명시적 허락 아님, xyz 회신 대기·재검토일 유지(§4.1) | Claude assisted |
+| 2026-08-18 | **Tiingo 견적 회신** — 재배포 최저 월 $150(Bootstrap Pilot), $30 티어는 공개 표시 불가. 예산 초과로 미국 EOD 재표시 보류 확정(§6) | Claude assisted |
 | 2026-08-18 | 국민연금 대량보유(5%) 공시 섹션(`/api/kr/pension`) 추가 — 기존 DART lane(`DS-2026-008`) 재사용, 신규 소스·권리 없음. 공시검색(D001)에 제출인 필터가 없어 ingest 배치 전용으로 걷고 web은 저장분만 서빙, 보고서 단위 값을 원문 전달("-"는 null). 계획서 Phase B-1 | Claude assisted |
 | 2026-08-18 | Tiingo 재배포 라이선스 **견적 문의 발송** (sales@tiingo.com) | Claude assisted |
 | 2026-08-18 | 미국 EOD 벤더 조사 갱신 — Tiingo·EODHD·Alpha Vantage 약관 원문 확인. 자가결제 재표시 티어 부재 확인, Tiingo 견적 문의 초안 작성 | Claude assisted |
