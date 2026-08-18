@@ -80,6 +80,7 @@ const TEXT = {
     "ptr.typeP": "매수", "ptr.typeS": "매도", "ptr.typeSP": "일부 매도", "ptr.typeE": "교환",
     "ptr.ownerSP": "배우자", "ptr.ownerJT": "공동", "ptr.ownerDC": "자녀",
     "ptr.scanned": "거래 미추출 신고(수기·스캔) {count}건 — 원문에서 확인:", "ptr.pending": "상세 수집 대기 {count}건",
+    "ptr.partial": "일부 거래만 추출된 신고 {count}건 — 나머지는 원문 참조",
     "ptr.window": "최근 {days}일 신고 {total}건 · 거래 {tx}건 표시",
     "sector.title": "섹터 자금 흐름", "sector.caption": "S&P 500 섹터 ETF 기간 수익률", "sector.name": "섹터", "sector.return": "수익률", "sector.interpretation": "플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.",
     "tv.title": "S&P 500 종목 히트맵", "tv.embed": "외부 위젯", "tv.notice": "이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.",
@@ -139,6 +140,7 @@ const TEXT = {
     "ptr.typeP": "Purchase", "ptr.typeS": "Sale", "ptr.typeSP": "Partial sale", "ptr.typeE": "Exchange",
     "ptr.ownerSP": "Spouse", "ptr.ownerJT": "Joint", "ptr.ownerDC": "Dep. child",
     "ptr.scanned": "{count} paper filings without extracted trades — see the originals:", "ptr.pending": "{count} awaiting detail collection",
+    "ptr.partial": "{count} filings partially extracted — see the originals for the rest",
     "ptr.window": "{total} filings in the last {days} days · {tx} transactions shown",
     "sector.title": "Sector flow", "sector.caption": "S&P 500 sector ETF period returns", "sector.name": "Sector", "sector.return": "Return", "sector.interpretation": "Broader positive participation can confirm a wider advance. ETF returns are not the same thing as fund-flow dollars.",
     "tv.title": "S&P 500 constituent heatmap", "tv.embed": "Third-party widget", "tv.notice": "TradingView serves this embed directly; it is not Mulmit API data.",
@@ -1157,10 +1159,11 @@ function renderUsPtr() {
   section.hidden = false;
 
   const transactions = [];
-  const scanned = [], pending = [];
+  const scanned = [], pending = [], partial = [];
   for (const filing of filings) {
     if (filing.detail_status === "unavailable") scanned.push(filing);
     if (filing.detail_status === "pending") pending.push(filing);
+    if (filing.detail_status === "partial") partial.push(filing);
     for (const tx of filing.transactions || []) transactions.push({ filing, tx });
   }
   transactions.sort((a, b) => String(b.tx.date || b.filing.filed_date).localeCompare(String(a.tx.date || a.filing.filed_date)));
@@ -1230,6 +1233,11 @@ function renderUsPtr() {
     tx: String(shown.length),
   });
   const parts = [sourceLink, windowNote];
+  if (partial.length) {
+    const partialNote = document.createElement("span");
+    partialNote.textContent = t("ptr.partial", { count: String(partial.length) });
+    parts.push(partialNote);
+  }
   if (pending.length) {
     const pendingNote = document.createElement("span");
     pendingNote.textContent = t("ptr.pending", { count: String(pending.length) });

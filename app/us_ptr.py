@@ -31,7 +31,8 @@ from .providers.house_fd import (
 
 log = logging.getLogger(__name__)
 
-CACHE_KEY = "house_ptr_v1"
+# v2: 파서가 줄 중간 서명과 오염 검증을 배우면서 기존 상세를 전부 재파싱한다.
+CACHE_KEY = "house_ptr_v2"
 WINDOW_DAYS = 45
 MAX_FILINGS = 40
 # 한 주기에 새로 받는 PDF 수 상한. 나머지는 pending으로 남아 다음 주기에 채워진다.

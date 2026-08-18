@@ -60,23 +60,36 @@ EIGA_105C_NOTICE_KO = (
     "개인 신용평가, 정치·자선 자금모집에 사용하는 것은 금지됩니다."
 )
 
-# 전자 제출 PTR 텍스트의 거래 서명: 유형 + 거래일 + 신고일 (+ 금액 구간 시작).
-_SIG_LINE = re.compile(
-    r"^(?P<type>P|S \(partial\)|S|E)\s*"
+# 전자 제출 PTR 텍스트의 거래 서명: 유형 + 거래일 + 신고일 + 금액 구간.
+# 서버측 추출은 자산명과 서명을 한 줄에 합치기도 하므로 줄 중간에서도 찾는다.
+# 단, 유형 문자 앞이 글자면("CommonP …") 그 서명은 자산에 붙은 것으로 보고
+# 버린다 — 붙은 레이아웃을 쪼개려는 추측은 오보를 만든다.
+_SIG = re.compile(
+    r"(?<![A-Za-z])(?P<type>P|S \(partial\)|S|E)\s+"
     r"(?P<date>\d{2}/\d{2}/\d{4})\s*"
     r"(?P<notification>\d{2}/\d{2}/\d{4})\s*"
-    r"(?P<amount>\$[\d,]+.*)$"
+    # "-" 뒤 상한이 다음 줄로 넘어간 경우("$15,001 -")도 대시까지 잡아 두어야
+    # 하한만 남은 값이 정확한 금액처럼 보이지 않는다. 상한은 tail 병합이 잇는다.
+    r"(?P<amount>\$[\d,]+(?:\s*-\s*(?:\$[\d,]+)?)?)"
 )
 _AMOUNT_TAIL = re.compile(r"^\$[\d,]+\s*$")
 _OWNER_PREFIX = re.compile(r"^(?:\d{8,12})?\s*(?P<owner>SP|JT|DC)\s+")
-_TICKER = re.compile(r"\((?P<ticker>[A-Z][A-Z0-9.\-]{0,9})\)\s*\[")
+_TICKER = re.compile(r"\((?P<ticker>[A-Z][A-Z0-9.\-]{0,9})\)\s*\[?")
 _ASSET_CODE = re.compile(r"\[(?P<code>[A-Z]{2,3})\]")
 # 낱글자·두 글자 대문자 토큰만으로 된 줄은 뭉개진 구역 제목이다 ("P T R", "F I").
 _MANGLED_HEADING = re.compile(r"^[A-Z]{1,2}(?:\s+[A-Z]{1,2})*$")
+# 자산 앞에 섞여 들어온 제목 잔여물: 짧은 대문자 토큰이 3개 이상 이어지는 머리.
+_MANGLED_LEAD = re.compile(r"^(?:[A-Z]{1,2}\s+){3,}")
+_FILING_ID = re.compile(r"Filing ID #\d+\s*")
+# 검증 게이트: 자산명에 날짜나 금액이 남아 있으면 레이아웃이 섞인 것이다.
+_ASSET_POLLUTION = re.compile(r"\d{2}/\d{2}/\d{4}|\$[\d,]")
 _NOISE_PREFIXES = (
     "Clerk of the House", "* For the complete list", "ID Owner Asset",
     "Type", "Date Notification", "Date", "Amount Cap.", "Gains >", "$200?",
+    "Digitally Signed",
 )
+# "Filing ID #…"는 줄 전체가 아니라 토큰만 걷어낸다 — 같은 줄에 다음 거래의
+# 자산이 이어지는 추출이 실제로 있다(_clean_asset의 _FILING_ID 스크럽).
 
 HttpGet = Callable[[Request, float], bytes]
 
@@ -107,69 +120,82 @@ def _is_noise(line: str) -> bool:
     return bool(_MANGLED_HEADING.match(stripped))
 
 
-def parse_ptr_text(text: str) -> tuple[list[dict[str, Any]], int]:
-    """전자 PTR 텍스트에서 (거래 목록, 서명 줄 수)를 뽑는다.
+def _clean_asset(asset_text: str) -> tuple[str | None, str]:
+    """자산 버퍼에서 (소유자, 자산명)을 뽑고 알려진 잔여물을 걷어낸다."""
+    asset_text = _FILING_ID.sub("", asset_text)
+    asset_text = _MANGLED_LEAD.sub("", asset_text).strip()
+    owner = None
+    owner_match = _OWNER_PREFIX.match(asset_text)
+    if owner_match:
+        owner = owner_match.group("owner")
+        asset_text = asset_text[owner_match.end():].strip()
+    return owner, re.sub(r"\s+", " ", asset_text)
 
-    서명(유형+두 날짜+금액)이 있는 줄만 거래로 인정하고, 자산명은 직전
-    서명 이후 누적된 비메타 줄에서 온다. 자산명이 비면 그 거래는 싣지
-    않는다 — 개수 차이는 호출자가 상태로 보고한다.
+
+def parse_ptr_text(text: str) -> tuple[list[dict[str, Any]], int]:
+    """전자 PTR 텍스트에서 (거래 목록, 서명 수)를 뽑는다.
+
+    서명(유형+두 날짜+금액)을 줄 안 어디서든 찾고, 자산명은 직전 서명 이후
+    누적된 텍스트에서 온다. 자산명이 비었거나 날짜·금액이 섞여 있으면 그
+    거래는 싣지 않는다 — 개수 차이는 호출자가 상태로 보고한다.
     """
     transactions: list[dict[str, Any]] = []
     signatures = 0
-    asset_lines: list[str] = []
-    pending: dict[str, Any] | None = None
+    asset_parts: list[str] = []
+    tail_open = False  # 직전 서명의 금액이 "$X -"로 끝나 하한만 있는 상태
 
     for raw in text.splitlines():
         line = raw.strip()
-        if pending is not None:
+        if tail_open:
+            tail_open = False
             # 금액 구간이 줄바꿈으로 쪼개진 경우("$15,001 -" ↵ "$50,000")를 잇는다.
-            if _AMOUNT_TAIL.match(line):
-                pending["amount"] = f"{pending['amount']} {line}".strip()
-                transactions.append(pending)
-                pending = None
+            if transactions and _AMOUNT_TAIL.match(line):
+                transactions[-1]["amount"] = f"{transactions[-1]['amount']} {line}".strip()
                 continue
-            transactions.append(pending)
-            pending = None
         if _is_noise(line):
             continue
-        match = _SIG_LINE.match(line)
-        if match is None:
+        matches = list(_SIG.finditer(line))
+        if not matches:
             if ":" in line:  # 메타데이터 줄 (Name:, F S : New, S O : …)
                 continue
-            asset_lines.append(line)
+            if line:
+                asset_parts.append(line)
             continue
 
-        signatures += 1
-        asset_text = " ".join(asset_lines).strip()
-        asset_lines = []
-        if not asset_text:
-            continue  # 자산명 없는 거래는 싣지 않는다
-        owner = None
-        owner_match = _OWNER_PREFIX.match(asset_text)
-        if owner_match:
-            owner = owner_match.group("owner")
-            asset_text = asset_text[owner_match.end():].strip()
-        ticker_match = _TICKER.search(asset_text)
-        code_match = _ASSET_CODE.search(asset_text)
-        asset_name = _ASSET_CODE.sub("", asset_text).strip()
-        amount = re.sub(r"\s+", " ", match.group("amount")).strip()
-        row = {
-            "owner": owner,
-            "asset": asset_name,
-            "ticker": ticker_match.group("ticker") if ticker_match else None,
-            "asset_code": code_match.group("code") if code_match else None,
-            "type": match.group("type"),
-            "date": _iso(match.group("date")),
-            "notification_date": _iso(match.group("notification")),
-            "amount": amount,
-        }
-        if amount.endswith("-"):
-            pending = row  # 다음 줄에서 금액 하한/상한이 이어질 수 있다
-        else:
-            transactions.append(row)
+        cursor = 0
+        last_appended = False
+        for match in matches:
+            signatures += 1
+            prefix = line[cursor:match.start()].strip()
+            if prefix and ":" not in prefix:
+                asset_parts.append(prefix)
+            cursor = match.end()
+            owner, asset_text = _clean_asset(" ".join(asset_parts).strip())
+            asset_parts = []
+            asset_name = _ASSET_CODE.sub("", asset_text).strip()
+            if not asset_name or _ASSET_POLLUTION.search(asset_name):
+                last_appended = False
+                continue  # 비었거나 레이아웃이 섞인 자산은 싣지 않는다
+            ticker_match = _TICKER.search(asset_text)
+            code_match = _ASSET_CODE.search(asset_text)
+            amount = re.sub(r"\s+", " ", match.group("amount")).strip()
+            transactions.append({
+                "owner": owner,
+                "asset": asset_name,
+                "ticker": ticker_match.group("ticker") if ticker_match else None,
+                "asset_code": code_match.group("code") if code_match else None,
+                "type": match.group("type"),
+                "date": _iso(match.group("date")),
+                "notification_date": _iso(match.group("notification")),
+                "amount": amount,
+            })
+            last_appended = True
+        remainder = line[cursor:].strip()
+        if not remainder and last_appended and transactions[-1]["amount"].endswith("-"):
+            tail_open = True
+        elif remainder and ":" not in remainder:
+            asset_parts.append(remainder)
 
-    if pending is not None:
-        transactions.append(pending)
     return transactions, signatures
 
 

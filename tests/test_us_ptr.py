@@ -117,6 +117,53 @@ def test_parse_withholds_what_it_cannot_anchor():
     assert transactions == []
 
 
+# 운영 서버 추출에서 실제로 관측된 세 가지 오염 레이아웃 (2026-08-18, PR #41 직후).
+def test_parse_finds_signatures_mid_line_and_carries_the_remainder():
+    # Hern 20035134: 자산과 서명이 한 줄, 뒤이어 다음 거래의 소유자·자산이 붙는다.
+    text = (
+        "Diageo plc Common Stock (DEO) S 08/05/202608/05/2026$1,001 - $15,000 "
+        "JT Kenvue Inc. Common Stock (KVUE) S 08/05/202608/05/2026$1,001 - $15,000\n"
+    )
+    transactions, signatures = parse_ptr_text(text)
+
+    assert signatures == 2
+    assert [(t["ticker"], t["owner"]) for t in transactions] == [("DEO", None), ("KVUE", "JT")]
+    assert all(t["amount"] == "$1,001 - $15,000" for t in transactions)
+
+
+def test_parse_strips_joined_headings_and_filing_id_residue():
+    # Keating 20034898 서버 추출: 뭉개진 구역 제목들이 자산 앞에 한 줄로 붙는다.
+    text = (
+        "P        T           R      F     I           T            "
+        "CAPITAL ONE FINL CORP NOTE 7.62400% [CS]\n"
+        "P 06/30/202608/11/2026$1,001 - $15,000\n"
+        "Filing ID #20035134 JT Kenvue Inc. Common Stock (KVUE) [ST]\n"
+        "S 08/05/202608/05/2026$1,001 - $15,000\n"
+    )
+    transactions, signatures = parse_ptr_text(text)
+
+    assert signatures == 2
+    assert transactions[0]["asset"].startswith("CAPITAL ONE FINL CORP")
+    kenvue = transactions[1]
+    assert kenvue["owner"] == "JT"
+    assert kenvue["ticker"] == "KVUE"
+    assert "Filing ID" not in kenvue["asset"]
+
+
+def test_parse_withholds_interleaved_two_column_rows():
+    # Johnson 20035035: 자산명이 서명 좌우로 쪼개지고 유형 글자가 자산에 붙는다
+    # ("CommonP"). 쪼개서 복원하려는 추측 대신 해당 거래를 버리고 개수로 남긴다.
+    text = (
+        "CMS Energy Corporation CommonP 12/08/202501/09/2026$1,001 - $15,000 "
+        "Stock (CMS)  JT Deere & Company Common StockS 10/21/202511/06/2025 $1,001 - $15,000\n"
+    )
+    transactions, signatures = parse_ptr_text(text)
+
+    # 글자에 붙은 서명은 서명으로 세지 않고, 오염된 자산은 싣지 않는다.
+    assert transactions == []
+    assert signatures == 0
+
+
 def _index_zip(rows: list[dict]) -> bytes:
     inner = "﻿<FinancialDisclosure>" + "".join(
         "<Member>" + "".join(f"<{k}>{v}</{k}>" for k, v in row.items()) + "</Member>"
