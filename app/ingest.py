@@ -22,7 +22,7 @@ import logging
 import threading
 import time
 
-from . import config, data, store
+from . import config, data, kr_pension, store
 from .market_assets import ASSET_TICKERS, CORRELATION_TICKERS
 from .providers import DataUnavailable, RateLimited, get_provider
 from .providers.bls import (
@@ -512,6 +512,30 @@ def migrate_macro_store() -> dict:
     return result
 
 
+def refresh_kr_pension(*, force: bool = False) -> dict:
+    """국민연금 대량보유(5%) 공시 갱신. list.json 전체 페이징이라 배치 전용이다.
+
+    web 요청 경로는 저장된 결과만 읽으므로, 이 배치가 오래 실패하면 섹션은
+    데이터 없음으로 닫힌다 — 만들어 보여주지 않는다.
+    """
+    if not config.DART_ENABLED:
+        return {"skipped": "disabled"}
+    if not config.DART_API_KEY:
+        return {"skipped": "not_configured"}
+    if not force and store.load_report(kr_pension.CACHE_KEY, config.DART_MAX_AGE) is not None:
+        return {"skipped": "fresh"}
+    try:
+        result = kr_pension.refresh()
+        log.info("국민연금 대량보유 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("DART 허용량 — 국민연금 공시는 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("국민연금 대량보유 갱신 실패: %s", exc)
+        return {"failed": str(exc)}
+
+
 def refresh_insider_filings(*, force: bool = False) -> dict:
     """Refresh SEC EDGAR ownership filings for the watchlist and searched tickers.
 
@@ -654,6 +678,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         fedboard_result = {"skipped": "explicit_price_refresh"}
         bls_result = {"skipped": "explicit_price_refresh"}
         fsc_result = {"skipped": "explicit_price_refresh"}
+        pension_result = {"skipped": "explicit_price_refresh"}
         if automatic:
             fred_result = refresh_fred()
             nyfed_result = refresh_nyfed()
@@ -661,6 +686,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             bls_result = refresh_bls()
             fsc_result = refresh_fsc()
             insider_result = refresh_insider_filings()
+            pension_result = refresh_kr_pension()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
             "skipped": "legacy_price_data_disabled",
@@ -676,6 +702,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             "bls": bls_result,
             "fsc": fsc_result,
             "insider": insider_result,
+            "kr_pension": pension_result,
             "elapsed": round(time.time() - started, 2),
         }
         log.info("레거시 가격 수집 비활성화: %s", result)
@@ -692,12 +719,14 @@ def run_once(tickers: list[str] | None = None) -> dict:
             bls_result = refresh_bls()
             fsc_result = refresh_fsc()
             insider_result = refresh_insider_filings()
+            pension_result = refresh_kr_pension()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
                 "skipped": "backoff",
                 "resume_in": round(waiting),
                 "fred": fred_result,
                 "insider": insider_result,
+                "kr_pension": pension_result,
             }
 
     _refresh_macro()
@@ -749,6 +778,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     fedboard_result = {"skipped": "explicit_price_refresh"}
     bls_result = {"skipped": "explicit_price_refresh"}
     fsc_result = {"skipped": "explicit_price_refresh"}
+    pension_result = {"skipped": "explicit_price_refresh"}
     if automatic:
         fred_result = refresh_fred()
         nyfed_result = refresh_nyfed()
@@ -756,6 +786,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         bls_result = refresh_bls()
         fsc_result = refresh_fsc()
         insider_result = refresh_insider_filings()
+        pension_result = refresh_kr_pension()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged
@@ -765,6 +796,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     result["bls"] = bls_result
     result["fsc"] = fsc_result
     result["insider"] = insider_result
+    result["kr_pension"] = pension_result
     result["elapsed"] = round(time.time() - started, 2)
     log.info("수집 완료: %s", result)
     return result

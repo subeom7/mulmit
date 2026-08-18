@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark light">
   <meta name="description" content="Mulmit 글로벌 자산·거시경제·유동성 모니터">
   <title>Market Monitor · Mulmit</title>
-  <link rel="stylesheet" href="/static/monitor.css?v=20260818-1">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260818-2">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -78,6 +78,18 @@
         <p class="section-copy" data-i18n="kridx.copy" style="margin:0 0 12px">대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 52주 범위까지 한 표에서 봅니다.</p>
         <div id="kridx-body"></div>
         <footer class="panel-footer" id="kridx-footer"></footer>
+      </div>
+    </section>
+
+    <section class="dashboard-section" id="kr-pension" hidden aria-labelledby="krp-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">KOREA · NPS 5% FILINGS · DART</p><h2 id="krp-title" data-i18n="krp.title">국민연금 5% 공시</h2></div>
+        <span class="source-pill">DART</span>
+      </div>
+      <div class="panel">
+        <p class="section-copy" data-i18n="krp.copy" style="margin:0 0 12px">주식등의 대량보유 상황보고(5% 룰) 중 국민연금공단 제출분입니다. 보고서 단위의 보유비율 변동이며, 통상 한 달치가 월초에 일괄 공시됩니다. 일별 매매가 아닙니다.</p>
+        <div id="krp-body"></div>
+        <footer class="panel-footer" id="krp-footer"></footer>
       </div>
     </section>
 
@@ -206,6 +218,6 @@
       <footer></footer>
     </article>
   </template>
-  <script src="/static/monitor.js?v=20260818-1" defer></script>
+  <script src="/static/monitor.js?v=20260818-2" defer></script>
 </body>
 </html>
