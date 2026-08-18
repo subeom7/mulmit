@@ -438,6 +438,19 @@ def refresh_fsc(*, force: bool = False) -> dict:
             result["indices_error"] = str(exc)
             log.warning("국내 지수 스냅샷 갱신 실패: %s", exc)
 
+    # ETF 보드는 하루 한 번의 전체 스냅샷이다. 지수 스냅샷과 같은 주기를 탄다.
+    if force or store.kr_etf_snapshot_stale(config.FSC_MAX_AGE):
+        try:
+            bas_dt, rows = provider.fetch_etf_day_snapshot()
+            result["etfs"] = store.save_kr_etf_snapshot(rows, bas_dt)
+            log.info("국내 ETF 스냅샷 갱신: %s일자 %d종목", bas_dt, result["etfs"])
+        except RateLimited:
+            result["rate_limited"] += 1
+            log.warning("data.go.kr 일일 호출 한도 — ETF 스냅샷은 다음 주기에")
+        except Exception as exc:  # noqa: BLE001
+            result["etfs_error"] = str(exc)
+            log.warning("국내 ETF 스냅샷 갱신 실패: %s", exc)
+
     keys = [spec.series_key for spec in FSC_SERIES]
     targets = (
         keys

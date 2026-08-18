@@ -266,6 +266,27 @@ kr_index_snapshot = sa.Table(
     sa.Column("fetched_at", sa.Float, nullable=False),
 )
 
+# ETF 하루 스냅샷(증권상품시세정보). 종가·NAV·거래대금·기초지수명을 한 행에
+# 담으므로, ETF 보드는 이 테이블만 읽고 이력을 수집하지 않는다.
+kr_etf_snapshot = sa.Table(
+    "kr_etf_snapshot",
+    metadata,
+    sa.Column("srtn_cd", sa.String(12), primary_key=True),
+    sa.Column("itms_nm", sa.String(256), nullable=False),
+    sa.Column("clpr", sa.Float),
+    sa.Column("vs", sa.Float),
+    sa.Column("flt_rt", sa.Float),
+    sa.Column("nav", sa.Float),
+    sa.Column("trqu", sa.Float),
+    sa.Column("tr_prc", sa.Float),
+    sa.Column("mrkt_tot_amt", sa.Float),
+    sa.Column("n_ppt_tot_amt", sa.Float),
+    sa.Column("bss_idx_idx_nm", sa.String(256)),
+    sa.Column("bss_idx_clpr", sa.Float),
+    sa.Column("bas_dt", sa.String(10), nullable=False),
+    sa.Column("fetched_at", sa.Float, nullable=False),
+)
+
 # DART 법인코드 매핑. corpCode.xml zip에서 상장사(종목코드 보유)만 담는다.
 dart_corp_codes = sa.Table(
     "dart_corp_codes",
@@ -1057,6 +1078,47 @@ def kr_index_snapshot_meta() -> dict[str, Any]:
 
 def kr_index_snapshot_stale(max_age: int) -> bool:
     meta = kr_index_snapshot_meta()
+    if not meta["count"] or meta["fetched_at"] is None:
+        return True
+    return meta["fetched_at"] <= time.time() - max_age
+
+
+def save_kr_etf_snapshot(rows: Iterable[dict[str, Any]], bas_dt: str) -> int:
+    """Replace the whole ETF snapshot with one trading day's rows."""
+    now = time.time()
+    payload = [
+        {**row, "bas_dt": bas_dt, "fetched_at": now}
+        for row in rows
+        if str(row.get("srtn_cd") or "").strip()
+    ]
+    if not payload:
+        return 0
+    with engine().begin() as conn:
+        conn.execute(kr_etf_snapshot.delete())
+        conn.execute(kr_etf_snapshot.insert(), payload)
+    return len(payload)
+
+
+def load_kr_etf_snapshot() -> list[dict[str, Any]]:
+    with engine().connect() as conn:
+        return [dict(row) for row in conn.execute(sa.select(kr_etf_snapshot)).mappings()]
+
+
+def kr_etf_snapshot_meta() -> dict[str, Any]:
+    with engine().connect() as conn:
+        row = conn.execute(
+            sa.select(
+                sa.func.count(kr_etf_snapshot.c.srtn_cd),
+                sa.func.max(kr_etf_snapshot.c.bas_dt),
+                sa.func.max(kr_etf_snapshot.c.fetched_at),
+            )
+        ).first()
+    count, bas_dt, fetched_at = row or (0, None, None)
+    return {"count": int(count or 0), "bas_dt": bas_dt, "fetched_at": fetched_at}
+
+
+def kr_etf_snapshot_stale(max_age: int) -> bool:
+    meta = kr_etf_snapshot_meta()
     if not meta["count"] or meta["fetched_at"] is None:
         return True
     return meta["fetched_at"] <= time.time() - max_age
