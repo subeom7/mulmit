@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark light">
   <meta name="description" content="삼성전자·SK하이닉스 24시간 참고가, 코스피 지수군, S&P 500 히트맵, 미국 매크로 — 한국·미국 시장을 한눈에 보는 Mulmit 대시보드">
   <title>Mulmit — 한국·미국 시장 대시보드</title>
-  <link rel="stylesheet" href="/static/monitor.css?v=20260818-6">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260818-7">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -25,6 +25,8 @@
       <a class="nav-chip" href="/docs">API</a>
     </nav>
     <div class="mast-actions">
+      <span class="session-badge" id="session-badge" hidden title=""><i></i><span></span></span>
+      <span class="mast-ticker" id="mast-ticker" hidden title=""></span>
       <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
       <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
       <button class="icon-button" id="theme-toggle" type="button" data-i18n-aria="theme.toggle" aria-label="테마 전환">◐</button>
@@ -32,7 +34,7 @@
   </header>
 
   <main id="main" class="shell">
-    <section class="hero" aria-labelledby="hero-title">
+    <section class="hero hero-compact" aria-labelledby="hero-title">
       <div>
         <p class="kicker" data-i18n="landing.kicker">KOREA × US MARKET CONSOLE</p>
         <h1 id="hero-title" data-i18n="landing.title">장이 닫혀도, 시장은 움직입니다.</h1>
@@ -64,11 +66,13 @@
     <section class="zone-links" aria-label="Market pages">
       <a class="zone-link-card" href="/kr">
         <strong data-i18n="landing.krLink">한국 시장 페이지</strong>
-        <span data-i18n="landing.krDesc">24시간 참고가 · 공식 종가 · 코스피 지수군 · 국민연금 5% 공시</span>
+        <span data-i18n="landing.krDesc">24시간 참고가 · 공식 종가 · 코스피 지수군 · ETF 보드 · 국민연금 5% 공시</span>
+        <span class="zone-mini" id="zone-kr-mini" hidden></span>
       </a>
       <a class="zone-link-card" href="/us">
         <strong data-i18n="landing.usLink">미국·글로벌 페이지</strong>
-        <span data-i18n="landing.usDesc">S&amp;P 500 히트맵 · 스트레스 지수 · 매크로 · 유동성 · 공식 환율</span>
+        <span data-i18n="landing.usDesc">S&amp;P 500 히트맵 · 하원 의원 거래 · 스트레스 지수 · 매크로 · 유동성</span>
+        <span class="zone-mini" id="zone-us-mini" hidden></span>
       </a>
     </section>
 
@@ -103,6 +107,6 @@
   </main>
 
   <script>window.MULMIT_PAGE = "landing";</script>
-  <script src="/static/monitor.js?v=20260818-6" defer></script>
+  <script src="/static/monitor.js?v=20260818-7" defer></script>
 </body>
 </html>

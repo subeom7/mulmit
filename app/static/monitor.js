@@ -39,8 +39,12 @@ const TEXT = {
     "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌",
     "landing.kicker": "KOREA × US MARKET CONSOLE", "landing.title": "장이 닫혀도, 시장은 움직입니다.",
     "landing.copy": "삼성전자·SK하이닉스의 24시간 참고가부터 미국 매크로까지, 연결된 데이터만 보여줍니다. 연결되지 않은 값은 추정하지 않습니다.",
-    "landing.krLink": "한국 시장 페이지", "landing.krDesc": "24시간 참고가 · 공식 종가 · 코스피 지수군 · 국민연금 5% 공시",
-    "landing.usLink": "미국·글로벌 페이지", "landing.usDesc": "S&P 500 히트맵 · 스트레스 지수 · 매크로 · 유동성 · 공식 환율",
+    "landing.krLink": "한국 시장 페이지", "landing.krDesc": "24시간 참고가 · 공식 종가 · 코스피 지수군 · ETF 보드 · 국민연금 5% 공시",
+    "landing.usLink": "미국·글로벌 페이지", "landing.usDesc": "S&P 500 히트맵 · 하원 의원 거래 · 스트레스 지수 · 매크로 · 유동성",
+    "session.open": "정규장 진행 중", "session.closed": "국내장 마감", "session.until": "개장까지 약 {time}",
+    "session.hm": "{h}시간 {m}분", "session.note": "시계 기준 · 휴장일 미반영 · 평일 09:00–15:30 KST",
+    "ticker.note": "미 연준 H.10 공식 고시 환율 · 실시간 아님",
+    "landing.krMini.kospi": "코스피 종가", "landing.usMini.sp500": "S&P 500 퍼프", "landing.usMini.stress": "스트레스",
     "krpage.kicker": "KOREA MARKETS", "krpage.title": "한국 주식, 장 밖에서도 한눈에.",
     "krpage.copy": "24시간 참고가, 공식 종가, 코스피 지수군, 국민연금 대량보유 공시를 한 페이지에서 봅니다.",
     "uspage.kicker": "US & GLOBAL MARKETS", "uspage.title": "미국·글로벌 시장.",
@@ -99,8 +103,12 @@ const TEXT = {
     "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & Global",
     "landing.kicker": "KOREA × US MARKET CONSOLE", "landing.title": "Markets move after the close.",
     "landing.copy": "From around-the-clock references for Samsung Electronics and SK Hynix to US macro — only connected data, nothing estimated.",
-    "landing.krLink": "Korea markets page", "landing.krDesc": "24h references · official closes · KOSPI index family · NPS 5% filings",
-    "landing.usLink": "US & global page", "landing.usDesc": "S&P 500 heatmap · stress index · macro · liquidity · official FX",
+    "landing.krLink": "Korea markets page", "landing.krDesc": "24h references · official closes · KOSPI index family · ETF board · NPS 5% filings",
+    "landing.usLink": "US & global page", "landing.usDesc": "S&P 500 heatmap · House trades · stress index · macro · liquidity",
+    "session.open": "KRX session open", "session.closed": "KRX closed", "session.until": "opens in ~{time}",
+    "session.hm": "{h}h {m}m", "session.note": "Clock-based; holidays not reflected. Weekdays 09:00–15:30 KST.",
+    "ticker.note": "Federal Reserve H.10 official rate · not live",
+    "landing.krMini.kospi": "KOSPI close", "landing.usMini.sp500": "S&P 500 perp", "landing.usMini.stress": "Stress",
     "krpage.kicker": "KOREA MARKETS", "krpage.title": "Korean stocks, beyond market hours.",
     "krpage.copy": "Around-the-clock references, official closes, the KOSPI index family and NPS large-holding filings on one page.",
     "uspage.kicker": "US & GLOBAL MARKETS", "uspage.title": "US & global markets.",
@@ -872,7 +880,7 @@ const PAGE_FETCHES = {
   assets: ["landing", "us"],
   sectors: ["us"],
   weekend: ["kr"],
-  stress: ["us"],
+  stress: ["landing", "us"],
   krIndices: ["kr"],
   krOvernight: ["landing", "kr"],
   krPension: ["kr"],
@@ -900,6 +908,7 @@ async function loadCore() {
 
 function renderAll() {
   renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKrPension(); renderKrEtf(); renderUsPtr();
+  renderMastTicker(); renderZonePreviews(); updateSessionBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
   // not failing — they are absent by decision, so they are hidden rather than
@@ -1144,6 +1153,96 @@ function renderKrEtf() {
   const note = document.createElement("span");
   note.textContent = localValue(payload.premium_note, state.lang);
   footer.append(link, window_, asof, note);
+}
+
+// P2: 헤더 상태줄 — 세션 배지(시계 기준, 휴장일 미반영을 툴팁에 명시)와
+// H.10 공식 환율 미니 티커, 랜딩 존 카드의 라이브 미니 프리뷰.
+function krSessionInfo(now = new Date()) {
+  const kst = new Date(now.getTime() + (now.getTimezoneOffset() + 540) * 60000);
+  const day = kst.getDay(), minutes = kst.getHours() * 60 + kst.getMinutes();
+  const OPEN = 9 * 60, CLOSE = 15 * 60 + 30;
+  if (day >= 1 && day <= 5 && minutes >= OPEN && minutes < CLOSE) return { open: true, minutesToOpen: 0 };
+  let wait = 0, probeDay = day, probeMinutes = minutes;
+  if (!(day >= 1 && day <= 5 && minutes < OPEN)) {
+    wait += 24 * 60 - probeMinutes; probeDay = (probeDay + 1) % 7; probeMinutes = 0;
+    while (probeDay === 0 || probeDay === 6) { wait += 24 * 60; probeDay = (probeDay + 1) % 7; }
+  }
+  wait += OPEN - probeMinutes;
+  return { open: false, minutesToOpen: wait };
+}
+
+function updateSessionBadge() {
+  const badge = $("#session-badge");
+  if (!badge) return;
+  const info = krSessionInfo();
+  badge.hidden = false;
+  badge.classList.toggle("open", info.open);
+  badge.title = t("session.note");
+  const label = $("span", badge);
+  if (info.open) { label.textContent = t("session.open"); return; }
+  const h = Math.floor(info.minutesToOpen / 60), m = info.minutesToOpen % 60;
+  label.textContent = `${t("session.closed")} · ${t("session.until", { time: t("session.hm", { h: String(h), m: String(m) }) })}`;
+}
+
+function renderMastTicker() {
+  const node = $("#mast-ticker");
+  if (!node) return;
+  const record = state.records.get("fx_usdkrw");
+  const recent = latest(record);
+  if (!record || recent.value === null) { node.hidden = true; return; }
+  node.hidden = false;
+  node.title = t("ticker.note");
+  const date = document.createElement("small");
+  date.textContent = `H.10 ${kroDate(recent.date)}`;
+  node.replaceChildren(
+    document.createTextNode(`USD/KRW ${recent.value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`),
+    date,
+  );
+}
+
+function renderZonePreviews() {
+  const krMini = $("#zone-kr-mini"), usMini = $("#zone-us-mini");
+  if (!krMini && !usMini) return;
+  const entry = (labelText, valueText, percent) => {
+    const wrap = document.createElement("span");
+    const label = document.createElement("small"); label.textContent = labelText;
+    wrap.append(label, document.createTextNode(` ${valueText}`));
+    if (percent !== null) {
+      const delta = document.createElement("em");
+      delta.className = changeClass(percent);
+      delta.textContent = ` ${formatSigned(percent)}`;
+      wrap.append(delta);
+    }
+    return wrap;
+  };
+  if (krMini) {
+    const kospi = state.records.get("kospi_exact");
+    const recent = latest(kospi), delta = change(kospi);
+    krMini.hidden = !kospi || recent.value === null;
+    if (!krMini.hidden) {
+      krMini.replaceChildren(entry(
+        t("landing.krMini.kospi"),
+        recent.value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        delta.percent,
+      ));
+    }
+  }
+  if (usMini) {
+    const parts = [];
+    const sp = state.records.get("sp500");
+    const spRecent = latest(sp), spDelta = change(sp);
+    if (sp && spRecent.value !== null) {
+      parts.push(entry(t("landing.usMini.sp500"),
+        spRecent.value.toLocaleString("en-US", { maximumFractionDigits: 1 }), spDelta.percent));
+    }
+    const stressScore = safeNumber(state.stress?.score);
+    if (stressScore !== null) {
+      parts.push(entry(t("landing.usMini.stress"),
+        `${stressScore.toFixed(1)} · ${localValue(state.stress?.band, state.lang)}`, null));
+    }
+    usMini.hidden = !parts.length;
+    if (parts.length) usMini.replaceChildren(...parts);
+  }
 }
 
 const PTR_TYPE_KEYS = { "P": "ptr.typeP", "S": "ptr.typeS", "S (partial)": "ptr.typeSP", "E": "ptr.typeE" };
@@ -1558,3 +1657,5 @@ function setupControls() {
 
 setupControls(); applyLocale(); setupLazySections(); loadCore();
 setInterval(() => { if (!document.hidden) loadCore(); }, 15 * 60 * 1000);
+// 세션 배지는 데이터가 아니라 시계라 1분마다 자체 갱신한다.
+setInterval(updateSessionBadge, 60 * 1000);

@@ -435,3 +435,22 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 .zone-link-card span { display: block; margin-top: 8px; color: var(--muted); font-size: 11.5px; }
 .zone-link-card:hover { border-color: var(--accent); }
 @media (max-width: 700px) { .zone-links { grid-template-columns: 1fr; } }
+
+/* P2: 헤더 세션 배지 · H.10 환율 티커 */
+.session-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 650 9.5px/1 var(--mono); white-space: nowrap; }
+.session-badge i { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
+.session-badge.open { color: var(--green); }
+.session-badge.open i { background: var(--green); box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 12%, transparent); }
+.mast-ticker { display: inline-flex; align-items: baseline; gap: 5px; color: var(--ink); font: 750 11px/1 var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mast-ticker small { color: var(--faint); font: 650 8.5px/1 var(--mono); }
+@media (max-width: 960px) { .mast-ticker { display: none; } }
+@media (max-width: 760px) { .session-badge { display: none; } }
+
+/* P2: 랜딩 컴팩트 히어로 · 존 카드 미니 프리뷰 */
+.hero.hero-compact { padding-bottom: 22px; }
+.hero.hero-compact h1 { font-size: clamp(30px, 4.8vw, 58px); }
+.zone-mini { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--ink); font: 750 12px/1.4 var(--mono); font-variant-numeric: tabular-nums; }
+.zone-mini small { color: var(--faint); font: 650 9px/1.4 var(--mono); }
+.zone-mini em { font-style: normal; }
+.zone-mini em.up { color: var(--green); }
+.zone-mini em.down { color: var(--red); }

@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark light">
   <meta name="description" content="Mulmit 글로벌 자산·거시경제·유동성 모니터">
   <title>Market Monitor · Mulmit</title>
-  <link rel="stylesheet" href="/static/monitor.css?v=20260818-6">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260818-7">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -25,6 +25,8 @@
       <a class="nav-chip" href="/docs">API</a>
     </nav>
     <div class="mast-actions">
+      <span class="session-badge" id="session-badge" hidden title=""><i></i><span></span></span>
+      <span class="mast-ticker" id="mast-ticker" hidden title=""></span>
       <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
       <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
       <button class="icon-button" id="theme-toggle" type="button" data-i18n-aria="theme.toggle" aria-label="테마 전환">◐</button>
@@ -243,6 +245,6 @@
       <footer></footer>
     </article>
   </template>
-  <script src="/static/monitor.js?v=20260818-6" defer></script>
+  <script src="/static/monitor.js?v=20260818-7" defer></script>
 </body>
 </html>
