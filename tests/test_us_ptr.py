@@ -150,6 +150,20 @@ def test_parse_strips_joined_headings_and_filing_id_residue():
     assert "Filing ID" not in kenvue["asset"]
 
 
+def test_parse_scrubs_nul_laced_headings():
+    # 운영 pypdf는 머리글 글자 사이에 NUL을 끼운다: "P\x00\x00 T\x00 …".
+    text = (
+        "P\x00\x00\x00 T\x00\x00 R\x00 F\x00 I\x00 T\x00 SP Pinterest, Inc. Class A Common Stock (PINS) [ST]\n"
+        "S 08/07/202608/07/2026$15,001 - $50,000\n"
+    )
+    transactions, signatures = parse_ptr_text(text)
+
+    assert signatures == 1
+    assert transactions[0]["owner"] == "SP"
+    assert transactions[0]["ticker"] == "PINS"
+    assert transactions[0]["asset"] == "Pinterest, Inc. Class A Common Stock (PINS)"
+
+
 def test_parse_withholds_interleaved_two_column_rows():
     # Johnson 20035035: 자산명이 서명 좌우로 쪼개지고 유형 글자가 자산에 붙는다
     # ("CommonP"). 쪼개서 복원하려는 추측 대신 해당 거래를 버리고 개수로 남긴다.
