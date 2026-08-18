@@ -33,6 +33,10 @@ from xml.etree import ElementTree
 
 from .base import DataError, DataUnavailable, RateLimited
 
+
+class EdgarNotFound(DataUnavailable):
+    """The requested EDGAR document or XBRL concept does not exist (404)."""
+
 SEC_BASE = "https://www.sec.gov"
 SEC_DATA_BASE = "https://data.sec.gov"
 COMPANY_TICKERS_URL = f"{SEC_BASE}/files/company_tickers.json"
@@ -250,7 +254,9 @@ class SecEdgarProvider:
                 return self._http_get(request, self.timeout)
             except HTTPError as exc:
                 if exc.code == 404:
-                    raise DataUnavailable(f"EDGAR has no document at {url}") from exc
+                    # 개념 사다리(fundamentals)가 "없는 태그"와 "장애"를 구분해야
+                    # 하므로 404는 하위 타입으로 던진다.
+                    raise EdgarNotFound(f"EDGAR has no document at {url}") from exc
                 retryable = exc.code in {403, 429} or 500 <= exc.code < 600
                 if retryable and attempt < self.retries:
                     self._sleep(self.retry_backoff * (2**attempt))
@@ -298,6 +304,23 @@ class SecEdgarProvider:
         if not mapping:
             raise DataUnavailable("EDGAR ticker map is empty")
         return mapping
+
+    def fetch_company_concept(
+        self, cik: str, tag: str, *, taxonomy: str = "us-gaap"
+    ) -> dict[str, Any]:
+        """One XBRL concept's reported values across a company's filings.
+
+        존재하지 않는 태그는 :class:`EdgarNotFound`로 온다 — 회사마다 쓰는
+        태그가 달라 호출자가 사다리로 시도한다.
+        """
+        url = (
+            f"{SEC_DATA_BASE}/api/xbrl/companyconcept/"
+            f"CIK{int(cik):010d}/{taxonomy}/{tag}.json"
+        )
+        payload = self._request_json(url)
+        if not isinstance(payload, dict) or not isinstance(payload.get("units"), dict):
+            raise DataUnavailable(f"EDGAR concept response malformed for {tag}")
+        return payload
 
     def fetch_company(self, cik: str, *, form_limit: int = 40) -> CompanyFilings:
         """Company metadata plus parsed transactions from its recent Form 3/4/5s."""

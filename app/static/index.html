@@ -249,6 +249,12 @@ ul.notes li::before { content: ""; position: absolute; left: 0; top: 9px; width:
 #kr-insider .chg-up { color: var(--positive); }
 #kr-insider .chg-down { color: var(--negative); }
 #kr-insider td.num, #kr-insider th.num { text-align: right; font-variant-numeric: tabular-nums; }
+#us-fund td.num, #us-fund th.num { text-align: right; font-variant-numeric: tabular-nums; }
+#us-fund .chg-up { color: var(--positive); }
+#us-fund .chg-down { color: var(--negative); }
+.usfund-toggle { display: inline-flex; margin: 0 0 10px; border: 1px solid rgba(128,128,128,.35); border-radius: 7px; overflow: hidden; }
+.usfund-toggle button { padding: 6px 14px; border: 0; background: transparent; color: inherit; opacity: .55; cursor: pointer; font: inherit; font-size: 12px; }
+.usfund-toggle button.active { opacity: 1; background: rgba(128,128,128,.16); font-weight: 700; }
 .table-wrap { overflow-x: auto; }
 
 /* --- 차트 ----------------------------------------------------------------- */
@@ -549,6 +555,22 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
   </div>
 </section>
 
+<section class="card insider-card" id="us-fund" hidden aria-labelledby="usfund-title">
+  <h2 id="usfund-title" data-i18n="usfund.title">재무제표 (EDGAR)</h2>
+  <p class="sub" data-i18n="usfund.sub">10-K·10-Q XBRL 공시값을 그대로 옮깁니다. 분기·연간은 보고 기간 길이로 구분하며, 마진은 같은 보고서의 이익 ÷ 매출입니다. 금액 단위 USD.</p>
+  <div id="usfund-state" class="state-block" role="status" aria-live="polite"></div>
+  <div id="usfund-body" hidden>
+    <div class="usfund-toggle" id="usfund-period" role="group" aria-label="Period">
+      <button type="button" data-period="annual" class="active" data-i18n="usfund.annual">연간</button>
+      <button type="button" data-period="quarterly" data-i18n="usfund.quarterly">분기</button>
+    </div>
+    <div class="table-scroll">
+      <table class="insider-table" id="usfund-table"><thead></thead><tbody></tbody></table>
+    </div>
+    <p class="insider-source" id="usfund-source"></p>
+  </div>
+</section>
+
 <div id="result" hidden>
 
   <div class="card">
@@ -719,6 +741,15 @@ const I18N = {
     "insider.noFilings": "{ticker}에 대해 수집된 Form 3·4·5 공시가 없습니다.",
     "insider.unknown": "{ticker}는 EDGAR 상장사 목록에 없습니다. 미국 외 상장 종목이나 ETF일 수 있습니다.",
     "insider.disabled": "내부자거래 공시 수집이 이 배포에서 비활성 상태입니다.",
+    "usfund.title": "재무제표 (EDGAR)", "usfund.sub": "10-K·10-Q XBRL 공시값을 그대로 옮깁니다. 분기·연간은 보고 기간 길이로 구분하며, 마진은 같은 보고서의 이익 ÷ 매출입니다. 금액 단위 USD.",
+    "usfund.loading": "{ticker} 재무제표를 불러오는 중입니다.",
+    "usfund.queued": "{ticker} 재무제표는 다음 수집 주기에 채워집니다. 잠시 뒤 다시 조회해 주세요.",
+    "usfund.unknown": "{ticker}는 EDGAR 상장사 목록에 없습니다.",
+    "usfund.none": "표시할 재무 데이터가 없습니다.", "usfund.error": "재무제표를 불러오지 못했습니다.",
+    "usfund.annual": "연간", "usfund.quarterly": "분기",
+    "usfund.colPeriod": "기간(종료일)", "usfund.colRevenue": "매출", "usfund.colOpInc": "영업이익", "usfund.colNetInc": "순이익",
+    "usfund.colOpMargin": "영업이익률", "usfund.colNetMargin": "순이익률", "usfund.colEps": "EPS(희석)",
+    "usfund.disabled": "재무제표 수집이 이 배포에서 비활성 상태입니다.", "usfund.notConfigured": "EDGAR 연락처(User-Agent)가 설정되지 않았습니다.",
     "insider.notConfigured": "EDGAR 접근에 필요한 연락처 User-Agent가 설정되지 않았습니다.",
     "insider.error": "공시를 불러오지 못했습니다.",
     "insider.buys": "시장 매수", "insider.sells": "시장 매도", "insider.otherLines": "비시장 거래 라인",
@@ -835,6 +866,15 @@ const I18N = {
     "insider.noFilings": "No Form 3, 4 or 5 filings have been collected for {ticker}.",
     "insider.unknown": "{ticker} is not in the EDGAR company list. It may be a non-US listing or an ETF.",
     "insider.disabled": "Insider-filing collection is disabled for this deployment.",
+    "usfund.title": "Financial statements (EDGAR)", "usfund.sub": "XBRL figures from 10-K/10-Q filings, relayed as filed. Quarterly and annual periods are split by reported duration; margins are income ÷ revenue from the same filing. Amounts in USD.",
+    "usfund.loading": "Loading financials for {ticker}.",
+    "usfund.queued": "Financials for {ticker} will be collected on the next ingest cycle — check back shortly.",
+    "usfund.unknown": "{ticker} is not in the EDGAR company list.",
+    "usfund.none": "No financial data to display.", "usfund.error": "Failed to load financial statements.",
+    "usfund.annual": "Annual", "usfund.quarterly": "Quarterly",
+    "usfund.colPeriod": "Period end", "usfund.colRevenue": "Revenue", "usfund.colOpInc": "Operating income", "usfund.colNetInc": "Net income",
+    "usfund.colOpMargin": "Op. margin", "usfund.colNetMargin": "Net margin", "usfund.colEps": "EPS (diluted)",
+    "usfund.disabled": "Financial-statement collection is disabled for this deployment.", "usfund.notConfigured": "SEC_EDGAR_USER_AGENT is not configured.",
     "insider.notConfigured": "The contact User-Agent required for EDGAR access is not configured.",
     "insider.error": "Could not load the filings.",
     "insider.buys": "Open-market buys", "insider.sells": "Open-market sells", "insider.otherLines": "Non-open-market lines",
@@ -948,6 +988,7 @@ function applyLocale() {
   }
   if (lastReport) render(lastReport);
   if (lastInsider) renderInsider(lastInsider);
+  if (lastUsFund) renderUsFund();
   else if (insiderState_) insiderState(insiderState_.key, insiderState_.vars, insiderState_.disabled);
   renderStatus();
 }
@@ -1914,6 +1955,107 @@ function renderInsider(payload) {
   if (notice) footer.appendChild(el("div", null, notice));
 }
 
+let usFundController = null, usFundRequestId = 0, lastUsFund = null, usFundPeriod = "annual";
+const USFUND_DISABLED_KEYS = {
+  us_fundamentals_disabled: "usfund.disabled",
+  us_fundamentals_not_configured: "usfund.notConfigured",
+};
+
+function usFundStateMsg(key, vars = {}) {
+  const node = document.getElementById("usfund-state");
+  node.hidden = false; node.textContent = t(key, vars);
+  document.getElementById("usfund-body").hidden = true;
+}
+
+const usFundMoney = (value) => value == null ? "—"
+  : Math.abs(value) >= 1e9 ? `$${(value / 1e9).toLocaleString(localeCode(), { maximumFractionDigits: 1 })}B`
+  : Math.abs(value) >= 1e6 ? `$${(value / 1e6).toLocaleString(localeCode(), { maximumFractionDigits: 0 })}M`
+  : `$${Math.round(value).toLocaleString(localeCode())}`;
+const usFundPct = (value) => value == null ? "—" : `${value.toFixed(1)}%`;
+
+function renderUsFund() {
+  const data = lastUsFund;
+  if (!data) return;
+  if (data.status === "queued") { usFundStateMsg("usfund.queued", { ticker: data.ticker }); return; }
+  if (data.status === "unknown_to_edgar") { usFundStateMsg("usfund.unknown", { ticker: data.ticker }); return; }
+  const rows = usFundPeriod === "annual" ? data.annual : data.quarterly;
+  if (!rows || !rows.length) { usFundStateMsg("usfund.none"); return; }
+  document.getElementById("usfund-state").hidden = true;
+  document.getElementById("usfund-body").hidden = false;
+  document.querySelectorAll("#usfund-period button").forEach((button) => {
+    button.classList.toggle("active", button.dataset.period === usFundPeriod);
+  });
+
+  const table = document.getElementById("usfund-table");
+  table.querySelector("thead").innerHTML = `<tr>
+    <th scope="col">${t("usfund.colPeriod")}</th><th scope="col" class="num">${t("usfund.colRevenue")}</th>
+    <th scope="col" class="num">${t("usfund.colOpInc")}</th><th scope="col" class="num">${t("usfund.colNetInc")}</th>
+    <th scope="col" class="num">${t("usfund.colOpMargin")}</th><th scope="col" class="num">${t("usfund.colNetMargin")}</th>
+    <th scope="col" class="num">${t("usfund.colEps")}</th></tr>`;
+  const tbody = table.querySelector("tbody");
+  tbody.replaceChildren();
+  for (const row of rows) {
+    const tr = document.createElement("tr");
+    const period = usFundPeriod === "annual" && row.fiscal_year
+      ? `FY${row.fiscal_year} · ${row.end}` : row.end || "—";
+    const cells = [
+      ["", period],
+      ["num", usFundMoney(row.revenue)],
+      ["num" + (row.operating_income != null && row.operating_income < 0 ? " chg-down" : ""), usFundMoney(row.operating_income)],
+      ["num" + (row.net_income != null && row.net_income < 0 ? " chg-down" : ""), usFundMoney(row.net_income)],
+      ["num", usFundPct(row.operating_margin)],
+      ["num", usFundPct(row.net_margin)],
+      ["num", row.eps_diluted == null ? "—" : row.eps_diluted.toFixed(2)],
+    ];
+    for (const [cls, textValue] of cells) {
+      const td = document.createElement("td");
+      if (cls) td.className = cls;
+      td.textContent = textValue;
+      tr.append(td);
+    }
+    tbody.append(tr);
+  }
+  const basis = uiLang === "ko" ? data.basis_ko : data.basis_en;
+  document.getElementById("usfund-source").textContent =
+    [`${data.company || data.ticker} · CIK ${data.cik || "—"} · SEC EDGAR`, basis].filter(Boolean).join(" — ");
+}
+
+document.getElementById("usfund-period").addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-period]");
+  if (!button) return;
+  usFundPeriod = button.dataset.period;
+  renderUsFund();
+});
+
+async function loadUsFundamentals(ticker) {
+  const panel = document.getElementById("us-fund");
+  if (!ticker) { panel.hidden = true; lastUsFund = null; return; }
+  panel.hidden = false;
+  if (usFundController) usFundController.abort();
+  const requestId = ++usFundRequestId;
+  const controller = new AbortController();
+  usFundController = controller;
+  usFundStateMsg("usfund.loading", { ticker });
+  try {
+    const response = await fetch(`/api/us/fundamentals/${encodeURIComponent(ticker)}`, { signal: controller.signal });
+    const body = await response.json().catch(() => ({}));
+    if (requestId !== usFundRequestId) return;
+    if (!response.ok) {
+      const code = body?.detail?.code;
+      if (USFUND_DISABLED_KEYS[code]) { usFundStateMsg(USFUND_DISABLED_KEYS[code]); return; }
+      usFundStateMsg("usfund.error");
+      return;
+    }
+    lastUsFund = body;
+    renderUsFund();
+  } catch (error) {
+    if (error.name === "AbortError" || requestId !== usFundRequestId) return;
+    usFundStateMsg("usfund.error");
+  } finally {
+    if (usFundController === controller) usFundController = null;
+  }
+}
+
 async function loadInsider(ticker) {
   const panel = document.getElementById("insider");
   if (!ticker) { panel.hidden = true; lastInsider = null; insiderState_ = null; return; }
@@ -1962,11 +2104,13 @@ async function load(push) {
     document.getElementById("go").disabled = false;
     setStatusKey("status.tickerRequired", {}, true);
     loadInsider(null);
+    loadUsFundamentals(null);
     return;
   }
   // Deliberately not awaited and not inside the try below: the insider lane is
   // independent, so it must still render when /api/metrics is gated off.
   loadInsider(params.get("ticker"));
+  loadUsFundamentals(params.get("ticker"));
   if (insiderOnly) {
     // Launch mode: the price lane is disabled deployment-wide, so there is no
     // metrics call to make and no retryable error to show.

@@ -28,6 +28,7 @@ from . import (
     kr_stocks,
     service,
     store,
+    us_fundamentals,
     us_ptr,
 )
 from .data import DataUnavailable, RateLimited
@@ -489,6 +490,28 @@ def us_ptr_filings(request: Request, response: Response) -> dict:
         ) from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "Clerk of the U.S. House of Representatives"
+    return payload
+
+
+@app.get("/api/us/fundamentals/{ticker}")
+@limiter.limit(config.RATE_LIMIT)
+def us_fundamentals_report(ticker: str, request: Request, response: Response) -> dict:
+    """미국 상장사 재무제표(EDGAR XBRL). 저장소만 읽고, 미수집 티커는 큐에 태운다."""
+    if not ticker.strip():
+        raise HTTPException(status_code=422, detail="ticker is required")
+    try:
+        payload = us_fundamentals.build_report(ticker)
+    except us_fundamentals.UsFundamentalsDisabled as exc:
+        detail = (
+            data_rights.US_FUNDAMENTALS_NOT_CONFIGURED
+            if exc.reason == "not_configured"
+            else data_rights.US_FUNDAMENTALS_DISABLED
+        )
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "SEC EDGAR"
     return payload
 
 
