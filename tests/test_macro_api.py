@@ -124,3 +124,35 @@ def test_long_macro_history_is_bounded_and_keeps_endpoints():
     assert len(sampled) == MAX_PUBLIC_OBSERVATIONS
     assert sampled[0] == observations[0]
     assert sampled[-1] == observations[-1]
+
+
+def test_stlfsi_ships_with_the_prescribed_citation(db, fred_serving):
+    """St. Louis Fed's written permission (2026-08-18) asks for the suggested
+    citation with the retrieval date wherever the series is displayed."""
+    spec = FRED_SERIES_BY_ID["STLFSI4"]
+    db.save_economic_series(
+        "financial_stress",
+        provider_id="fred",
+        provider_series_id="STLFSI4",
+        metadata_fields={"title": "St. Louis Fed Financial Stress Index"},
+        observations=[(dt.date(2026, 8, 7), -0.5), (dt.date(2026, 8, 14), -0.4)],
+        publisher=spec.publisher,
+        publisher_url=spec.publisher_url,
+        series_url=spec.series_url,
+        rights_status="approved",
+    )
+
+    body = TestClient(app).get("/api/market/macro").json()
+
+    stress = next(item for item in body["series"] if item["key"] == "financial_stress")
+    citation = stress["rights"]["citation"]
+    assert citation.startswith("Federal Reserve Bank of St. Louis, St. Louis Fed Financial Stress Index [STLFSI4]")
+    assert "retrieved from FRED" in citation
+    assert "https://fred.stlouisfed.org/series/STLFSI4" in citation
+    # The date accessed follows the URL, e.g. "..., August 18, 2026."
+    assert citation.rstrip(".").rsplit(", ", 2)[-1] == "2026"
+    # No other series invents a citation.
+    treasury = next(
+        (item for item in body["series"] if item["key"] == "treasury_10y"), None
+    )
+    assert treasury is None or treasury["rights"]["citation"] is None

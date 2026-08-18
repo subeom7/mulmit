@@ -738,6 +738,9 @@ function renderAttribution() {
     localValue(state.assets?.attribution?.notice_localized, state.lang) || state.assets?.attribution?.notice,
     ...[...state.records.values()].map(localizedRightsNotice),
     ...[...state.restricted.values()].map(localizedRightsNotice),
+    // Publisher-prescribed citations (e.g. STLFSI4) ship with the series and
+    // must appear wherever the values do, retrieval date included.
+    ...[...state.records.values()].map((record) => record?.rights?.citation),
   ].map((value) => String(value || "").trim()).filter(Boolean));
   if (notices.size) {
     const title = document.createElement("p"); title.textContent = t("notice.market"); host.append(title);
