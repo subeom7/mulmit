@@ -176,13 +176,13 @@ def refresh_for(provider: SecEdgarProvider, ticker: str, cik: str, name: str) ->
             key = (str(base["start"]), str(base["end"]))
             end = str(base["end"])
 
-            def flow(metric: str) -> float | None:
+            def flow(metric: str, *, _key: tuple = key) -> float | None:
                 bucket = collected.get(metric, {}).get(period_kind, {})
-                entry = bucket.get(key)
+                entry = bucket.get(_key)
                 return entry.get("val") if entry else None
 
-            def instant(metric: str) -> float | None:
-                entry = collected.get(metric, {}).get("by_end", {}).get(end)
+            def instant(metric: str, *, _end: str = end) -> float | None:
+                entry = collected.get(metric, {}).get("by_end", {}).get(_end)
                 return entry.get("val") if entry else None
 
             revenue = base.get("val")
