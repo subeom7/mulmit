@@ -25,9 +25,26 @@ const safeNumber = (value) => {
 };
 const localValue = (value, lang) => value && typeof value === "object" ? (value[lang] || value.en || value.ko || "") : (value || "");
 
+// Which page this script is driving. Each HTML sets window.MULMIT_PAGE before
+// this file loads; the legacy combined monitor sets nothing and gets everything.
+// Renderers already no-op when their section is absent from the page's markup —
+// this constant only decides which endpoints are fetched and which deep
+// sections are built.
+const PAGE = window.MULMIT_PAGE || "all";
+const onPage = (...pages) => PAGE === "all" || pages.includes(PAGE);
+
 const TEXT = {
   ko: {
     "brand.tagline": "MARKET SIGNAL CONSOLE", "nav.analytics": "종목 분석", "nav.monitor": "시장 모니터",
+    "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌",
+    "landing.kicker": "KOREA × US MARKET CONSOLE", "landing.title": "장이 닫혀도, 시장은 움직입니다.",
+    "landing.copy": "삼성전자·SK하이닉스의 24시간 참고가부터 미국 매크로까지, 연결된 데이터만 보여줍니다. 연결되지 않은 값은 추정하지 않습니다.",
+    "landing.krLink": "한국 시장 페이지", "landing.krDesc": "24시간 참고가 · 공식 종가 · 코스피 지수군 · 국민연금 5% 공시",
+    "landing.usLink": "미국·글로벌 페이지", "landing.usDesc": "S&P 500 히트맵 · 스트레스 지수 · 매크로 · 유동성 · 공식 환율",
+    "krpage.kicker": "KOREA MARKETS", "krpage.title": "한국 주식, 장 밖에서도 한눈에.",
+    "krpage.copy": "24시간 참고가, 공식 종가, 코스피 지수군, 국민연금 대량보유 공시를 한 페이지에서 봅니다.",
+    "uspage.kicker": "US & GLOBAL MARKETS", "uspage.title": "미국·글로벌 시장.",
+    "uspage.copy": "S&P 500 히트맵, 스트레스 지수, 매크로, 유동성, 공식 환율을 한 페이지에서 봅니다.",
     "status.connecting": "연결 중", "status.live": "데이터 연결", "status.partial": "일부 데이터", "status.offline": "연결 오류",
     "status.loading": "불러오는 중", "status.viewport": "화면에 표시되면 불러옵니다", "status.unavailable": "데이터 미연결",
     "status.noSeries": "표시할 시계열이 없습니다", "status.retry": "새로고침 후 다시 시도해 주세요.", "status.staleData": "지연 데이터", "status.legacyDisabled": "라이선스 데이터 전환 중 · 공개 데이터 비활성",
@@ -69,6 +86,15 @@ const TEXT = {
   },
   en: {
     "brand.tagline": "MARKET SIGNAL CONSOLE", "nav.analytics": "Stock analytics", "nav.monitor": "Market monitor",
+    "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & Global",
+    "landing.kicker": "KOREA × US MARKET CONSOLE", "landing.title": "Markets move after the close.",
+    "landing.copy": "From around-the-clock references for Samsung Electronics and SK Hynix to US macro — only connected data, nothing estimated.",
+    "landing.krLink": "Korea markets page", "landing.krDesc": "24h references · official closes · KOSPI index family · NPS 5% filings",
+    "landing.usLink": "US & global page", "landing.usDesc": "S&P 500 heatmap · stress index · macro · liquidity · official FX",
+    "krpage.kicker": "KOREA MARKETS", "krpage.title": "Korean stocks, beyond market hours.",
+    "krpage.copy": "Around-the-clock references, official closes, the KOSPI index family and NPS large-holding filings on one page.",
+    "uspage.kicker": "US & GLOBAL MARKETS", "uspage.title": "US & global markets.",
+    "uspage.copy": "The S&P 500 heatmap, stress index, macro, liquidity and official FX on one page.",
     "status.connecting": "Connecting", "status.live": "Data live", "status.partial": "Partial data", "status.offline": "Connection error",
     "status.loading": "Loading", "status.viewport": "Loads when scrolled into view", "status.unavailable": "Data not connected",
     "status.noSeries": "No series available", "status.retry": "Refresh and try again.", "status.staleData": "Stale data", "status.legacyDisabled": "Public data disabled during licensed-provider migration",
@@ -282,15 +308,15 @@ const OVERVIEW = [
 const SECTIONS = [
   // korea-official leads: it renders into the deep flow with the others, then
   // the whole section is moved up into the Korea zone beside #kr-overnight.
-  { id: "korea-official", eyebrow: "KOREA · OFFICIAL CLOSE", title: LABEL("한국 공식 종가", "Korean official closes"), copy: LABEL("한국거래소 장 마감 확정값입니다. 금융위원회가 공공데이터로 개방한 자료로, 기준일 다음 영업일에 공개됩니다. 위의 24시간 참고가와 같은 값이 아닙니다.", "Confirmed Korea Exchange closes, opened as public data by the Financial Services Commission and published the next business day. These are not the around-the-clock references above."), keys: ["kospi_exact", "kosdaq_exact", "samsung_exact", "sk_hynix_exact"] },
-  { id: "global-assets", eyebrow: "GLOBAL PRICES", title: LABEL("글로벌 자산", "Global assets"), copy: LABEL("전고점 대비 위치와 최근 가격 흐름을 함께 봅니다.", "View recent prices alongside distance from prior highs."), keys: ["sp500", "nasdaq", "gold", "bitcoin"] },
-  { id: "global-etfs", eyebrow: "CROSS-BORDER ETFs", title: LABEL("글로벌 지역 ETF", "Regional ETFs"), copy: LABEL("미국 상장 ETF를 통해 지역별 위험선호를 확인합니다.", "Use US-listed ETFs to compare regional risk appetite."), keys: ["ewz", "inda", "vnm", "ewj"] },
-  { id: "market-risk", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("시장심리·변동성·금리곡선·신용스프레드·금융스트레스를 나란히 봅니다.", "Compare sentiment, volatility, the yield curve, credit spread and financial stress."), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread", "financial_stress"] },
-  { id: "macro-regime", eyebrow: "MACRO REGIME", title: LABEL("매크로 환경", "Macro regime"), copy: LABEL("달러·금리·원자재·고용의 방향을 확인합니다.", "Track the dollar, rates, commodities and labor conditions."), keys: ["dollar_index_broad", "dxy", "usdjpy", "treasury_10y", "wti", "copper", "unemployment", "initial_claims"] },
-  { id: "liquidity", eyebrow: "FED & LIQUIDITY", title: LABEL("유동성 대차대조표", "Liquidity balance sheet"), copy: LABEL("연준·재무부·단기자금시장 유동성의 크기와 흐름입니다.", "Monitor Federal Reserve, Treasury and money-market liquidity."), keys: ["fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account", "m2", "retail_money_market_funds"] },
-  { id: "exchange-rates", eyebrow: "OFFICIAL FX · FEDERAL RESERVE H.10", title: LABEL("환율", "Exchange rates"), copy: LABEL("미 연준이 매 영업일 고시하는 공식 환율입니다. 앞의 세 개는 달러당 외화, 뒤의 두 개는 외화당 달러로 방향이 반대입니다.", "Official rates published each business day by the Federal Reserve. The first three are foreign currency per dollar; the last two are quoted the other way round."), keys: ["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd", "dollar_index_afe", "dollar_index_eme"] },
-  { id: "funding", eyebrow: "OVERNIGHT FUNDING", title: LABEL("단기자금 조달금리", "Overnight funding"), copy: LABEL("담보·무담보 금리와 지급준비금 이자율의 간격을 봅니다.", "Compare secured, unsecured and reserve remuneration rates."), keys: ["sofr", "effective_fed_funds", "reserve_interest"] },
-  { id: "options-risk", eyebrow: "DERIVATIVES", title: LABEL("옵션과 변동성", "Options and volatility"), copy: LABEL("공식 라이선스가 필요한 값은 계약 전까지 빈 상태로 표시합니다.", "Values requiring official display licenses remain blank until licensed."), keys: ["skew", "vvix", "ovx", "pcr"] },
+  { id: "korea-official", zone: "kr", eyebrow: "KOREA · OFFICIAL CLOSE", title: LABEL("한국 공식 종가", "Korean official closes"), copy: LABEL("한국거래소 장 마감 확정값입니다. 금융위원회가 공공데이터로 개방한 자료로, 기준일 다음 영업일에 공개됩니다. 위의 24시간 참고가와 같은 값이 아닙니다.", "Confirmed Korea Exchange closes, opened as public data by the Financial Services Commission and published the next business day. These are not the around-the-clock references above."), keys: ["kospi_exact", "kosdaq_exact", "samsung_exact", "sk_hynix_exact"] },
+  { id: "global-assets", zone: "us", eyebrow: "GLOBAL PRICES", title: LABEL("글로벌 자산", "Global assets"), copy: LABEL("전고점 대비 위치와 최근 가격 흐름을 함께 봅니다.", "View recent prices alongside distance from prior highs."), keys: ["sp500", "nasdaq", "gold", "bitcoin"] },
+  { id: "global-etfs", zone: "us", eyebrow: "CROSS-BORDER ETFs", title: LABEL("글로벌 지역 ETF", "Regional ETFs"), copy: LABEL("미국 상장 ETF를 통해 지역별 위험선호를 확인합니다.", "Use US-listed ETFs to compare regional risk appetite."), keys: ["ewz", "inda", "vnm", "ewj"] },
+  { id: "market-risk", zone: "us", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("시장심리·변동성·금리곡선·신용스프레드·금융스트레스를 나란히 봅니다.", "Compare sentiment, volatility, the yield curve, credit spread and financial stress."), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread", "financial_stress"] },
+  { id: "macro-regime", zone: "us", eyebrow: "MACRO REGIME", title: LABEL("매크로 환경", "Macro regime"), copy: LABEL("달러·금리·원자재·고용의 방향을 확인합니다.", "Track the dollar, rates, commodities and labor conditions."), keys: ["dollar_index_broad", "dxy", "usdjpy", "treasury_10y", "wti", "copper", "unemployment", "initial_claims"] },
+  { id: "liquidity", zone: "us", eyebrow: "FED & LIQUIDITY", title: LABEL("유동성 대차대조표", "Liquidity balance sheet"), copy: LABEL("연준·재무부·단기자금시장 유동성의 크기와 흐름입니다.", "Monitor Federal Reserve, Treasury and money-market liquidity."), keys: ["fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account", "m2", "retail_money_market_funds"] },
+  { id: "exchange-rates", zone: "us", eyebrow: "OFFICIAL FX · FEDERAL RESERVE H.10", title: LABEL("환율", "Exchange rates"), copy: LABEL("미 연준이 매 영업일 고시하는 공식 환율입니다. 앞의 세 개는 달러당 외화, 뒤의 두 개는 외화당 달러로 방향이 반대입니다.", "Official rates published each business day by the Federal Reserve. The first three are foreign currency per dollar; the last two are quoted the other way round."), keys: ["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd", "dollar_index_afe", "dollar_index_eme"] },
+  { id: "funding", zone: "us", eyebrow: "OVERNIGHT FUNDING", title: LABEL("단기자금 조달금리", "Overnight funding"), copy: LABEL("담보·무담보 금리와 지급준비금 이자율의 간격을 봅니다.", "Compare secured, unsecured and reserve remuneration rates."), keys: ["sofr", "effective_fed_funds", "reserve_interest"] },
+  { id: "options-risk", zone: "us", eyebrow: "DERIVATIVES", title: LABEL("옵션과 변동성", "Options and volatility"), copy: LABEL("공식 라이선스가 필요한 값은 계약 전까지 빈 상태로 표시합니다.", "Values requiring official display licenses remain blank until licensed."), keys: ["skew", "vvix", "ovx", "pcr"] },
 ];
 
 const COMPARISONS = [
@@ -523,9 +549,11 @@ function localizedRightsNotice(record) {
     || record?.rights?.notice || "").trim();
 }
 
+const pageSections = () => SECTIONS.filter((section) => onPage(section.zone));
+
 function renderSkeleton() {
   const groups = $("#overview-groups");
-  groups.replaceChildren(...OVERVIEW.map((group) => {
+  if (groups) groups.replaceChildren(...OVERVIEW.map((group) => {
     const section = document.createElement("section"); section.className = "overview-group";
     const heading = document.createElement("h3"); heading.textContent = localValue(group.label, state.lang); section.append(heading);
     const grid = document.createElement("div"); grid.className = "summary-grid";
@@ -538,31 +566,36 @@ function renderSkeleton() {
     section.append(grid); return section;
   }));
 
-  const deep = $("#deep-sections"); deep.replaceChildren();
-  // A previous skeleton pass may have moved #korea-official out of the deep
-  // container, where replaceChildren cannot reach it; a fresh copy is about to
-  // be built, so the stray one must go first or the id would duplicate.
-  document.getElementById("korea-official")?.remove();
-  SECTIONS.forEach((section, index) => {
-    const block = document.createElement("section"); block.className = "dashboard-section"; block.id = section.id;
-    block.innerHTML = `<div class="section-heading"><span class="section-index">${String(index + 1).padStart(2, "0")}</span><div><p class="eyebrow">${section.eyebrow}</p><h2></h2></div></div><p class="section-copy"></p><div class="metric-grid"></div>`;
-    $("h2", block).textContent = localValue(section.title, state.lang); $(".section-copy", block).textContent = localValue(section.copy, state.lang);
-    const grid = $(".metric-grid", block);
-    section.keys.forEach((key) => grid.append(makeMetricCard(key)));
-    deep.append(block);
-  });
-  const compare = document.createElement("section"); compare.className = "dashboard-section"; compare.id = "liquidity-comparisons";
-  compare.innerHTML = `<div class="section-heading"><span class="section-index">09</span><div><p class="eyebrow">DERIVED · REBASED SERIES</p><h2>${state.lang === "ko" ? "유동성 비교" : "Liquidity comparisons"}</h2></div></div><p class="section-copy">${t("chart.normalized")}</p><div class="comparison-grid"></div>`;
-  COMPARISONS.forEach((item, index) => {
-    const card = document.createElement("article"); card.className = "comparison-card lazy-comparison"; card.dataset.comparison = String(index);
-    card.innerHTML = `<h3></h3><p></p><div class="comparison-chart state-block">${t("status.viewport")}</div><div class="comparison-legend"></div>`;
-    $("h3", card).textContent = localValue(item.title, state.lang); $("p", card).textContent = localValue(item.copy, state.lang); $(".comparison-grid", compare).append(card);
-  });
-  deep.append(compare);
-  // The official-close cards belong in the Korea zone, between the 24-hour
-  // references and the index-family table, not in the middle of the deep flow.
-  const koreaOfficial = $("#korea-official"), krIndicesSection = $("#kr-indices");
-  if (koreaOfficial && krIndicesSection) krIndicesSection.insertAdjacentElement("beforebegin", koreaOfficial);
+  const deep = $("#deep-sections");
+  if (deep) {
+    deep.replaceChildren();
+    // A previous skeleton pass may have moved #korea-official out of the deep
+    // container, where replaceChildren cannot reach it; a fresh copy is about to
+    // be built, so the stray one must go first or the id would duplicate.
+    document.getElementById("korea-official")?.remove();
+    pageSections().forEach((section, index) => {
+      const block = document.createElement("section"); block.className = "dashboard-section"; block.id = section.id;
+      block.innerHTML = `<div class="section-heading"><span class="section-index">${String(index + 1).padStart(2, "0")}</span><div><p class="eyebrow">${section.eyebrow}</p><h2></h2></div></div><p class="section-copy"></p><div class="metric-grid"></div>`;
+      $("h2", block).textContent = localValue(section.title, state.lang); $(".section-copy", block).textContent = localValue(section.copy, state.lang);
+      const grid = $(".metric-grid", block);
+      section.keys.forEach((key) => grid.append(makeMetricCard(key)));
+      deep.append(block);
+    });
+    if (onPage("us")) {
+      const compare = document.createElement("section"); compare.className = "dashboard-section"; compare.id = "liquidity-comparisons";
+      compare.innerHTML = `<div class="section-heading"><span class="section-index">${String(pageSections().length + 1).padStart(2, "0")}</span><div><p class="eyebrow">DERIVED · REBASED SERIES</p><h2>${state.lang === "ko" ? "유동성 비교" : "Liquidity comparisons"}</h2></div></div><p class="section-copy">${t("chart.normalized")}</p><div class="comparison-grid"></div>`;
+      COMPARISONS.forEach((item, index) => {
+        const card = document.createElement("article"); card.className = "comparison-card lazy-comparison"; card.dataset.comparison = String(index);
+        card.innerHTML = `<h3></h3><p></p><div class="comparison-chart state-block">${t("status.viewport")}</div><div class="comparison-legend"></div>`;
+        $("h3", card).textContent = localValue(item.title, state.lang); $("p", card).textContent = localValue(item.copy, state.lang); $(".comparison-grid", compare).append(card);
+      });
+      deep.append(compare);
+    }
+    // The official-close cards belong in the Korea zone, between the 24-hour
+    // references and the index-family table, not in the middle of the deep flow.
+    const koreaOfficial = $("#korea-official"), krIndicesSection = $("#kr-indices");
+    if (koreaOfficial && krIndicesSection) krIndicesSection.insertAdjacentElement("beforebegin", koreaOfficial);
+  }
   renderJumpNav(); setupLazyCharts();
 }
 
@@ -607,17 +640,23 @@ function pruneEmpty() {
 }
 
 function renderJumpNav() {
-  const nav = $("#jump-nav"); nav.replaceChildren();
-  // Mirrors the page: Korea zone first, then the US & global flow.
+  const nav = $("#jump-nav"); if (!nav) return; nav.replaceChildren();
+  // Mirrors the page: Korea zone first, then the US & global flow. Numbering
+  // must come from the same filtered list renderSkeleton used, or the nav and
+  // the section headings would disagree on a split page.
+  const sections = pageSections();
+  const numbered = sections.map((section, index) => ({ id: section.id, text: `${String(index + 1).padStart(2, "0")} ${localValue(section.title, state.lang)}` }));
   [{ id: "kr-overnight", text: t("kro.title") },
-    { id: SECTIONS[0].id, text: `01 ${localValue(SECTIONS[0].title, state.lang)}` },
+    ...numbered.filter((item) => item.id === "korea-official"),
     { id: "kr-indices", text: t("kridx.title") },
     { id: "kr-pension", text: t("krp.title") },
     { id: "constituent-heatmap", text: t("tv.title") },
-    ...SECTIONS.slice(1).map((section, index) => ({ id: section.id, text: `${String(index + 2).padStart(2, "0")} ${localValue(section.title, state.lang)}` })),
-    { id: "liquidity-comparisons", text: `${String(SECTIONS.length + 1).padStart(2, "0")} ${state.lang === "ko" ? "유동성 비교" : "Comparisons"}` },
+    ...numbered.filter((item) => item.id !== "korea-official"),
+    { id: "liquidity-comparisons", text: `${String(sections.length + 1).padStart(2, "0")} ${state.lang === "ko" ? "유동성 비교" : "Comparisons"}` },
     { id: "sector-flow", text: t("sector.title") }, { id: "correlation", text: t("corr.title") }]
-    .filter((item) => !document.getElementById(item.id)?.hidden)
+    // A split page carries only its own sections; links must not point at ids
+    // that exist on a different page.
+    .filter((item) => { const el = document.getElementById(item.id); return el && !el.hidden; })
     .forEach((item) => { const link = document.createElement("a"); link.href = `#${item.id}`; link.textContent = item.text; nav.append(link); });
 }
 
@@ -717,7 +756,7 @@ function renderComparison(index) {
 }
 
 function renderAttribution() {
-  const host = $("#attribution"); host.replaceChildren(); const attr = state.macro?.attribution;
+  const host = $("#attribution"); if (!host) return; host.replaceChildren(); const attr = state.macro?.attribution;
   // Each serving lane states its own required notice and term links. Hardcoding
   // one provider's name here would credit it for another's data.
   const providers = Array.isArray(attr?.providers) && attr.providers.length
@@ -804,19 +843,33 @@ function endpointHealth(key) {
   return staleCount === usable.length ? "stale" : "usable";
 }
 
+// Which pages need which endpoint. A lane a page never shows is never fetched
+// there; its state stays null and its renderers no-op on the missing markup.
+const PAGE_FETCHES = {
+  macro: ["landing", "kr", "us"],
+  assets: ["landing", "us"],
+  sectors: ["us"],
+  weekend: ["kr"],
+  stress: ["us"],
+  krIndices: ["kr"],
+  krOvernight: ["landing", "kr"],
+  krPension: ["kr"],
+};
+
 async function loadCore() {
-  $("#refresh-button").setAttribute("aria-busy", "true");
+  $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
+  const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
   const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension] = await Promise.all([
-    fetchJson("/api/market/macro?history=3y", "macro"), fetchJson("/api/market/assets?history=3y", "assets"),
-    fetchJson("/api/market/sectors", "sectors"), fetchJson("/api/market/weekend", "weekend"),
-    fetchJson("/api/market/stress", "stress"), fetchJson("/api/kr/indices", "krIndices"),
-    fetchJson("/api/kr/overnight", "krOvernight"), fetchJson("/api/kr/pension", "krPension"),
+    request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
+    request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
+    request("/api/market/stress", "stress"), request("/api/kr/indices", "krIndices"),
+    request("/api/kr/overnight", "krOvernight"), request("/api/kr/pension", "krPension"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
   state.stress = stress; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets");
-  renderAll(); $("#refresh-button").removeAttribute("aria-busy");
+  renderAll(); $("#refresh-button")?.removeAttribute("aria-busy");
 }
 
 function renderAll() {
@@ -837,8 +890,10 @@ function renderAll() {
   // A deliberately disabled lane is absence by decision, not degraded service.
   // It leaves the health calculation entirely: with the legacy price lane off,
   // the badge would otherwise read "partial data" forever on a healthy site.
-  const health = ["macro", "assets", "sectors", "weekend", "krOvernight"].map(endpointHealth)
-    .filter((item) => item !== "disabled");
+  const health = ["macro", "assets", "sectors", "weekend", "krOvernight"]
+    // A lane this page never fetches must not read as an outage here.
+    .filter((key) => onPage(...PAGE_FETCHES[key]))
+    .map(endpointHealth).filter((item) => item !== "disabled");
   const badge = $("#connection-badge");
   const count = (value) => health.filter((item) => item === value).length;
   const usable = count("usable"); const stale = count("stale");
@@ -848,7 +903,8 @@ function renderAll() {
     : "status.offline";
   badge.className = `connection-badge ${key === "status.live" ? "ok" : key === "status.staleData" ? "stale" : key === "status.offline" ? "error" : ""}`;
   $("span", badge).textContent = t(key);
-  $("#overview-source").textContent = [state.assets?.provider?.name || state.assets?.provider?.id, state.macro?.provider?.name || state.macro?.provider?.id].filter(Boolean).join(" + ") || "API";
+  const overviewSource = $("#overview-source");
+  if (overviewSource) overviewSource.textContent = [state.assets?.provider?.name || state.assets?.provider?.id, state.macro?.provider?.name || state.macro?.provider?.id].filter(Boolean).join(" + ") || "API";
 }
 
 function formatKrw(value) {
@@ -1093,8 +1149,9 @@ function renderKrOvernight() {
 }
 
 function renderSectors() {
-  $$("#sector-period button").forEach((button) => { const active = button.dataset.period === state.sectorPeriod; button.classList.toggle("active", active); button.setAttribute("aria-pressed", String(active)); });
   const payload = state.sectors; const stateNode = $("#sector-state"), bars = $("#sector-bars");
+  if (!stateNode) return;
+  $$("#sector-period button").forEach((button) => { const active = button.dataset.period === state.sectorPeriod; button.classList.toggle("active", active); button.setAttribute("aria-pressed", String(active)); });
   if (!payload) { const disabled = disabledText("sectors"); stateNode.hidden = false; stateNode.classList.toggle("disabled", Boolean(disabled)); stateNode.textContent = disabled || `${t("status.unavailable")} · ${t("status.retry")}`; bars.hidden = true; return; }
   stateNode.classList.remove("disabled");
   const returnMultiplier = payload.basis?.return_unit === "decimal" ? 100 : 1;
@@ -1176,6 +1233,7 @@ function formatWeekendValue(value, signal) {
 
 function renderWeekend() {
   const host = $("#weekend-grid"), status = $("#weekend-state"), payload = state.weekend;
+  if (!host || !status) return;
   if (!payload) {
     const disabled = disabledText("weekend");
     host.hidden = true; status.hidden = false; status.classList.toggle("disabled", Boolean(disabled));
@@ -1216,6 +1274,7 @@ function renderWeekend() {
 
 function renderStressIndex() {
   const stateNode = $("#stress-state"), body = $("#stress-body"), data = state.stress;
+  if (!stateNode || !body) return;
   if (!data) {
     const disabled = disabledText("stress");
     stateNode.hidden = false; stateNode.classList.toggle("disabled", Boolean(disabled)); body.hidden = true;
@@ -1294,10 +1353,10 @@ function setupControls() {
   $("#locale-toggle").addEventListener("click", () => { state.lang = state.lang === "ko" ? "en" : "ko"; localStorage.setItem("monitor.locale", state.lang); applyLocale(); });
   $("#theme-toggle").addEventListener("click", () => { const next = document.documentElement.dataset.theme === "light" ? "dark" : "light"; document.documentElement.dataset.theme = next; localStorage.setItem("monitor.theme", next); if (state.tvLoaded) renderTradingView(); });
   const theme = localStorage.getItem("monitor.theme"); if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
-  $("#refresh-button").addEventListener("click", loadCore);
-  $("#sector-period").addEventListener("click", (event) => { const button = event.target.closest("button[data-period]"); if (!button) return; state.sectorPeriod = button.dataset.period; localStorage.setItem("monitor.sectorPeriod", state.sectorPeriod); renderSectors(); });
-  $("#tv-period").addEventListener("click", (event) => { const button = event.target.closest("button[data-period]"); if (!button) return; state.tvPeriod = button.dataset.period; localStorage.setItem("monitor.tvPeriod", state.tvPeriod); $$("#tv-period button").forEach((node) => { const active = node === button; node.classList.toggle("active", active); node.setAttribute("aria-pressed", String(active)); }); if (state.tvLoaded) renderTradingView(); });
-  $("#corr-period").addEventListener("change", () => { if (state.correlationLoaded) loadCorrelation(); });
+  $("#refresh-button")?.addEventListener("click", loadCore);
+  $("#sector-period")?.addEventListener("click", (event) => { const button = event.target.closest("button[data-period]"); if (!button) return; state.sectorPeriod = button.dataset.period; localStorage.setItem("monitor.sectorPeriod", state.sectorPeriod); renderSectors(); });
+  $("#tv-period")?.addEventListener("click", (event) => { const button = event.target.closest("button[data-period]"); if (!button) return; state.tvPeriod = button.dataset.period; localStorage.setItem("monitor.tvPeriod", state.tvPeriod); $$("#tv-period button").forEach((node) => { const active = node === button; node.classList.toggle("active", active); node.setAttribute("aria-pressed", String(active)); }); if (state.tvLoaded) renderTradingView(); });
+  $("#corr-period")?.addEventListener("change", () => { if (state.correlationLoaded) loadCorrelation(); });
   $$("#tv-period button").forEach((node) => { const active = node.dataset.period === state.tvPeriod; node.classList.toggle("active", active); node.setAttribute("aria-pressed", String(active)); });
 }
 

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="삼성전자·SK하이닉스 24시간 참고가, 코스피 지수군, S&P 500 히트맵, 미국 매크로 — 한국·미국 시장을 한눈에 보는 Mulmit 대시보드">
+  <title>Mulmit — 한국·미국 시장 대시보드</title>
+  <link rel="stylesheet" href="/static/monitor.css?v=20260818-3">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to market data</a>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Mulmit home">
+      <span class="brand-mark" aria-hidden="true">M</span>
+      <span><strong>Mulmit</strong><small data-i18n="brand.tagline">MARKET SIGNAL CONSOLE</small></span>
+    </a>
+    <nav class="view-switch" aria-label="View">
+      <a class="view-tab active" href="/" aria-current="page" data-i18n="nav.home">홈</a>
+      <a class="view-tab" href="/kr" data-i18n="nav.kr">한국</a>
+      <a class="view-tab" href="/us" data-i18n="nav.us">미국·글로벌</a>
+      <a class="view-tab" href="/analytics" data-i18n="nav.analytics">종목 분석</a>
+    </nav>
+    <nav class="mast-nav" aria-label="Secondary">
+      <a class="nav-chip" href="/docs">API</a>
+    </nav>
+    <div class="mast-actions">
+      <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
+      <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
+      <button class="icon-button" id="theme-toggle" type="button" data-i18n-aria="theme.toggle" aria-label="테마 전환">◐</button>
+    </div>
+  </header>
+
+  <main id="main" class="shell">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <p class="kicker" data-i18n="landing.kicker">KOREA × US MARKET CONSOLE</p>
+        <h1 id="hero-title" data-i18n="landing.title">장이 닫혀도, 시장은 움직입니다.</h1>
+        <p class="hero-copy" data-i18n="landing.copy">삼성전자·SK하이닉스의 24시간 참고가부터 미국 매크로까지, 연결된 데이터만 보여줍니다. 연결되지 않은 값은 추정하지 않습니다.</p>
+      </div>
+      <aside class="hero-meta" aria-live="polite">
+        <span data-i18n="hero.updated">마지막 갱신</span>
+        <strong id="updated-at">—</strong>
+        <button class="refresh-button" id="refresh-button" type="button"><span aria-hidden="true">↻</span> <span data-i18n="action.refresh">새로고침</span></button>
+      </aside>
+    </section>
+
+    <section class="dashboard-section" id="kr-overnight" aria-labelledby="kro-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">KOREA · 24H PERP × OFFICIAL CLOSE</p><h2 id="kro-title" data-i18n="kro.title">한국 주식, 장 밖에서는</h2></div>
+        <span class="source-pill">HIP-3 × FSC × H.10</span>
+      </div>
+      <p class="section-copy" data-i18n="kro.copy">장이 닫혀 있어도 합성 무기한선물은 24시간 움직입니다. 마크가격을 공식환율로 환산해 마지막 공식 종가와 비교합니다. 현물 호가나 시초가 예측이 아닙니다.</p>
+      <div class="risk-strip" role="note">
+        <span class="status-badge warn" data-i18n="weekend.notSpot">현물가격 아님</span>
+        <span class="status-badge warn" data-i18n="weekend.syntheticPerp">USD 환산 합성 무기한선물</span>
+        <span class="status-badge warn" data-i18n="kro.fxOfficial">공식환율 환산 · 실시간 환율 아님</span>
+      </div>
+      <div id="kro-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="kro-grid" class="kro-grid" hidden></div>
+      <footer class="kro-footer" id="kro-footer" hidden></footer>
+    </section>
+
+    <section class="zone-links" aria-label="Market pages">
+      <a class="zone-link-card" href="/kr">
+        <strong data-i18n="landing.krLink">한국 시장 페이지</strong>
+        <span data-i18n="landing.krDesc">24시간 참고가 · 공식 종가 · 코스피 지수군 · 국민연금 5% 공시</span>
+      </a>
+      <a class="zone-link-card" href="/us">
+        <strong data-i18n="landing.usLink">미국·글로벌 페이지</strong>
+        <span data-i18n="landing.usDesc">S&amp;P 500 히트맵 · 스트레스 지수 · 매크로 · 유동성 · 공식 환율</span>
+      </a>
+    </section>
+
+    <section class="overview" aria-labelledby="overview-title">
+      <div class="section-heading compact">
+        <span class="section-index">00</span>
+        <div><p class="eyebrow" data-i18n="overview.eyebrow">MARKET TAPE</p><h2 id="overview-title" data-i18n="overview.title">시장 요약</h2></div>
+        <span class="source-pill" id="overview-source">API</span>
+      </div>
+      <div id="overview-groups" class="overview-groups" aria-live="polite"></div>
+    </section>
+
+    <section class="methodology" aria-labelledby="method-title">
+      <p class="eyebrow">DATA POLICY</p>
+      <h2 id="method-title" data-i18n="method.title">숫자를 다루는 원칙</h2>
+      <div class="method-grid">
+        <article><strong data-i18n="method.one.title">출처를 함께 표시</strong><p data-i18n="method.one.copy">각 수치는 공급자, 기준일, 신선도를 함께 보여줍니다.</p></article>
+        <article><strong data-i18n="method.two.title">단위를 추측하지 않음</strong><p data-i18n="method.two.copy">API가 제공한 단위와 배율만 사용합니다.</p></article>
+        <article><strong data-i18n="method.three.title">미연결은 미연결로</strong><p data-i18n="method.three.copy">라이선스나 API가 없는 지표는 숫자 대신 상태를 표시합니다.</p></article>
+      </div>
+      <div id="attribution" class="attribution"></div>
+    </section>
+
+    <footer class="site-footer">
+      <nav aria-label="Legal">
+        <a href="/privacy" data-i18n="legal.privacy">개인정보처리방침</a>
+        <a href="/terms" data-i18n="legal.terms">이용약관</a>
+        <a href="/disclaimer" data-i18n="legal.disclaimer">면책 고지</a>
+      </nav>
+      <p data-i18n="legal.notAdvice">Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.</p>
+    </footer>
+  </main>
+
+  <script>window.MULMIT_PAGE = "landing";</script>
+  <script src="/static/monitor.js?v=20260818-3" defer></script>
+</body>
+</html>
