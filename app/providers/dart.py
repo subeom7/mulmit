@@ -84,7 +84,7 @@ def _parse_float(value: Any) -> float | None:
 
 
 class DartProvider:
-    """Open DART의 네 endpoint만 아는 작은 클라이언트."""
+    """Open DART의 다섯 endpoint만 아는 작은 클라이언트."""
 
     name = DART_PROVIDER_ID
 
@@ -279,6 +279,40 @@ class DartProvider:
                 "report_url": DART_REPORT_URL.format(rcept_no=rcept_no),
             })
         return holdings
+
+    def fetch_major_accounts(
+        self, corp_code: str, bsns_year: int, *, reprt_code: str = "11011"
+    ) -> list[dict[str, Any]]:
+        """단일회사 주요계정(fnlttSinglAcnt) — 한 요청이 당기·전기·전전기를 담는다.
+
+        연결(CFS)과 별도(OFS)가 같이 오며 금액은 쉼표 문자열이다. 값 해석은
+        호출자가 한다 — 여기서는 형태만 정규화한다.
+        """
+        body = self._get_json(
+            "fnlttSinglAcnt.json",
+            {
+                "corp_code": corp_code.strip(),
+                "bsns_year": str(bsns_year),
+                "reprt_code": reprt_code,
+            },
+        )
+        if str(body.get("status") or "") == STATUS_NO_DATA:
+            return []
+        rows = []
+        for row in body.get("list") or []:
+            if not isinstance(row, dict):
+                continue
+            rows.append({
+                "fs_div": str(row.get("fs_div") or "").strip(),
+                "sj_div": str(row.get("sj_div") or "").strip(),
+                "account_nm": str(row.get("account_nm") or "").strip(),
+                "thstrm_amount": _parse_int(row.get("thstrm_amount")),
+                "frmtrm_amount": _parse_int(row.get("frmtrm_amount")),
+                "bfefrmtrm_amount": _parse_int(row.get("bfefrmtrm_amount")),
+                "currency": str(row.get("currency") or "").strip() or None,
+                "rcept_no": str(row.get("rcept_no") or "").strip() or None,
+            })
+        return rows
 
     def fetch_ownership_reports(self, corp_code: str) -> list[dict[str, Any]]:
         """임원·주요주주 소유상황 보고 목록. 보고서 단위이며 거래 단위가 아니다."""

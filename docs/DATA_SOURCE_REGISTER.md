@@ -567,7 +567,13 @@ notes: >
 | 현재 상태 | `approved` (아래 근거·범위 한정) |
 | 코드 위치 | `app/providers/dart.py`, `app/kr_insider.py`, `tests/test_kr_insider.py` |
 | 배포 기본값 | `DART_ENABLED=false`, `DART_API_KEY=` (미설정이면 lane이 닫힘) |
-| 현재 사용 | `corpCode.xml`(상장사 종목코드↔법인코드 매핑), `elestock.json`(소유상황 보고 목록) |
+| 현재 사용 | `corpCode.xml`(매핑), `elestock.json`(소유상황 보고), `list.json`+`majorstock.json`(국민연금 대량보유), **`fnlttSinglAcnt.json`(연간 주요계정 재무제표 — `/api/kr/fundamentals/{code}`)** |
+
+재무제표(2026-08-19 추가) 표시 규칙: **연간(사업보고서)만** 다룬다 — 분기
+손익은 누적·분기 구분이 API 응답에 없어 추측 대신 범위를 좁혔다. 연결(CFS)
+우선·없으면 별도(OFS)이며 어느 쪽인지 응답에 명시한다. 금융사는 매출액·영업수익
+계정 자체가 없는 것이 사실이므로(실측: KB금융) 매출·마진을 비운 채 영업이익·
+순이익·자산·자본만 싣는다. 파생값은 마진 둘뿐(같은 보고서의 이익 ÷ 매출).
 | 접근 조건 | 발급 키 필수. 허용량은 약관 제10조 ④ "홈페이지 게시" 방식 — 스로틀 유지, 요청 기반 조회만 |
 | 표시 경계 | 보고된 값을 **가공 없이 전달**. elestock은 보고서 단위 소유수량·순증감이며 개별 매매·단가가 아님 — 화면 basis 문구로 명시. 합산 요약을 만들지 않음 |
 | attribution | `출처: 금융감독원 전자공시시스템(DART)` + 공시 원문 링크(`dsaf001/main.do?rcpNo=`)를 행마다 제공 |
@@ -1039,6 +1045,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
 | 2026-08-18 | 한국 24시간 참고가 섹션(`/api/kr/overnight`) 추가 — 기존 세 lane의 결합(HIP-3 마크 × H.10 공식환율 × FSC 기준가), 신규 소스·권리 없음. HIP-3 게이트를 그대로 타고 환율·기준가 날짜를 값과 함께 표기, 김프 조정 없음 명시. 모니터를 한국/미국·글로벌 존으로 재배치, 합성 참고값 카드 2장은 이 섹션이 대체. 계획서 `docs/PLAN_KR_SECTIONS.md` | Claude assisted |
+| 2026-08-19 | DART 연간 재무제표 추가(`/api/kr/fundamentals/{code}`, §3.10 확장) — 주요계정 원문 전달, 연간 한정(분기 손익 누적 구분 부재), 연결 우선, 금융사 매출 부재는 사실로 표시. 미국 패널과 대칭 | Claude assisted |
 | 2026-08-19 | EDGAR 재무제표 추가(`/api/us/fundamentals/{ticker}`, §3.5 확장) — XBRL companyconcept, 내부자 lane과 같은 티커 큐·게이트. 태그 사다리는 최신 보고 기간 기준(NVIDIA 태그 전환 실측), YTD 배제·정정 우선, 파생은 마진 2종뿐 | Claude assisted |
 | 2026-08-18 | 미 하원 PTR lane 추가(`DS` §3.14, `/api/us/ptr`) — STOCK Act 공시 원문 전달, EIGA §105(c) 분석·고지 동봉, 엄격 파서(불일치는 원문 링크로 강등), 상원 eFD는 봇 차단으로 **보류(우회 안 함)** | Claude assisted |
 | 2026-08-18 | ETF 보드(`/api/kr/etf`) 추가 — 금융위원회_증권상품시세정보 활용신청 승인(자동승인, 만료 2028-08-18) 후 기존 FSC lane·키로 하루 스냅샷 수집. 괴리율 = 종가÷NAV−1, 같은 기준일 공표값 두 개에서만 계산·NAV 0은 결측. 채권·일반상품시세정보도 함께 승인(미사용 보관) | Claude assisted |
