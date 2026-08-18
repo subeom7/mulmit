@@ -149,6 +149,13 @@ DART_MAX_AGE = _int("DART_MAX_AGE", 60 * 60 * 12)
 # 법인코드 매핑(zip)은 거의 안 바뀐다.
 DART_CORP_MAX_AGE = _int("DART_CORP_MAX_AGE", 60 * 60 * 24 * 7)
 
+# 미 하원 PTR(STOCK Act) — 법정 공시 relay. 키는 없고 게이트만 있다.
+US_PTR_ENABLED = _bool("US_PTR_ENABLED", False)
+US_PTR_TIMEOUT = _float("US_PTR_TIMEOUT", 30.0)
+US_PTR_RETRIES = _int("US_PTR_RETRIES", 2)
+US_PTR_REQUEST_INTERVAL = _float("US_PTR_REQUEST_INTERVAL", 1.0)
+US_PTR_MAX_AGE = _int("US_PTR_MAX_AGE", 60 * 60 * 6)
+
 # KRX OPEN API must remain disabled until KRX approves the exact public use
 # case. Possessing a key alone does not grant redistribution rights. The FSC
 # lane above does not change this: it is a separate grant over a separate,

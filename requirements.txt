@@ -9,5 +9,7 @@ yfinance>=0.2.54
 # 없으면 requests로 폴백하는데 야후가 그 지문을 우선적으로 차단한다.
 curl_cffi>=0.7
 pandas>=2.0
+# 하원 PTR PDF의 텍스트 추출(전자 제출분). 스캔 제출분은 추출 불가로 표시한다.
+pypdf>=4.0
 numpy>=1.24
 statsmodels>=0.14
