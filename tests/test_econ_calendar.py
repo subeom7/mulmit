@@ -10,7 +10,6 @@ from __future__ import annotations
 import datetime as dt
 import json
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app import config, econ_calendar, ingest
