@@ -86,6 +86,10 @@ const TEXT = {
     "ptr.scanned": "거래 미추출 신고(수기·스캔) {count}건 — 원문에서 확인:", "ptr.pending": "상세 수집 대기 {count}건",
     "ptr.partial": "일부 거래만 추출된 신고 {count}건 — 나머지는 원문 참조",
     "ptr.window": "최근 {days}일 신고 {total}건 · 거래 {tx}건 표시",
+    "cal.title": "경제 캘린더", "cal.copy": "다가오는 미국 데이터 발표와 FOMC·금통위 일정입니다. 기관이 공표한 예정일이며 변경될 수 있습니다.",
+    "cal.colDate": "날짜", "cal.colEvent": "이벤트", "cal.colRegion": "지역", "cal.colKind": "유형",
+    "cal.kindRelease": "지표 발표", "cal.kindPolicy": "정책회의", "cal.regionUs": "미국", "cal.regionKr": "한국",
+    "cal.dday": "D-{n}", "cal.today": "오늘",
     "sector.title": "섹터 자금 흐름", "sector.caption": "S&P 500 섹터 ETF 기간 수익률", "sector.name": "섹터", "sector.return": "수익률", "sector.interpretation": "플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.",
     "tv.title": "S&P 500 종목 히트맵", "tv.embed": "외부 위젯", "tv.notice": "이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.",
     "tv.terms": "데이터·표시 조건은 제공자 정책을 따릅니다.", "corr.title": "자산군 상관관계", "corr.note": "서로 다른 시장 시간대는 동시 일간 수익률 상관을 왜곡할 수 있습니다.", "corr.scale": "+1은 같은 방향, 0은 약한 선형 관계, −1은 반대 방향입니다. 상관은 인과관계가 아닙니다.",
@@ -150,6 +154,10 @@ const TEXT = {
     "ptr.scanned": "{count} paper filings without extracted trades — see the originals:", "ptr.pending": "{count} awaiting detail collection",
     "ptr.partial": "{count} filings partially extracted — see the originals for the rest",
     "ptr.window": "{total} filings in the last {days} days · {tx} transactions shown",
+    "cal.title": "Economic calendar", "cal.copy": "Upcoming US data releases and FOMC/BOK meetings. Dates are as announced by the institutions and can change.",
+    "cal.colDate": "Date", "cal.colEvent": "Event", "cal.colRegion": "Region", "cal.colKind": "Type",
+    "cal.kindRelease": "Data release", "cal.kindPolicy": "Policy meeting", "cal.regionUs": "US", "cal.regionKr": "Korea",
+    "cal.dday": "D-{n}", "cal.today": "Today",
     "sector.title": "Sector flow", "sector.caption": "S&P 500 sector ETF period returns", "sector.name": "Sector", "sector.return": "Return", "sector.interpretation": "Broader positive participation can confirm a wider advance. ETF returns are not the same thing as fund-flow dollars.",
     "tv.title": "S&P 500 constituent heatmap", "tv.embed": "Third-party widget", "tv.notice": "TradingView serves this embed directly; it is not Mulmit API data.",
     "tv.terms": "Provider data and display terms apply.", "corr.title": "Cross-asset correlation", "corr.note": "Different market hours can distort same-day return correlations.", "corr.scale": "+1 moves together, 0 indicates a weak linear link, and −1 moves oppositely. Correlation is not causation.",
@@ -357,7 +365,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, krOvernight: null, krPension: null, krEtf: null, usPtr: null,
+  stress: null, krOvernight: null, krPension: null, krEtf: null, usPtr: null, calendar: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -681,6 +689,7 @@ function renderJumpNav() {
     { id: "kr-pension", text: t("krp.title") },
     { id: "constituent-heatmap", text: t("tv.title") },
     { id: "us-ptr", text: t("ptr.title") },
+    { id: "econ-calendar", text: t("cal.title") },
     ...numbered.filter((item) => item.id !== "korea-official"),
     { id: "liquidity-comparisons", text: `${String(sections.length + 1).padStart(2, "0")} ${state.lang === "ko" ? "유동성 비교" : "Comparisons"}` },
     { id: "sector-flow", text: t("sector.title") }, { id: "correlation", text: t("corr.title") }]
@@ -886,28 +895,30 @@ const PAGE_FETCHES = {
   krPension: ["kr"],
   krEtf: ["kr"],
   usPtr: ["us"],
+  calendar: ["us"],
 };
 
 async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension, krEtf, usPtr] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension, krEtf, usPtr, calendar] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/kr/indices", "krIndices"),
     request("/api/kr/overnight", "krOvernight"), request("/api/kr/pension", "krPension"),
     request("/api/kr/etf", "krEtf"), request("/api/us/ptr", "usPtr"),
+    request("/api/calendar", "calendar"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
   state.stress = stress; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension;
-  state.krEtf = krEtf; state.usPtr = usPtr;
+  state.krEtf = krEtf; state.usPtr = usPtr; state.calendar = calendar;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets");
   renderAll(); $("#refresh-button")?.removeAttribute("aria-busy");
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKrPension(); renderKrEtf(); renderUsPtr();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKrPension(); renderKrEtf(); renderUsPtr(); renderCalendar();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -1348,6 +1359,54 @@ function renderUsPtr() {
   legal.textContent = state.lang === "ko"
     ? (payload.legal?.notice_ko || "") : (payload.legal?.notice || "");
   footer.append(...parts, basis, legal);
+}
+
+function renderCalendar() {
+  const section = $("#econ-calendar");
+  if (!section) return;
+  const payload = state.calendar;
+  const events = Array.isArray(payload?.events) ? payload.events : [];
+  if (!events.length) { section.hidden = true; return; }
+  section.hidden = false;
+
+  const body = $("#cal-body");
+  body.replaceChildren();
+  const scroll = document.createElement("div"); scroll.className = "table-scroll";
+  const table = document.createElement("table"); table.className = "accessible-table kridx-table";
+  table.innerHTML = `<thead><tr>
+    <th scope="col">${t("cal.colDate")}</th><th scope="col">${t("cal.colEvent")}</th>
+    <th scope="col">${t("cal.colRegion")}</th><th scope="col">${t("cal.colKind")}</th>
+  </tr></thead>`;
+  const tbody = document.createElement("tbody");
+  const todayIso = new Date(Date.now() + (new Date().getTimezoneOffset() + 540) * 60000).toISOString().slice(0, 10);
+  for (const event of events) {
+    const tr = document.createElement("tr");
+    const dateTd = document.createElement("td");
+    const days = Math.round((new Date(event.date) - new Date(todayIso)) / 86400000);
+    const dday = days === 0 ? t("cal.today") : days > 0 && days <= 14 ? t("cal.dday", { n: String(days) }) : "";
+    dateTd.textContent = dday ? `${dateText(event.date)} · ${dday}` : dateText(event.date);
+    if (days === 0) dateTd.className = "up";
+    const eventTd = document.createElement("td"); eventTd.className = "krp-company";
+    const link = document.createElement("a");
+    link.href = event.source_url; link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.textContent = localValue(event.name, state.lang);
+    eventTd.append(link);
+    const regionTd = document.createElement("td");
+    regionTd.textContent = event.region === "kr" ? t("cal.regionKr") : t("cal.regionUs");
+    const kindTd = document.createElement("td"); kindTd.className = "range";
+    kindTd.textContent = event.kind === "policy" ? t("cal.kindPolicy") : t("cal.kindRelease");
+    tr.append(dateTd, eventTd, regionTd, kindTd);
+    tbody.append(tr);
+  }
+  table.append(tbody); scroll.append(table); body.append(scroll);
+
+  const footer = $("#cal-footer");
+  footer.replaceChildren();
+  const basis = document.createElement("span");
+  basis.textContent = state.lang === "ko" ? (payload.basis_ko || "") : (payload.basis_en || "");
+  const fred = document.createElement("span");
+  fred.textContent = payload.source?.fred_notice || "";
+  footer.append(basis, fred);
 }
 
 // Compact month/day for the overnight cards, where the full year is noise.

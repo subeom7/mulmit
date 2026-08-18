@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark light">
   <meta name="description" content="Mulmit 글로벌 자산·거시경제·유동성 모니터">
   <title>Market Monitor · Mulmit</title>
-  <link rel="stylesheet" href="/static/monitor.css?v=20260818-7">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260819-1">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -178,6 +178,17 @@
       </div>
     </section>
 
+    <section class="dashboard-section" id="econ-calendar" hidden aria-labelledby="cal-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">SCHEDULE · FRED × FOMC × BOK</p><h2 id="cal-title" data-i18n="cal.title">경제 캘린더</h2></div>
+      </div>
+      <div class="panel">
+        <p class="section-copy" data-i18n="cal.copy" style="margin:0 0 12px">다가오는 미국 데이터 발표와 FOMC·금통위 일정입니다. 기관이 공표한 예정일이며 변경될 수 있습니다.</p>
+        <div id="cal-body"></div>
+        <footer class="panel-footer" id="cal-footer"></footer>
+      </div>
+    </section>
+
     <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
 
     <div id="deep-sections"></div>
@@ -245,6 +256,6 @@
       <footer></footer>
     </article>
   </template>
-  <script src="/static/monitor.js?v=20260818-7" defer></script>
+  <script src="/static/monitor.js?v=20260819-1" defer></script>
 </body>
 </html>

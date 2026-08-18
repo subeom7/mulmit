@@ -460,6 +460,24 @@ class FredProvider:
             raise DataUnavailable(f"FRED has no numeric observations for {series_id}")
         return observations
 
+    def fetch_release_dates(
+        self, release_id: int, *, start: dt.date, end: dt.date, limit: int = 12
+    ) -> list[str]:
+        """한 릴리스의 (예정 포함) 발표일 목록. 경제 캘린더가 쓴다."""
+        payload = self._request_json(
+            "release/dates",
+            release_id=release_id,
+            realtime_start=start.isoformat(),
+            realtime_end=end.isoformat(),
+            include_release_dates_with_no_data="true",
+            sort_order="asc",
+            limit=limit,
+        )
+        rows = payload.get("release_dates")
+        if not isinstance(rows, list):
+            raise DataUnavailable(f"FRED release dates unavailable for {release_id}")
+        return [str(row.get("date")) for row in rows if isinstance(row, dict) and row.get("date")]
+
     def fetch_series(self, series_id: str) -> FredSeriesData:
         return FredSeriesData(
             metadata=self.fetch_metadata(series_id),
