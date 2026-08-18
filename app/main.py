@@ -28,6 +28,7 @@ from . import (
     kr_stocks,
     service,
     store,
+    us_ptr,
 )
 from .data import DataUnavailable, RateLimited
 from .insider_filings import (
@@ -467,6 +468,27 @@ def kr_pension_filings(request: Request, response: Response) -> dict:
         ) from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "FSS DART"
+    return payload
+
+
+@app.get("/api/us/ptr")
+@limiter.limit(config.RATE_LIMIT)
+def us_ptr_filings(request: Request, response: Response) -> dict:
+    """미 하원 의원 주기거래보고(PTR). ingest 배치가 저장한 결과만 읽는다."""
+    try:
+        payload = us_ptr.get_filings()
+    except us_ptr.UsPtrDisabled as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=data_rights.US_PTR_DISABLED,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    except DataUnavailable as exc:
+        raise HTTPException(
+            status_code=503, detail="House PTR filings not collected yet"
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "Clerk of the U.S. House of Representatives"
     return payload
 
 

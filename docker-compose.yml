@@ -35,6 +35,8 @@ x-app: &app
     FSC_HISTORY_DAYS: ${FSC_HISTORY_DAYS:-1830}
     # DART도 FSC와 같은 이유로 web·ingest 양쪽에 준다: 요청 기반 조회는 web에서 돈다.
     DART_ENABLED: ${DART_ENABLED:-false}
+    # 하원 PTR 게이트. web은 판정, ingest는 수집에 쓴다 — 값이 다르면 어긋난다.
+    US_PTR_ENABLED: ${US_PTR_ENABLED:-false}
     DART_API_KEY: ${DART_API_KEY:-}
     DART_MAX_AGE: ${DART_MAX_AGE:-43200}
     SEC_EDGAR_ENABLED: ${SEC_EDGAR_ENABLED:-false}

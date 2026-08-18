@@ -97,6 +97,12 @@ KR_PENSION_NOT_CONFIGURED = {
     "message": "DART_API_KEY must be issued by opendart.fss.or.kr before use.",
 }
 
+US_PTR_DISABLED = {
+    "code": "us_ptr_disabled",
+    "status": "disabled",
+    "message": "The House PTR relay is disabled for this deployment.",
+}
+
 NO_STORE_HEADERS = {"Cache-Control": "no-store"}
 
 # Macro lanes and the flag that decides whether their stored rows may be served.

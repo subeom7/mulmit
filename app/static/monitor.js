@@ -75,6 +75,12 @@ const TEXT = {
     "kre.title": "ETF 보드", "kre.copy": "거래대금 상위 ETF의 종가·NAV·괴리율입니다. 장 마감 확정값이며 실시간이 아닙니다.",
     "kre.colName": "종목", "kre.colClose": "종가", "kre.colDay": "등락", "kre.colNav": "NAV", "kre.colPremium": "괴리율", "kre.colIndex": "기초지수", "kre.colValue": "거래대금",
     "kre.window": "상장 {total}종목 중 거래대금 상위 {count}", "kre.asof": "기준 {date}",
+    "ptr.title": "미 하원 의원 주식 거래", "ptr.copy": "STOCK Act에 따른 주기거래보고(PTR)를 그대로 옮깁니다. 금액은 구간으로만 공시되며, 수기 제출분은 원문 링크로 안내합니다. 상원은 수집 경로가 막혀 있어 포함되지 않습니다.",
+    "ptr.colDate": "거래일", "ptr.colMember": "의원", "ptr.colAsset": "자산", "ptr.colType": "유형", "ptr.colAmount": "금액 구간", "ptr.colFiled": "신고일",
+    "ptr.typeP": "매수", "ptr.typeS": "매도", "ptr.typeSP": "일부 매도", "ptr.typeE": "교환",
+    "ptr.ownerSP": "배우자", "ptr.ownerJT": "공동", "ptr.ownerDC": "자녀",
+    "ptr.scanned": "거래 미추출 신고(수기·스캔) {count}건 — 원문에서 확인:", "ptr.pending": "상세 수집 대기 {count}건",
+    "ptr.window": "최근 {days}일 신고 {total}건 · 거래 {tx}건 표시",
     "sector.title": "섹터 자금 흐름", "sector.caption": "S&P 500 섹터 ETF 기간 수익률", "sector.name": "섹터", "sector.return": "수익률", "sector.interpretation": "플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.",
     "tv.title": "S&P 500 종목 히트맵", "tv.embed": "외부 위젯", "tv.notice": "이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.",
     "tv.terms": "데이터·표시 조건은 제공자 정책을 따릅니다.", "corr.title": "자산군 상관관계", "corr.note": "서로 다른 시장 시간대는 동시 일간 수익률 상관을 왜곡할 수 있습니다.", "corr.scale": "+1은 같은 방향, 0은 약한 선형 관계, −1은 반대 방향입니다. 상관은 인과관계가 아닙니다.",
@@ -128,6 +134,12 @@ const TEXT = {
     "kre.title": "ETF board", "kre.copy": "Top ETFs by traded value with close, NAV and the premium/discount. Confirmed end-of-day values, not live quotes.",
     "kre.colName": "Fund", "kre.colClose": "Close", "kre.colDay": "Day", "kre.colNav": "NAV", "kre.colPremium": "Premium", "kre.colIndex": "Underlying index", "kre.colValue": "Value traded",
     "kre.window": "Top {count} of {total} listed, by traded value", "kre.asof": "As of {date}",
+    "ptr.title": "US House stock trades", "ptr.copy": "Periodic transaction reports under the STOCK Act, relayed verbatim. Amounts are disclosed only as ranges; scanned paper filings link to the original. The Senate is not included because its portal blocks server collection.",
+    "ptr.colDate": "Traded", "ptr.colMember": "Member", "ptr.colAsset": "Asset", "ptr.colType": "Type", "ptr.colAmount": "Amount range", "ptr.colFiled": "Filed",
+    "ptr.typeP": "Purchase", "ptr.typeS": "Sale", "ptr.typeSP": "Partial sale", "ptr.typeE": "Exchange",
+    "ptr.ownerSP": "Spouse", "ptr.ownerJT": "Joint", "ptr.ownerDC": "Dep. child",
+    "ptr.scanned": "{count} paper filings without extracted trades — see the originals:", "ptr.pending": "{count} awaiting detail collection",
+    "ptr.window": "{total} filings in the last {days} days · {tx} transactions shown",
     "sector.title": "Sector flow", "sector.caption": "S&P 500 sector ETF period returns", "sector.name": "Sector", "sector.return": "Return", "sector.interpretation": "Broader positive participation can confirm a wider advance. ETF returns are not the same thing as fund-flow dollars.",
     "tv.title": "S&P 500 constituent heatmap", "tv.embed": "Third-party widget", "tv.notice": "TradingView serves this embed directly; it is not Mulmit API data.",
     "tv.terms": "Provider data and display terms apply.", "corr.title": "Cross-asset correlation", "corr.note": "Different market hours can distort same-day return correlations.", "corr.scale": "+1 moves together, 0 indicates a weak linear link, and −1 moves oppositely. Correlation is not causation.",
@@ -335,7 +347,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, krOvernight: null, krPension: null, krEtf: null,
+  stress: null, krOvernight: null, krPension: null, krEtf: null, usPtr: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -658,6 +670,7 @@ function renderJumpNav() {
     { id: "kr-etf", text: t("kre.title") },
     { id: "kr-pension", text: t("krp.title") },
     { id: "constituent-heatmap", text: t("tv.title") },
+    { id: "us-ptr", text: t("ptr.title") },
     ...numbered.filter((item) => item.id !== "korea-official"),
     { id: "liquidity-comparisons", text: `${String(sections.length + 1).padStart(2, "0")} ${state.lang === "ko" ? "유동성 비교" : "Comparisons"}` },
     { id: "sector-flow", text: t("sector.title") }, { id: "correlation", text: t("corr.title") }]
@@ -862,28 +875,29 @@ const PAGE_FETCHES = {
   krOvernight: ["landing", "kr"],
   krPension: ["kr"],
   krEtf: ["kr"],
+  usPtr: ["us"],
 };
 
 async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension, krEtf] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension, krEtf, usPtr] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/kr/indices", "krIndices"),
     request("/api/kr/overnight", "krOvernight"), request("/api/kr/pension", "krPension"),
-    request("/api/kr/etf", "krEtf"),
+    request("/api/kr/etf", "krEtf"), request("/api/us/ptr", "usPtr"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
   state.stress = stress; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension;
-  state.krEtf = krEtf;
+  state.krEtf = krEtf; state.usPtr = usPtr;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets");
   renderAll(); $("#refresh-button")?.removeAttribute("aria-busy");
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKrPension(); renderKrEtf();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKrPension(); renderKrEtf(); renderUsPtr();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
   // not failing — they are absent by decision, so they are hidden rather than
@@ -1128,6 +1142,105 @@ function renderKrEtf() {
   const note = document.createElement("span");
   note.textContent = localValue(payload.premium_note, state.lang);
   footer.append(link, window_, asof, note);
+}
+
+const PTR_TYPE_KEYS = { "P": "ptr.typeP", "S": "ptr.typeS", "S (partial)": "ptr.typeSP", "E": "ptr.typeE" };
+const PTR_OWNER_KEYS = { SP: "ptr.ownerSP", JT: "ptr.ownerJT", DC: "ptr.ownerDC" };
+const PTR_MAX_ROWS = 30;
+
+function renderUsPtr() {
+  const section = $("#us-ptr");
+  if (!section) return;
+  const payload = state.usPtr;
+  const filings = Array.isArray(payload?.filings) ? payload.filings : [];
+  if (!filings.length) { section.hidden = true; return; }
+  section.hidden = false;
+
+  const transactions = [];
+  const scanned = [], pending = [];
+  for (const filing of filings) {
+    if (filing.detail_status === "unavailable") scanned.push(filing);
+    if (filing.detail_status === "pending") pending.push(filing);
+    for (const tx of filing.transactions || []) transactions.push({ filing, tx });
+  }
+  transactions.sort((a, b) => String(b.tx.date || b.filing.filed_date).localeCompare(String(a.tx.date || a.filing.filed_date)));
+  const shown = transactions.slice(0, PTR_MAX_ROWS);
+
+  const body = $("#ptr-body");
+  body.replaceChildren();
+  const scroll = document.createElement("div"); scroll.className = "table-scroll";
+  const table = document.createElement("table"); table.className = "accessible-table kridx-table";
+  table.innerHTML = `<thead><tr>
+    <th scope="col">${t("ptr.colDate")}</th><th scope="col">${t("ptr.colMember")}</th>
+    <th scope="col">${t("ptr.colAsset")}</th><th scope="col">${t("ptr.colType")}</th>
+    <th scope="col" class="num">${t("ptr.colAmount")}</th><th scope="col">${t("ptr.colFiled")}</th>
+  </tr></thead>`;
+  const tbody = document.createElement("tbody");
+  for (const { filing, tx } of shown) {
+    const tr = document.createElement("tr");
+    const dateTd = document.createElement("td"); dateTd.textContent = dateText(tx.date);
+    const memberTd = document.createElement("td"); memberTd.className = "krp-company";
+    const link = document.createElement("a");
+    link.href = filing.pdf_url; link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.textContent = filing.name || "—";
+    const district = document.createElement("small"); district.className = "krp-market";
+    district.textContent = filing.state_district || "";
+    memberTd.append(link, district);
+    const assetTd = document.createElement("td");
+    const assetName = document.createElement("span"); assetName.textContent = tx.asset || "—";
+    assetTd.append(assetName);
+    if (tx.ticker) { const chip = document.createElement("small"); chip.className = "krp-market"; chip.textContent = tx.ticker; assetTd.append(chip); }
+    if (tx.owner && PTR_OWNER_KEYS[tx.owner]) { const owner = document.createElement("small"); owner.className = "krp-market"; owner.textContent = t(PTR_OWNER_KEYS[tx.owner]); assetTd.append(owner); }
+    const typeTd = document.createElement("td");
+    const typeClass = tx.type === "P" ? "up" : tx.type === "E" ? "" : "down";
+    if (typeClass) typeTd.className = typeClass;
+    typeTd.textContent = PTR_TYPE_KEYS[tx.type] ? t(PTR_TYPE_KEYS[tx.type]) : (tx.type || "—");
+    const amountTd = document.createElement("td"); amountTd.className = "num";
+    amountTd.textContent = tx.amount || "—";
+    const filedTd = document.createElement("td"); filedTd.textContent = dateText(tx.notification_date || filing.filed_date);
+    tr.append(dateTd, memberTd, assetTd, typeTd, amountTd, filedTd);
+    tbody.append(tr);
+  }
+  table.append(tbody); scroll.append(table); body.append(scroll);
+
+  // 수기·스캔 제출분은 거래 표에 실을 수 없다 — 그 사실과 원문 링크를 그대로 보여준다.
+  if (scanned.length) {
+    const note = document.createElement("p"); note.className = "interpretation-note";
+    note.append(document.createTextNode(`${t("ptr.scanned", { count: String(scanned.length) })} `));
+    scanned.slice(0, 5).forEach((filing, index) => {
+      if (index) note.append(document.createTextNode(" · "));
+      const a = document.createElement("a");
+      a.href = filing.pdf_url; a.target = "_blank"; a.rel = "noopener noreferrer";
+      a.textContent = `${filing.name} (${dateText(filing.filed_date)})`;
+      note.append(a);
+    });
+    body.append(note);
+  }
+
+  const footer = $("#ptr-footer");
+  footer.replaceChildren();
+  const source = payload.source || {};
+  const sourceLink = document.createElement("a");
+  sourceLink.href = source.url || "#"; sourceLink.target = "_blank"; sourceLink.rel = "noopener noreferrer";
+  sourceLink.textContent = source.provider_name || "House Clerk";
+  const windowNote = document.createElement("span");
+  windowNote.textContent = t("ptr.window", {
+    days: String(payload.window?.days ?? "—"),
+    total: String(payload.total_in_window ?? filings.length),
+    tx: String(shown.length),
+  });
+  const parts = [sourceLink, windowNote];
+  if (pending.length) {
+    const pendingNote = document.createElement("span");
+    pendingNote.textContent = t("ptr.pending", { count: String(pending.length) });
+    parts.push(pendingNote);
+  }
+  const basis = document.createElement("span");
+  basis.textContent = state.lang === "ko" ? (payload.basis_ko || "") : (payload.basis_en || "");
+  const legal = document.createElement("span");
+  legal.textContent = state.lang === "ko"
+    ? (payload.legal?.notice_ko || "") : (payload.legal?.notice || "");
+  footer.append(...parts, basis, legal);
 }
 
 // Compact month/day for the overnight cards, where the full year is noise.

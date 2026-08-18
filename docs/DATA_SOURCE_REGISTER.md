@@ -657,6 +657,61 @@ System 원본에서 직접 받는 경로만 검토한다. IMF 자료도 무조�
 
 월 30,000원 예산 안에 외부 공개 표시 계약이 가능하다는 근거가 없으므로 견적을 추정하지 않는다. HIP-3 VIX-linked/Copper-linked 값은 해당 공식 지표의 대체 “정답”이 아니라 별도 합성 참고값이다.
 
+### 3.14 미 하원 서기국 재정공시 — PTR (STOCK Act)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `house_fd` |
+| 현재 상태 | `approved` (아래 §105(c) 분석 조건부) |
+| 코드 위치 | `app/providers/house_fd.py`, `app/us_ptr.py`, `tests/test_us_ptr.py` |
+| 배포 기본값 | `US_PTR_ENABLED=false` (키 없음, 게이트만) |
+| 현재 사용 | `/api/us/ptr` — 최근 45일 주기거래보고: 인덱스(구조화 XML) + 전자 제출 PDF의 거래 표 |
+| 수집 | ingest 배치 전용. 연간 인덱스 zip 1요청 + 신규 PDF 건당 1요청(1초 간격, 주기당 25건 상한, doc_id 증분 재사용) |
+| attribution | `Source: Clerk of the U.S. House of Representatives, Financial Disclosure Reports.` + 건별 원문 PDF 링크 |
+| 공식 근거 | [Clerk Financial Disclosure](https://disclosures-clerk.house.gov/FinancialDisclosure), 5 U.S.C. app. §105(c) |
+
+**EIGA §105(c) 사용 제한 분석 (2026-08-18).** 법은 보고서를 ① 불법 목적,
+② 상업 목적, ③ 개인 신용평가, ④ 정치·자선 자금모집에 쓰는 것을 금지하되,
+②에서 "**news and communications media의 일반 공중 배포**"를 명시적으로
+제외한다. Mulmit의 표시는 무료 공개 사이트에서 출처·원문 링크와 함께 공시
+내용을 일반 공중에 전달하는 것으로 그 제외 사유의 기능에 해당한다고 판단한다
+(동일 구조의 선례: 뉴스 매체·공익 추적 사이트들). 광고 수익은 뉴스 매체의
+통상 모델과 같다. ③·④에 해당하는 이용은 하지 않으며, **같은 제한을 API
+응답과 화면에 원문 고지로 실어** 다운스트림 이용자에게도 전달한다.
+
+**파싱 정직성.** 전자 제출 PDF만 거래 표를 추출한다(실검증: 8건 중 7건 완전
+추출, 스캔 수기 1건은 추출 불가로 분류). 서명(유형+거래일+신고일+금액 구간)이
+엄격히 일치하는 행만 싣고, 자산명이 비면 그 거래는 버리고 상태로 보고한다 —
+이름이 걸린 데이터에서 추측하지 않는다. 금액은 구간 문자열 그대로다.
+
+**상원(eFD)은 보류.** efdsearch.senate.gov는 비브라우저 클라이언트에 403을
+반환한다(Akamai, 2026-08-18 실측 — 로컬·EC2 모두). TLS 지문 위장으로 우회하지
+않는다는 원칙에 따라 상원은 수집하지 않으며, 화면 문구가 하원 한정임을
+명시한다. 공식 접근 경로가 생기면 재검토한다.
+
+```yaml
+provider_id: house_fd
+status: approved
+reviewed_at: 2026-08-18
+reviewer: repository owner
+evidence_type: statute_and_official_portal
+evidence_reference: 5 U.S.C. app. §105(c); https://disclosures-clerk.house.gov/FinancialDisclosure
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  cache_ttl_seconds: 300
+  stale_seconds: 0
+  historical_storage: true
+  derived_metrics: false
+  advertising: true
+attribution: "Source: Clerk of the U.S. House of Representatives, Financial Disclosure Reports."
+expires_at: null
+recheck_at: 2027-08-18
+notes: >
+  §105(c) 금지 목적(신용평가·자금모집 등)의 이용을 하지 않고, 제한 고지를
+  응답에 동봉한다. 상원 eFD는 봇 차단으로 보류 — 우회하지 않는다.
+```
+
 ## 4. 원 발행기관 후보
 
 아래 표의 `pending_review`는 무료라고 단정하는 표시가 아니다. 다음 세션에서 정확한 endpoint, 이용조건, attribution, 저장·캐시·제3자 표시 범위를 다시 확인한 뒤 series 단위로 승인한다.
@@ -970,6 +1025,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
 | 2026-08-18 | 한국 24시간 참고가 섹션(`/api/kr/overnight`) 추가 — 기존 세 lane의 결합(HIP-3 마크 × H.10 공식환율 × FSC 기준가), 신규 소스·권리 없음. HIP-3 게이트를 그대로 타고 환율·기준가 날짜를 값과 함께 표기, 김프 조정 없음 명시. 모니터를 한국/미국·글로벌 존으로 재배치, 합성 참고값 카드 2장은 이 섹션이 대체. 계획서 `docs/PLAN_KR_SECTIONS.md` | Claude assisted |
+| 2026-08-18 | 미 하원 PTR lane 추가(`DS` §3.14, `/api/us/ptr`) — STOCK Act 공시 원문 전달, EIGA §105(c) 분석·고지 동봉, 엄격 파서(불일치는 원문 링크로 강등), 상원 eFD는 봇 차단으로 **보류(우회 안 함)** | Claude assisted |
 | 2026-08-18 | ETF 보드(`/api/kr/etf`) 추가 — 금융위원회_증권상품시세정보 활용신청 승인(자동승인, 만료 2028-08-18) 후 기존 FSC lane·키로 하루 스냅샷 수집. 괴리율 = 종가÷NAV−1, 같은 기준일 공표값 두 개에서만 계산·NAV 0은 결측. 채권·일반상품시세정보도 함께 승인(미사용 보관) | Claude assisted |
 | 2026-08-18 | 모니터를 랜딩·`/kr`·`/us` 세 페이지로 분리(P1) — 데이터·권리 변경 없음, 페이지 구성 레이어. React 전환 보류 판정은 `docs/ROADMAP.md` | Claude assisted |
 | 2026-08-18 | **St. Louis Fed STLFSI4 서면 승인 수신** — FRED API 경유, 지정 인용문+접근일, 접근 유료화 금지, 로고·보증 금지(§3.3). `rights.citation` 구현, FRED lane 운영 활성화 결정. 동승 계열은 ICSA·DCOILWTICO(미 연방정부 저작물)뿐, 제3자 계열은 `license_required` 유지 | Claude assisted |
