@@ -1045,6 +1045,7 @@ notes: "No confidential contract language here"
 | 2026-08-17 | 예산 30,000→50,000원 상향 기록. Cboe CGI 월 $1,000 시작가 확인 — 상향 후에도 재표시 클래스는 예산 밖 | Claude assisted |
 | 2026-08-17 | St. Louis Fed STLFSI4 문의 초안 작성 — "Copyrighted: Citation Required" 태그 확인, 표시 권리와 수집 경로를 함께 묻는 구성 | Claude assisted |
 | 2026-08-18 | 한국 24시간 참고가 섹션(`/api/kr/overnight`) 추가 — 기존 세 lane의 결합(HIP-3 마크 × H.10 공식환율 × FSC 기준가), 신규 소스·권리 없음. HIP-3 게이트를 그대로 타고 환율·기준가 날짜를 값과 함께 표기, 김프 조정 없음 명시. 모니터를 한국/미국·글로벌 존으로 재배치, 합성 참고값 카드 2장은 이 섹션이 대체. 계획서 `docs/PLAN_KR_SECTIONS.md` | Claude assisted |
+| 2026-08-19 | 경제 캘린더 추가(`/api/calendar`) — 미국 데이터 발표일은 FRED 릴리스 메타데이터(승인 lane, 실측 검증), FOMC·금통위는 공식 페이지에서 확인한 큐레이션(확인일 2026-08-19 동봉, "직전 회의 전 잠정" 고지). 일정은 공표된 사실이되 변경 가능함을 basis로 전달 | Claude assisted |
 | 2026-08-19 | DART 연간 재무제표 추가(`/api/kr/fundamentals/{code}`, §3.10 확장) — 주요계정 원문 전달, 연간 한정(분기 손익 누적 구분 부재), 연결 우선, 금융사 매출 부재는 사실로 표시. 미국 패널과 대칭 | Claude assisted |
 | 2026-08-19 | EDGAR 재무제표 추가(`/api/us/fundamentals/{ticker}`, §3.5 확장) — XBRL companyconcept, 내부자 lane과 같은 티커 큐·게이트. 태그 사다리는 최신 보고 기간 기준(NVIDIA 태그 전환 실측), YTD 배제·정정 우선, 파생은 마진 2종뿐 | Claude assisted |
 | 2026-08-18 | 미 하원 PTR lane 추가(`DS` §3.14, `/api/us/ptr`) — STOCK Act 공시 원문 전달, EIGA §105(c) 분석·고지 동봉, 엄격 파서(불일치는 원문 링크로 강등), 상원 eFD는 봇 차단으로 **보류(우회 안 함)** | Claude assisted |

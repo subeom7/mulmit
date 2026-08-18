@@ -22,7 +22,7 @@ import logging
 import threading
 import time
 
-from . import config, data, kr_pension, store, us_fundamentals, us_ptr
+from . import config, data, econ_calendar, kr_pension, store, us_fundamentals, us_ptr
 from .market_assets import ASSET_TICKERS, CORRELATION_TICKERS
 from .providers import DataUnavailable, RateLimited, get_provider
 from .providers.bls import (
@@ -549,6 +549,26 @@ def refresh_kr_pension(*, force: bool = False) -> dict:
         return {"failed": str(exc)}
 
 
+def refresh_econ_calendar(*, force: bool = False) -> dict:
+    """경제 캘린더의 FRED 릴리스 예정일 갱신. 큐레이션 부분은 코드에 있다."""
+    if not config.FRED_ENABLED:
+        return {"skipped": "disabled"}
+    if not config.FRED_API_KEY:
+        return {"skipped": "not_configured"}
+    if not force and store.load_report(econ_calendar.CACHE_KEY, config.FRED_MAX_AGE * 4) is not None:
+        return {"skipped": "fresh"}
+    try:
+        result = econ_calendar.refresh()
+        log.info("경제 캘린더 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("FRED 요청 제한 — 캘린더는 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("경제 캘린더 갱신 실패: %s", exc)
+        return {"failed": str(exc)}
+
+
 def refresh_us_fundamentals(*, force: bool = False) -> dict:
     """내부자 수집이 끝난 티커들의 재무 패널을 같은 lane 조건으로 채운다."""
     if not config.SEC_EDGAR_ENABLED:
@@ -764,6 +784,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             pension_result = refresh_kr_pension()
             ptr_result = refresh_us_ptr()
             fund_result = refresh_us_fundamentals()
+            refresh_econ_calendar()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
             "skipped": "legacy_price_data_disabled",
@@ -801,6 +822,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             pension_result = refresh_kr_pension()
             refresh_us_ptr()
             refresh_us_fundamentals()
+            refresh_econ_calendar()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
                 "skipped": "backoff",
@@ -872,6 +894,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         pension_result = refresh_kr_pension()
         ptr_result = refresh_us_ptr()
         fund_result = refresh_us_fundamentals()
+        refresh_econ_calendar()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged

@@ -22,6 +22,7 @@ from . import (
     __version__,
     config,
     data_rights,
+    econ_calendar,
     ingest,
     kr_fundamentals,
     kr_insider,
@@ -522,6 +523,15 @@ def us_ptr_filings(request: Request, response: Response) -> dict:
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "Clerk of the U.S. House of Representatives"
     return payload
+
+
+@app.get("/api/calendar")
+@limiter.limit(config.RATE_LIMIT)
+def economic_calendar(request: Request, response: Response) -> dict:
+    """다가오는 경제 일정. FRED 릴리스 예정일(저장분) + 검증된 정책회의 큐레이션."""
+    response.headers["Cache-Control"] = "public, max-age=1800"
+    response.headers["X-Data-Source"] = "FRED release metadata + official calendars"
+    return econ_calendar.build_calendar()
 
 
 @app.get("/api/us/fundamentals/{ticker}")
