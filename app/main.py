@@ -18,7 +18,17 @@ from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from . import __version__, config, data_rights, ingest, kr_insider, kr_stocks, service, store
+from . import (
+    __version__,
+    config,
+    data_rights,
+    ingest,
+    kr_insider,
+    kr_pension,
+    kr_stocks,
+    service,
+    store,
+)
 from .data import DataUnavailable, RateLimited
 from .insider_filings import (
     DEFAULT_TRANSACTIONS,
@@ -401,6 +411,30 @@ def kr_insider_reports(code: str, request: Request, response: Response) -> dict:
         ) from exc
     except (DataUnavailable, RateLimited) as exc:
         raise HTTPException(status_code=503, detail="DART reports unavailable") from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "FSS DART"
+    return payload
+
+
+@app.get("/api/kr/pension")
+@limiter.limit(config.RATE_LIMIT)
+def kr_pension_filings(request: Request, response: Response) -> dict:
+    """국민연금 대량보유(5%) 공시. ingest 배치가 저장한 결과만 읽는다."""
+    try:
+        payload = kr_pension.get_filings()
+    except kr_pension.KrPensionDisabled as exc:
+        detail = (
+            data_rights.KR_PENSION_NOT_CONFIGURED
+            if exc.reason == "not_configured"
+            else data_rights.KR_PENSION_DISABLED
+        )
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    except DataUnavailable as exc:
+        raise HTTPException(
+            status_code=503, detail="NPS major-holding filings not collected yet"
+        ) from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "FSS DART"
     return payload

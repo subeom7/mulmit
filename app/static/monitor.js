@@ -52,6 +52,9 @@ const TEXT = {
     "kro.title": "한국 주식, 장 밖에서는", "kro.copy": "장이 닫혀 있어도 합성 무기한선물은 24시간 움직입니다. 마크가격을 공식환율로 환산해 마지막 공식 종가와 비교합니다. 현물 호가나 시초가 예측이 아닙니다.",
     "kro.fxOfficial": "공식환율 환산 · 실시간 환율 아님", "kro.vsClose": "{date} 종가 대비", "kro.mark": "마크", "kro.official": "공식 종가", "kro.fx": "환산 환율",
     "kro.noFx": "환율 미확보 · 환산 보류", "kro.noClose": "공식 종가 미확보", "kro.noMarket": "표시할 시장 없음", "kro.session": "주말 내부 가격발견 중",
+    "krp.title": "국민연금 5% 공시", "krp.copy": "주식등의 대량보유 상황보고(5% 룰) 중 국민연금공단 제출분입니다. 보고서 단위의 보유비율 변동이며, 통상 한 달치가 월초에 일괄 공시됩니다. 일별 매매가 아닙니다.",
+    "krp.colDate": "보고일", "krp.colCompany": "회사", "krp.colRatio": "보유비율", "krp.colChange": "증감", "krp.colShares": "보유주식수", "krp.colReason": "보고사유",
+    "krp.detailPending": "상세 미확보", "krp.window": "최근 {days}일 공시 {total}건 중 {count}건",
     "sector.title": "섹터 자금 흐름", "sector.caption": "S&P 500 섹터 ETF 기간 수익률", "sector.name": "섹터", "sector.return": "수익률", "sector.interpretation": "플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.",
     "tv.title": "S&P 500 종목 히트맵", "tv.embed": "외부 위젯", "tv.notice": "이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.",
     "tv.terms": "데이터·표시 조건은 제공자 정책을 따릅니다.", "corr.title": "자산군 상관관계", "corr.note": "서로 다른 시장 시간대는 동시 일간 수익률 상관을 왜곡할 수 있습니다.", "corr.scale": "+1은 같은 방향, 0은 약한 선형 관계, −1은 반대 방향입니다. 상관은 인과관계가 아닙니다.",
@@ -90,6 +93,9 @@ const TEXT = {
     "kro.title": "Korean stocks, after hours", "kro.copy": "Synthetic perpetuals keep trading around the clock. Marks are converted at the official exchange rate and compared with the last official close. Not spot quotes, not an open forecast.",
     "kro.fxOfficial": "Official-rate conversion · not a live FX rate", "kro.vsClose": "vs {date} close", "kro.mark": "Mark", "kro.official": "Official close", "kro.fx": "FX applied",
     "kro.noFx": "No official FX yet · conversion withheld", "kro.noClose": "Official close unavailable", "kro.noMarket": "No live market", "kro.session": "Weekend internal price discovery",
+    "krp.title": "NPS 5% filings", "krp.copy": "Large-holding (5% rule) reports filed by the National Pension Service. Report-level stake changes, usually filed as one early-month batch covering the prior month — not daily trades.",
+    "krp.colDate": "Filed", "krp.colCompany": "Company", "krp.colRatio": "Stake", "krp.colChange": "Change", "krp.colShares": "Shares held", "krp.colReason": "Reason",
+    "krp.detailPending": "Detail pending", "krp.window": "{count} of {total} filings in the last {days} days",
     "sector.title": "Sector flow", "sector.caption": "S&P 500 sector ETF period returns", "sector.name": "Sector", "sector.return": "Return", "sector.interpretation": "Broader positive participation can confirm a wider advance. ETF returns are not the same thing as fund-flow dollars.",
     "tv.title": "S&P 500 constituent heatmap", "tv.embed": "Third-party widget", "tv.notice": "TradingView serves this embed directly; it is not Mulmit API data.",
     "tv.terms": "Provider data and display terms apply.", "corr.title": "Cross-asset correlation", "corr.note": "Different market hours can distort same-day return correlations.", "corr.scale": "+1 moves together, 0 indicates a weak linear link, and −1 moves oppositely. Correlation is not causation.",
@@ -297,7 +303,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, krOvernight: null,
+  stress: null, krOvernight: null, krPension: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -606,6 +612,7 @@ function renderJumpNav() {
   [{ id: "kr-overnight", text: t("kro.title") },
     { id: SECTIONS[0].id, text: `01 ${localValue(SECTIONS[0].title, state.lang)}` },
     { id: "kr-indices", text: t("kridx.title") },
+    { id: "kr-pension", text: t("krp.title") },
     { id: "constituent-heatmap", text: t("tv.title") },
     ...SECTIONS.slice(1).map((section, index) => ({ id: section.id, text: `${String(index + 2).padStart(2, "0")} ${localValue(section.title, state.lang)}` })),
     { id: "liquidity-comparisons", text: `${String(SECTIONS.length + 1).padStart(2, "0")} ${state.lang === "ko" ? "유동성 비교" : "Comparisons"}` },
@@ -797,20 +804,20 @@ function endpointHealth(key) {
 async function loadCore() {
   $("#refresh-button").setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
-  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension] = await Promise.all([
     fetchJson("/api/market/macro?history=3y", "macro"), fetchJson("/api/market/assets?history=3y", "assets"),
     fetchJson("/api/market/sectors", "sectors"), fetchJson("/api/market/weekend", "weekend"),
     fetchJson("/api/market/stress", "stress"), fetchJson("/api/kr/indices", "krIndices"),
-    fetchJson("/api/kr/overnight", "krOvernight"),
+    fetchJson("/api/kr/overnight", "krOvernight"), fetchJson("/api/kr/pension", "krPension"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
-  state.stress = stress; state.krIndices = krIndices; state.krOvernight = krOvernight;
+  state.stress = stress; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets");
   renderAll(); $("#refresh-button").removeAttribute("aria-busy");
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKrPension();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
   // not failing — they are absent by decision, so they are hidden rather than
@@ -903,6 +910,90 @@ function renderKrIndices() {
   const note = document.createElement("span");
   note.textContent = `${t("kridx.asof", { date: dateText(payload.as_of) })}`;
   $("#kridx-footer").append(link, note);
+}
+
+// DART fields carry a closed Korean vocabulary; EN gets a fixed mapping with a
+// verbatim fallback, same as the insider panel on /analytics.
+const KRP_REASON_EN = {
+  "단순추가취득/처분": "Simple acquisition/disposal",
+  "단순추가취득": "Simple additional acquisition",
+  "단순처분": "Simple disposal",
+  "단순취득": "Simple acquisition",
+  "신규보고": "New report",
+  "1%이상변동": "Change of 1% or more",
+  "1% 이상 변동": "Change of 1% or more",
+  "단순투자목적에서 일반투자목적으로 보유목적 변경":
+    "Purpose changed from simple to general investment",
+};
+
+function renderKrPension() {
+  const section = $("#kr-pension");
+  if (!section) return;
+  const payload = state.krPension;
+  const filings = Array.isArray(payload?.filings) ? payload.filings : [];
+  // Batch-fed lane: no payload means the lane is off or not collected yet.
+  // Either way the section stays hidden, like the index-family table.
+  if (!filings.length) { section.hidden = true; return; }
+  section.hidden = false;
+
+  const body = $("#krp-body");
+  body.replaceChildren();
+  const scroll = document.createElement("div"); scroll.className = "table-scroll";
+  const table = document.createElement("table"); table.className = "accessible-table kridx-table";
+  table.innerHTML = `<thead><tr>
+    <th scope="col">${t("krp.colDate")}</th><th scope="col">${t("krp.colCompany")}</th>
+    <th scope="col" class="num">${t("krp.colRatio")}</th><th scope="col" class="num">${t("krp.colChange")}</th>
+    <th scope="col" class="num">${t("krp.colShares")}</th><th scope="col">${t("krp.colReason")}</th>
+  </tr></thead>`;
+  const tbody = document.createElement("tbody");
+  const signClass = (value) => value == null ? "" : value > 0 ? "up" : value < 0 ? "down" : "";
+  for (const filing of filings) {
+    const tr = document.createElement("tr");
+    const dateTd = document.createElement("td");
+    dateTd.textContent = kroDate(filing.report_date);
+    const companyTd = document.createElement("td"); companyTd.className = "krp-company";
+    const link = document.createElement("a");
+    link.href = filing.report_url; link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.textContent = filing.company || "—";
+    companyTd.append(link);
+    if (filing.market) {
+      const chip = document.createElement("small"); chip.className = "krp-market";
+      chip.textContent = localValue(filing.market, state.lang);
+      companyTd.append(chip);
+    }
+    const ratio = safeNumber(filing.ratio); const ratioChange = safeNumber(filing.ratio_change);
+    const shares = safeNumber(filing.shares);
+    const ratioTd = document.createElement("td"); ratioTd.className = "num";
+    ratioTd.textContent = ratio === null ? "—" : `${ratio.toFixed(2)}%`;
+    const changeTd = document.createElement("td"); changeTd.className = `num ${signClass(ratioChange)}`;
+    changeTd.textContent = ratioChange === null ? "—" : `${ratioChange > 0 ? "+" : ""}${ratioChange.toFixed(2)}%p`;
+    const sharesTd = document.createElement("td"); sharesTd.className = "num";
+    sharesTd.textContent = shares === null ? "—" : shares.toLocaleString("en-US");
+    const reasonTd = document.createElement("td");
+    const reason = filing.reason || "";
+    reasonTd.textContent = reason
+      ? (state.lang === "en" ? (KRP_REASON_EN[reason] || reason) : reason)
+      : (filing.detail_status === "unavailable" ? t("krp.detailPending") : "—");
+    tr.append(dateTd, companyTd, ratioTd, changeTd, sharesTd, reasonTd);
+    tbody.append(tr);
+  }
+  table.append(tbody); scroll.append(table); body.append(scroll);
+
+  const footer = $("#krp-footer");
+  footer.replaceChildren();
+  const source = payload.source || {};
+  const link = document.createElement("a");
+  link.href = source.url || "#"; link.target = "_blank"; link.rel = "noopener noreferrer";
+  link.textContent = source.provider_name || "금융감독원";
+  const note = document.createElement("span");
+  note.textContent = t("krp.window", {
+    days: String(payload.window?.days ?? "—"),
+    total: String(payload.total_in_window ?? filings.length),
+    count: String(filings.length),
+  });
+  const basis = document.createElement("span");
+  basis.textContent = state.lang === "ko" ? (payload.basis_ko || "") : (payload.basis_en || "");
+  footer.append(link, note, basis);
 }
 
 // Compact month/day for the overnight cards, where the full year is noise.

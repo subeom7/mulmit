@@ -85,6 +85,18 @@ KR_INSIDER_NOT_CONFIGURED = {
     "message": "DART_API_KEY must be issued by opendart.fss.or.kr before use.",
 }
 
+KR_PENSION_DISABLED = {
+    "code": "kr_pension_data_disabled",
+    "status": "disabled",
+    "message": "DART pension-filing relay is disabled for this deployment.",
+}
+
+KR_PENSION_NOT_CONFIGURED = {
+    "code": "kr_pension_not_configured",
+    "status": "not_configured",
+    "message": "DART_API_KEY must be issued by opendart.fss.or.kr before use.",
+}
+
 NO_STORE_HEADERS = {"Cache-Control": "no-store"}
 
 # Macro lanes and the flag that decides whether their stored rows may be served.

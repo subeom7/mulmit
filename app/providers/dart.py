@@ -84,7 +84,7 @@ def _parse_float(value: Any) -> float | None:
 
 
 class DartProvider:
-    """Open DART의 두 endpoint만 아는 작은 클라이언트."""
+    """Open DART의 네 endpoint만 아는 작은 클라이언트."""
 
     name = DART_PROVIDER_ID
 
@@ -195,18 +195,95 @@ class DartProvider:
             raise DataUnavailable("DART corpCode parsed to zero listed companies")
         return rows
 
-    def fetch_ownership_reports(self, corp_code: str) -> list[dict[str, Any]]:
-        """임원·주요주주 소유상황 보고 목록. 보고서 단위이며 거래 단위가 아니다."""
-        raw = self._get_bytes("elestock.json", {"corp_code": corp_code.strip()})
+    def _get_json(self, endpoint: str, params: dict[str, str]) -> dict[str, Any]:
+        raw = self._get_bytes(endpoint, params)
         try:
             body = json.loads(raw.decode("utf-8"))
         except (JSONDecodeError, UnicodeDecodeError) as exc:
-            raise DataUnavailable("DART elestock response is not JSON") from exc
+            raise DataUnavailable(f"DART {endpoint} response is not JSON") from exc
         if not isinstance(body, dict):
-            raise DataUnavailable("DART elestock response is not an object")
-        status = str(body.get("status") or "")
-        self._check_status(status, str(body.get("message") or ""))
-        if status == STATUS_NO_DATA:
+            raise DataUnavailable(f"DART {endpoint} response is not an object")
+        self._check_status(str(body.get("status") or ""), str(body.get("message") or ""))
+        return body
+
+    def fetch_filing_index(
+        self, *, detail_type: str, bgn_de: str, end_de: str, max_pages: int = 60
+    ) -> tuple[list[dict[str, Any]], bool]:
+        """공시검색(list.json)을 기간·상세유형으로 걷는다.
+
+        제출인 필터가 없어 기간 안의 전 페이지를 받아야 한다. 최신순 정렬이
+        기본값이므로 ``max_pages``에서 끊기면 잘리는 쪽은 가장 오래된
+        공시들이고, 두 번째 반환값이 그 사실을 알린다.
+        """
+        rows: list[dict[str, Any]] = []
+        page = 1
+        while True:
+            body = self._get_json(
+                "list.json",
+                {
+                    "pblntf_detail_ty": detail_type,
+                    "bgn_de": bgn_de,
+                    "end_de": end_de,
+                    "page_no": str(page),
+                    "page_count": "100",
+                },
+            )
+            if str(body.get("status") or "") == STATUS_NO_DATA:
+                return rows, False
+            for row in body.get("list") or []:
+                if not isinstance(row, dict):
+                    continue
+                rcept_no = str(row.get("rcept_no") or "").strip()
+                if not rcept_no:
+                    continue
+                rows.append({
+                    "rcept_no": rcept_no,
+                    "rcept_dt": str(row.get("rcept_dt") or "").strip(),
+                    "corp_code": str(row.get("corp_code") or "").strip(),
+                    "corp_name": str(row.get("corp_name") or "").strip(),
+                    "stock_code": str(row.get("stock_code") or "").strip(),
+                    "corp_cls": str(row.get("corp_cls") or "").strip(),
+                    "report_nm": str(row.get("report_nm") or "").strip(),
+                    "flr_nm": str(row.get("flr_nm") or "").strip(),
+                })
+            total_page = int(body.get("total_page") or 1)
+            if page >= total_page:
+                return rows, False
+            if page >= max_pages:
+                return rows, True
+            page += 1
+
+    def fetch_major_holdings(self, corp_code: str) -> list[dict[str, Any]]:
+        """대량보유(5%) 상황보고 목록(majorstock.json). 보고서 단위 값이다."""
+        body = self._get_json("majorstock.json", {"corp_code": corp_code.strip()})
+        if str(body.get("status") or "") == STATUS_NO_DATA:
+            return []
+        holdings = []
+        for row in body.get("list") or []:
+            if not isinstance(row, dict):
+                continue
+            rcept_no = str(row.get("rcept_no") or "").strip()
+            if not rcept_no:
+                continue
+            holdings.append({
+                "rcept_no": rcept_no,
+                # list.json은 YYYYMMDD, majorstock은 YYYY-MM-DD로 온다.
+                "report_date": str(row.get("rcept_dt") or "").strip(),
+                "report_type": str(row.get("report_tp") or "").strip(),
+                "reporter": str(row.get("repror") or "").strip(),
+                "shares": _parse_int(row.get("stkqy")),
+                "shares_change": _parse_int(row.get("stkqy_irds")),
+                "ratio": _parse_float(row.get("stkrt")),
+                "ratio_change": _parse_float(row.get("stkrt_irds")),
+                "reason": str(row.get("report_resn") or "").strip(),
+                "report_url": DART_REPORT_URL.format(rcept_no=rcept_no),
+            })
+        return holdings
+
+    def fetch_ownership_reports(self, corp_code: str) -> list[dict[str, Any]]:
+        """임원·주요주주 소유상황 보고 목록. 보고서 단위이며 거래 단위가 아니다."""
+        body = self._get_json("elestock.json", {"corp_code": corp_code.strip()})
+        if str(body.get("status") or "") == STATUS_NO_DATA:
             return []
 
         reports = []
