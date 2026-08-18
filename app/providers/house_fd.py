@@ -79,7 +79,19 @@ _ASSET_CODE = re.compile(r"\[(?P<code>[A-Z]{2,3})\]")
 # 낱글자·두 글자 대문자 토큰만으로 된 줄은 뭉개진 구역 제목이다 ("P T R", "F I").
 _MANGLED_HEADING = re.compile(r"^[A-Z]{1,2}(?:\s+[A-Z]{1,2})*$")
 # 자산 앞에 섞여 들어온 제목 잔여물: 짧은 대문자 토큰이 3개 이상 이어지는 머리.
-_MANGLED_LEAD = re.compile(r"^(?:[A-Z]{1,2}\s+){3,}")
+# 소유자 코드(SP/JT/DC)는 같은 모양이라도 잔여물이 아니므로 거기서 멈춘다.
+_SHORT_CAPS = re.compile(r"[A-Z]{1,2}\Z")
+
+
+def _strip_mangled_lead(text: str) -> str:
+    tokens = text.split()
+    count = 0
+    while count < len(tokens) and _SHORT_CAPS.fullmatch(tokens[count]) \
+            and tokens[count] not in ("SP", "JT", "DC"):
+        count += 1
+    if count >= 3:
+        return " ".join(tokens[count:])
+    return text
 _FILING_ID = re.compile(r"Filing ID #\d+\s*")
 # 검증 게이트: 자산명에 날짜나 금액이 남아 있으면 레이아웃이 섞인 것이다.
 _ASSET_POLLUTION = re.compile(r"\d{2}/\d{2}/\d{4}|\$[\d,]")
@@ -123,7 +135,7 @@ def _is_noise(line: str) -> bool:
 def _clean_asset(asset_text: str) -> tuple[str | None, str]:
     """자산 버퍼에서 (소유자, 자산명)을 뽑고 알려진 잔여물을 걷어낸다."""
     asset_text = _FILING_ID.sub("", asset_text)
-    asset_text = _MANGLED_LEAD.sub("", asset_text).strip()
+    asset_text = _strip_mangled_lead(asset_text.strip())
     owner = None
     owner_match = _OWNER_PREFIX.match(asset_text)
     if owner_match:
