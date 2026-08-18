@@ -1996,8 +1996,10 @@ function renderUsFund() {
   tbody.replaceChildren();
   for (const row of rows) {
     const tr = document.createElement("tr");
-    const period = usFundPeriod === "annual" && row.fiscal_year
-      ? `FY${row.fiscal_year} · ${row.end}` : row.end || "—";
+    // XBRL 항목의 fy는 기간이 아니라 "그 값을 실은 공시"의 회계연도다 — 정정
+    // 우선 정책과 만나면 과거 기간에 최신 연도가 붙는다. 연도를 추정하지 않고
+    // 보고 기간 종료일만 표시한다.
+    const period = row.end || "—";
     const cells = [
       ["", period],
       ["num", usFundMoney(row.revenue)],
