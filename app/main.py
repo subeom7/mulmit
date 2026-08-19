@@ -169,6 +169,16 @@ def stock_analytics() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "index.html")
 
 
+@app.get("/robots.txt", include_in_schema=False)
+def robots() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "robots.txt", media_type="text/plain")
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+def sitemap() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "sitemap.xml", media_type="application/xml")
+
+
 @app.get("/privacy", include_in_schema=False)
 def privacy_policy() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "privacy.html")

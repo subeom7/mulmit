@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /docs
+
+Sitemap: https://mulmit.com/sitemap.xml

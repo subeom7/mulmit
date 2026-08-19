@@ -114,3 +114,15 @@ def test_pages_are_served_without_any_provider_configured(db, monkeypatch):
 
     for path in PAGES:
         assert client.get(path).status_code == 200
+
+
+def test_robots_and_sitemap_serve(db):
+    client = TestClient(app)
+
+    robots = client.get("/robots.txt")
+    sitemap = client.get("/sitemap.xml")
+
+    assert robots.status_code == 200
+    assert "Sitemap: https://mulmit.com/sitemap.xml" in robots.text
+    assert sitemap.status_code == 200
+    assert "https://mulmit.com/kr" in sitemap.text
