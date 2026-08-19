@@ -181,6 +181,15 @@ def favicon() -> FileResponse:
     )
 
 
+@app.get("/naverf28e6af919fa64efb88f2106778bbe7d.html", include_in_schema=False)
+def naver_site_verification() -> FileResponse:
+    """네이버 서치어드바이저 소유확인 파일. 루트 경로에서 서빙되어야 한다."""
+    return FileResponse(
+        config.STATIC_DIR / "naverf28e6af919fa64efb88f2106778bbe7d.html",
+        media_type="text/html",
+    )
+
+
 @app.get("/robots.txt", include_in_schema=False)
 def robots() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "robots.txt", media_type="text/plain")
