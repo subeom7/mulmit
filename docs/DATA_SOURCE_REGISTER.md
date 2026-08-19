@@ -732,6 +732,48 @@ notes: >
   응답에 동봉한다. 상원 eFD는 봇 차단으로 보류 — 우회하지 않는다.
 ```
 
+### 3.15 뉴욕 연방준비은행 — 침체 확률 연구 데이터 (국채 스프레드 모델)
+
+- **시리즈**: `recession_prob` — "Probability of U.S. Recession Predicted by
+  Treasury Spread, Twelve Months Ahead". 월별, 1959~. **날짜는 예측 대상 월**이라
+  최신 관측치가 12개월 미래에 찍히는 것이 정상이다.
+- **원본 파일**: `newyorkfed.org/medialibrary/media/research/capital_markets/allmonth.xls`
+  (구형 BIFF .xls, 시트 `rec_prob`). 함정 실측(2026-08-19): 미디어 서버는
+  **확장자를 무시**한다 — `.csv` URL도 같은 OLE2 바이너리를 주고, `Prob_Rec.xls`는
+  실제로는 차트 **PDF**다. allmonth가 유일한 실데이터.
+- **권리 (2026-08-19 약관 전문 검토)**: Terms of Use(newyorkfed.org/privacy/termsofuse)가
+  "personal or business purposes"의 사용·복사·배포·파생을 명시 허용. Use
+  Restrictions 목록(블로그·레퍼런스 금리·스태프 리포트·HHDC·SCE)에 연구 지표
+  데이터는 **없음** → 일반 허용 라이선스 적용. 기존 nyfed lane(SOFR·EFFR·RRP)과
+  같은 근거, 같은 게이트(NYFED_ENABLED).
+- **조건**: ① 지정 인용문 동봉("© [연도] Federal Reserve Bank of New York.
+  Content from the New York Fed subject to the Terms of Use at newyorkfed.org.")
+  — 기존 attribution 기계가 자동 처리. ② 원문 왜곡 금지 — 원자료는 소수(0.152)이고
+  연은 자신의 페이지가 퍼센트로 말하므로 **×100 표기 변환만** 하고 그 사실을 코드에
+  기록. ③ **연은 이름 광고 사용 금지** — 광고 도입 시 광고 소재에 NY Fed 명칭
+  불사용을 체크리스트에 포함할 것. ④ 보증 시사 금지.
+- **경위**: Polymarket 침체 베팅 대체 검토(2026-08-19, 방심위 차단으로 ❌ 유지)
+  에서 나온 대안. CME FedWatch는 재게시가 CME 라이선스 대상이라 배제.
+
+```yaml
+provider: nyfed
+series: recession_prob
+status: approved
+rights:
+  store: true
+  cache: true
+  display_values: true
+  redistribute_api: true
+  derived_metrics: false
+  advertising: true  # 단, 광고 소재에 NY Fed 명칭 사용 금지
+attribution: "© [year] Federal Reserve Bank of New York. Content from the New York Fed subject to the Terms of Use at newyorkfed.org."
+expires_at: null
+recheck_at: 2027-08-19
+notes: >
+  값은 소수→퍼센트 ×100 표기 변환만. 날짜는 예측 대상 월(미래 날짜 정상).
+  allmonth.xls만 실데이터(확장자 무시 서버, Prob_Rec는 PDF).
+```
+
 ## 4. 원 발행기관 후보
 
 아래 표의 `pending_review`는 무료라고 단정하는 표시가 아니다. 다음 세션에서 정확한 endpoint, 이용조건, attribution, 저장·캐시·제3자 표시 범위를 다시 확인한 뒤 series 단위로 승인한다.
@@ -1048,6 +1090,7 @@ notes: "No confidential contract language here"
 | 2026-08-19 | 경제 캘린더 추가(`/api/calendar`) — 미국 데이터 발표일은 FRED 릴리스 메타데이터(승인 lane, 실측 검증), FOMC·금통위는 공식 페이지에서 확인한 큐레이션(확인일 2026-08-19 동봉, "직전 회의 전 잠정" 고지). 일정은 공표된 사실이되 변경 가능함을 basis로 전달 | Claude assisted |
 | 2026-08-19 | DART 연간 재무제표 추가(`/api/kr/fundamentals/{code}`, §3.10 확장) — 주요계정 원문 전달, 연간 한정(분기 손익 누적 구분 부재), 연결 우선, 금융사 매출 부재는 사실로 표시. 미국 패널과 대칭 | Claude assisted |
 | 2026-08-19 | EDGAR 재무제표 추가(`/api/us/fundamentals/{ticker}`, §3.5 확장) — XBRL companyconcept, 내부자 lane과 같은 티커 큐·게이트. 태그 사다리는 최신 보고 기간 기준(NVIDIA 태그 전환 실측), YTD 배제·정정 우선, 파생은 마진 2종뿐 | Claude assisted |
+| 2026-08-19 | NY연은 침체 확률 lane 추가(§3.15, `recession_prob`) — 약관 전문 검토로 일반 허용 라이선스 확인(Use Restrictions 비해당), 기존 nyfed lane·인용문 기계 재사용. Polymarket 대안 검토의 산출물(Polymarket ❌ 유지, FedWatch는 CME 라이선스 대상이라 배제) | Claude assisted |
 | 2026-08-18 | 미 하원 PTR lane 추가(`DS` §3.14, `/api/us/ptr`) — STOCK Act 공시 원문 전달, EIGA §105(c) 분석·고지 동봉, 엄격 파서(불일치는 원문 링크로 강등), 상원 eFD는 봇 차단으로 **보류(우회 안 함)** | Claude assisted |
 | 2026-08-18 | ETF 보드(`/api/kr/etf`) 추가 — 금융위원회_증권상품시세정보 활용신청 승인(자동승인, 만료 2028-08-18) 후 기존 FSC lane·키로 하루 스냅샷 수집. 괴리율 = 종가÷NAV−1, 같은 기준일 공표값 두 개에서만 계산·NAV 0은 결측. 채권·일반상품시세정보도 함께 승인(미사용 보관) | Claude assisted |
 | 2026-08-18 | 모니터를 랜딩·`/kr`·`/us` 세 페이지로 분리(P1) — 데이터·권리 변경 없음, 페이지 구성 레이어. React 전환 보류 판정은 `docs/ROADMAP.md` | Claude assisted |

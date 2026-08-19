@@ -65,11 +65,13 @@ def test_lane_is_closed_by_default_and_calls_nothing(db, monkeypatch):
     assert store.list_economic_series(provider_id="nyfed") == []
 
 
-def test_ingest_stores_all_three_series_with_approved_rights(db, nyfed):
+def test_ingest_stores_all_four_series_with_approved_rights(db, nyfed):
     result = ingest.refresh_nyfed()
 
-    assert result["updated"] == 3
-    assert sorted(nyfed.calls) == ["effective_fed_funds", "reverse_repo", "sofr"]
+    assert result["updated"] == 4
+    assert sorted(nyfed.calls) == [
+        "effective_fed_funds", "recession_prob", "reverse_repo", "sofr",
+    ]
     row = store.get_economic_series("sofr")
     assert row["provider_id"] == "nyfed"
     assert row["provider_series_id"] == "SOFR"
@@ -103,11 +105,11 @@ def test_the_lane_serves_while_fred_stays_shut(db, nyfed):
     assert response.status_code == 200
     body = response.json()
     served = {item["key"] for item in body["series"]}
-    assert served == {"sofr", "effective_fed_funds", "reverse_repo"}
+    assert served == {"sofr", "effective_fed_funds", "reverse_repo", "recession_prob"}
     assert body["lanes"]["enabled"] == ["nyfed"]
     # Every card sourced from a closed lane is reported as disabled, not missing.
-    assert set(body["disabled"]).isdisjoint({"SOFR", "EFFR", "RRPONTSYD"})
-    assert len(body["disabled"]) == len(FRED_SERIES) - 3
+    assert set(body["disabled"]).isdisjoint({"SOFR", "EFFR", "RRPONTSYD", "REC_PROB_12M"})
+    assert len(body["disabled"]) == len(FRED_SERIES) - 4
     assert response.headers["x-data-source"] == "NYFED"
 
 
@@ -175,6 +177,10 @@ def test_fred_cannot_take_back_a_series_the_ny_fed_owns(db, nyfed, monkeypatch):
     assert requested, "FRED should still collect the series nobody else owns"
     for owned in ("SOFR", "EFFR", "RRPONTSYD"):
         assert owned not in requested
+    # Research-file and FSC keys are never FRED downloads, owned or not:
+    # their catalog ids do not exist on FRED and would 404 on the first cycle.
+    for foreign in ("REC_PROB_12M", "FSC_KOSPI"):
+        assert foreign not in requested
     assert store.get_economic_series("sofr")["provider_id"] == "nyfed"
     assert store.get_economic_series("sofr")["rights_status"] == "approved"
 
@@ -188,7 +194,7 @@ def test_a_failure_marks_the_series_without_dropping_history(db, nyfed, monkeypa
 
     result = ingest.refresh_nyfed()
 
-    assert result["failed"] == 3
+    assert result["failed"] == 4
     assert store.get_economic_series("sofr")["status"] == "error"
     assert len(store.load_economic_observations("sofr")) == 2
 

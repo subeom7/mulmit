@@ -132,12 +132,19 @@ def refresh_fred(*, force: bool = False) -> dict:
     keys = [spec.key for spec in FRED_SERIES if spec.public_web]
     stale_keys = set(store.stale_economic_series(keys, config.FRED_MAX_AGE))
     by_key = {spec.key: spec.series_id for spec in FRED_SERIES}
+    # Keys whose series_id is not a FRED id would only 404 on the first cycle,
+    # before their real lane's save claims ownership. SOFR/EFFR stay eligible on
+    # purpose: those exist on FRED and remain a fallback when the nyfed lane is off.
+    foreign_keys = set(FSC_SERIES_BY_KEY) | {
+        spec.series_key for spec in NYFED_SERIES if spec.kind == "recession_probability"
+    }
     targets = [
         by_key[key]
         for key in keys
         if (force or key in stale_keys)
         # An approved provider owns its series; FRED must not take it back.
         and _series_owner(key) in (None, FRED_PROVIDER_ID)
+        and key not in foreign_keys
     ]
     if not targets:
         return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
