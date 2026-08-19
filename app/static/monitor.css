@@ -454,3 +454,9 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 .zone-mini em { font-style: normal; }
 .zone-mini em.up { color: var(--green); }
 .zone-mini em.down { color: var(--red); }
+
+/* 24시간 카드 틱 플래시 — 값이 움직인 방향으로 한 번 번쩍인다 */
+@keyframes kro-tick-up { 0% { color: var(--green); text-shadow: 0 0 14px color-mix(in srgb, var(--green) 45%, transparent); } 100% { color: inherit; text-shadow: none; } }
+@keyframes kro-tick-down { 0% { color: var(--red); text-shadow: 0 0 14px color-mix(in srgb, var(--red) 45%, transparent); } 100% { color: inherit; text-shadow: none; } }
+.kro-price.tick-up { animation: kro-tick-up .7s ease-out; }
+.kro-price.tick-down { animation: kro-tick-down .7s ease-out; }

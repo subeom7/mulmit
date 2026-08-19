@@ -395,7 +395,7 @@ def kr_overnight(request: Request, response: Response) -> dict:
     FSC·H.10 쪽 결손은 카드 안에서 상태 코드와 null로 표현된다.
     """
     require_hip3_public_display()
-    response.headers["Cache-Control"] = "private, max-age=15, stale-while-revalidate=300"
+    response.headers["Cache-Control"] = "private, max-age=3, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "Hyperliquid HIP-3 + FSC + Federal Reserve H.10"
     return build_kr_overnight()
 

@@ -40,7 +40,9 @@ from .providers.hyperliquid import (
 from .weekend_signals import _korea_weekend_session
 
 OVERNIGHT_DEX = "xyz"
-OVERNIGHT_CACHE_TTL_SECONDS = 30.0
+# 짧게 잡아 홈 카드가 체감 실시간으로 움직이게 한다. 상류 호출은 이 TTL이
+# 프로세스당 분당 12회로 캡을 씌우므로 방문자 수와 무관하다(공식 한도 대비 미미).
+OVERNIGHT_CACHE_TTL_SECONDS = 5.0
 OVERNIGHT_STALE_TTL_SECONDS = 300.0
 FX_SERIES_KEY = "fx_usdkrw"
 # The H.10 release publishes daily rates weekly; beyond this window the stored
