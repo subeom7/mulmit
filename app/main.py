@@ -32,6 +32,7 @@ from . import (
     kr_pension,
     kr_stocks,
     service,
+    signal_feed,
     store,
     us_events,
     us_fundamentals,
@@ -687,6 +688,14 @@ def kr_pension_filings(request: Request, response: Response) -> dict:
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "FSS DART"
     return payload
+
+
+@app.get("/api/feed")
+@limiter.limit(config.RATE_LIMIT)
+def unified_feed(request: Request, response: Response) -> dict:
+    """통합 신호 피드 — 저장된 lane들의 재조립. 저장소만 읽는다."""
+    response.headers["Cache-Control"] = "public, max-age=300"
+    return signal_feed.build_feed()
 
 
 @app.get("/api/kr/events")
