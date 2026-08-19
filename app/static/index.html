@@ -14,7 +14,7 @@
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260819-16">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260819-17">
 <style>
 /* ---------------------------------------------------------------------------
    디자인 토큰은 monitor.css가 단일 원본이다. 이 페이지의 예전 변수명은 아래
@@ -2227,6 +2227,7 @@ document.getElementById("locale-toggle").addEventListener("click", () => {
   uiLang = uiLang === "ko" ? "en" : "ko";
   localStorage.setItem("monitor.locale", uiLang);
   applyLocale();
+  renderPresenceBadge();
 });
 
 /* URL 파라미터로 진입하면 그대로 복원한다. */
@@ -2672,6 +2673,18 @@ function presenceId() {
   if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${String(Math.random()).slice(2, 12)}`; localStorage.setItem("mulmit.presence", id); }
   return id;
 }
+let presenceCount = null;
+function renderPresenceBadge() {
+  if (presenceCount === null) return;
+  let badge = document.getElementById("presence-badge");
+  if (!badge) {
+    const host = document.querySelector(".mast-actions");
+    if (!host) return;
+    badge = document.createElement("span"); badge.id = "presence-badge"; badge.className = "presence-badge"; host.prepend(badge);
+  }
+  badge.title = t("presence.note");
+  badge.textContent = t("presence.now", { n: presenceCount });
+}
 async function presenceBeat() {
   if (document.hidden) return;
   try {
@@ -2679,14 +2692,8 @@ async function presenceBeat() {
     if (!res.ok) return;
     const data = await res.json();
     if (!Number.isFinite(data.count)) return;
-    let badge = document.getElementById("presence-badge");
-    if (!badge) {
-      const host = document.querySelector(".mast-actions");
-      if (!host) return;
-      badge = document.createElement("span"); badge.id = "presence-badge"; badge.className = "presence-badge"; host.prepend(badge);
-    }
-    badge.title = t("presence.note");
-    badge.textContent = t("presence.now", { n: data.count });
+    presenceCount = data.count;
+    renderPresenceBadge();
   } catch (error) { /* 다음 박동에 */ }
 }
 presenceBeat();
