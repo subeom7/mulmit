@@ -123,11 +123,15 @@ def get_reports(stock_code: str) -> dict[str, Any]:
         "count": len(reports),
         "basis_ko": (
             "임원·주요주주 특정증권등 소유상황 보고를 그대로 옮깁니다. 각 행은 보고서 "
-            "단위의 소유수량과 순증감이며, 개별 매매 내역이나 체결 단가가 아닙니다."
+            "단위의 소유수량과 순증감이며, 개별 매매 내역이나 체결 단가가 아닙니다. "
+            "비율은 공시 원문 기준(소수점 2자리)이라 대형주 임원 지분은 0.005% 미만이면 "
+            "<0.01%로 표시됩니다."
         ),
         "basis_en": (
             "Officer and major-shareholder ownership reports relayed verbatim. Each row "
-            "is a report-level holding and net change, not individual trades or prices."
+            "is a report-level holding and net change, not individual trades or prices. "
+            "Ratios follow the filing's own two-decimal precision, so large-cap officer "
+            "stakes below 0.005% show as <0.01%."
         ),
         "source": {
             "provider": DART_PROVIDER_ID,
