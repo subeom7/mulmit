@@ -230,6 +230,18 @@ FRED_SERIES = (
         "Effective overnight U.S. interbank policy rate", _NY_FED, _NY_FED_URL,
         public_web=True,
     ),
+    # New York Fed yield-curve model, collected from the research workbook by
+    # the nyfed lane (not FRED). Dates mark the month being predicted, so the
+    # newest observations sit up to twelve months in the future by design.
+    FredSeriesSpec(
+        "REC_PROB_12M", "recession_prob", "market", "미국 침체 확률 (12개월 선행)",
+        "US recession odds (12M ahead)",
+        "뉴욕 연은이 국채 10년–3개월 스프레드로 추정한 12개월 뒤 미국 침체 확률. 날짜는 예측 대상 월입니다",
+        "Probability of a U.S. recession twelve months ahead, estimated by the New York Fed "
+        "from the 10-year minus 3-month Treasury spread. Dates mark the predicted month",
+        _NY_FED, _NY_FED_URL,
+        public_web=True,
+    ),
     FredSeriesSpec(
         "IORB", "reserve_interest", "rates", "지급준비금 이자율",
         "Interest on Reserve Balances", "연준이 지급준비금에 적용하는 이자율",

@@ -219,3 +219,79 @@ def test_attribution_matches_the_wording_the_terms_prescribe():
         "© 2026 Federal Reserve Bank of New York. Content from the New York Fed "
         "subject to the Terms of Use at newyorkfed.org."
     )
+
+
+# --- recession probability workbook -------------------------------------------
+#
+# Cell layout mirrors the real allmonth.xls: a Date/Rec_prob header row, dates
+# as "01-Jan-1959" text, probabilities as decimals with blank strings before the
+# model's first forecast, and target months that reach into the future because
+# the series predicts twelve months ahead.
+
+RECESSION_ROWS = [
+    ["Date", "10 Year Treasury Yield", "3 Month Treasury Yield",
+     "3 Month Treasury Yield (Bond Equivalent Basis)", "Spread", "Rec_prob", "NBER_Rec"],
+    ["01-Jan-1959", 4.02, 2.82, 2.88, 1.14, "", 0.0],
+    ["01-May-2026", 4.4, 4.1, 4.12, 0.28, 0.0912, 0.0],
+    ["01-Jun-2027", "", "", "", "", 0.16061881370338651, ""],
+    ["01-Jul-2027", "", "", "", "", 0.15187350665955465, ""],
+    # Malformed rows must stay absent, never clamped or guessed.
+    ["01-Aug-2027", "", "", "", "", 1.5, ""],
+    ["not-a-date", "", "", "", "", 0.5, ""],
+]
+
+RECESSION = NYFED_SERIES_BY_KEY["recession_prob"]
+
+
+def make_recession_provider(rows=None, transport=None, **kwargs):
+    from app.providers import nyfed as nyfed_module
+
+    provider = make_provider(transport or Transport(body=b"ole2-bytes"), **kwargs)
+    original = nyfed_module._extract_recession_rows
+    nyfed_module._extract_recession_rows = lambda raw: rows if rows is not None else RECESSION_ROWS
+    return provider, lambda: setattr(nyfed_module, "_extract_recession_rows", original)
+
+
+def test_recession_probabilities_scale_to_percent_and_keep_future_months():
+    provider, restore = make_recession_provider()
+    try:
+        metadata, observations = provider.fetch_series(RECESSION, start=dt.date(2016, 1, 1))
+    finally:
+        restore()
+
+    values = dict(observations)
+    assert values[dt.date(2026, 5, 1)] == pytest.approx(9.12)
+    # The newest observations are legitimately dated in the future.
+    assert values[dt.date(2027, 7, 1)] == pytest.approx(15.187350665955465)
+    assert dt.date(2027, 8, 1) not in values  # probability above 1.0 is malformed
+    assert dt.date(1959, 1, 1) not in values  # blank cell and before start
+    assert metadata["units"] == "Percent"
+    assert metadata["observation_end"] == "2027-07-01"
+
+
+def test_recession_start_filter_trims_history_but_not_the_future():
+    provider, restore = make_recession_provider()
+    try:
+        _, observations = provider.fetch_series(RECESSION, start=dt.date(2027, 1, 1))
+    finally:
+        restore()
+
+    assert [date for date, _ in observations] == [dt.date(2027, 6, 1), dt.date(2027, 7, 1)]
+
+
+def test_recession_workbook_without_headers_is_unavailable():
+    provider, restore = make_recession_provider(rows=[["nothing", "here"]])
+    try:
+        with pytest.raises(DataUnavailable):
+            provider.fetch_series(RECESSION, start=dt.date(2016, 1, 1))
+    finally:
+        restore()
+
+
+def test_recession_dates_parse_without_locale():
+    from app.providers.nyfed import _recession_date
+
+    assert _recession_date("01-Jan-1959") == dt.date(1959, 1, 1)
+    assert _recession_date("01-Dec-2027") == dt.date(2027, 12, 1)
+    assert _recession_date("32-Jan-2027") is None
+    assert _recession_date("01-XXX-2027") is None

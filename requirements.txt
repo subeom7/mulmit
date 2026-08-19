@@ -11,5 +11,7 @@ curl_cffi>=0.7
 pandas>=2.0
 # 하원 PTR PDF의 텍스트 추출(전자 제출분). 스캔 제출분은 추출 불가로 표시한다.
 pypdf>=4.0
+# 뉴욕 연은 침체 확률 파일(allmonth.xls)은 구형 BIFF 워크북. xlrd 2.x는 .xls 전용이다.
+xlrd>=2.0
 numpy>=1.24
 statsmodels>=0.14
