@@ -19,6 +19,12 @@ from .providers.bls import (
     BLS_PUBLISHER_URL,
     BLS_TERMS_URL,
 )
+from .providers.ecos import (
+    ECOS_ATTRIBUTION,
+    ECOS_PROVIDER_ID,
+    ECOS_PUBLISHER_URL,
+    ECOS_TERMS_URL,
+)
 from .providers.fedboard import (
     FEDBOARD_ATTRIBUTION,
     FEDBOARD_DDP_TRANSITION_URL,
@@ -77,6 +83,7 @@ PROVIDER_NAMES = {
     FEDBOARD_PROVIDER_ID: "Federal Reserve Board",
     BLS_PROVIDER_ID: "U.S. Bureau of Labor Statistics",
     FSC_PROVIDER_ID: FSC_PUBLISHER,
+    ECOS_PROVIDER_ID: "한국은행 (ECOS)",
     "eia": "U.S. Energy Information Administration",
     "federal_reserve": "Federal Reserve Board",
     "treasury": "U.S. Department of the Treasury",
@@ -91,6 +98,7 @@ PROVIDER_NOTICES: dict[str, Callable[[], str]] = {
     FEDBOARD_PROVIDER_ID: lambda: FEDBOARD_ATTRIBUTION,
     BLS_PROVIDER_ID: lambda: BLS_ATTRIBUTION,
     FSC_PROVIDER_ID: lambda: FSC_ATTRIBUTION,
+    ECOS_PROVIDER_ID: lambda: ECOS_ATTRIBUTION,
 }
 
 
@@ -151,6 +159,7 @@ PROVIDER_URLS = {
     FEDBOARD_PROVIDER_ID: FEDBOARD_PUBLISHER_URL,
     BLS_PROVIDER_ID: BLS_PUBLISHER_URL,
     FSC_PROVIDER_ID: FSC_PUBLISHER_URL,
+    ECOS_PROVIDER_ID: ECOS_PUBLISHER_URL,
 }
 
 # What each lane requires be shown when its values are published.
@@ -186,6 +195,12 @@ PROVIDER_ATTRIBUTION: dict[str, Callable[[], dict[str, str]]] = {
         "name": PROVIDER_NAMES[FSC_PROVIDER_ID],
         "notice": FSC_ATTRIBUTION,
         "terms_url": FSC_TERMS_URL,
+    },
+    ECOS_PROVIDER_ID: lambda: {
+        "provider": ECOS_PROVIDER_ID,
+        "name": PROVIDER_NAMES[ECOS_PROVIDER_ID],
+        "notice": ECOS_ATTRIBUTION,
+        "terms_url": ECOS_TERMS_URL,
     },
 }
 

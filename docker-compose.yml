@@ -28,6 +28,8 @@ x-app: &app
     FEDBOARD_ENABLED: ${FEDBOARD_ENABLED:-false}
     BLS_ENABLED: ${BLS_ENABLED:-false}
     FSC_ENABLED: ${FSC_ENABLED:-false}
+    # 한국은행 ECOS(한국 거시). 게이트는 web(서빙 판정)·ingest(수집) 양쪽에 필요하다.
+    ECOS_ENABLED: ${ECOS_ENABLED:-false}
     # 키가 ingest에만 있으면 web의 요청 기반 국내 종목 조회(app/kr_stocks.py)가
     # 잠겨 있는 lane처럼 보인다. 게이트와 마찬가지로 양쪽에 같은 값을 준다.
     FSC_API_KEY: ${FSC_API_KEY:-}
@@ -102,6 +104,8 @@ services:
       FRED_RETRIES: ${FRED_RETRIES:-2}
       FRED_INGEST_DELAY: ${FRED_INGEST_DELAY:-0.1}
       KRX_API_KEY: ${KRX_API_KEY:-}
+      ECOS_API_KEY: ${ECOS_API_KEY:-}
+      ECOS_MAX_AGE: ${ECOS_MAX_AGE:-21600}
       BLS_API_KEY: ${BLS_API_KEY:-}
       BLS_MAX_AGE: ${BLS_MAX_AGE:-43200}
       FEDBOARD_MAX_AGE: ${FEDBOARD_MAX_AGE:-43200}

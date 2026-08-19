@@ -34,6 +34,15 @@ from .providers.bls import (
     BLS_TERMS_URL,
     BlsProvider,
 )
+from .providers.ecos import (
+    ECOS_PROVIDER_ID,
+    ECOS_PUBLISHER,
+    ECOS_PUBLISHER_URL,
+    ECOS_SERIES,
+    ECOS_SERIES_BY_KEY,
+    ECOS_TERMS_URL,
+    EcosProvider,
+)
 from .providers.fedboard import (
     FEDBOARD_DDP_TRANSITION_URL,
     FEDBOARD_DERIVED,
@@ -135,7 +144,7 @@ def refresh_fred(*, force: bool = False) -> dict:
     # Keys whose series_id is not a FRED id would only 404 on the first cycle,
     # before their real lane's save claims ownership. SOFR/EFFR stay eligible on
     # purpose: those exist on FRED and remain a fallback when the nyfed lane is off.
-    foreign_keys = set(FSC_SERIES_BY_KEY) | {
+    foreign_keys = set(FSC_SERIES_BY_KEY) | set(ECOS_SERIES_BY_KEY) | {
         spec.series_key for spec in NYFED_SERIES if spec.kind == "recession_probability"
     }
     targets = [
@@ -259,6 +268,70 @@ def refresh_nyfed(*, force: bool = False) -> dict:
             result["failed"] += 1
             store.mark_economic_error(spec.series_key, str(exc))
             log.warning("거시 갱신 실패 %s: %s", spec.provider_series_id, exc)
+    return result
+
+
+def refresh_ecos(*, force: bool = False) -> dict:
+    """한국은행 ECOS 시리즈 갱신 — FRED의 한국 대칭 lane.
+
+    약관 확인 전까지 게이트가 꺼져 있어 이 함수는 skip으로 끝난다. 활성화 후에도
+    row 권리(rights_status)와 lane 게이트 양쪽이 서빙을 결정한다.
+    """
+    if not config.ECOS_ENABLED:
+        return {"skipped": "disabled", "attempted": 0, "updated": 0, "failed": 0}
+    if not config.ECOS_API_KEY:
+        return {"skipped": "not_configured", "attempted": 0, "updated": 0, "failed": 0}
+
+    keys = [spec.series_key for spec in ECOS_SERIES]
+    targets = (
+        keys
+        if force
+        else [
+            key
+            for key in store.stale_economic_series(keys, config.ECOS_MAX_AGE)
+            if _series_owner(key) in (None, ECOS_PROVIDER_ID)
+        ]
+    )
+    if not targets:
+        return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
+
+    provider = EcosProvider(
+        config.ECOS_API_KEY,
+        timeout=config.ECOS_TIMEOUT,
+        retries=config.ECOS_RETRIES,
+        request_interval=config.ECOS_REQUEST_INTERVAL,
+    )
+    start = dt.date.today() - dt.timedelta(days=config.ECOS_HISTORY_DAYS)
+    result = {"attempted": 0, "updated": 0, "failed": 0, "rate_limited": 0, "observations": 0}
+
+    for key in targets:
+        spec = ECOS_SERIES_BY_KEY[key]
+        result["attempted"] += 1
+        try:
+            metadata, observations = provider.fetch_series(spec, start=start)
+            count = store.save_economic_series(
+                spec.series_key,
+                provider_id=ECOS_PROVIDER_ID,
+                provider_series_id=f"{spec.stat_code}/{spec.item_code}",
+                metadata_fields=metadata,
+                observations=observations,
+                publisher=ECOS_PUBLISHER,
+                publisher_url=ECOS_PUBLISHER_URL,
+                series_url=ECOS_PUBLISHER_URL,
+                rights_status="approved",
+                rights_evidence=ECOS_TERMS_URL,
+            )
+            result["updated"] += 1
+            result["observations"] += count
+            log.info("거시 갱신 %s/%s (%d행)", ECOS_PROVIDER_ID, spec.stat_code, count)
+        except RateLimited:
+            result["rate_limited"] += 1
+            log.warning("ECOS 요청 제한 — 남은 계열은 다음 주기에 재시도")
+            break
+        except Exception as exc:  # noqa: BLE001 - 한 계열 실패가 나머지를 막지 않는다
+            result["failed"] += 1
+            store.mark_economic_error(spec.series_key, str(exc))
+            log.warning("거시 갱신 실패 %s: %s", spec.stat_code, exc)
     return result
 
 
@@ -823,6 +896,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         if automatic:
             fred_result = refresh_fred()
             nyfed_result = refresh_nyfed()
+            ecos_result = refresh_ecos()
             fedboard_result = refresh_fedboard()
             bls_result = refresh_bls()
             fsc_result = refresh_fsc()
@@ -843,6 +917,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             "purged_reports": purged,
             "fred": fred_result,
             "nyfed": nyfed_result,
+            "ecos": ecos_result,
             "fedboard": fedboard_result,
             "bls": bls_result,
             "fsc": fsc_result,
@@ -863,6 +938,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             # Price-provider backoff must not disable the independent FRED lane.
             fred_result = refresh_fred()
             nyfed_result = refresh_nyfed()
+            ecos_result = refresh_ecos()
             fedboard_result = refresh_fedboard()
             bls_result = refresh_bls()
             fsc_result = refresh_fsc()
@@ -937,6 +1013,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     if automatic:
         fred_result = refresh_fred()
         nyfed_result = refresh_nyfed()
+        ecos_result = refresh_ecos()
         fedboard_result = refresh_fedboard()
         bls_result = refresh_bls()
         fsc_result = refresh_fsc()
