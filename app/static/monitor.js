@@ -406,6 +406,8 @@ const state = {
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
 
+let presenceCount = null;
+
 function trNode(root = document) {
   $$('[data-i18n]', root).forEach((node) => { node.textContent = t(node.dataset.i18n); });
   $$('[data-i18n-aria]', root).forEach((node) => node.setAttribute("aria-label", t(node.dataset.i18nAria)));
@@ -2012,8 +2014,9 @@ function presenceId() {
 
 // 마지막 수신 값은 캐시에 두고 그리기만 다시 한다 — 언어 전환(renderAll)이
 // 다음 박동을 기다리지 않고 즉시 새 언어로 배지를 다시 그리게 하기 위해서다.
-let presenceCount = null;
-
+// 주의: 캐시 변수 선언은 파일 상단(state 옆)에 있다 — renderAll이 이 블록보다
+// 먼저 실행되므로 여기 let으로 두면 TDZ ReferenceError로 전체 렌더가 죽는다
+// (2026-08-19 프로덕션 장애 실측).
 function renderPresenceBadge() {
   if (presenceCount === null) return;
   let badge = document.getElementById("presence-badge");
