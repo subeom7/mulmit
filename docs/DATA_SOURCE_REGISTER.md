@@ -996,9 +996,17 @@ CNN Fear & Greed는 명칭도 점수도 복제하지 않는다. 그 지수의 7�
 | KOSIS (통계청) | 뉴스 아님 — 통계 | ECOS와 같은 트랙. 공공누리 유형 확인 필요 |
 | DART Open API | 공시 | ✅ 운영 중 — 공시 속보 피드(`/api/kr/events`)가 이 축 |
 
-**뉴스 트랙 결론(현재)**: 무료·합법 경로가 아직 없다. 다음 관문 = NCP API HUB
-Search 약관 조사 + Marketaux 약관 확보. 등락률 칩은 뉴스 소스와 무관하게 우리
-데이터로 계산하는 설계라, 소스만 확보되면 즉시 결합 가능.
+**2026-08-19 심층 조사 (2차) — GDELT 발견으로 결론 변경**
+
+| 후보 | 판정 | 근거 (원문 확보) |
+|---|---|---|
+| **GDELT** | **✅ 완전 청정 — 유일** | 공식 Terms of Use: "unlimited and unrestricted use for any academic, **commercial**, or governmental use of any kind **without fee**" + "You may **redistribute, rehost, republish**, and mirror … in any form". 조건 = GDELT 인용 + gdeltproject.org 링크. DOC 2.0 API가 주는 것 = 기사 **제목·URL·도메인·시각·언어**(본문 없음 — 언론 저작권 표면 최소, 우리 안전선과 정확히 일치). 운영 실측: 무키, **5초당 1요청**(위반 시 분 단위 쿨다운 — 2026-08-19 실측), 15분 단위 갱신. 한계: 한국어 매체 커버리지 미검증(1차 프로브 0건 — 쿼리 문법/커버리지 구분 필요), **영문 축 우선** |
+| NCP NAVER API HUB (뉴스 검색) | 조건부 — 한국어 축 현실 경로 | 뉴스 검색 "한시적 무료", 향후 종량제 예고(비용 리스크). 구약관의 "검색결과 삽입 금지" 특약 승계 여부 미확인 — **신청 화면 약관 캡처 필요**(ECOS 방식). NCP 계정 = 운영자 액션 |
+| 공공누리 보도자료 (금융위·한은·korea.kr) | 유망 — 엔드포인트 미확정 | 권리 전망 밝음(공공누리 1유형 관행)이나 RSS 실측 실패(금융위 /rss 소프트404, korea.kr 추측 URL 404). 기관별 정확한 피드 주소·KOGL 유형 개별 확인이 다음 작업 |
+
+**뉴스 트랙 결론(갱신)**: **GDELT로 글로벌/영문 축은 지금 구축 가능** — 계약·키·비용
+전부 0, 조건은 인용+링크뿐. 한국어 축은 NCP HUB 가입(운영자) 또는 공공누리 RSS
+확정 후. 등락률 칩은 소스 무관하게 우리 데이터 계산이라 어느 축이든 즉시 결합.
 
 결론:
 
@@ -1134,6 +1142,7 @@ notes: "No confidential contract language here"
 | 2026-08-19 | 경제 캘린더 추가(`/api/calendar`) — 미국 데이터 발표일은 FRED 릴리스 메타데이터(승인 lane, 실측 검증), FOMC·금통위는 공식 페이지에서 확인한 큐레이션(확인일 2026-08-19 동봉, "직전 회의 전 잠정" 고지). 일정은 공표된 사실이되 변경 가능함을 basis로 전달 | Claude assisted |
 | 2026-08-19 | DART 연간 재무제표 추가(`/api/kr/fundamentals/{code}`, §3.10 확장) — 주요계정 원문 전달, 연간 한정(분기 손익 누적 구분 부재), 연결 우선, 금융사 매출 부재는 사실로 표시. 미국 패널과 대칭 | Claude assisted |
 | 2026-08-19 | EDGAR 재무제표 추가(`/api/us/fundamentals/{ticker}`, §3.5 확장) — XBRL companyconcept, 내부자 lane과 같은 티커 큐·게이트. 태그 사다리는 최신 보고 기간 기준(NVIDIA 태그 전환 실측), YTD 배제·정정 우선, 파생은 마진 2종뿐 | Claude assisted |
+| 2026-08-19 | 뉴스 소스 심층 조사 2차(§6.1) — **GDELT ✅ 완전 청정 확정**(상업·재배포 명시 허용, 인용+링크 조건, 5초/1요청 실측), NCP HUB 조건부(한시 무료·약관 캡처 필요), 공공누리 축 유망(엔드포인트 미확정), Finnhub ❌ 유지 | Claude assisted |
 | 2026-08-19 | 재무 파생 범위 확장(§3.5·§3.10) — 마진에 더해 연간 행의 ROE·ROA·부채비율((자산−자본)÷자본 항등식)·매출 성장률(연속 연도 한정). 국내는 후행 PER·PBR 추가: FSC 최신 시총 ÷ 최근 연간 공시값(서빙 시 계산, 적자 PER 표시 안 함). 전부 공시값 산술 — 추정·연율화 없음. 캐시 키 v2 범프 | Claude assisted |
 | 2026-08-19 | ECOS 한국 거시 lane 구축(§3.16, `kr_base_rate`·`kr_cpi`) — 게이트 꺼짐 배포, sample 키로 코드·응답 형식 실측. 활성화는 운영자 인증키 발급 + 약관 전문 기록 후 | Claude assisted |
 | 2026-08-19 | EDGAR 광고 병행 판정 advertising: true (§3.5) — 정책 원문 재확인(무료 접근·fair access·UA만 부과, 상업 제한 없음) + 17 U.S.C. §105 퍼블릭 도메인. webmaster@sec.gov 예우성 통지 발송(허락 게이트 아님, 상세 INQUIRY_SEC_EDGAR_ADS.md) | Claude assisted |
