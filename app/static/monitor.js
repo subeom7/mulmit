@@ -1423,6 +1423,9 @@ function kroMoney(value, kind) {
   return `₩${Math.round(value).toLocaleString("en-US")}`;
 }
 
+// 직전 렌더의 환산가 — 값이 움직인 카드에 틱 플래시를 준다.
+const kroPrevValues = new Map();
+
 function renderKrOvernight() {
   const section = $("#kr-overnight");
   if (!section) return;
@@ -1463,6 +1466,12 @@ function renderKrOvernight() {
     const price = document.createElement("div"); price.className = "kro-price";
     const markUsd = mark === null ? "—" : `$${mark.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     price.textContent = implied !== null ? kroMoney(implied, card.kind) : markUsd;
+    const tickValue = implied !== null ? implied : mark;
+    const previous = kroPrevValues.get(card.id);
+    if (tickValue !== null && previous !== undefined && tickValue !== previous) {
+      price.classList.add(tickValue > previous ? "tick-up" : "tick-down");
+    }
+    if (tickValue !== null) kroPrevValues.set(card.id, tickValue);
 
     const vs = document.createElement("div"); vs.className = `kro-vs ${changeClass(percent)}`;
     if (percent !== null) vs.textContent = `${formatSigned(percent)} · ${t("kro.vsClose", { date: kroDate(card.official?.date) })}`;
@@ -1722,11 +1731,12 @@ setInterval(() => { if (!document.hidden) loadCore(); }, 15 * 60 * 1000);
 // 세션 배지는 데이터가 아니라 시계라 1분마다 자체 갱신한다.
 setInterval(updateSessionBadge, 60 * 1000);
 // 24시간 참고가 카드의 마크가격은 실시간 소스라, 페이지 전체 주기(15분)와
-// 별개로 1분마다 가볍게 갱신한다. API 캐시가 15초라 서버 부담은 미미하다.
+// 별개로 5초마다 가볍게 갱신한다. 레이트리밋(60/분) 안이고, 상류 호출은
+// 서버 캐시 TTL이 캡을 씌우므로 방문자 수와 무관하다.
 if (onPage(...PAGE_FETCHES.krOvernight)) {
   setInterval(async () => {
     if (document.hidden || !document.getElementById("kr-overnight")) return;
     const payload = await fetchJson("/api/kr/overnight", "krOvernight");
     if (payload) { state.krOvernight = payload; renderKrOvernight(); }
-  }, 60 * 1000);
+  }, 5 * 1000);
 }
