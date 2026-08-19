@@ -14,7 +14,7 @@
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260819-20">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260819-21">
 <style>
 /* ---------------------------------------------------------------------------
    디자인 토큰은 monitor.css가 단일 원본이다. 이 페이지의 예전 변수명은 아래
@@ -2699,6 +2699,10 @@ async function presenceBeat() {
 presenceBeat();
 setInterval(presenceBeat, 30 * 1000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) presenceBeat(); });
+// 방문 통계 비콘 (모니터 페이지와 같은 규약, 익명·쿠키 없음)
+try {
+  fetch("/api/pageview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: location.pathname, ref: document.referrer || "", id: presenceId() }), keepalive: true }).catch(() => {});
+} catch (error) { /* 최선노력 */ }
 </script>
 </body>
 </html>

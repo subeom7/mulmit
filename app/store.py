@@ -308,6 +308,23 @@ reports = sa.Table(
     sa.Index("ix_reports_created", "created_at"),
 )
 
+# 자체 방문 통계. 일×경로×유입호스트 단위 집계와, 일×익명id 고유방문 기록.
+pageviews = sa.Table(
+    "pageviews",
+    metadata,
+    sa.Column("date", sa.Date, primary_key=True),
+    sa.Column("path", sa.String(64), primary_key=True),
+    sa.Column("referrer_host", sa.String(128), primary_key=True, server_default=""),
+    sa.Column("count", sa.Integer, nullable=False, server_default="0"),
+)
+
+visitor_days = sa.Table(
+    "visitor_days",
+    metadata,
+    sa.Column("date", sa.Date, primary_key=True),
+    sa.Column("client_id", sa.String(64), primary_key=True),
+)
+
 # 접속자 하트비트. 브라우저가 만든 익명 무작위 id 하나당 한 행이라 개인정보가
 # 없고, 오래된 행은 하트비트가 올 때마다 지워져 테이블이 항상 최근 크기로 남는다.
 # 워커가 여럿이라 프로세스 메모리 대신 DB에 둔다.
@@ -1594,3 +1611,84 @@ def load_recent_events(limit: int = 40) -> list[dict]:
             .limit(limit)
         ).mappings()
         return [dict(row) for row in rows]
+
+
+# --- 방문 통계 (자체 집계) ----------------------------------------------------
+# 개인정보 없음: 경로는 닫힌 목록으로 버킷팅, 유입경로는 호스트명만, 방문자
+# 구분은 presence와 같은 익명 무작위 id다. 일 단위 집계라 행 수가 작게 유지된다.
+
+def record_pageview(
+    path: str,
+    referrer_host: str,
+    client_id: str,
+    *,
+    today: dt.date | None = None,
+) -> None:
+    date = today or dt.date.today()
+    host = (referrer_host or "")[:128]
+    with engine().begin() as conn:
+        updated = conn.execute(
+            pageviews.update()
+            .where(
+                (pageviews.c.date == date)
+                & (pageviews.c.path == path)
+                & (pageviews.c.referrer_host == host)
+            )
+            .values(count=pageviews.c.count + 1)
+        ).rowcount
+        if not updated:
+            with contextlib.suppress(sa.exc.IntegrityError):
+                conn.execute(
+                    pageviews.insert().values(
+                        date=date, path=path, referrer_host=host, count=1
+                    )
+                )
+        if client_id:
+            with contextlib.suppress(sa.exc.IntegrityError):
+                conn.execute(
+                    visitor_days.insert().values(date=date, client_id=client_id[:64])
+                )
+
+
+def traffic_stats(days: int = 14, *, today: dt.date | None = None) -> dict:
+    """최근 N일 요약: 일별 방문자·조회수, 경로별 합, 상위 유입경로."""
+    end = today or dt.date.today()
+    start = end - dt.timedelta(days=days - 1)
+    with engine().begin() as conn:
+        daily_views = dict(conn.execute(
+            sa.select(pageviews.c.date, sa.func.sum(pageviews.c.count))
+            .where(pageviews.c.date >= start)
+            .group_by(pageviews.c.date)
+        ).all())
+        daily_uniques = dict(conn.execute(
+            sa.select(visitor_days.c.date, sa.func.count())
+            .where(visitor_days.c.date >= start)
+            .group_by(visitor_days.c.date)
+        ).all())
+        by_path = conn.execute(
+            sa.select(pageviews.c.path, sa.func.sum(pageviews.c.count))
+            .where(pageviews.c.date >= start)
+            .group_by(pageviews.c.path)
+            .order_by(sa.func.sum(pageviews.c.count).desc())
+        ).all()
+        referrers = conn.execute(
+            sa.select(pageviews.c.referrer_host, sa.func.sum(pageviews.c.count))
+            .where((pageviews.c.date >= start) & (pageviews.c.referrer_host != ""))
+            .group_by(pageviews.c.referrer_host)
+            .order_by(sa.func.sum(pageviews.c.count).desc())
+            .limit(10)
+        ).all()
+    series = []
+    for offset in range(days):
+        date = start + dt.timedelta(days=offset)
+        series.append({
+            "date": date.isoformat(),
+            "pageviews": int(daily_views.get(date, 0)),
+            "unique_visitors": int(daily_uniques.get(date, 0)),
+        })
+    return {
+        "window_days": days,
+        "daily": series,
+        "by_path": [{"path": p, "count": int(c)} for p, c in by_path],
+        "top_referrers": [{"host": h, "count": int(c)} for h, c in referrers],
+    }
