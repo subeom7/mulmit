@@ -125,6 +125,16 @@ HIP3_PUBLIC_DISPLAY_ENABLED = _bool("HIP3_PUBLIC_DISPLAY_ENABLED", False)
 # widest licence tier — which is a different and broader grant than the KRX
 # OPEN API terms below. Published the next business day at 13:00 KST, so this
 # is never a live quote. https://www.data.go.kr/data/15094808/openapi.do
+# 한국은행 ECOS — 한국 거시 lane (FRED의 한국 대칭). 인증키 약관 확인 전까지
+# 기본 꺼짐(fail-closed)으로 배포된다.
+ECOS_ENABLED = _bool("ECOS_ENABLED", False)
+ECOS_API_KEY = os.environ.get("ECOS_API_KEY", "")
+ECOS_TIMEOUT = _float("ECOS_TIMEOUT", 15.0)
+ECOS_RETRIES = _int("ECOS_RETRIES", 2)
+ECOS_REQUEST_INTERVAL = _float("ECOS_REQUEST_INTERVAL", 0.2)
+ECOS_MAX_AGE = _int("ECOS_MAX_AGE", 60 * 60 * 6)
+ECOS_HISTORY_DAYS = _int("ECOS_HISTORY_DAYS", 366 * 10)
+
 FSC_ENABLED = _bool("FSC_ENABLED", False)
 FSC_API_KEY = os.environ.get("FSC_API_KEY", "").strip()
 FSC_TIMEOUT = _float("FSC_TIMEOUT", 20.0)

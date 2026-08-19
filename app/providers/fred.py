@@ -327,6 +327,22 @@ FRED_SERIES = (
     # `kosdaq` and `samsung` on purpose: an exchange close in won and a synthetic
     # perpetual in USD are not the same measurement, so they never share a key
     # and are never spliced into one series.
+    # 한국은행 ECOS lane이 수집하는 한국 거시 시리즈 (FRED 아님). 카탈로그는
+    # 라벨·설명·발행처를 주고, 소유권은 저장 행의 provider_id가 결정한다.
+    FredSeriesSpec(
+        "ECOS_722Y001", "kr_base_rate", "korea", "한국은행 기준금리", "BOK Base Rate",
+        "한국은행 금융통화위원회가 결정하는 정책금리",
+        "The Bank of Korea's policy rate, set by the Monetary Policy Board",
+        "한국은행", "https://ecos.bok.or.kr/",
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "ECOS_901Y009", "kr_cpi", "korea", "소비자물가지수 (한국)", "Korea CPI",
+        "통계청 소비자물가지수 총지수(2020=100), 한국은행 ECOS 제공",
+        "Korean Consumer Price Index, all items (2020=100), via the Bank of Korea's ECOS",
+        "한국은행", "https://ecos.bok.or.kr/",
+        public_web=True,
+    ),
     FredSeriesSpec(
         "FSC_KOSPI", "kospi_exact", "korea", "코스피 (공식 종가)", "KOSPI (official close)",
         "한국거래소 코스피 지수의 공식 종가. 다음 영업일에 공개되는 장 마감 기준값입니다",

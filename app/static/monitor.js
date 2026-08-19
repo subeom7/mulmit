@@ -226,6 +226,8 @@ const METRICS = {
   dollar_index_broad: { aliases: ["dollar_index_broad", "jrxwtfb_n.b"], label: LABEL("광의 달러지수", "Broad dollar index"), group: "macro", format: "number", accent: "#a78bfa", description: LABEL("연준이 교역량으로 가중한 달러 강세 지표. ICE 달러지수(DXY)와 값을 비교할 수 없습니다", "The Fed's trade-weighted dollar index — its level is not comparable with ICE's DXY") },
   dollar_index_afe: { aliases: ["dollar_index_afe", "jrxwtfn_n.b"], label: LABEL("선진국 달러지수", "AFE dollar index"), group: "macro", format: "number", accent: "#a78bfa", description: LABEL("선진 교역상대국 통화 대비 달러", "The dollar against advanced foreign economies") },
   dollar_index_eme: { aliases: ["dollar_index_eme", "jrxwtfo_n.b"], label: LABEL("신흥국 달러지수", "EME dollar index"), group: "macro", format: "number", accent: "#a78bfa", description: LABEL("신흥 교역상대국 통화 대비 달러", "The dollar against emerging market economies") },
+  kr_base_rate: { aliases: ["kr_base_rate", "ecos_722y001"], label: LABEL("한국은행 기준금리", "BOK base rate"), group: "korea", format: "number", accent: "#2dd4a3", description: LABEL("한국은행 금융통화위원회가 결정하는 정책금리", "The Bank of Korea's policy rate, set by the Monetary Policy Board") },
+  kr_cpi: { aliases: ["kr_cpi", "ecos_901y009"], label: LABEL("소비자물가지수 (한국)", "Korea CPI"), group: "korea", format: "number", accent: "#42a5ff", description: LABEL("소비자물가지수 총지수(2020=100) — 한국은행 ECOS 제공", "Korean CPI, all items (2020=100), via the Bank of Korea's ECOS") },
   kospi_exact: { aliases: ["kospi_exact", "fsc_kospi", "코스피"], label: LABEL("코스피 공식 종가", "KOSPI official close"), group: "korea", format: "number", accent: "#2dd4a3", description: LABEL("한국거래소 코스피 지수의 장 마감 확정값", "The confirmed Korea Exchange KOSPI close") },
   kosdaq_exact: { aliases: ["kosdaq_exact", "fsc_kosdaq", "코스닥"], label: LABEL("코스닥 공식 종가", "KOSDAQ official close"), group: "korea", format: "number", accent: "#2dd4a3", description: LABEL("한국거래소 코스닥 지수의 장 마감 확정값", "The confirmed Korea Exchange KOSDAQ close") },
   samsung_exact: { aliases: ["samsung_exact", "fsc_005930", "005930"], label: LABEL("삼성전자 공식 종가", "Samsung official close"), group: "korea", format: "currency", currency: "KRW", accent: "#2dd4a3", description: LABEL("삼성전자 보통주의 원화 종가", "The Korean won close for Samsung Electronics common stock") },
@@ -377,6 +379,7 @@ const SECTIONS = [
   // 한국 공식 종가 히어로 섹션은 2026-08-19 제거: T+1 확정값이 실시간처럼 생긴
   // 큰 카드로 나가 장중마다 오독을 낳았다(8/14 기준일, −1.55% 소동). 기준선
   // 역할은 kr-overnight 카드의 메타 행이, 기록은 kr-indices 표와 분석 페이지가 맡는다.
+  { id: "kr-macro", zone: "kr", eyebrow: "KOREA · MACRO · BANK OF KOREA ECOS", title: LABEL("한국 매크로", "Korea macro"), copy: LABEL("한국은행 경제통계시스템(ECOS)의 공식 통계입니다. 기준금리와 소비자물가부터 시작합니다.", "Official statistics from the Bank of Korea's ECOS — starting with the base rate and CPI."), keys: ["kr_base_rate", "kr_cpi"] },
   { id: "global-assets", zone: "us", eyebrow: "GLOBAL PRICES", title: LABEL("글로벌 자산", "Global assets"), copy: LABEL("전고점 대비 위치와 최근 가격 흐름을 함께 봅니다.", "View recent prices alongside distance from prior highs."), keys: ["sp500", "nasdaq", "gold", "bitcoin"] },
   { id: "global-etfs", zone: "us", eyebrow: "CROSS-BORDER ETFs", title: LABEL("글로벌 지역 ETF", "Regional ETFs"), copy: LABEL("미국 상장 ETF를 통해 지역별 위험선호를 확인합니다.", "Use US-listed ETFs to compare regional risk appetite."), keys: ["ewz", "inda", "vnm", "ewj"] },
   { id: "market-risk", zone: "us", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("시장심리·변동성·금리곡선·신용스프레드·금융스트레스를 나란히 봅니다.", "Compare sentiment, volatility, the yield curve, credit spread and financial stress."), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread", "financial_stress", "recession_prob"] },
@@ -503,7 +506,8 @@ const CARD_LANES = new Map([
     "initial_claims", "fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account",
     "m2", "retail_money_market_funds", "sofr", "effective_fed_funds", "reserve_interest",
     "dollar_index_broad", "dollar_index_afe", "dollar_index_eme",
-    "kospi_exact", "kosdaq_exact", "samsung_exact", "sk_hynix_exact"].map((key) => [key, "macro"]),
+    "kospi_exact", "kosdaq_exact", "samsung_exact", "sk_hynix_exact",
+    "kr_base_rate", "kr_cpi"].map((key) => [key, "macro"]),
 ]);
 
 // One place decides why a card shows no number, so the summary tile and the
