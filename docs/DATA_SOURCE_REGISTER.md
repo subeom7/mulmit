@@ -776,8 +776,10 @@ notes: >
 
 ### 3.16 한국은행 경제통계시스템 (ECOS) — 한국 거시 lane
 
-- **상태**: **pending_review — 게이트 꺼짐 배포 (ECOS_ENABLED=false)**. 코드·카탈로그·UI는
-  준비되었고, 활성화는 아래 체크리스트 완료 후에만 한다.
+- **상태**: **✅ 활성화 (2026-08-20)** — 운영자 인증키 도착("영리" 이용형태로 승인 =
+  상업 이용 증빙), 키 라이브 검증(기준금리 2026-07 = 2.75%) 후 서버 투입.
+  첫 수집 3시리즈·360관측치, /api/market/macro 서빙·출처표기 확인. 가입 화면
+  약관 전문은 미보관 — 영리 카테고리 승인이 1차 증빙이며, 조건 문구 발견 시 보강.
 - **시리즈 (라이브 검증 2026-08-19, sample 키)**: `kr_base_rate` 722Y001/0101000
   (월, 연%) · `kr_cpi` 901Y009/0 (월, 2020=100) · `kr_unemployment` 901Y027/I61BC
   (월, %). 가계신용(151Y002)은 분기 주기 지원 확장 후 후속.
@@ -1002,7 +1004,7 @@ CNN Fear & Greed는 명칭도 점수도 복제하지 않는다. 그 지수의 7�
 |---|---|---|
 | **GDELT** | **✅ lane 구축·배포 (2026-08-20)** — `/api/news`, 게이트 GDELT_ENABLED | 공식 Terms of Use: "unlimited and unrestricted use for any academic, **commercial**, or governmental use of any kind **without fee**" + "You may **redistribute, rehost, republish**, and mirror … in any form". 조건 = GDELT 인용 + gdeltproject.org 링크. DOC 2.0 API가 주는 것 = 기사 **제목·URL·도메인·시각·언어**(본문 없음 — 언론 저작권 표면 최소, 우리 안전선과 정확히 일치). 운영 실측: 무키, **5초당 1요청**(위반 시 분 단위 쿨다운 — 2026-08-19 실측), 15분 단위 갱신. 한계: 한국어 매체 커버리지 미검증(1차 프로브 0건 — 쿼리 문법/커버리지 구분 필요), **영문 축 우선** |
 | NCP NAVER API HUB (뉴스 검색) | 조건부 — 한국어 축 현실 경로 | 뉴스 검색 "한시적 무료", 향후 종량제 예고(비용 리스크). 구약관의 "검색결과 삽입 금지" 특약 승계 여부 미확인 — **신청 화면 약관 캡처 필요**(ECOS 방식). NCP 계정 = 운영자 액션 |
-| 공공누리 보도자료 (금융위·한은·korea.kr) | 유망 — 엔드포인트 미확정 | 권리 전망 밝음(공공누리 1유형 관행)이나 RSS 실측 실패(금융위 /rss 소프트404, korea.kr 추측 URL 404). 기관별 정확한 피드 주소·KOGL 유형 개별 확인이 다음 작업 |
+| 정부 보도자료 RSS (금융위·기재부) | **✅ lane 구축·배포 (2026-08-20)** — `/api/kr/press` | 실주소 확보(금융위 fsc_bbs_rss fid=0111 · 기재부 detailRssTagService bbsId=028, 안내 페이지에서 추출·검증). 근거: 기관이 구독·연동 목적으로 공표하는 RSS에서 **제목·기관명·링크만** 사용(본문 무전달 — GDELT와 같은 안전선). KOGL 유형은 본문 활용 시 재검토(기재부 푸터 "All rights reserved" 병기 기록). 금융위 피드는 게시일 부재 → first_seen 표기 |
 
 **뉴스 트랙 결론(갱신)**: **GDELT로 글로벌/영문 축은 지금 구축 가능** — 계약·키·비용
 전부 0, 조건은 인용+링크뿐. 한국어 축은 NCP HUB 가입(운영자) 또는 공공누리 RSS
@@ -1142,6 +1144,7 @@ notes: "No confidential contract language here"
 | 2026-08-19 | 경제 캘린더 추가(`/api/calendar`) — 미국 데이터 발표일은 FRED 릴리스 메타데이터(승인 lane, 실측 검증), FOMC·금통위는 공식 페이지에서 확인한 큐레이션(확인일 2026-08-19 동봉, "직전 회의 전 잠정" 고지). 일정은 공표된 사실이되 변경 가능함을 basis로 전달 | Claude assisted |
 | 2026-08-19 | DART 연간 재무제표 추가(`/api/kr/fundamentals/{code}`, §3.10 확장) — 주요계정 원문 전달, 연간 한정(분기 손익 누적 구분 부재), 연결 우선, 금융사 매출 부재는 사실로 표시. 미국 패널과 대칭 | Claude assisted |
 | 2026-08-19 | EDGAR 재무제표 추가(`/api/us/fundamentals/{ticker}`, §3.5 확장) — XBRL companyconcept, 내부자 lane과 같은 티커 큐·게이트. 태그 사다리는 최신 보고 기간 기준(NVIDIA 태그 전환 실측), YTD 배제·정정 우선, 파생은 마진 2종뿐 | Claude assisted |
+| 2026-08-20 | ECOS 활성화(§3.16 — 키 도착·영리 승인 증빙·3시리즈 서빙) + 정부 보도자료 lane(`/api/kr/press`, 금융위·기재부 RSS 제목·링크만, first_seen 정직 표기) + GDELT 제목 중복 접기(+N곳) | Claude assisted |
 | 2026-08-20 | GDELT 뉴스 lane 구축·배포(§6.1, `/api/news` + 통합 피드 합류) — 제목·출처·링크만(본문 무전달), 종목 태그는 닫힌 사전 단어경계 매칭, 등락 칩은 금융위 전일 확정값, 인용+링크 조건은 payload attribution으로 상시 동반, 6초 간격·배치 전용 | Claude assisted |
 | 2026-08-19 | 뉴스 소스 심층 조사 2차(§6.1) — **GDELT ✅ 완전 청정 확정**(상업·재배포 명시 허용, 인용+링크 조건, 5초/1요청 실측), NCP HUB 조건부(한시 무료·약관 캡처 필요), 공공누리 축 유망(엔드포인트 미확정), Finnhub ❌ 유지 | Claude assisted |
 | 2026-08-19 | 재무 파생 범위 확장(§3.5·§3.10) — 마진에 더해 연간 행의 ROE·ROA·부채비율((자산−자본)÷자본 항등식)·매출 성장률(연속 연도 한정). 국내는 후행 PER·PBR 추가: FSC 최신 시총 ÷ 최근 연간 공시값(서빙 시 계산, 적자 PER 표시 안 함). 전부 공시값 산술 — 추정·연율화 없음. 캐시 키 v2 범프 | Claude assisted |

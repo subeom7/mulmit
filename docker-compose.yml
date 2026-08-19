@@ -31,6 +31,7 @@ x-app: &app
     # 한국은행 ECOS(한국 거시). 게이트는 web(서빙 판정)·ingest(수집) 양쪽에 필요하다.
     ECOS_ENABLED: ${ECOS_ENABLED:-false}
     GDELT_ENABLED: ${GDELT_ENABLED:-false}
+    KR_PRESS_ENABLED: ${KR_PRESS_ENABLED:-false}
     # 키가 ingest에만 있으면 web의 요청 기반 국내 종목 조회(app/kr_stocks.py)가
     # 잠겨 있는 lane처럼 보인다. 게이트와 마찬가지로 양쪽에 같은 값을 준다.
     FSC_API_KEY: ${FSC_API_KEY:-}
