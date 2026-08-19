@@ -109,6 +109,49 @@ class InsiderTransaction:
     filing_url: str
 
 
+# 8-K 이벤트 공시. submissions 응답에 이미 들어 있는 행이라 추가 요청이 없다.
+EVENT_FORMS = ("8-K", "8-K/A")
+EVENT_LIMIT = 15
+
+# 공식 8-K Item 번호와 제목의 닫힌 매핑. 여기 없는 번호는 원문 코드 그대로 나간다.
+EVENT_ITEM_LABELS: dict[str, tuple[str, str]] = {
+    "1.01": ("Entry into a material agreement", "중요 계약 체결"),
+    "1.02": ("Termination of a material agreement", "중요 계약 해지"),
+    "1.03": ("Bankruptcy or receivership", "파산·법정관리"),
+    "2.01": ("Completed acquisition or disposition of assets", "자산 취득·처분 완료"),
+    "2.02": ("Results of operations", "실적 발표"),
+    "2.03": ("Creation of a direct financial obligation", "채무 부담"),
+    "2.04": ("Triggering events on financial obligations", "채무 조기상환 사유 발생"),
+    "2.05": ("Costs associated with exit or disposal activities", "구조조정 비용"),
+    "2.06": ("Material impairments", "자산 손상"),
+    "3.01": ("Delisting or listing-standard notice", "상장 유지 관련 통지"),
+    "3.02": ("Unregistered sales of equity securities", "미등록 증권 발행"),
+    "3.03": ("Material modification to rights of security holders", "증권 권리 변경"),
+    "4.01": ("Change in certifying accountant", "감사인 변경"),
+    "4.02": ("Non-reliance on previously issued financials", "기존 재무제표 신뢰 불가"),
+    "5.01": ("Change in control", "지배권 변동"),
+    "5.02": ("Officer or director change", "임원·이사 변동"),
+    "5.03": ("Amendments to charter or bylaws", "정관 변경"),
+    "5.07": ("Submission of matters to a vote", "주주총회 결과"),
+    "5.08": ("Shareholder director nominations", "주주 이사 후보 추천"),
+    "7.01": ("Regulation FD disclosure", "Reg FD 공시"),
+    "8.01": ("Other events", "기타 중요 이벤트"),
+    "9.01": ("Financial statements and exhibits", "재무제표·첨부"),
+}
+
+
+@dataclass(frozen=True)
+class CompanyEvent:
+    """One 8-K row straight out of the submissions index."""
+
+    accession_number: str
+    form_type: str
+    filed_at: dt.date
+    accepted_at: str | None
+    items: str
+    url: str
+
+
 @dataclass(frozen=True)
 class CompanyFilings:
     cik: str
@@ -116,6 +159,7 @@ class CompanyFilings:
     exchanges: tuple[str, ...] = ()
     transactions: tuple[InsiderTransaction, ...] = field(default=())
     filings_seen: int = 0
+    events: tuple[CompanyEvent, ...] = field(default=())
 
 
 HttpGet = Callable[[Request, float], bytes]
@@ -337,6 +381,40 @@ class SecEdgarProvider:
         accessions = recent.get("accessionNumber") or []
         filing_dates = recent.get("filingDate") or []
         documents = recent.get("primaryDocument") or []
+        acceptance_times = recent.get("acceptanceDateTime") or []
+        item_lists = recent.get("items") or []
+
+        # 8-K 행은 같은 응답에서 그대로 뽑는다 — 이 피드를 위한 추가 요청은 없다.
+        events: list[CompanyEvent] = []
+        for index, form in enumerate(forms):
+            if len(events) >= EVENT_LIMIT:
+                break
+            if str(form).strip() not in EVENT_FORMS:
+                continue
+            try:
+                accession = str(accessions[index])
+                filed_at = _date(str(filing_dates[index]))
+                document = str(documents[index] or "")
+            except (IndexError, TypeError):
+                continue
+            if not accession or filed_at is None:
+                continue
+            accepted = str(acceptance_times[index]) if index < len(acceptance_times) else ""
+            items = str(item_lists[index]) if index < len(item_lists) else ""
+            bare = accession.replace("-", "")
+            url = (
+                f"{SEC_BASE}/Archives/edgar/data/{int(cik)}/{bare}/{document}"
+                if document
+                else f"{SEC_BASE}/Archives/edgar/data/{int(cik)}/{bare}"
+            )
+            events.append(CompanyEvent(
+                accession_number=accession,
+                form_type=str(form).strip(),
+                filed_at=filed_at,
+                accepted_at=accepted or None,
+                items=items,
+                url=url,
+            ))
 
         transactions: list[InsiderTransaction] = []
         seen = 0
@@ -375,6 +453,7 @@ class SecEdgarProvider:
             exchanges=tuple(str(item) for item in exchanges) if isinstance(exchanges, list) else (),
             transactions=tuple(transactions),
             filings_seen=seen,
+            events=tuple(events),
         )
 
     def fetch_ownership_document(

@@ -337,7 +337,7 @@ button:focus-visible, a:focus-visible, select:focus-visible {
   .view-tab { padding: 6px 9px; font-size: 11.5px; }
   .kro-price { font-size: 24px; }
   /* 컬럼 많은 표는 셀을 찌그러뜨리는 대신 컨테이너 안에서 가로 스크롤한다. */
-  #ptr-body table, #krp-body table, #kre-body table, #kridx-body table { min-width: 620px; }
+  #ptr-body table, #krp-body table, #kre-body table, #kridx-body table, #ev-body table { min-width: 620px; }
 }
 @media (max-width: 430px) {
   .hero h1 { font-size: clamp(30px, 9.5vw, 42px); }
@@ -451,6 +451,8 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 
 /* P2: 헤더 세션 배지 · H.10 환율 티커 */
 .session-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 650 9.5px/1 var(--mono); white-space: nowrap; }
+.presence-badge { display: inline-flex; align-items: center; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--green); font: 650 9.5px/1 var(--mono); white-space: nowrap; }
+@media (max-width: 430px) { .presence-badge { display: none; } }
 .session-badge i { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
 .session-badge.open { color: var(--green); }
 .session-badge.open i { background: var(--green); box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 12%, transparent); }
