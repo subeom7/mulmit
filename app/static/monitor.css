@@ -326,7 +326,21 @@ button:focus-visible, a:focus-visible, select:focus-visible {
   .method-grid { grid-template-columns: 1fr; }
   .method-grid article + article { border-left: 0; border-top: 1px solid var(--line); }
 }
+@media (max-width: 560px) {
+  /* 마스트헤드: 뷰 탭 4개가 390px에서 넘친다 — 탭바만 가로 스크롤로 흡수하고
+     API 칩은 내린다. 로고·언어·테마 버튼은 항상 보인다. */
+  .masthead { gap: 10px; }
+  .mast-nav { display: none; }
+  .mast-actions { flex-shrink: 0; }
+  .view-switch { flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .view-switch::-webkit-scrollbar { display: none; }
+  .view-tab { padding: 6px 9px; font-size: 11.5px; }
+  .kro-price { font-size: 24px; }
+  /* 컬럼 많은 표는 셀을 찌그러뜨리는 대신 컨테이너 안에서 가로 스크롤한다. */
+  #ptr-body table, #krp-body table, #kre-body table, #kridx-body table { min-width: 620px; }
+}
 @media (max-width: 430px) {
+  .hero h1 { font-size: clamp(30px, 9.5vw, 42px); }
   .summary-grid { grid-template-columns: 1fr 1fr; }
   .summary-card { min-height: 118px; padding: 13px 12px; }
   .summary-value { font-size: 19px; }
