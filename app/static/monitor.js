@@ -2052,3 +2052,15 @@ setInterval(presenceBeat, 30 * 1000);
 // 백그라운드로 열린 탭은 숨김 상태의 박동을 건너뛰므로(집계 정직성),
 // 화면에 나타나는 순간 즉시 한 번 박동해 배지가 바로 뜨게 한다.
 document.addEventListener("visibilitychange", () => { if (!document.hidden) presenceBeat(); });
+
+// --- 방문 통계 비콘 -----------------------------------------------------------
+// 페이지 로드당 한 번, 익명으로: 경로·유입 호스트·presence의 무작위 id만 보낸다.
+// 쿠키 없음. 실패는 조용히 무시한다 — 통계가 서비스를 방해하면 안 된다.
+try {
+  fetch("/api/pageview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: location.pathname, ref: document.referrer || "", id: presenceId() }),
+    keepalive: true,
+  }).catch(() => {});
+} catch (error) { /* 통계는 최선노력 */ }

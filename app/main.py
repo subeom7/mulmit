@@ -262,6 +262,55 @@ def presence_heartbeat(request: Request, response: Response, payload: dict) -> d
     }
 
 
+_PAGEVIEW_PATHS = {"/", "/kr", "/us", "/analytics", "/monitor"}
+
+
+@app.post("/api/pageview")
+@limiter.limit(config.RATE_LIMIT)
+def pageview_beacon(request: Request, response: Response, payload: dict) -> dict:
+    """자체 방문 통계 비콘 — 개인정보 없음.
+
+    경로는 닫힌 목록으로 버킷팅하고, 유입경로는 호스트명만 남기며(자기 자신
+    제외), 방문자 구분은 presence와 같은 익명 무작위 id다. 쿠키를 쓰지 않는다.
+    """
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=422, detail="invalid payload")
+    raw_path = str(payload.get("path") or "")
+    path = raw_path if raw_path in _PAGEVIEW_PATHS else "other"
+    client_id = str(payload.get("id") or "")
+    if client_id and not re.fullmatch(r"[A-Za-z0-9-]{8,64}", client_id):
+        client_id = ""
+    referrer_host = ""
+    raw_ref = str(payload.get("ref") or "")[:512]
+    if raw_ref:
+        from urllib.parse import urlparse
+
+        host = urlparse(raw_ref).hostname or ""
+        if host and not host.endswith("mulmit.com"):
+            referrer_host = host
+    store.record_pageview(path, referrer_host, client_id)
+    response.headers["Cache-Control"] = "no-store"
+    return {"ok": True}
+
+
+@app.get("/api/stats/traffic")
+@limiter.limit(config.RATE_LIMIT)
+def stats_traffic(request: Request, response: Response) -> dict:
+    """최근 14일 방문 요약. 집계값뿐이라 공개해도 개인정보가 없다."""
+    response.headers["Cache-Control"] = "public, max-age=300"
+    return {
+        **store.traffic_stats(14),
+        "basis_ko": (
+            "자체 익명 집계 — 쿠키 없음, 경로 버킷·유입 호스트명·익명 무작위 id의 "
+            "일 단위 합계만 저장합니다."
+        ),
+        "basis_en": (
+            "First-party anonymous counts: no cookies; only daily sums of path "
+            "buckets, referrer hostnames and random anonymous ids are stored."
+        ),
+    }
+
+
 @app.get("/api/market/sectors")
 @limiter.limit(config.RATE_LIMIT)
 def market_sectors(request: Request) -> dict:
