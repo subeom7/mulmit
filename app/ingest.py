@@ -28,6 +28,7 @@ from . import (
     econ_calendar,
     kr_events,
     kr_pension,
+    kr_press,
     news_feed,
     store,
     us_fundamentals,
@@ -677,6 +678,21 @@ def refresh_gdelt_news(*, force: bool = False) -> dict:
         return {"failed": str(exc)}
 
 
+def refresh_kr_press(*, force: bool = False) -> dict:
+    """정부 보도자료 RSS 갱신 — 배치 전용, 기관 단위 fail-soft."""
+    if not config.KR_PRESS_ENABLED:
+        return {"skipped": "disabled"}
+    if not force and store.load_report(kr_press.CACHE_KEY, config.KR_PRESS_MAX_AGE) is not None:
+        return {"skipped": "fresh"}
+    try:
+        result = kr_press.refresh()
+        log.info("보도자료 피드 갱신: %s", result)
+        return result
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("보도자료 피드 갱신 실패: %s", exc)
+        return {"failed": str(exc)}
+
+
 def refresh_econ_calendar(*, force: bool = False) -> dict:
     """경제 캘린더의 FRED 릴리스 예정일 갱신. 큐레이션 부분은 코드에 있다."""
     if not config.FRED_ENABLED:
@@ -932,6 +948,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             pension_result = refresh_kr_pension()
             kr_events_result = refresh_kr_events()
             refresh_gdelt_news()
+            refresh_kr_press()
             ptr_result = refresh_us_ptr()
             fund_result = refresh_us_fundamentals()
             refresh_econ_calendar()
@@ -975,6 +992,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             pension_result = refresh_kr_pension()
             kr_events_result = refresh_kr_events()
             refresh_gdelt_news()
+            refresh_kr_press()
             refresh_us_ptr()
             refresh_us_fundamentals()
             refresh_econ_calendar()
@@ -1051,6 +1069,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         pension_result = refresh_kr_pension()
         kr_events_result = refresh_kr_events()
         refresh_gdelt_news()
+        refresh_kr_press()
         ptr_result = refresh_us_ptr()
         fund_result = refresh_us_fundamentals()
         refresh_econ_calendar()

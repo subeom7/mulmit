@@ -128,7 +128,16 @@ def refresh(provider: GdeltProvider | None = None) -> dict:
         fetched += 1
         by_url[article["url"]] = {**article, "tags": tags}
 
-    merged = sorted(by_url.values(), key=lambda a: a["seendate"], reverse=True)[:MAX_ARTICLES]
+    # 폴리시: 같은 제목이 여러 매체에 실리면 한 행으로 접고 매체 수를 남긴다.
+    by_title: dict[str, dict[str, Any]] = {}
+    for article in sorted(by_url.values(), key=lambda a: a["seendate"], reverse=True):
+        key = re.sub(r"\s+", " ", article["title"].casefold()).strip()
+        kept = by_title.get(key)
+        if kept is None:
+            by_title[key] = {**article, "also_on": 0}
+        else:
+            kept["also_on"] = int(kept.get("also_on", 0)) + 1
+    merged = list(by_title.values())[:MAX_ARTICLES]
     payload = {
         "generated_at": dt.datetime.now(dt.UTC).isoformat().replace("+00:00", "Z"),
         "articles": merged,

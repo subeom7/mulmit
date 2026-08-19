@@ -1535,6 +1535,7 @@ const FEED_KIND = {
   kr_pension: { label: LABEL("국민연금", "NPS"), cls: "kr" },
   index_move: { label: LABEL("지수 급변", "Index move"), cls: "kr" },
   news: { label: LABEL("뉴스", "News"), cls: "news" },
+  kr_press: { label: LABEL("보도자료", "Press"), cls: "kr" },
 };
 
 function renderFeed() {
@@ -1573,7 +1574,9 @@ function renderFeed() {
     row.append(date, tag, title);
     if (item.domain) {
       const domain = document.createElement("small"); domain.className = "feed-domain";
-      domain.textContent = item.domain; row.append(domain);
+      domain.textContent = item.domain + (item.also_on ? ` +${item.also_on}` : "");
+      if (item.also_on) domain.title = state.lang === "ko" ? `같은 제목을 실은 다른 매체 ${item.also_on}곳` : `${item.also_on} more outlets carried this title`;
+      row.append(domain);
     }
     // 연관 종목 등락 칩 — %는 뉴스 벤더가 아니라 우리 확정 종가 데이터다.
     for (const chip of (item.tags || []).slice(0, 3)) {

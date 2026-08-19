@@ -30,6 +30,7 @@ from . import (
     kr_fundamentals,
     kr_insider,
     kr_pension,
+    kr_press,
     kr_stocks,
     news_feed,
     service,
@@ -688,6 +689,24 @@ def kr_pension_filings(request: Request, response: Response) -> dict:
         ) from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "FSS DART"
+    return payload
+
+
+@app.get("/api/kr/press")
+@limiter.limit(config.RATE_LIMIT)
+def kr_press_feed(request: Request, response: Response) -> dict:
+    """정부 보도자료 헤드라인. ingest 배치가 저장한 결과만 읽는다."""
+    try:
+        payload = kr_press.get_press()
+    except kr_press.KrPressDisabled as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "kr_press_disabled", "message": "Press lane is disabled."},
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    except DataUnavailable as exc:
+        raise HTTPException(status_code=503, detail="press not collected yet") from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
     return payload
 
 

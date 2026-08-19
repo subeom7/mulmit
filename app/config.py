@@ -142,6 +142,11 @@ GDELT_TIMEOUT = _float("GDELT_TIMEOUT", 15.0)
 GDELT_RETRIES = _int("GDELT_RETRIES", 1)
 GDELT_MAX_AGE = _int("GDELT_MAX_AGE", 60 * 30)
 
+# 정부 보도자료 RSS (금융위·기재부) — 제목·기관·링크만. 뉴스의 한국어 축.
+KR_PRESS_ENABLED = _bool("KR_PRESS_ENABLED", False)
+KR_PRESS_TIMEOUT = _float("KR_PRESS_TIMEOUT", 15.0)
+KR_PRESS_MAX_AGE = _int("KR_PRESS_MAX_AGE", 60 * 30)
+
 FSC_ENABLED = _bool("FSC_ENABLED", False)
 FSC_API_KEY = os.environ.get("FSC_API_KEY", "").strip()
 FSC_TIMEOUT = _float("FSC_TIMEOUT", 20.0)

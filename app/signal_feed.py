@@ -17,7 +17,7 @@ import datetime as dt
 import logging
 from typing import Any
 
-from . import config, econ_calendar, kr_events, kr_pension, news_feed, store, us_ptr
+from . import config, econ_calendar, kr_events, kr_pension, kr_press, news_feed, store, us_ptr
 
 log = logging.getLogger(__name__)
 
@@ -205,6 +205,27 @@ def _index_move_items() -> list[dict[str, Any]]:
     return items
 
 
+def _kr_press_items() -> list[dict[str, Any]]:
+    blob = store.load_report(kr_press.CACHE_KEY, config.REPORT_TTL * 2)
+    items = []
+    for entry in (blob or {}).get("items", [])[:8]:
+        items.append({
+            "at": str(entry.get("at") or ""),
+            "date": str(entry.get("at") or "")[:10],
+            "kind": "kr_press",
+            "symbol": None,
+            "title": {
+                "ko": f"[{entry.get('agency')}] {entry.get('title')}",
+                "en": f"[{entry.get('agency_en')}] {entry.get('title')}",
+            },
+            "url": entry.get("url"),
+            "hub": None,
+            # 금융위 피드는 게시일이 없어 수집 시각 기준 — 그 사실을 행에 남긴다.
+            "date_basis": entry.get("date_basis"),
+        })
+    return items
+
+
 def _news_items() -> list[dict[str, Any]]:
     blob = store.load_report(news_feed.CACHE_KEY, config.REPORT_TTL * 2)
     items = []
@@ -219,6 +240,7 @@ def _news_items() -> list[dict[str, Any]]:
             "url": article.get("url"),
             "hub": tags[0].get("hub") if tags else None,
             "domain": article.get("domain"),
+            "also_on": article.get("also_on") or 0,
             "tags": tags,
         })
     return items
@@ -256,7 +278,7 @@ def _upcoming_items(today: dt.date) -> list[dict[str, Any]]:
 def build_feed(*, today: dt.date | None = None) -> dict[str, Any]:
     today = today or dt.datetime.now(_KST).date()
     items: list[dict[str, Any]] = []
-    for source in (_us_8k_items, _kr_material_items, _us_ptr_items, _kr_pension_items, _index_move_items, _news_items):
+    for source in (_us_8k_items, _kr_material_items, _us_ptr_items, _kr_pension_items, _index_move_items, _news_items, _kr_press_items):
         try:
             items.extend(source())
         except Exception as exc:  # noqa: BLE001 - 소스 하나의 실패는 그 소스만 지운다
