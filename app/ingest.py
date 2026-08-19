@@ -721,9 +721,28 @@ def refresh_insider_filings(*, force: bool = False) -> dict:
                     for item in company.transactions
                 ],
             )
+            # 같은 submissions 응답에서 나온 8-K 행 — 이 저장을 위한 추가 요청은 없다.
+            events_saved = store.save_company_events(
+                ticker,
+                [
+                    {
+                        "accession_number": event.accession_number,
+                        "cik": company.cik,
+                        "form_type": event.form_type,
+                        "filed_at": event.filed_at,
+                        "accepted_at": event.accepted_at,
+                        "items": event.items,
+                        "url": event.url,
+                    }
+                    for event in company.events
+                ],
+            )
             result["updated"] += 1
             result["transactions"] += saved
-            log.info("EDGAR 갱신 %s (%d행 / 공시 %d건)", ticker, saved, company.filings_seen)
+            log.info(
+                "EDGAR 갱신 %s (%d행 / 공시 %d건 / 8-K %d건)",
+                ticker, saved, company.filings_seen, events_saved,
+            )
         except RateLimited:
             result["rate_limited"] += 1
             log.warning("EDGAR 요청 제한 — 남은 티커는 다음 주기에 재시도")

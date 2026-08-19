@@ -14,7 +14,7 @@
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260819-13">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260819-14">
 <style>
 /* ---------------------------------------------------------------------------
    디자인 토큰은 monitor.css가 단일 원본이다. 이 페이지의 예전 변수명은 아래
@@ -744,6 +744,7 @@ const I18N = {
     "kr.kpi.mdd": "최대 낙폭 (5년)", "kr.kpi.range": "52주 범위", "kr.kpi.vol": "연 변동성 (1Y)",
     "kr.asof": "기준 {date}", "kr.retTitle": "기간 수익률",
     "insider.none": "보고 없음",
+    "presence.now": "{n}명 보는 중", "presence.note": "최근 90초 하트비트 기준 열린 브라우저 수 — 사람 수가 아닙니다.",
     "krins.title": "임원·주요주주 소유보고", "krins.caption": "임원·주요주주 특정증권등 소유상황 보고",
     "krins.colDate": "보고일", "krins.colReporter": "보고자", "krins.colPosition": "직위·관계",
     "krins.colOwned": "소유수량", "krins.colChange": "증감", "krins.colRatio": "비율", "krins.colReport": "원문",
@@ -874,6 +875,7 @@ const I18N = {
     "kr.kpi.mdd": "Max drawdown (5y)", "kr.kpi.range": "52-week range", "kr.kpi.vol": "Volatility (1y, ann.)",
     "kr.asof": "as of {date}", "kr.retTitle": "Period returns",
     "insider.none": "None reported",
+    "presence.now": "{n} viewing", "presence.note": "Open browsers heard from in the last 90 seconds — not unique people.",
     "krins.title": "Officer & major-shareholder reports", "krins.caption": "Officer and major-shareholder ownership reports",
     "krins.colDate": "Reported", "krins.colReporter": "Reporter", "krins.colPosition": "Position",
     "krins.colOwned": "Shares owned", "krins.colChange": "Change", "krins.colRatio": "Ratio", "krins.colReport": "Filing",
@@ -2687,6 +2689,32 @@ function applyInsiderMode(fscOn = false) {
   }
   load(false);
 })();
+
+// 접속자 수: 익명 무작위 id의 30초 하트비트 (모니터 페이지와 같은 규약)
+function presenceId() {
+  let id = localStorage.getItem("mulmit.presence");
+  if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${String(Math.random()).slice(2, 12)}`; localStorage.setItem("mulmit.presence", id); }
+  return id;
+}
+async function presenceBeat() {
+  if (document.hidden) return;
+  try {
+    const res = await fetch("/api/presence", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: presenceId() }) });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!Number.isFinite(data.count)) return;
+    let badge = document.getElementById("presence-badge");
+    if (!badge) {
+      const host = document.querySelector(".mast-actions");
+      if (!host) return;
+      badge = document.createElement("span"); badge.id = "presence-badge"; badge.className = "presence-badge"; host.prepend(badge);
+    }
+    badge.title = t("presence.note");
+    badge.textContent = t("presence.now", { n: data.count });
+  } catch (error) { /* 다음 박동에 */ }
+}
+presenceBeat();
+setInterval(presenceBeat, 30 * 1000);
 </script>
 </body>
 </html>

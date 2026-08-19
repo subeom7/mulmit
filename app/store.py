@@ -14,6 +14,7 @@ DateTime을 쓰면 두 DB의 동작이 갈린다. 나이 계산도 뺄셈 한 �
 
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
 import gzip
 import json
@@ -305,6 +306,34 @@ reports = sa.Table(
     sa.Column("payload", sa.LargeBinary, nullable=False),
     sa.Column("created_at", sa.Float, nullable=False),
     sa.Index("ix_reports_created", "created_at"),
+)
+
+# 접속자 하트비트. 브라우저가 만든 익명 무작위 id 하나당 한 행이라 개인정보가
+# 없고, 오래된 행은 하트비트가 올 때마다 지워져 테이블이 항상 최근 크기로 남는다.
+# 워커가 여럿이라 프로세스 메모리 대신 DB에 둔다.
+presence = sa.Table(
+    "presence",
+    metadata,
+    sa.Column("client_id", sa.String(64), primary_key=True),
+    sa.Column("seen_at", sa.Float, nullable=False),
+    sa.Index("ix_presence_seen", "seen_at"),
+)
+
+# 우리 커버리지 내 기업의 8-K 이벤트 공시. 내부자 수집이 이미 받는 submissions
+# 응답에서 같이 뽑아 저장한다 — 이 표를 위해 EDGAR를 따로 부르지 않는다.
+company_events = sa.Table(
+    "company_events",
+    metadata,
+    sa.Column("accession_number", sa.String(32), primary_key=True),
+    sa.Column("ticker", sa.String(32), nullable=False),
+    sa.Column("cik", sa.String(16)),
+    sa.Column("form_type", sa.String(12), nullable=False),
+    sa.Column("filed_at", sa.Date, nullable=False),
+    # EDGAR acceptanceDateTime 원문(ISO). 없으면 null — 만들어내지 않는다.
+    sa.Column("accepted_at", sa.String(32)),
+    sa.Column("items", sa.String(256)),
+    sa.Column("url", sa.String(512), nullable=False),
+    sa.Index("ix_company_events_filed", "filed_at"),
 )
 
 _engine: sa.Engine | None = None
@@ -1484,3 +1513,84 @@ def stats() -> dict:
                 sa.select(sa.func.max(instruments.c.prices_updated_at))
             ).scalar(),
         }
+
+
+def touch_presence(
+    client_id: str, *, now: float | None = None, window_seconds: float = 90.0
+) -> int:
+    """하트비트를 기록하고, 창 안에서 살아 있는 브라우저 수를 돌려준다.
+
+    같은 id는 30초마다 한 번 오므로 update가 거의 항상 이긴다. 새 id의 insert가
+    다른 워커와 부딪히는 창은 이론상뿐이지만, 부딪혀도 카운트만 반환하면 된다.
+    """
+    moment = float(now if now is not None else time.time())
+    with engine().begin() as conn:
+        updated = conn.execute(
+            presence.update().where(presence.c.client_id == client_id).values(seen_at=moment)
+        ).rowcount
+        if not updated:
+            with contextlib.suppress(sa.exc.IntegrityError):
+                conn.execute(presence.insert().values(client_id=client_id, seen_at=moment))
+        # 오래된 행은 하트비트마다 정리한다 — 테이블은 항상 최근 방문자 크기다.
+        conn.execute(presence.delete().where(presence.c.seen_at < moment - 3600.0))
+        count = conn.execute(
+            sa.select(sa.func.count())
+            .select_from(presence)
+            .where(presence.c.seen_at >= moment - window_seconds)
+        ).scalar_one()
+    return int(count)
+
+
+def save_company_events(ticker: str, rows: list[dict]) -> int:
+    """한 회사의 8-K 이벤트 행을 upsert한다. accession이 자연 키다."""
+    saved = 0
+    normalized = str(ticker or "").strip().upper()
+    if not normalized:
+        return 0
+    with engine().begin() as conn:
+        for row in rows:
+            accession = str(row.get("accession_number") or "").strip()
+            if not accession or row.get("filed_at") is None:
+                continue
+            values = {
+                "ticker": normalized,
+                "cik": row.get("cik"),
+                "form_type": str(row.get("form_type") or "8-K"),
+                "filed_at": row["filed_at"],
+                "accepted_at": row.get("accepted_at"),
+                "items": row.get("items"),
+                "url": str(row.get("url") or ""),
+            }
+            updated = conn.execute(
+                company_events.update()
+                .where(company_events.c.accession_number == accession)
+                .values(**values)
+            ).rowcount
+            if not updated:
+                conn.execute(
+                    company_events.insert().values(accession_number=accession, **values)
+                )
+            saved += 1
+    return saved
+
+
+def load_recent_events(limit: int = 40) -> list[dict]:
+    """커버리지 전체에서 최근 8-K를 최신순으로. 회사 이름은 sec_companies에서 조인."""
+    with engine().begin() as conn:
+        rows = conn.execute(
+            sa.select(
+                company_events,
+                sec_companies.c.name.label("company_name"),
+            )
+            .join(
+                sec_companies,
+                company_events.c.ticker == sec_companies.c.ticker,
+                isouter=True,
+            )
+            .order_by(
+                company_events.c.filed_at.desc(),
+                company_events.c.accepted_at.desc().nulls_last(),
+            )
+            .limit(limit)
+        ).mappings()
+        return [dict(row) for row in rows]

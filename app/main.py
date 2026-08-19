@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
@@ -30,6 +31,7 @@ from . import (
     kr_stocks,
     service,
     store,
+    us_events,
     us_fundamentals,
     us_ptr,
 )
@@ -226,6 +228,27 @@ def status() -> dict:
         # lane are never served, so operators need both numbers side by side.
         "data_lanes": data_rights.lane_report(),
         **store.stats(),
+    }
+
+
+@app.post("/api/presence")
+@limiter.limit(config.RATE_LIMIT)
+def presence_heartbeat(request: Request, response: Response, payload: dict) -> dict:
+    """접속자 하트비트: 익명 무작위 id를 창에 기록하고 현재 수를 돌려준다.
+
+    개인정보 없음 — id는 브라우저가 만든 무작위 값이고 다른 무엇과도 연결되지
+    않는다. 수치는 최근 90초 창의 열린 브라우저 수이며 사람 수가 아니다.
+    """
+    client_id = str(payload.get("id") or "") if isinstance(payload, dict) else ""
+    if not re.fullmatch(r"[A-Za-z0-9-]{8,64}", client_id):
+        raise HTTPException(status_code=422, detail="invalid presence id")
+    response.headers["Cache-Control"] = "no-store"
+    return {
+        "count": store.touch_presence(client_id),
+        "window_seconds": 90,
+        "heartbeat_seconds": 30,
+        "basis_ko": "최근 90초 하트비트 기준 열린 브라우저 수 — 사람 수가 아닙니다.",
+        "basis_en": "Open browsers heard from in the last 90 seconds — not unique people.",
     }
 
 
@@ -605,6 +628,32 @@ def insider_filings(
         ) from exc
     # Short cache only: a queued ticker becomes collected on the next cycle and
     # a stale answer would hide that.
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "SEC EDGAR"
+    return payload
+
+
+@app.get("/api/us/events")
+@limiter.limit(config.RATE_LIMIT)
+def us_events_feed(
+    request: Request,
+    response: Response,
+    limit: int = Query(us_events.DEFAULT_EVENTS, ge=1, le=us_events.MAX_EVENTS),
+) -> dict:
+    """커버 중인 티커의 8-K 이벤트 공시 피드. 저장소만 읽는다."""
+    try:
+        payload = us_events.build_events_feed(limit)
+    except InsiderDataDisabled as exc:
+        detail = (
+            data_rights.INSIDER_NOT_CONFIGURED
+            if exc.reason == "not_configured"
+            else data_rights.INSIDER_DATA_DISABLED
+        )
+        raise HTTPException(
+            status_code=503,
+            detail=detail,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "SEC EDGAR"
     return payload
