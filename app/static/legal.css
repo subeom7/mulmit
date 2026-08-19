@@ -51,10 +51,7 @@ body {
   padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--panel);
 }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
-.brand-mark {
-  display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px;
-  background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
-}
+.brand-mark { display: block; width: 28px; height: 28px; border-radius: 8px; }
 .brand strong { display: block; font-size: 15px; letter-spacing: -0.01em; }
 .brand small { display: block; font-size: 10px; letter-spacing: .14em; color: var(--faint); font-family: var(--mono); }
 .mast-nav { display: flex; gap: 6px; flex-wrap: wrap; }
