@@ -13,7 +13,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import Response as PlainResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
@@ -195,6 +196,89 @@ def robots() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "robots.txt", media_type="text/plain")
 
 
+
+
+_STOCK_TEMPLATE: str | None = None
+
+
+def _stock_template() -> str:
+    global _STOCK_TEMPLATE
+    if _STOCK_TEMPLATE is None:
+        _STOCK_TEMPLATE = (config.STATIC_DIR / "stock.html").read_text(encoding="utf-8")
+    return _STOCK_TEMPLATE
+
+
+@app.get("/stock/{symbol}", include_in_schema=False)
+def stock_hub(symbol: str) -> HTMLResponse:
+    """종목 허브 — 서버가 종목별 타이틀·메타를 렌더한다.
+
+    네이버 크롤러는 자바스크립트를 실행하지 않으므로, 검색에 잡히는 제목과
+    설명은 여기서 치환되어야 한다. 알 수 없는 심볼은 404 — 쓰레기 URL이
+    무한히 색인되는 것을 막는다(미수집 미국 티커는 로스터에 있으면 허용).
+    """
+    import html as _html
+
+    symbol = symbol.strip().upper()
+    if re.fullmatch(r"\d{6}", symbol):
+        listing = store.get_kr_listing(symbol)
+        if listing is None:
+            raise HTTPException(status_code=404, detail="unknown KRX code")
+        name = str(listing.get("itms_nm") or symbol)
+        market = str(listing.get("mrkt_ctg") or "KRX")
+        title = f"{name} ({symbol}) 주가·재무·내부자 공시 | Mulmit"
+        description = (
+            f"{name} 공식 종가와 낙폭·변동성, 연간 재무제표와 ROE·부채비율·후행 PER, "
+            "임원·주요주주 소유보고, 주요사항보고 공시를 한 페이지에서."
+        )
+    elif re.fullmatch(r"[A-Z][A-Z0-9.\-]{0,9}", symbol):
+        company = store.get_insider_company(symbol)
+        if company is None or company.get("status") != "ok":
+            raise HTTPException(status_code=404, detail="ticker not in covered roster")
+        name = str(company.get("name") or symbol)
+        market = str(company.get("exchange") or "US")
+        title = f"{name} ({symbol}) financials, insiders & 8-K | Mulmit"
+        description = (
+            f"{name} annual financials with ROE and revenue growth, insider Forms "
+            "3/4/5, 8-K events and congressional trades, on one page."
+        )
+    else:
+        raise HTTPException(status_code=404, detail="unrecognized symbol")
+
+    page = _stock_template()
+    for key, value in (
+        ("{{SYMBOL}}", symbol), ("{{NAME}}", name), ("{{MARKET}}", market),
+        ("{{TITLE}}", title), ("{{DESCRIPTION}}", description),
+    ):
+        page = page.replace(key, _html.escape(value, quote=True))
+    return HTMLResponse(page, headers={"Cache-Control": "public, max-age=600"})
+
+
+@app.get("/sitemap-pages.xml", include_in_schema=False)
+def sitemap_pages() -> FileResponse:
+    return FileResponse(config.STATIC_DIR / "sitemap-pages.xml", media_type="application/xml")
+
+
+@app.get("/sitemap-stocks.xml", include_in_schema=False)
+def sitemap_stocks() -> PlainResponse:
+    """전 종목 허브 URL의 동적 사이트맵 — 롱테일 검색 유입의 입구."""
+    urls = [f"https://mulmit.com/stock/{code}" for code, _name in store.list_kr_codes()]
+    urls += [
+        f"https://mulmit.com/stock/{row['ticker']}"
+        for row in store.list_insider_companies(status="ok")
+    ]
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>']
+    lines.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    lines.extend(
+        f"  <url><loc>{u}</loc><changefreq>daily</changefreq></url>" for u in urls
+    )
+    lines.append("</urlset>")
+    body = "\n".join(lines) + "\n"
+    return PlainResponse(
+        content=body, media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
 @app.get("/sitemap.xml", include_in_schema=False)
 def sitemap() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "sitemap.xml", media_type="application/xml")
@@ -262,7 +346,7 @@ def presence_heartbeat(request: Request, response: Response, payload: dict) -> d
     }
 
 
-_PAGEVIEW_PATHS = {"/", "/kr", "/us", "/analytics", "/monitor"}
+_PAGEVIEW_PATHS = {"/", "/kr", "/us", "/analytics", "/monitor", "/stock"}
 
 
 @app.post("/api/pageview")

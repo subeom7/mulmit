@@ -125,4 +125,7 @@ def test_robots_and_sitemap_serve(db):
     assert robots.status_code == 200
     assert "Sitemap: https://mulmit.com/sitemap.xml" in robots.text
     assert sitemap.status_code == 200
-    assert "https://mulmit.com/kr" in sitemap.text
+    # 사이트맵은 이제 인덱스다 — 정적 페이지 목록은 sitemap-pages.xml이 든다.
+    assert "sitemap-pages.xml" in sitemap.text
+    pages = client.get("/sitemap-pages.xml")
+    assert "https://mulmit.com/kr" in pages.text

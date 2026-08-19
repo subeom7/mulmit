@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="{{DESCRIPTION}}">
+  <title>{{TITLE}}</title>
+  <link rel="canonical" href="https://mulmit.com/stock/{{SYMBOL}}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mulmit">
+  <meta property="og:title" content="{{TITLE}}">
+  <meta property="og:description" content="{{DESCRIPTION}}">
+  <meta property="og:url" content="https://mulmit.com/stock/{{SYMBOL}}">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260819-23">
+  <style>
+    .stock-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 26px 0 18px; border-bottom: 1px solid var(--line); }
+    .stock-head h1 { margin: 0; font-size: clamp(26px, 4vw, 40px); letter-spacing: -.04em; }
+    .stock-head code { color: var(--faint); font: 700 13px/1 var(--mono); }
+    .stock-head .market-tag { padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 650 10px/1 var(--mono); }
+    .stock-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 18px 0 6px; }
+    .stock-kpi { padding: 13px 14px; border: 1px solid var(--line); border-radius: 9px; background: linear-gradient(145deg, var(--panel), var(--panel-2)); }
+    .stock-kpi small { display: block; color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+    .stock-kpi strong { display: block; margin-top: 5px; font: 750 18px/1.15 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+    .stock-kpi span { display: block; margin-top: 3px; color: var(--muted); font: 650 10px/1.3 var(--mono); }
+    .stock-section { margin: 34px 0; }
+    .stock-section h2 { margin: 0 0 4px; font-size: 16px; letter-spacing: -.02em; }
+    .stock-section .sub { margin: 0 0 12px; color: var(--muted); font-size: 11.5px; }
+    .stock-note { color: var(--faint); font-size: 10.5px; }
+    .stock-table { width: 100%; border-collapse: collapse; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+    .stock-table th, .stock-table td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+    .stock-table th { color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+    .stock-table td.num, .stock-table th.num { text-align: right; }
+    .stock-table td.down { color: var(--red); } .stock-table td.up { color: var(--green); }
+    .state-line { padding: 14px; border: 1px dashed var(--line); border-radius: 9px; color: var(--faint); font-size: 11.5px; }
+    .stock-links { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 8px; }
+    .stock-links a { padding: 6px 11px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font-size: 11px; font-weight: 700; text-decoration: none; }
+    .stock-links a:hover { color: var(--ink); border-color: var(--line-strong); }
+    @media (max-width: 560px) { .stock-table { min-width: 620px; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Mulmit home">
+      <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="36" height="36">
+      <span><strong>Mulmit</strong><small>MARKET SIGNAL CONSOLE</small></span>
+    </a>
+    <nav class="view-switch" aria-label="View">
+      <a class="view-tab" href="/">홈</a>
+      <a class="view-tab" href="/kr">한국</a>
+      <a class="view-tab" href="/us">미국·글로벌</a>
+      <a class="view-tab" href="/analytics">종목 분석</a>
+    </nav>
+    <div class="mast-actions"></div>
+  </header>
+
+  <main id="main" class="shell">
+    <div class="stock-head">
+      <h1 id="stock-name">{{NAME}}</h1>
+      <code id="stock-symbol">{{SYMBOL}}</code>
+      <span class="market-tag" id="stock-market">{{MARKET}}</span>
+    </div>
+
+    <div class="stock-kpis" id="stock-kpis" hidden></div>
+    <div class="table-scroll" style="margin-top:6px"><div id="head-state" class="state-line">데이터를 불러오는 중입니다…</div></div>
+
+    <section class="stock-section" id="sec-fund" hidden>
+      <h2>연간 재무제표와 비율</h2>
+      <p class="sub" id="fund-sub"></p>
+      <div class="table-scroll"><table class="stock-table" id="fund-table"><thead></thead><tbody></tbody></table></div>
+      <p class="stock-note" id="fund-note"></p>
+    </section>
+
+    <section class="stock-section" id="sec-insider" hidden>
+      <h2 id="insider-title">내부자 거래</h2>
+      <p class="sub" id="insider-sub"></p>
+      <div class="table-scroll"><table class="stock-table" id="insider-table"><thead></thead><tbody></tbody></table></div>
+      <p class="stock-note" id="insider-note"></p>
+    </section>
+
+    <section class="stock-section" id="sec-events" hidden>
+      <h2 id="events-title">공시 이벤트</h2>
+      <p class="sub" id="events-sub"></p>
+      <div class="table-scroll"><table class="stock-table" id="events-table"><thead></thead><tbody></tbody></table></div>
+    </section>
+
+    <section class="stock-section" id="sec-extra" hidden>
+      <h2 id="extra-title"></h2>
+      <div class="table-scroll"><table class="stock-table" id="extra-table"><thead></thead><tbody></tbody></table></div>
+    </section>
+
+    <section class="stock-section">
+      <div class="stock-links">
+        <a id="link-analytics" href="/analytics">위험 분석 (낙폭·변동성) →</a>
+        <a href="/kr">한국 시장 대시보드</a>
+        <a href="/us">미국·글로벌 대시보드</a>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <nav aria-label="Legal">
+        <a href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a><a href="/disclaimer">면책 고지</a>
+      </nav>
+      <p>Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다. 데이터는 공시·공공 원천의 전달값입니다.</p>
+    </footer>
+  </main>
+
+<script>
+"use strict";
+// 종목 허브: 서버가 심볼·이름·메타를 박아 주고(검색엔진용), 본문은 기존 API의
+// 재조립이다. 실패한 섹션은 조용히 숨는다 — 없는 데이터를 지어내지 않는다.
+const SYMBOL = "{{SYMBOL}}";
+const IS_KR = /^\d{6}$/.test(SYMBOL);
+const $id = (x) => document.getElementById(x);
+const won = (v) => v == null ? "—" : Math.abs(v) >= 1e12 ? (v/1e12).toFixed(1) + "조" : Math.abs(v) >= 1e8 ? Math.round(v/1e8).toLocaleString() + "억" : Math.round(v).toLocaleString();
+const usd = (v) => v == null ? "—" : Math.abs(v) >= 1e9 ? "$" + (v/1e9).toFixed(1) + "B" : Math.abs(v) >= 1e6 ? "$" + (v/1e6).toFixed(0) + "M" : "$" + Math.round(v).toLocaleString();
+const pct = (v) => v == null ? "—" : v.toFixed(1) + "%";
+const num = (v, d = 0) => v == null ? "—" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const fetchJson = async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(String(r.status)); return r.json(); };
+const fill = (tableId, headers, rows) => {
+  const table = $id(tableId);
+  table.querySelector("thead").innerHTML = "<tr>" + headers.map(([cls, text]) => `<th class="${cls}">${text}</th>`).join("") + "</tr>";
+  const tbody = table.querySelector("tbody"); tbody.replaceChildren();
+  for (const row of rows) {
+    const tr = document.createElement("tr");
+    for (const [cls, text] of row) { const td = document.createElement("td"); if (cls) td.className = cls; td.textContent = text; tr.append(td); }
+    tbody.append(tr);
+  }
+};
+const kpi = (label, value, note) => { const div = document.createElement("div"); div.className = "stock-kpi";
+  div.innerHTML = "<small></small><strong></strong>" + (note ? "<span></span>" : "");
+  div.querySelector("small").textContent = label; div.querySelector("strong").textContent = value;
+  if (note) div.querySelector("span").textContent = note; return div; };
+
+async function loadKr() {
+  $id("link-analytics").href = "/analytics?ticker=" + SYMBOL;
+  // 시세·통계
+  try {
+    const a = await fetchJson("/api/kr/stock/" + SYMBOL);
+    const kpis = $id("stock-kpis"); kpis.hidden = false;
+    const latest = a.latest || {};
+    kpis.append(
+      kpi("공식 종가", latest.close != null ? "₩" + num(latest.close) : "—", (latest.date || "") + " · T+1 확정값"),
+      kpi("전일 대비", pct(latest.change_percent), ""),
+      kpi("52주 범위 내 위치", a.stats && a.stats.range_position_52w != null ? pct(a.stats.range_position_52w * 100) : "—", ""),
+      kpi("최대 낙폭 (5년)", a.stats ? pct((a.stats.max_drawdown ?? 0) * 100) : "—", ""),
+    );
+    $id("head-state").hidden = true;
+  } catch (e) { $id("head-state").textContent = "시세 데이터가 아직 없습니다. 잠시 후 새로고침해 주세요."; }
+  // 재무 + 비율 + 후행 배수
+  try {
+    const f = await fetchJson("/api/kr/fundamentals/" + SYMBOL);
+    const rows = (f.annual || []).map((r) => [["", String(r.year)], ["num", won(r.revenue)], ["num" + (r.operating_income < 0 ? " down" : ""), won(r.operating_income)], ["num" + (r.net_income < 0 ? " down" : ""), won(r.net_income)], ["num", pct(r.operating_margin)], ["num", pct(r.roe)], ["num", pct(r.debt_ratio)], ["num" + (r.revenue_growth < 0 ? " down" : ""), pct(r.revenue_growth)]]);
+    if (rows.length) {
+      fill("fund-table", [["", "연도"], ["num", "매출"], ["num", "영업이익"], ["num", "순이익"], ["num", "영업이익률"], ["num", "ROE"], ["num", "부채비율"], ["num", "매출성장"]], rows);
+      const v = f.valuation;
+      $id("fund-sub").textContent = (v && (v.per != null || v.pbr != null))
+        ? `후행 ${v.per != null ? "PER " + v.per.toFixed(1) : ""}${v.per != null && v.pbr != null ? " · " : ""}${v.pbr != null ? "PBR " + v.pbr.toFixed(2) : ""} (시총 ${v.market_cap_date} 종가 기준 ÷ FY${v.fiscal_year})` : (f.statement || "");
+      $id("fund-note").textContent = f.basis_ko || "";
+      $id("sec-fund").hidden = false;
+    }
+  } catch (e) {}
+  // 내부자(임원·주요주주)
+  try {
+    const i = await fetchJson("/api/kr/insider/" + SYMBOL);
+    const rows = (i.reports || []).slice(0, 12).map((r) => [["", r.report_date || "—"], ["", r.reporter || "—"], ["", r.position && r.position !== "-" ? r.position : (r.main_shareholder || "—")], ["num", num(r.shares_owned)], ["num" + (r.shares_change < 0 ? " down" : r.shares_change > 0 ? " up" : ""), r.shares_change == null ? "—" : (r.shares_change > 0 ? "+" : "") + num(r.shares_change)]]);
+    if (rows.length) {
+      $id("insider-title").textContent = "임원·주요주주 소유보고";
+      fill("insider-table", [["", "보고일"], ["", "보고자"], ["", "직위·관계"], ["num", "소유수량"], ["num", "증감"]], rows);
+      $id("insider-note").textContent = i.basis_ko || "";
+      $id("sec-insider").hidden = false;
+    }
+  } catch (e) {}
+  // 이 종목의 주요사항보고 (피드에서 필터)
+  try {
+    const ev = await fetchJson("/api/kr/events");
+    const mine = (ev.events || []).filter((x) => x.stock_code === SYMBOL).slice(0, 8);
+    if (mine.length) {
+      $id("events-title").textContent = "주요사항보고 (최근)";
+      fill("events-table", [["", "접수일"], ["", "보고서명"]], mine.map((x) => [["", x.filed_at], ["", x.report_name]]));
+      $id("events-sub").textContent = "DART 접수 목록 원문 제목 그대로 · 수집 주기 갱신";
+      $id("sec-events").hidden = false;
+    }
+  } catch (e) {}
+  // 국민연금 보유 언급
+  try {
+    const p = await fetchJson("/api/kr/pension");
+    const mine = (p.filings || []).filter((x) => x.stock_code === SYMBOL).slice(0, 5);
+    if (mine.length) {
+      $id("extra-title").textContent = "국민연금 5% 공시 (이 종목)";
+      fill("extra-table", [["", "보고일"], ["num", "보유비율"], ["num", "증감"], ["", "보고사유"]], mine.map((x) => [["", x.report_date], ["num", x.ratio == null ? "—" : x.ratio + "%"], ["num", x.ratio_change == null ? "—" : x.ratio_change + "%p"], ["", x.reason || "—"]]));
+      $id("sec-extra").hidden = false;
+    }
+  } catch (e) {}
+}
+
+async function loadUs() {
+  $id("link-analytics").textContent = "내부자·재무 상세 (분석 페이지) →";
+  $id("link-analytics").href = "/analytics";
+  // 재무 + 비율
+  try {
+    const f = await fetchJson("/api/us/fundamentals/" + SYMBOL);
+    if (f.status === "queued") { $id("head-state").textContent = "이 티커는 수집 대기열에 들어갔습니다. 다음 수집 주기(약 1시간) 후 다시 열어 주세요."; }
+    const rows = (f.annual || []).map((r) => [["", r.end || "—"], ["num", usd(r.revenue)], ["num" + (r.operating_income < 0 ? " down" : ""), usd(r.operating_income)], ["num" + (r.net_income < 0 ? " down" : ""), usd(r.net_income)], ["num", pct(r.operating_margin)], ["num", pct(r.roe)], ["num" + (r.revenue_growth < 0 ? " down" : ""), pct(r.revenue_growth)], ["num", r.eps_diluted == null ? "—" : r.eps_diluted.toFixed(2)]]);
+    if (rows.length) {
+      fill("fund-table", [["", "기간 종료"], ["num", "매출"], ["num", "영업이익"], ["num", "순이익"], ["num", "영업이익률"], ["num", "ROE"], ["num", "매출성장"], ["num", "EPS"]], rows);
+      $id("fund-note").textContent = f.basis_ko || "";
+      $id("sec-fund").hidden = false;
+      $id("head-state").hidden = true;
+      const kpis = $id("stock-kpis"); kpis.hidden = false;
+      const latest = (f.annual || [])[0] || {};
+      kpis.append(
+        kpi("최근 연간 매출", usd(latest.revenue), latest.end || ""),
+        kpi("순이익", usd(latest.net_income), ""),
+        kpi("ROE", pct(latest.roe), ""),
+        kpi("영업이익률", pct(latest.operating_margin), ""),
+      );
+    }
+  } catch (e) {}
+  // 내부자 Form 3/4/5
+  try {
+    const i = await fetchJson("/api/us/insider/" + SYMBOL + "?limit=12");
+    const rows = (i.transactions || []).slice(0, 12).map((r) => [["", r.transaction_date || r.filing_date || "—"], ["", r.owner_name || "—"], ["", (r.transaction_meaning && r.transaction_meaning.ko) || r.transaction_code || "—"], ["num", num(r.shares)], ["num", r.price_per_share == null ? "—" : "$" + num(r.price_per_share, 2)]]);
+    if (rows.length) {
+      $id("insider-title").textContent = "내부자 거래 (Form 3·4·5)";
+      fill("insider-table", [["", "거래일"], ["", "보고자"], ["", "유형"], ["num", "수량"], ["num", "단가"]], rows);
+      $id("insider-note").textContent = "SEC EDGAR 원문 전달 · 개별 보고 라인 단위";
+      $id("sec-insider").hidden = false;
+      $id("head-state").hidden = true;
+    }
+  } catch (e) {}
+  // 8-K
+  try {
+    const ev = await fetchJson("/api/us/events");
+    const mine = (ev.events || []).filter((x) => x.ticker === SYMBOL).slice(0, 8);
+    if (mine.length) {
+      $id("events-title").textContent = "8-K 이벤트 공시 (최근)";
+      fill("events-table", [["", "제출일"], ["", "내용 (Item)"]], mine.map((x) => [["", x.filed_at], ["", (x.items || []).map((it) => it.label.ko).join(" · ") || "—"]]));
+      $id("events-sub").textContent = "표준 Item 제목 · 수집 주기 갱신";
+      $id("sec-events").hidden = false;
+    }
+  } catch (e) {}
+  // 의원 거래 언급 (PTR)
+  try {
+    const p = await fetchJson("/api/us/ptr");
+    const mine = [];
+    for (const filing of (p.filings || [])) for (const tr of (filing.transactions || [])) {
+      if ((tr.ticker || "").toUpperCase() === SYMBOL) mine.push({ member: filing.member, date: tr.transaction_date, type: (tr.type_meaning && tr.type_meaning.ko) || tr.type, amount: tr.amount });
+    }
+    if (mine.length) {
+      $id("extra-title").textContent = "미 하원 의원 거래 (STOCK Act)";
+      fill("extra-table", [["", "의원"], ["", "거래일"], ["", "유형"], ["", "금액 구간"]], mine.slice(0, 8).map((x) => [["", x.member || "—"], ["", x.date || "—"], ["", x.type || "—"], ["", x.amount || "—"]]));
+      $id("sec-extra").hidden = false;
+    }
+  } catch (e) {}
+}
+
+(IS_KR ? loadKr() : loadUs()).finally(() => {
+  if (!$id("head-state").hidden && !$id("sec-fund").hidden) $id("head-state").hidden = true;
+});
+
+// 방문 통계 비콘 (익명·쿠키 없음)
+try {
+  let id = localStorage.getItem("mulmit.presence");
+  if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${String(Math.random()).slice(2, 12)}`; localStorage.setItem("mulmit.presence", id); }
+  fetch("/api/pageview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: "/stock", ref: document.referrer || "", id }), keepalive: true }).catch(() => {});
+} catch (e) {}
+</script>
+</body>
+</html>
