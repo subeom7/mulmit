@@ -14,7 +14,7 @@
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260819-21">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260819-22">
 <style>
 /* ---------------------------------------------------------------------------
    디자인 토큰은 monitor.css가 단일 원본이다. 이 페이지의 예전 변수명은 아래
@@ -510,6 +510,8 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
             <th scope="col" class="num" data-i18n="krfund.colOpMargin">영업이익률</th>
             <th scope="col" class="num" data-i18n="krfund.colNetMargin">순이익률</th>
             <th scope="col" class="num" data-i18n="krfund.colEquity">자본총계</th>
+            <th scope="col" class="num" data-i18n="krfund.colRoe">ROE</th>
+            <th scope="col" class="num" data-i18n="krfund.colGrowth">매출성장</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -749,6 +751,7 @@ const I18N = {
     "krfund.colOpMargin": "영업이익률", "krfund.colNetMargin": "순이익률", "krfund.colEquity": "자본총계",
     "krfund.loading": "재무제표를 불러오는 중입니다.", "krfund.none": "표시할 재무 데이터가 없습니다.", "krfund.error": "재무제표를 불러오지 못했습니다.",
     "krfund.statement": "{statement} 기준", "krfund.revenueAccount": "매출 계정: {name}",
+    "krfund.colRoe": "ROE", "krfund.colGrowth": "매출성장", "krfund.trailing": "후행",
     "market.title": "S&P 500 섹터 모니터", "market.tag": "11 SECTOR ETFs · ADJUSTED CLOSE", "market.summaryAria": "섹터 요약",
     "market.lede": "일간·주간·월간·연간 흐름을 전환해 시장의 리더십과 확산도를 빠르게 확인합니다.",
     "pulse.best": "가장 강한 섹터", "pulse.worst": "가장 약한 섹터", "pulse.breadth": "상승 섹터", "pulse.asof": "기준일",
@@ -784,6 +787,7 @@ const I18N = {
     "usfund.annual": "연간", "usfund.quarterly": "분기",
     "usfund.colPeriod": "기간(종료일)", "usfund.colRevenue": "매출", "usfund.colOpInc": "영업이익", "usfund.colNetInc": "순이익",
     "usfund.colOpMargin": "영업이익률", "usfund.colNetMargin": "순이익률", "usfund.colEps": "EPS(희석)",
+    "usfund.colRoe": "ROE", "usfund.colGrowth": "매출성장",
     "usfund.disabled": "재무제표 수집이 이 배포에서 비활성 상태입니다.", "usfund.notConfigured": "EDGAR 연락처(User-Agent)가 설정되지 않았습니다.",
     "insider.notConfigured": "EDGAR 접근에 필요한 연락처 User-Agent가 설정되지 않았습니다.",
     "insider.error": "공시를 불러오지 못했습니다.",
@@ -880,6 +884,7 @@ const I18N = {
     "krfund.colOpMargin": "Op. margin", "krfund.colNetMargin": "Net margin", "krfund.colEquity": "Total equity",
     "krfund.loading": "Loading financial statements.", "krfund.none": "No financial data to display.", "krfund.error": "Failed to load financial statements.",
     "krfund.statement": "Basis: {statement}", "krfund.revenueAccount": "Revenue account: {name}",
+    "krfund.colRoe": "ROE", "krfund.colGrowth": "Rev. growth", "krfund.trailing": "Trailing",
     "market.title": "S&P 500 Sector Monitor", "market.tag": "11 SECTOR ETFs · ADJUSTED CLOSE", "market.summaryAria": "Sector summary",
     "market.lede": "Switch between daily, weekly, monthly and yearly returns to see leadership and market breadth at a glance.",
     "pulse.best": "Strongest sector", "pulse.worst": "Weakest sector", "pulse.breadth": "Sectors up", "pulse.asof": "As of",
@@ -915,6 +920,7 @@ const I18N = {
     "usfund.annual": "Annual", "usfund.quarterly": "Quarterly",
     "usfund.colPeriod": "Period end", "usfund.colRevenue": "Revenue", "usfund.colOpInc": "Operating income", "usfund.colNetInc": "Net income",
     "usfund.colOpMargin": "Op. margin", "usfund.colNetMargin": "Net margin", "usfund.colEps": "EPS (diluted)",
+    "usfund.colRoe": "ROE", "usfund.colGrowth": "Rev. growth",
     "usfund.disabled": "Financial-statement collection is disabled for this deployment.", "usfund.notConfigured": "SEC_EDGAR_USER_AGENT is not configured.",
     "insider.notConfigured": "The contact User-Agent required for EDGAR access is not configured.",
     "insider.error": "Could not load the filings.",
@@ -2030,7 +2036,7 @@ function renderUsFund() {
     <th scope="col">${t("usfund.colPeriod")}</th><th scope="col" class="num">${t("usfund.colRevenue")}</th>
     <th scope="col" class="num">${t("usfund.colOpInc")}</th><th scope="col" class="num">${t("usfund.colNetInc")}</th>
     <th scope="col" class="num">${t("usfund.colOpMargin")}</th><th scope="col" class="num">${t("usfund.colNetMargin")}</th>
-    <th scope="col" class="num">${t("usfund.colEps")}</th></tr>`;
+    <th scope="col" class="num">${t("usfund.colEps")}</th>${usFundPeriod === "annual" ? `<th scope="col" class="num">${t("usfund.colRoe")}</th><th scope="col" class="num">${t("usfund.colGrowth")}</th>` : ""}</tr>`;
   const tbody = table.querySelector("tbody");
   tbody.replaceChildren();
   for (const row of rows) {
@@ -2048,6 +2054,10 @@ function renderUsFund() {
       ["num", usFundPct(row.net_margin)],
       ["num", row.eps_diluted == null ? "—" : row.eps_diluted.toFixed(2)],
     ];
+    if (usFundPeriod === "annual") {
+      cells.push(["num", usFundPct(row.roe)]);
+      cells.push(["num" + (row.revenue_growth != null && row.revenue_growth < 0 ? " chg-down" : ""), usFundPct(row.revenue_growth)]);
+    }
     for (const [cls, textValue] of cells) {
       const td = document.createElement("td");
       if (cls) td.className = cls;
@@ -2371,6 +2381,8 @@ function renderKrFund(data) {
       ["num", pct(row.operating_margin)],
       ["num", pct(row.net_margin)],
       ["num", krFundWon(row.equity)],
+      ["num", pct(row.roe)],
+      ["num" + (row.revenue_growth != null && row.revenue_growth < 0 ? " chg-down" : ""), pct(row.revenue_growth)],
     ];
     for (const [cls, textValue] of cells) {
       const td = document.createElement("td");
@@ -2385,6 +2397,14 @@ function renderKrFund(data) {
     `${data.company || data.code}`,
     t("krfund.statement", { statement: data.statement || "" }),
   ];
+  // 후행 PER·PBR — 서버가 최신 시총으로 계산해 주는 값. 없으면 조용히 생략.
+  const valuation = data.valuation;
+  if (valuation && (valuation.per != null || valuation.pbr != null)) {
+    const bits = [];
+    if (valuation.per != null) bits.push(`PER ${valuation.per.toFixed(1)}`);
+    if (valuation.pbr != null) bits.push(`PBR ${valuation.pbr.toFixed(2)}`);
+    parts.unshift(`${t("krfund.trailing")} ${bits.join(" · ")} (${valuation.market_cap_date || ""})`);
+  }
   const revenueAccount = rows[0]?.revenue_account;
   if (revenueAccount && revenueAccount !== "매출액") parts.push(t("krfund.revenueAccount", { name: revenueAccount }));
   parts.push(notice);

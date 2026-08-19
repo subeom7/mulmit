@@ -1127,6 +1127,7 @@ notes: "No confidential contract language here"
 | 2026-08-19 | 경제 캘린더 추가(`/api/calendar`) — 미국 데이터 발표일은 FRED 릴리스 메타데이터(승인 lane, 실측 검증), FOMC·금통위는 공식 페이지에서 확인한 큐레이션(확인일 2026-08-19 동봉, "직전 회의 전 잠정" 고지). 일정은 공표된 사실이되 변경 가능함을 basis로 전달 | Claude assisted |
 | 2026-08-19 | DART 연간 재무제표 추가(`/api/kr/fundamentals/{code}`, §3.10 확장) — 주요계정 원문 전달, 연간 한정(분기 손익 누적 구분 부재), 연결 우선, 금융사 매출 부재는 사실로 표시. 미국 패널과 대칭 | Claude assisted |
 | 2026-08-19 | EDGAR 재무제표 추가(`/api/us/fundamentals/{ticker}`, §3.5 확장) — XBRL companyconcept, 내부자 lane과 같은 티커 큐·게이트. 태그 사다리는 최신 보고 기간 기준(NVIDIA 태그 전환 실측), YTD 배제·정정 우선, 파생은 마진 2종뿐 | Claude assisted |
+| 2026-08-19 | 재무 파생 범위 확장(§3.5·§3.10) — 마진에 더해 연간 행의 ROE·ROA·부채비율((자산−자본)÷자본 항등식)·매출 성장률(연속 연도 한정). 국내는 후행 PER·PBR 추가: FSC 최신 시총 ÷ 최근 연간 공시값(서빙 시 계산, 적자 PER 표시 안 함). 전부 공시값 산술 — 추정·연율화 없음. 캐시 키 v2 범프 | Claude assisted |
 | 2026-08-19 | ECOS 한국 거시 lane 구축(§3.16, `kr_base_rate`·`kr_cpi`) — 게이트 꺼짐 배포, sample 키로 코드·응답 형식 실측. 활성화는 운영자 인증키 발급 + 약관 전문 기록 후 | Claude assisted |
 | 2026-08-19 | EDGAR 광고 병행 판정 advertising: true (§3.5) — 정책 원문 재확인(무료 접근·fair access·UA만 부과, 상업 제한 없음) + 17 U.S.C. §105 퍼블릭 도메인. webmaster@sec.gov 예우성 통지 발송(허락 게이트 아님, 상세 INQUIRY_SEC_EDGAR_ADS.md) | Claude assisted |
 | 2026-08-19 | NY연은 침체 확률 lane 추가(§3.15, `recession_prob`) — 약관 전문 검토로 일반 허용 라이선스 확인(Use Restrictions 비해당), 기존 nyfed lane·인용문 기계 재사용. Polymarket 대안 검토의 산출물(Polymarket ❌ 유지, FedWatch는 CME 라이선스 대상이라 배제) | Claude assisted |

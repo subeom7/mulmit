@@ -23,7 +23,8 @@ import threading
 import time
 from typing import Any
 
-from . import config, store
+from . import config, data_rights, store
+from .fundamental_ratios import enrich_annual_rows, trailing_valuation
 from .kr_insider import ensure_corp_codes
 from .providers.base import DataError, DataUnavailable, RateLimited
 from .providers.dart import (
@@ -36,6 +37,7 @@ from .providers.dart import (
     DART_TERMS_URL,
     DartProvider,
 )
+from .providers.fsc import FSC_PROVIDER_ID
 
 log = logging.getLogger(__name__)
 
@@ -83,7 +85,8 @@ def _provider() -> DartProvider:
 
 
 def _cache_key(corp_code: str) -> str:
-    return f"dart_fund_{corp_code}"
+    # v2: 연간 행에 파생 비율(ROE·ROA·부채비율·성장률)이 추가되어 재파싱이 필요하다.
+    return f"dart_fund_v2_{corp_code}"
 
 
 def _pick(rows: list[dict[str, Any]], fs_div: str, names: tuple[str, ...]) -> dict[str, Any] | None:
@@ -156,6 +159,7 @@ def _fetch_payload(provider: DartProvider, corp_code: str, corp_name: str, code:
         rows_by_year.setdefault(row["year"], row)
 
     annual = [rows_by_year[year] for year in sorted(rows_by_year, reverse=True)][:MAX_YEARS]
+    enrich_annual_rows(annual, year_key="year")
     return {
         "generated_at": dt.datetime.now(dt.UTC).isoformat().replace("+00:00", "Z"),
         "code": code,
@@ -169,13 +173,17 @@ def _fetch_payload(provider: DartProvider, corp_code: str, corp_name: str, code:
         "basis_ko": (
             "DART 사업보고서의 주요계정을 그대로 전달합니다(연간·연결 우선, 없으면 "
             "별도). 분기 손익은 누적·분기 구분이 없어 다루지 않습니다. 파생값은 "
-            "마진 둘뿐입니다(이익 ÷ 매출, 같은 보고서의 두 값). 금액 단위 KRW."
+            "공시값의 산술뿐입니다: 마진(이익÷매출), ROE·ROA(순이익÷자본·자산), "
+            "부채비율((자산−자본)÷자본), 매출 성장률(전년 공시 대비, 연속 연도만). "
+            "금액 단위 KRW."
         ),
         "basis_en": (
             "Key accounts from DART annual reports, relayed as filed (consolidated "
             "preferred, separate otherwise). Quarterly income lines are omitted "
             "because the API does not distinguish cumulative from in-quarter "
-            "figures. The only derived values are the two margins. Amounts in KRW."
+            "figures. Derived values are arithmetic on filed numbers only: margins, "
+            "ROE/ROA, debt ratio ((assets−equity)/equity) and year-over-year revenue "
+            "growth for consecutive filed years. Amounts in KRW."
         ),
         "source": {
             "provider": DART_PROVIDER_ID,
@@ -219,4 +227,41 @@ def get_report(stock_code: str) -> dict[str, Any]:
                         log.warning("DART 재무 조회 실패 %s: %s", corp_code, exc)
     if cached is None:
         raise DataUnavailable(f"DART fundamentals unavailable for {stock_code}")
-    return cached
+
+    # 후행 PER·PBR은 캐시에 굽지 않는다 — 시가총액은 금융위 로스터의 최신
+    # 종가 기준이라 재무 블롭보다 자주 움직인다. FSC lane이 닫혀 있으면 없다.
+    valuation = None
+    if data_rights.series_values_servable(FSC_PROVIDER_ID, data_rights.SERVABLE_ROW_RIGHTS):
+        listing = store.get_kr_listing(stock_code)
+        annual = cached.get("annual") or []
+        if listing and annual:
+            market_cap = listing.get("mrkt_tot_amt")
+            base = trailing_valuation(
+                float(market_cap) if market_cap else None,
+                annual[0].get("net_income"),
+                annual[0].get("equity"),
+            )
+            if base is not None:
+                valuation = {
+                    **base,
+                    "market_cap": float(market_cap),
+                    "market_cap_date": _listing_date(listing.get("bas_dt")),
+                    "fiscal_year": annual[0].get("year"),
+                    "basis_ko": (
+                        "후행 배수 — 최신 공식 종가 기준 시가총액 ÷ 최근 사업연도 "
+                        "공시값. 순이익이 0 이하이면 PER은 표시하지 않습니다."
+                    ),
+                    "basis_en": (
+                        "Trailing multiples: market cap at the latest official close "
+                        "over the latest filed annual figures. PER is withheld when "
+                        "net income is not positive."
+                    ),
+                }
+    return {**cached, "valuation": valuation}
+
+
+def _listing_date(value) -> str | None:
+    text = str(value or "").strip()
+    if len(text) == 8 and text.isdigit():
+        return f"{text[:4]}-{text[4:6]}-{text[6:]}"
+    return text or None

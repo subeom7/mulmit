@@ -26,6 +26,7 @@ import logging
 from typing import Any
 
 from . import config, data_rights, store
+from .fundamental_ratios import enrich_annual_rows
 from .insider_filings import rights_metadata
 from .providers.base import DataUnavailable
 from .providers.sec_edgar import (
@@ -68,8 +69,21 @@ class UsFundamentalsDisabled(RuntimeError):
         self.reason = reason
 
 
+def _with_ratios(rows: list[dict]) -> list[dict]:
+    """연간 행에 파생 비율을 더한다. 성장률 매칭은 XBRL fy가 아니라 기간 종료
+    연도를 쓴다 — fy는 제출 연도라 회계연도와 어긋난 사례를 실측했다."""
+    for row in rows:
+        end = str(row.get("end") or "")
+        row["_year"] = int(end[:4]) if len(end) >= 4 and end[:4].isdigit() else None
+    enrich_annual_rows(rows, year_key="_year")
+    for row in rows:
+        row.pop("_year", None)
+    return rows
+
+
 def cache_key(ticker: str) -> str:
-    return f"us_fund_{ticker.strip().upper()}"
+    # v2: 연간 행에 파생 비율이 추가되어 재수집이 필요하다.
+    return f"us_fund_v2_{ticker.strip().upper()}"
 
 
 def _require_serving() -> None:
@@ -212,13 +226,14 @@ def refresh_for(provider: SecEdgarProvider, ticker: str, cik: str, name: str) ->
         "cik": cik,
         "company": name,
         "unit": "USD",
-        "annual": rows_for("annual", ANNUAL_ROWS),
+        "annual": _with_ratios(rows_for("annual", ANNUAL_ROWS)),
         "quarterly": rows_for("quarterly", QUARTERLY_ROWS),
         "concepts_used": concepts_used,
         "basis_ko": (
             "SEC EDGAR XBRL(10-K·10-Q) 공시값을 그대로 전달합니다. 분기와 연간은 "
             "보고 기간 길이로 구분하고, 정정 공시는 최신 제출분을 씁니다. 파생값은 "
-            "마진 둘뿐입니다(이익 ÷ 매출, 같은 보고서의 두 값). 금액 단위 USD."
+            "공시값의 산술뿐입니다: 마진, 그리고 연간 행의 ROE·ROA·부채비율"
+            "((자산−자본)÷자본)·매출 성장률(연속 회계연도만). 금액 단위 USD."
         ),
         "basis_en": (
             "XBRL figures from SEC EDGAR 10-K/10-Q filings, relayed as filed. "
