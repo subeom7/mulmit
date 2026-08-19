@@ -22,6 +22,11 @@ from . import config, econ_calendar, kr_events, kr_pension, store, us_ptr
 log = logging.getLogger(__name__)
 
 MAX_ITEMS = 30
+# 지수 급변: 3% 계단(±3·6·9…)을 "넘는 순간"만 이벤트다. 같은 구간에 머무는
+# 동안은 반복하지 않고, 회복 방향의 계단 통과도 똑같이 기록한다.
+MOVE_STEP = 3.0
+MOVE_STATE_KEY = "feed_index_move_v1"
+MOVE_HISTORY = 8
 MAX_UPCOMING = 5
 
 _KST = dt.timezone(dt.timedelta(hours=9))
@@ -131,6 +136,75 @@ def _kr_pension_items() -> list[dict[str, Any]]:
     return items
 
 
+def _move_bucket(percent: float) -> int:
+
+    if abs(percent) < MOVE_STEP:
+        return 0
+    magnitude = int(abs(percent) // MOVE_STEP)
+    return magnitude if percent > 0 else -magnitude
+
+
+def _index_move_items() -> list[dict[str, Any]]:
+    """코스피 200 퍼프의 종가 대비 %가 3% 계단을 통과한 순간들.
+
+    피드 요청이 곧 샘플링이다(응답 캐시 5분): 상태 블롭에 마지막 구간을 두고,
+    구간이 바뀐 요청에서만 이벤트를 앞에 쌓는다. 서로 다른 워커의 동시 기록은
+    같은 구간 비교라 최악의 경우 중복 한 건 — 만들어낸 수치는 없다.
+    """
+    from .kr_overnight import build_kr_overnight
+
+    state = store.load_report(MOVE_STATE_KEY, 90 * 24 * 3600) or {"bucket": 0, "events": []}
+    try:
+        kro = build_kr_overnight()
+        card = next(c for c in kro["cards"] if c["id"] == "kospi_200")
+        percent = card["implied"]["vs_official_percent"]
+        official_date = (card.get("official") or {}).get("date")
+    except Exception as exc:  # noqa: BLE001 - 시세 실패 시 저장된 이력만 보여준다
+        log.warning("피드: 지수 급변 샘플 실패: %s", exc)
+        percent = None
+        official_date = None
+    if percent is not None:
+        bucket = _move_bucket(float(percent))
+        if bucket != int(state.get("bucket", 0)):
+            line = int(max(abs(bucket), abs(int(state.get("bucket", 0))))) * MOVE_STEP
+            direction_ko = "이탈" if abs(bucket) > abs(int(state.get("bucket", 0))) else "회복"
+            direction_en = "crossed below" if bucket < int(state.get("bucket", 0)) else "crossed above"
+            sign = "-" if (bucket < 0 or (bucket == 0 and int(state.get("bucket", 0)) < 0)) else "+"
+            now_iso = dt.datetime.now(_KST).isoformat(timespec="minutes")
+            state["events"] = ([{
+                "at": now_iso,
+                "percent": round(float(percent), 2),
+                "line": f"{sign}{line:g}%",
+                "direction_ko": direction_ko,
+                "direction_en": direction_en,
+                "official_date": official_date,
+            }] + list(state.get("events", [])))[:MOVE_HISTORY]
+            state["bucket"] = bucket
+            store.save_report(MOVE_STATE_KEY, state)
+    items = []
+    for event in state.get("events", []):
+        date_part = str(event.get("at", ""))[:10]
+        items.append({
+            "at": str(event.get("at", "")),
+            "date": date_part,
+            "kind": "index_move",
+            "symbol": None,
+            "title": {
+                "ko": (
+                    f"코스피 200 퍼프 {event.get('line')} 선 {event.get('direction_ko')} "
+                    f"(당시 {event.get('percent'):+.1f}% · {event.get('official_date')} 종가 대비)"
+                ),
+                "en": (
+                    f"KOSPI 200 perp {event.get('direction_en')} the {event.get('line')} line "
+                    f"(at {event.get('percent'):+.1f}% vs the {event.get('official_date')} close)"
+                ),
+            },
+            "url": "/kr",
+            "hub": None,
+        })
+    return items
+
+
 def _upcoming_items(today: dt.date) -> list[dict[str, Any]]:
     try:
         calendar = econ_calendar.build_calendar()
@@ -163,7 +237,7 @@ def _upcoming_items(today: dt.date) -> list[dict[str, Any]]:
 def build_feed(*, today: dt.date | None = None) -> dict[str, Any]:
     today = today or dt.datetime.now(_KST).date()
     items: list[dict[str, Any]] = []
-    for source in (_us_8k_items, _kr_material_items, _us_ptr_items, _kr_pension_items):
+    for source in (_us_8k_items, _kr_material_items, _us_ptr_items, _kr_pension_items, _index_move_items):
         try:
             items.extend(source())
         except Exception as exc:  # noqa: BLE001 - 소스 하나의 실패는 그 소스만 지운다
@@ -179,8 +253,8 @@ def build_feed(*, today: dt.date | None = None) -> dict[str, Any]:
         "count": min(len(items), MAX_ITEMS),
         "basis_ko": (
             "기존 공시·일정 lane의 재조립입니다 — 8-K와 주요사항보고는 원문 제목, "
-            "PTR 금액은 공시 구간 그대로. 수집 주기(약 1시간) 기반이라 실시간 속보가 "
-            "아니며, 비어 있는 소스는 표시되지 않습니다."
+            "PTR 금액은 공시 구간 그대로. 지수 급변은 퍼프 참고가의 3% 계단 통과 기록입니다. "
+            "수집 주기 기반이라 실시간 속보가 아니며, 비어 있는 소스는 표시되지 않습니다."
         ),
         "basis_en": (
             "A reassembly of existing filing and schedule lanes — 8-K and Korean "

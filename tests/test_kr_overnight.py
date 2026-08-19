@@ -381,7 +381,8 @@ def test_delisted_and_absent_markets_read_as_market_unavailable(full_lanes):
     assert _card(payload, "sk_hynix")["status"] == "market_unavailable"
     assert _card(payload, "sk_hynix")["perp"] is None
     assert _card(payload, "hyundai_motor")["status"] == "market_unavailable"
-    assert payload["coverage"] == {"available": 3, "total": 5}
+    # EWY·KORU(us_etf)는 픽스처 시장에 없어 market_unavailable — 총원만 7로 는다.
+    assert payload["coverage"] == {"available": 3, "total": 7}
 
 
 def test_dex_outage_degrades_to_cards_without_marks(full_lanes):
@@ -413,7 +414,7 @@ def test_route_serves_the_assembled_payload_with_the_gate_open(
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["coverage"] == {"available": 5, "total": 5}
+    assert payload["coverage"] == {"available": 5, "total": 7}
     assert response.headers["x-data-source"] == "Hyperliquid HIP-3 + FSC + Federal Reserve H.10"
     smsn = _card(payload, "samsung_electronics")
     assert smsn["implied"]["value"] == pytest.approx(198.98 * 1414.29)
@@ -455,3 +456,24 @@ def test_the_adr_card_withholds_conversion_without_fx(db, hip3_public_display, m
     assert adr["status"] == "no_fx"
     assert adr["implied"]["value"] is None
     assert adr["perp"]["mark"] == 154.41  # 마크 자체는 보류하지 않는다
+
+
+US_ETF_MARKETS = ALL_MARKETS + [
+    ("xyz:EWY", _context("62.4", "63.1")),
+    ("xyz:KORU", _context("21.8", "23.9")),
+]
+
+
+def test_us_etf_cards_are_reference_only_and_never_touch_the_close_system(full_lanes):
+    payload = build_kr_overnight(FixtureProvider(US_ETF_MARKETS))
+    ewy = _card(payload, "ewy")
+    koru = _card(payload, "koru")
+
+    assert ewy["status"] == "reference_only"
+    assert ewy["official"]["status"] == "not_applicable"
+    assert ewy["implied"]["value"] is None          # 원화 환산 없음
+    assert ewy["implied"]["fx_applied"] is False
+    assert ewy["perp"]["mark"] == pytest.approx(62.4)
+    assert koru["leverage"] == 3
+    assert "공식 종가 비교 없음" in ewy["basis"]["ko"]
+    assert payload["coverage"] == {"available": 7, "total": 7}

@@ -431,6 +431,10 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 
 /* P2: 헤더 세션 배지 · H.10 환율 티커 */
 .session-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 650 9.5px/1 var(--mono); white-space: nowrap; }
+.krp-source { margin-left: 7px; color: var(--faint); font: 700 9.5px/1.3 var(--mono); text-decoration: none; }
+.krp-source:hover { color: var(--ink); }
+.krp-company a:first-child { color: inherit; }
+
 .feed-upcoming { display: flex; flex-wrap: wrap; gap: 7px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
 .feed-soon { padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 650 10px/1.3 var(--mono); text-decoration: none; }
 .feed-soon:hover { color: var(--ink); border-color: var(--line-strong); }

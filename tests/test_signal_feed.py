@@ -10,12 +10,22 @@ from __future__ import annotations
 
 import datetime as dt
 
+import pytest
 from fastapi.testclient import TestClient
 
-from app import kr_events, kr_pension, signal_feed, store, us_ptr
+from app import kr_events, kr_overnight, kr_pension, signal_feed, store, us_ptr
 from app.main import app
 
 TODAY = dt.date(2026, 8, 19)
+
+
+@pytest.fixture(autouse=True)
+def quiet_index_move(monkeypatch):
+    """지수 급변 소스가 테스트에서 실망 네트워크를 부르지 않게 기본 무음."""
+    monkeypatch.setattr(
+        kr_overnight, "build_kr_overnight",
+        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("no network in tests")),
+    )
 
 
 def _seed(db):
@@ -81,3 +91,31 @@ def test_route_serves_and_upcoming_stays_separate(db):
     for event in body["upcoming"]:
         assert event["date"] not in past_dates or event["kind"] == "calendar"
         assert event["d_day"] >= 0
+
+
+def _kro_with(percent):
+    return lambda *a, **k: {"cards": [{
+        "id": "kospi_200",
+        "implied": {"vs_official_percent": percent},
+        "official": {"date": "2026-08-18"},
+    }]}
+
+
+def test_index_move_records_threshold_crossings_once(db, monkeypatch):
+    monkeypatch.setattr(kr_overnight, "build_kr_overnight", _kro_with(-5.4))
+    feed = signal_feed.build_feed(today=TODAY)
+    moves = [item for item in feed["items"] if item["kind"] == "index_move"]
+    assert len(moves) == 1
+    assert "-3% 선 이탈" in moves[0]["title"]["ko"]
+    assert "-5.4%" in moves[0]["title"]["ko"]
+
+    # 같은 구간에 머무는 동안은 이벤트가 늘지 않는다.
+    feed = signal_feed.build_feed(today=TODAY)
+    assert sum(1 for i in feed["items"] if i["kind"] == "index_move") == 1
+
+    # 회복 방향의 계단 통과도 기록된다.
+    monkeypatch.setattr(kr_overnight, "build_kr_overnight", _kro_with(-1.2))
+    feed = signal_feed.build_feed(today=TODAY)
+    moves = [item for item in feed["items"] if item["kind"] == "index_move"]
+    assert len(moves) == 2
+    assert "회복" in moves[0]["title"]["ko"]

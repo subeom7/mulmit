@@ -90,12 +90,14 @@ class DexProvider(Protocol):
 class OvernightTarget:
     id: str
     symbol: str
-    kind: str  # "equity" | "index" | "adr"
+    kind: str  # "equity" | "index" | "adr" | "us_etf"
     code: str | None
     label_ko: str
     label_en: str
     # ADR 전용: 원주 1주가 몇 ADR인지. 발행사 공시로 검증된 값만 넣는다.
     adr_per_ordinary: int | None = None
+    # us_etf 전용: 레버리지 배수. 1이 아닌 값은 카드에 경고 배지로 나간다.
+    leverage: int | None = None
 
 
 TARGETS = (
@@ -112,6 +114,12 @@ TARGETS = (
     OvernightTarget(
         "sk_hynix_adr", "xyz:SKHY", "adr", "000660",
         "SK하이닉스 ADR", "SK hynix ADR", adr_per_ordinary=10,
+    ),
+    # 미국 상장 한국 노출 ETF 퍼프 (2026-08-18 xyz 신규 상장 확인). USD 자산이라
+    # 원화 환산·공식 종가 비교가 없다 — 15:30 세션 참고선(퍼프 자기 비교)만 성립.
+    OvernightTarget("ewy", "xyz:EWY", "us_etf", None, "EWY (한국 ETF)", "EWY (Korea ETF)"),
+    OvernightTarget(
+        "koru", "xyz:KORU", "us_etf", None, "KORU (3×)", "KORU (3×)", leverage=3,
     ),
 )
 
@@ -321,6 +329,10 @@ def _official_close(target: OvernightTarget, fsc_ok: bool) -> dict[str, Any]:
             FSC_INDEX_DATASET_URL if target.kind == "index" else FSC_STOCK_DATASET_URL
         ),
     }
+    if target.kind == "us_etf":
+        # 미국 상장 자산 — 이 섹션의 기준가 체계(FSC 종가) 밖이다.
+        base["status"] = "not_applicable"
+        return base
     if not fsc_ok:
         base["status"] = "lane_disabled"
         return base
@@ -399,7 +411,10 @@ def _card(
         "vs_official_percent": None,
     }
     if perp is not None:
-        if target.kind in ("equity", "adr"):
+        if target.kind == "us_etf":
+            # USD 표시 그대로 — 원화 환산이 의미를 갖지 않는 자산이다.
+            implied["fx_applied"] = False
+        elif target.kind in ("equity", "adr"):
             if fx["status"] == "ok":
                 ratio = target.adr_per_ordinary or 1
                 implied["value"] = perp["mark"] * ratio * fx["rate"]
@@ -417,6 +432,8 @@ def _card(
 
     if perp is None:
         status = "market_unavailable"
+    elif target.kind == "us_etf":
+        status = "reference_only"
     elif implied["vs_official_percent"] is not None:
         status = "ok"
     elif implied["status"] == "no_fx":
@@ -430,6 +447,7 @@ def _card(
         "code": target.code,
         "kind": target.kind,
         "label": {"ko": target.label_ko, "en": target.label_en},
+        "leverage": target.leverage,
         "adr": (
             {
                 "per_ordinary": target.adr_per_ordinary,
@@ -446,14 +464,18 @@ def _card(
         "session_reference": _session_reference_block(target, perp, session_ref, fx, boundary),
         "basis": {
             "ko": (
-                "지수 무기한선물 마크(포인트)를 코스피 200 공식 종가와 직접 비교"
+                "미국 상장 한국 노출 ETF 퍼프 — 원화 환산·공식 종가 비교 없음, 직전 거래일 15:30 대비만 참고"
+                if target.kind == "us_etf"
+                else "지수 무기한선물 마크(포인트)를 코스피 200 공식 종가와 직접 비교"
                 if target.kind == "index"
                 else "ADR 퍼프 마크 × 비율 × H.10 공식환율을 원주 마지막 공식 종가와 비교"
                 if target.kind == "adr"
                 else "합성 무기한선물 마크가격 × H.10 공식환율을 마지막 공식 종가와 비교"
             ),
             "en": (
-                "Index-perpetual mark (points) compared directly with the official KOSPI 200 close"
+                "US-listed Korea-exposure ETF perp — no KRW conversion or official-close comparison; only the 15:30 session reference applies"
+                if target.kind == "us_etf"
+                else "Index-perpetual mark (points) compared directly with the official KOSPI 200 close"
                 if target.kind == "index"
                 else "ADR-perpetual mark × ratio × official H.10 rate versus the ordinary share's last official close"
                 if target.kind == "adr"
@@ -515,7 +537,7 @@ def build_kr_overnight(
         )
         for target in TARGETS
     ]
-    available = sum(1 for card in cards if card["status"] == "ok")
+    available = sum(1 for card in cards if card["status"] in ("ok", "reference_only"))
 
     # 오늘의 휴장 여부를 프런트가 세션 문구·배지에 쓴다. 시계는 각 거래소의
     # 타임존 기준이고, 휴장일 판정은 큐레이션 달력이 맡는다.
