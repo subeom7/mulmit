@@ -2470,7 +2470,12 @@ function renderKrInsider(data) {
       ["num", num(row.shares_owned)],
       ["num " + (row.shares_change > 0 ? "chg-up" : row.shares_change < 0 ? "chg-down" : ""),
         row.shares_change == null ? NBSP : `${row.shares_change > 0 ? "+" : ""}${row.shares_change.toLocaleString()}`],
-      ["num", row.ownership_ratio == null ? NBSP : `${row.ownership_ratio.toFixed(2)}%`],
+      // DART 원문이 소수점 2자리 반올림이라 대형주 임원 지분은 '0.00'으로 온다.
+      // 보유수량이 있는데 0.00이면 "지분 없음"이 아니라 "0.005% 미만"이라는 뜻 —
+      // 수학적으로 참인 "<0.01%"로 표시한다.
+      ["num", row.ownership_ratio == null ? NBSP
+        : row.ownership_ratio === 0 && row.shares_owned > 0 ? "<0.01%"
+        : `${row.ownership_ratio.toFixed(2)}%`],
     ];
     for (const [cls, text] of cells) {
       const td = document.createElement("td");
