@@ -38,6 +38,9 @@ const TEXT = {
     "brand.tagline": "MARKET SIGNAL CONSOLE", "nav.analytics": "종목 분석", "nav.monitor": "시장 모니터",
     "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌",
     "landing.kicker": "KOREA × US MARKET CONSOLE", "landing.title": "장이 닫혀도, 시장은 움직입니다.",
+    "landing.title.krOpen": "장중입니다. 마감 후에도, 여기서 이어집니다.",
+    "landing.title.usOpen": "서울은 밤, 뉴욕은 장중입니다.",
+    "landing.title.weekend": "주말에도, 시장은 움직입니다.",
     "landing.copy": "삼성전자·SK하이닉스의 24시간 참고가부터 미국 매크로까지, 연결된 데이터만 보여줍니다. 연결되지 않은 값은 추정하지 않습니다.",
     "landing.krLink": "한국 시장 페이지", "landing.krDesc": "24시간 참고가 · 공식 종가 · 코스피 지수군 · ETF 보드 · 국민연금 5% 공시",
     "landing.usLink": "미국·글로벌 페이지", "landing.usDesc": "S&P 500 히트맵 · 하원 의원 거래 · 스트레스 지수 · 매크로 · 유동성",
@@ -111,6 +114,9 @@ const TEXT = {
     "brand.tagline": "MARKET SIGNAL CONSOLE", "nav.analytics": "Stock analytics", "nav.monitor": "Market monitor",
     "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & Global",
     "landing.kicker": "KOREA × US MARKET CONSOLE", "landing.title": "Markets move after the close.",
+    "landing.title.krOpen": "Seoul is trading. It carries on here after the close.",
+    "landing.title.usOpen": "Night in Seoul, open in New York.",
+    "landing.title.weekend": "Even on weekends, markets move.",
     "landing.copy": "From around-the-clock references for Samsung Electronics and SK Hynix to US macro — only connected data, nothing estimated.",
     "landing.krLink": "Korea markets page", "landing.krDesc": "24h references · official closes · KOSPI index family · ETF board · NPS 5% filings",
     "landing.usLink": "US & global page", "landing.usDesc": "S&P 500 heatmap · House trades · stress index · macro · liquidity",
@@ -1190,7 +1196,40 @@ function krSessionInfo(now = new Date()) {
   return { open: false, minutesToOpen: wait };
 }
 
+// 히어로 카피를 시장 세션에 맞춘다. 방문자 시계가 아니라 서울·뉴욕 타임존
+// 기준이고(해외 접속 대비), 미국 서머타임은 타임존 API가 처리한다. 시계 기준
+// 평일 판정이라 휴장일은 반영하지 못한다 — 세션 배지와 같은 공통 한계다.
+// 한국 정규장(09:00–15:30 KST)과 미국 정규장(NY 09:30–16:00)은 겹치지 않아
+// 상태는 넷으로 닫힌다: 한국 장중 · 미국 장중 · 주말 · 그 외(원래 문구).
+function zoneClock(timeZone) {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date());
+  const get = (type) => parts.find((part) => part.type === type)?.value || "";
+  const weekday = get("weekday");
+  return {
+    weekend: weekday === "Sat" || weekday === "Sun",
+    minutes: (parseInt(get("hour"), 10) % 24) * 60 + parseInt(get("minute"), 10),
+  };
+}
+
+function heroTitleKey() {
+  const newYork = zoneClock("America/New_York");
+  if (!newYork.weekend && newYork.minutes >= 9 * 60 + 30 && newYork.minutes < 16 * 60) return "landing.title.usOpen";
+  const seoul = zoneClock("Asia/Seoul");
+  if (seoul.weekend) return "landing.title.weekend";
+  if (seoul.minutes >= 9 * 60 && seoul.minutes < 15 * 60 + 30) return "landing.title.krOpen";
+  return "landing.title";
+}
+
+function updateHeroTitle() {
+  const node = document.querySelector('[data-i18n^="landing.title"]');
+  if (!node) return;
+  const key = heroTitleKey();
+  // dataset까지 바꿔 두면 언어 전환(trNode)이 고른 변형을 그대로 번역한다.
+  if (node.dataset.i18n !== key) { node.dataset.i18n = key; node.textContent = t(key); }
+}
+
 function updateSessionBadge() {
+  updateHeroTitle();
   const badge = $("#session-badge");
   if (!badge) return;
   const info = krSessionInfo();
