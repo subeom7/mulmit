@@ -146,6 +146,8 @@ DART_RETRIES = _int("DART_RETRIES", 2)
 DART_REQUEST_INTERVAL = _float("DART_REQUEST_INTERVAL", 0.25)
 # 보고서 목록 캐시. 공시는 수시 제출이라 반나절 신선도면 충분하다.
 DART_MAX_AGE = _int("DART_MAX_AGE", 60 * 60 * 12)
+# 주요사항보고 속보 피드는 공시 lane과 별개 주기로 더 자주 돈다 (요청 수 ~3/회).
+KR_EVENTS_MAX_AGE = _int("KR_EVENTS_MAX_AGE", 60 * 60)
 # 법인코드 매핑(zip)은 거의 안 바뀐다.
 DART_CORP_MAX_AGE = _int("DART_CORP_MAX_AGE", 60 * 60 * 24 * 7)
 

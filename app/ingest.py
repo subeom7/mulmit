@@ -22,7 +22,7 @@ import logging
 import threading
 import time
 
-from . import config, data, econ_calendar, kr_pension, store, us_fundamentals, us_ptr
+from . import config, data, econ_calendar, kr_events, kr_pension, store, us_fundamentals, us_ptr
 from .market_assets import ASSET_TICKERS, CORRELATION_TICKERS
 from .providers import DataUnavailable, RateLimited, get_provider
 from .providers.bls import (
@@ -556,6 +556,26 @@ def refresh_kr_pension(*, force: bool = False) -> dict:
         return {"failed": str(exc)}
 
 
+def refresh_kr_events(*, force: bool = False) -> dict:
+    """주요사항보고 접수 목록 갱신. 속보성이라 자체 주기(KR_EVENTS_MAX_AGE)를 쓴다."""
+    if not config.DART_ENABLED:
+        return {"skipped": "disabled"}
+    if not config.DART_API_KEY:
+        return {"skipped": "not_configured"}
+    if not force and store.load_report(kr_events.CACHE_KEY, config.KR_EVENTS_MAX_AGE) is not None:
+        return {"skipped": "fresh"}
+    try:
+        result = kr_events.refresh()
+        log.info("주요사항보고 피드 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("DART 허용량 — 주요사항보고 피드는 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("주요사항보고 피드 갱신 실패: %s", exc)
+        return {"failed": str(exc)}
+
+
 def refresh_econ_calendar(*, force: bool = False) -> dict:
     """경제 캘린더의 FRED 릴리스 예정일 갱신. 큐레이션 부분은 코드에 있다."""
     if not config.FRED_ENABLED:
@@ -808,6 +828,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             fsc_result = refresh_fsc()
             insider_result = refresh_insider_filings()
             pension_result = refresh_kr_pension()
+            kr_events_result = refresh_kr_events()
             ptr_result = refresh_us_ptr()
             fund_result = refresh_us_fundamentals()
             refresh_econ_calendar()
@@ -827,6 +848,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             "fsc": fsc_result,
             "insider": insider_result,
             "kr_pension": pension_result,
+            "kr_events": kr_events_result,
             "us_ptr": ptr_result,
             "us_fundamentals": fund_result,
             "elapsed": round(time.time() - started, 2),
@@ -846,6 +868,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             fsc_result = refresh_fsc()
             insider_result = refresh_insider_filings()
             pension_result = refresh_kr_pension()
+            kr_events_result = refresh_kr_events()
             refresh_us_ptr()
             refresh_us_fundamentals()
             refresh_econ_calendar()
@@ -856,6 +879,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
                 "fred": fred_result,
                 "insider": insider_result,
                 "kr_pension": pension_result,
+            "kr_events": kr_events_result,
             }
 
     _refresh_macro()
@@ -918,6 +942,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         fsc_result = refresh_fsc()
         insider_result = refresh_insider_filings()
         pension_result = refresh_kr_pension()
+        kr_events_result = refresh_kr_events()
         ptr_result = refresh_us_ptr()
         fund_result = refresh_us_fundamentals()
         refresh_econ_calendar()

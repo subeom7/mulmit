@@ -207,21 +207,36 @@ class DartProvider:
         return body
 
     def fetch_filing_index(
-        self, *, detail_type: str, bgn_de: str, end_de: str, max_pages: int = 60
+        self,
+        *,
+        detail_type: str | None = None,
+        broad_type: str | None = None,
+        bgn_de: str,
+        end_de: str,
+        max_pages: int = 60,
     ) -> tuple[list[dict[str, Any]], bool]:
-        """공시검색(list.json)을 기간·상세유형으로 걷는다.
+        """공시검색(list.json)을 기간·유형으로 걷는다.
 
-        제출인 필터가 없어 기간 안의 전 페이지를 받아야 한다. 최신순 정렬이
-        기본값이므로 ``max_pages``에서 끊기면 잘리는 쪽은 가장 오래된
-        공시들이고, 두 번째 반환값이 그 사실을 알린다.
+        ``detail_type``은 상세유형(pblntf_detail_ty, 예: D001), ``broad_type``은
+        대분류(pblntf_ty, 예: B 주요사항보고)다 — 정확히 하나만 준다. 제출인
+        필터가 없어 기간 안의 전 페이지를 받아야 한다. 최신순 정렬이 기본값이므로
+        ``max_pages``에서 끊기면 잘리는 쪽은 가장 오래된 공시들이고, 두 번째
+        반환값이 그 사실을 알린다.
         """
+        if bool(detail_type) == bool(broad_type):
+            raise ValueError("give exactly one of detail_type or broad_type")
+        type_param = (
+            {"pblntf_detail_ty": detail_type}
+            if detail_type
+            else {"pblntf_ty": broad_type}
+        )
         rows: list[dict[str, Any]] = []
         page = 1
         while True:
             body = self._get_json(
                 "list.json",
                 {
-                    "pblntf_detail_ty": detail_type,
+                    **type_param,
                     "bgn_de": bgn_de,
                     "end_de": end_de,
                     "page_no": str(page),

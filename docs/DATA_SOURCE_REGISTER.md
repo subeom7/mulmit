@@ -956,6 +956,20 @@ CNN Fear & Greed는 명칭도 점수도 복제하지 않는다. 그 지수의 7�
 | Alpha Vantage | 개인/표준 API와 commercial 문의 분리 | 불확실 | commercial/public display는 문의 필요 | [Terms](https://www.alphavantage.co/terms_of_service/) |
 | Finnhub | 재배포/enterprise는 문의형 | 예산 내 근거 없음 | enterprise 계약 전 사용 금지 | [Pricing](https://finnhub.io/pricing-startups-and-enterprise) |
 
+### 6.1 뉴스·피드 소스 후보 (2026-08-19 운영자 아이디어 접수 — ROADMAP #10 조사 대기)
+
+아직 약관 검토 전인 **후보 목록**이다. 어느 것도 승인 아님. 조사 시 공개 표시(재배포) 허용 여부와
+헤드라인+링크 vs 본문의 구분, 무료 티어의 상업 이용 조건을 먼저 본다.
+
+| 후보 | 성격 | 첫인상 판단(미검증) |
+|---|---|---|
+| Financial Juice | 실시간 뉴스 스쿼크 | 무료 플레이어는 자사 위젯 임베드 전용일 가능성 — 데이터 재배포는 별도 계약 예상 |
+| Finnhub (뉴스 API) | 종목별 뉴스 | 위 행과 동일 — 무료 티어는 개인 용도, 공개 표시는 enterprise 문의형 |
+| Marketaux | 뉴스 API (헤드라인+링크) | 무료 티어 소량. 헤드라인·링크·출처 표기 표시가 약관상 허용인지 확인 필요 |
+| 한국은행 ECOS API | 뉴스 아님 — 거시 통계 | 공공데이터·출처표기형으로 권리 유리 예상. **한국 거시 lane(기준금리 등) 후보로 별도 트랙** |
+| KOSIS (통계청) | 뉴스 아님 — 통계 | ECOS와 같은 트랙. 공공누리 유형 확인 필요 |
+| DART Open API | 공시 | ✅ 이미 승인·운영 중 (§3.9 계열) — 공시 속보 피드(`/api/kr/events`)가 이 축 |
+
 결론:
 
 - 가격이 예산 안이라는 이유만으로 구매하지 않는다.
