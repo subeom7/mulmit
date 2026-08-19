@@ -73,6 +73,7 @@ const TEXT = {
     "kro.title": "한국 주식, 장 밖에서는", "kro.copy": "장이 닫혀 있어도 합성 무기한선물은 24시간 움직입니다. 마크가격을 공식환율로 환산해 마지막 공식 종가와 비교합니다. 현물 호가나 시초가 예측이 아닙니다.",
     "kro.fxOfficial": "공식환율 환산 · 실시간 환율 아님", "kro.vsClose": "{date} 종가 대비", "kro.mark": "마크", "kro.official": "공식 종가", "kro.fx": "환산 환율",
     "kro.adrRatio": "ADR 비율", "kro.noFx": "환율 미확보 · 환산 보류", "kro.noClose": "공식 종가 미확보", "kro.noMarket": "표시할 시장 없음", "kro.session": "주말 내부 가격발견 중",
+    "kro.vsSession": "{date} 15:30 퍼프가 대비 · 참고", "kro.vsSessionNote": "퍼프 5분봉 기준 · 공식 종가 아님",
     "krp.title": "국민연금 5% 공시", "krp.copy": "주식등의 대량보유 상황보고(5% 룰) 중 국민연금공단 제출분입니다. 보고서 단위의 보유비율 변동이며, 통상 한 달치가 월초에 일괄 공시됩니다. 일별 매매가 아닙니다.",
     "krp.colDate": "보고일", "krp.colCompany": "회사", "krp.colRatio": "보유비율", "krp.colChange": "증감", "krp.colShares": "보유주식수", "krp.colReason": "보고사유",
     "krp.detailPending": "상세 미확보", "krp.window": "최근 {days}일 공시 {total}건 중 {count}건",
@@ -141,6 +142,7 @@ const TEXT = {
     "kro.title": "Korean stocks, after hours", "kro.copy": "Synthetic perpetuals keep trading around the clock. Marks are converted at the official exchange rate and compared with the last official close. Not spot quotes, not an open forecast.",
     "kro.fxOfficial": "Official-rate conversion · not a live FX rate", "kro.vsClose": "vs {date} close", "kro.mark": "Mark", "kro.official": "Official close", "kro.fx": "FX applied",
     "kro.adrRatio": "ADR ratio", "kro.noFx": "No official FX yet · conversion withheld", "kro.noClose": "Official close unavailable", "kro.noMarket": "No live market", "kro.session": "Weekend internal price discovery",
+    "kro.vsSession": "vs perp @ {date} 15:30 KST · reference", "kro.vsSessionNote": "Perp 5-minute candle basis · not an official close",
     "krp.title": "NPS 5% filings", "krp.copy": "Large-holding (5% rule) reports filed by the National Pension Service. Report-level stake changes, usually filed as one early-month batch covering the prior month — not daily trades.",
     "krp.colDate": "Filed", "krp.colCompany": "Company", "krp.colRatio": "Stake", "krp.colChange": "Change", "krp.colShares": "Shares held", "krp.colReason": "Reason",
     "krp.detailPending": "Detail pending", "krp.window": "{count} of {total} filings in the last {days} days",
@@ -1478,6 +1480,20 @@ function renderKrOvernight() {
     else if (card.status === "no_fx") vs.textContent = t("kro.noFx");
     else vs.textContent = t("kro.noClose");
 
+    // 공식 종가가 직전 세션보다 늦을 때(아침·연휴)만 직전 15:30 퍼프가 대비를
+    // 참고선으로 덧붙인다. 공식 종가가 따라잡으면 두 수치가 겹치므로 숨긴다.
+    const ref = card.session_reference;
+    const refPercent = safeNumber(ref?.vs_percent);
+    const refDate = String(ref?.boundary_kst || "").slice(0, 10);
+    const officialDate = String(card.official?.date || "");
+    let vsRef = null;
+    if (ref?.status === "ok" && refPercent !== null && refDate && (!officialDate || officialDate < refDate)) {
+      vsRef = document.createElement("div");
+      vsRef.className = `kro-vs-ref ${changeClass(refPercent)}`;
+      vsRef.textContent = `${formatSigned(refPercent)} · ${t("kro.vsSession", { date: kroDate(refDate) })}`;
+      vsRef.title = t("kro.vsSessionNote");
+    }
+
     const meta = document.createElement("dl"); meta.className = "kro-meta";
     const row = (labelText, valueText) => {
       const wrap = document.createElement("div");
@@ -1501,7 +1517,9 @@ function renderKrOvernight() {
     if (card.perp?.liquidity_status === "low") badge(t("weekend.liquidity"));
     if (payload.session?.active) badge(t("kro.session"), "info");
 
-    article.append(header, price, vs, meta);
+    article.append(header, price, vs);
+    if (vsRef) article.append(vsRef);
+    article.append(meta);
     if (badges.childElementCount) article.append(badges);
     return article;
   }));

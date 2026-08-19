@@ -179,6 +179,123 @@ def test_index_card_compares_points_directly_without_fx(db, monkeypatch):
     )
 
 
+# --- session reference: perp vs its own 15:30 candle --------------------------
+
+
+class BaselineFixtureProvider(FixtureProvider):
+    """FixtureProvider that also answers session-baseline candle lookups."""
+
+    def __init__(
+        self,
+        markets: list[tuple[str, dict[str, Any]]],
+        *,
+        baselines: dict[str, float] | None = None,
+        quality: str = "high",
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(markets, **kwargs)
+        self.baselines = baselines or {}
+        self.quality = quality
+        self.baseline_calls: list[tuple[str, dt.datetime]] = []
+
+    def fetch_session_baseline(
+        self, symbol: str, boundary: dt.datetime, *, interval: str = "5m"
+    ) -> dict[str, Any] | None:
+        self.baseline_calls.append((symbol, boundary))
+        price = self.baselines.get(symbol)
+        if price is None:
+            return None
+        return {
+            "price": price,
+            "interval": interval,
+            "boundary_at": boundary.isoformat(),
+            "candle_open_at": "2026-08-18T06:25:00Z",
+            "candle_close_at": "2026-08-18T06:30:00Z",
+            "distance_seconds": 30.0,
+            "proximity_quality": self.quality,
+            "fetched_at": "2026-08-18T06:30:01Z",
+            "as_of": "2026-08-18T06:30:00Z",
+            "cached": False,
+            "stale": False,
+            "age_seconds": 0.0,
+        }
+
+
+WEDNESDAY_MORNING = dt.datetime(2026, 8, 19, 1, 0, tzinfo=dt.UTC)  # 10:00 KST
+
+
+def test_session_reference_is_pure_perp_move_and_needs_no_lanes(db, monkeypatch):
+    # Both official lanes closed: the perp-vs-perp percent must survive alone.
+    monkeypatch.setattr(config, "FSC_ENABLED", False)
+    monkeypatch.setattr(config, "FEDBOARD_ENABLED", False)
+    provider = BaselineFixtureProvider(
+        ALL_MARKETS, baselines={"xyz:SMSN": 190.0, "xyz:KR200": 1100.0}
+    )
+
+    payload = build_kr_overnight(provider, now=WEDNESDAY_MORNING)
+    samsung = _card(payload, "samsung_electronics")["session_reference"]
+    kospi = _card(payload, "kospi_200")["session_reference"]
+
+    assert samsung["status"] == "ok"
+    assert samsung["boundary_kst"] == "2026-08-18T15:30:00+09:00"
+    assert samsung["vs_percent"] == pytest.approx((198.98 / 190.0 - 1.0) * 100.0, abs=1e-3)
+    assert samsung["implied_value"] is None  # no FX lane, so no won conversion
+    assert kospi["status"] == "ok"
+    assert kospi["implied_value"] == pytest.approx(1100.0)  # points need no FX
+    assert kospi["vs_percent"] == pytest.approx((1131.5 / 1100.0 - 1.0) * 100.0, abs=1e-3)
+
+
+def test_session_boundary_skips_the_weekend_and_rolls_after_close(full_lanes):
+    provider = BaselineFixtureProvider(ALL_MARKETS, baselines={"xyz:SMSN": 190.0})
+
+    monday_morning = dt.datetime(2026, 8, 24, 1, 0, tzinfo=dt.UTC)  # Mon 10:00 KST
+    payload = build_kr_overnight(provider, now=monday_morning)
+    ref = _card(payload, "samsung_electronics")["session_reference"]
+    assert ref["boundary_kst"] == "2026-08-21T15:30:00+09:00"  # Friday
+
+    wednesday_evening = dt.datetime(2026, 8, 19, 8, 0, tzinfo=dt.UTC)  # Wed 17:00 KST
+    payload = build_kr_overnight(provider, now=wednesday_evening)
+    ref = _card(payload, "samsung_electronics")["session_reference"]
+    assert ref["boundary_kst"] == "2026-08-19T15:30:00+09:00"  # same day after close
+
+    # The candle lookup carries the 30-second slack so a candle stamped exactly
+    # at the boundary is included regardless of the vendor's close convention.
+    _, fetched_boundary = provider.baseline_calls[0]
+    assert fetched_boundary.astimezone(kr_overnight.KST).strftime("%H:%M:%S") == "15:30:30"
+
+
+def test_missing_baseline_reads_unavailable_without_touching_the_card(full_lanes):
+    provider = BaselineFixtureProvider(ALL_MARKETS, baselines={})
+
+    payload = build_kr_overnight(provider, now=WEDNESDAY_MORNING)
+    samsung = _card(payload, "samsung_electronics")
+
+    assert samsung["status"] == "ok"  # official comparison unaffected
+    assert samsung["session_reference"]["status"] == "unavailable"
+    assert samsung["session_reference"]["vs_percent"] is None
+
+
+def test_low_proximity_baseline_is_flagged_not_hidden(full_lanes):
+    provider = BaselineFixtureProvider(
+        ALL_MARKETS, baselines={"xyz:SMSN": 190.0}, quality="low"
+    )
+
+    payload = build_kr_overnight(provider, now=WEDNESDAY_MORNING)
+    ref = _card(payload, "samsung_electronics")["session_reference"]
+
+    assert ref["status"] == "low_proximity"
+    assert ref["vs_percent"] is not None
+    assert ref["proximity_quality"] == "low"
+
+
+def test_provider_without_baseline_support_reads_unavailable(full_lanes):
+    payload = build_kr_overnight(FixtureProvider(ALL_MARKETS), now=WEDNESDAY_MORNING)
+    ref = _card(payload, "samsung_electronics")["session_reference"]
+
+    assert ref["status"] == "unavailable"
+    assert ref["vs_percent"] is None
+
+
 # --- missing inputs null exactly their dependents -----------------------------
 
 

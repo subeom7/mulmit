@@ -411,6 +411,9 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 .kro-vs { color: var(--muted); font: 750 11.5px/1.25 var(--mono); }
 .kro-vs.up { color: var(--green); }
 .kro-vs.down { color: var(--red); }
+.kro-vs-ref { margin-top: 3px; color: var(--faint); font: 650 10px/1.25 var(--mono); opacity: .92; }
+.kro-vs-ref.up { color: var(--green); }
+.kro-vs-ref.down { color: var(--red); }
 .kro-meta { display: grid; gap: 4px; margin: 13px 0 0; padding-top: 9px; border-top: 1px solid var(--line); }
 .kro-meta div { display: flex; justify-content: space-between; gap: 8px; }
 .kro-meta dt { color: var(--faint); font: 650 9px/1.4 var(--mono); }
