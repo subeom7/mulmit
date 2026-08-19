@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib.parse import quote
 
-from . import data_rights, store
+from . import data_rights, market_calendar, store
 from .providers.base import DataUnavailable, RateLimited
 from .providers.fedboard import FEDBOARD_PROVIDER_ID, FEDBOARD_PUBLISHER
 from .providers.fsc import (
@@ -137,11 +137,11 @@ def _iso_date(value: Any) -> str | None:
 
 
 def _last_session_boundary(moment: dt.datetime) -> dt.datetime:
-    """The most recent weekday 15:30 KST strictly before ``moment``.
+    """The most recent KRX trading day's 15:30 KST strictly before ``moment``.
 
-    Clock-based weekday logic: Korean market holidays are not consulted, so on
-    a holiday this points at a moment when the perp traded but KRX did not.
-    The payload labels the value as a perp reference, never as a close.
+    Weekends by clock, holidays by the curated calendar — so on the morning
+    after a holiday the baseline points at the last day KRX actually traded,
+    not at a 15:30 when only the perp moved.
     """
     local = moment.astimezone(KST)
     boundary = local.replace(
@@ -149,7 +149,7 @@ def _last_session_boundary(moment: dt.datetime) -> dt.datetime:
     )
     if boundary >= local:
         boundary -= dt.timedelta(days=1)
-    while boundary.weekday() >= 5:
+    while boundary.weekday() >= 5 or market_calendar.krx_closed(boundary.date()):
         boundary -= dt.timedelta(days=1)
     return boundary
 
@@ -218,13 +218,13 @@ def _session_reference_block(
     if perp is None:
         return None
     basis_ko = (
-        "가장 최근 평일 15:30(KST) 직전 퍼프 5분봉 종가 대비 변동률 — 공식 종가가 "
-        "아닌 참고값이며 휴장일은 반영하지 않습니다."
+        "가장 최근 거래일 15:30(KST) 직전 퍼프 5분봉 종가 대비 변동률 — 공식 종가가 "
+        f"아닌 참고값입니다. 휴장일은 큐레이션 달력(확인 {market_calendar.CURATED_VERIFIED_AT}) 기준."
     )
     basis_en = (
         "Move versus the perp's own 5-minute candle close just before the most recent "
-        "weekday 15:30 KST — a reference, not an official close; market holidays are "
-        "not reflected."
+        "trading day's 15:30 KST — a reference, not an official close. Holidays follow "
+        f"a curated calendar (verified {market_calendar.CURATED_VERIFIED_AT})."
     )
     block: dict[str, Any] = {
         "status": "unavailable",
@@ -517,10 +517,27 @@ def build_kr_overnight(
     ]
     available = sum(1 for card in cards if card["status"] == "ok")
 
+    # 오늘의 휴장 여부를 프런트가 세션 문구·배지에 쓴다. 시계는 각 거래소의
+    # 타임존 기준이고, 휴장일 판정은 큐레이션 달력이 맡는다.
+    kst_today = moment.astimezone(KST).date()
+    ny_today = moment.astimezone(dt.timezone(dt.timedelta(hours=-5))).date()
+    try:
+        from zoneinfo import ZoneInfo
+
+        ny_today = moment.astimezone(ZoneInfo("America/New_York")).date()
+    except Exception:  # noqa: BLE001 - tz 데이터 없는 환경은 고정 오프셋 근사로
+        pass
+
     return {
         "generated_at": _iso_utc(),
         "as_of": snapshot.get("as_of") or snapshot.get("fetched_at"),
         "session": _korea_weekend_session(moment),
+        "market_days": {
+            "date_kst": kst_today.isoformat(),
+            "krx_closed_today": market_calendar.krx_closed(kst_today),
+            "nyse_closed_today": market_calendar.nyse_closed(ny_today),
+            "calendar_verified_at": market_calendar.CURATED_VERIFIED_AT,
+        },
         "fx": fx,
         "cards": cards,
         "coverage": {"available": available, "total": len(cards)},
@@ -529,8 +546,8 @@ def build_kr_overnight(
                 "환산가 = 마크가격 × 원/달러(H.10 공식 고시, 날짜 표기). 기준가 대비 % = "
                 "환산가 ÷ 마지막 공식 종가 − 1. 코스피 200은 포인트 단위가 같아 환산 없이 "
                 "직접 비교합니다. ADR 카드는 마크 × 공시 비율(10 ADR = 원주 1주) × 환율을 원주 종가와 비교한 프리미엄 참고값입니다. 김치프리미엄 조정은 하지 않습니다. "
-                "공식 종가가 아직 전전일이면 직전 평일 15:30 시점 퍼프 5분봉 종가 대비 변동률을 "
-                "참고로 함께 표시합니다(공식 종가 아님, 휴장일 미반영)."
+                "공식 종가가 아직 전전일이면 직전 거래일 15:30 시점 퍼프 5분봉 종가 대비 변동률을 "
+                "참고로 함께 표시합니다(공식 종가 아님, 휴장일은 큐레이션 달력 기준)."
             ),
             "en": (
                 "Implied price = mark × won/dollar (official H.10 quotation, date shown). "
@@ -539,8 +556,8 @@ def build_kr_overnight(
                 "premium reference: mark × disclosed ratio (10 ADRs = 1 ordinary) × FX versus "
                 "the ordinary close. No kimchi-premium adjustment is applied. While the official "
                 "close lags, the move versus the perp's own 5-minute candle close at the most "
-                "recent weekday 15:30 KST is shown as a reference (not an official close; "
-                "holidays not reflected)."
+                "recent trading day's 15:30 KST is shown as a reference (not an official close; "
+                "holidays follow a curated calendar)."
             ),
         },
         "disclaimer": {
