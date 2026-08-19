@@ -15,7 +15,7 @@
   <meta property="og:locale" content="ko_KR">
   <meta name="twitter:card" content="summary">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260819-14">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260819-15">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -94,6 +94,18 @@
       </div>
     </section>
 
+    <section class="dashboard-section" id="kr-events" hidden aria-labelledby="krev-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">KOREA · MATERIAL EVENT FILINGS · DART</p><h2 id="krev-title" data-i18n="krev.title">한국 기업 공시 속보 (주요사항보고)</h2></div>
+        <span class="source-pill">DART</span>
+      </div>
+      <div class="panel">
+        <p class="section-copy" data-i18n="krev.copy" style="margin:0 0 12px">유가증권·코스닥 상장사의 주요사항보고서 접수 목록입니다. 제목은 공시 원문 제목이며, 수집 주기(약 1시간)로 갱신되어 실시간 속보가 아닙니다. 내용은 원문에서 확인하세요.</p>
+        <div id="krev-body"></div>
+        <footer class="panel-footer" id="krev-footer"></footer>
+      </div>
+    </section>
+
     <section class="dashboard-section" id="kr-pension" hidden aria-labelledby="krp-title">
       <div class="section-heading">
         <div><p class="eyebrow">KOREA · NPS 5% FILINGS · DART</p><h2 id="krp-title" data-i18n="krp.title">국민연금 5% 공시</h2></div>
@@ -159,6 +171,6 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "kr";</script>
-  <script src="/static/monitor.js?v=20260819-14" defer></script>
+  <script src="/static/monitor.js?v=20260819-15" defer></script>
 </body>
 </html>

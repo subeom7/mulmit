@@ -45,6 +45,8 @@ const TEXT = {
     "session.holiday": "휴장일",
     "presence.now": "{n}명 보는 중", "presence.note": "최근 90초 하트비트 기준 열린 브라우저 수 — 사람 수가 아닙니다.",
     "ev.title": "미국 기업 공시 속보 (8-K)", "ev.copy": "커버 중인 티커의 8-K(주요 이벤트 보고)입니다. 수집 주기(약 1시간)로 갱신되며 실시간 속보가 아닙니다. 제목은 공식 Item 번호의 표준 제목이고, 내용은 원문에서 확인하세요.",
+    "krev.title": "한국 기업 공시 속보 (주요사항보고)", "krev.copy": "유가증권·코스닥 상장사의 주요사항보고서 접수 목록입니다. 제목은 공시 원문 제목이며, 수집 주기(약 1시간)로 갱신되어 실시간 속보가 아닙니다.",
+    "krev.colDate": "접수일", "krev.colCompany": "회사", "krev.colName": "보고서명", "krev.colLink": "원문", "krev.view": "보기",
     "ev.colDate": "제출일", "ev.colCompany": "회사", "ev.colItems": "내용 (Item)", "ev.colLink": "원문", "ev.view": "보기",
     "landing.copy": "삼성전자·SK하이닉스의 24시간 참고가부터 미국 매크로까지, 연결된 데이터만 보여줍니다. 연결되지 않은 값은 추정하지 않습니다.",
     "landing.krLink": "한국 시장 페이지", "landing.krDesc": "24시간 참고가 · 공식 종가 · 코스피 지수군 · ETF 보드 · 국민연금 5% 공시",
@@ -126,6 +128,8 @@ const TEXT = {
     "session.holiday": "Market holiday",
     "presence.now": "{n} viewing", "presence.note": "Open browsers heard from in the last 90 seconds — not unique people.",
     "ev.title": "US company events (8-K)", "ev.copy": "8-K current reports for covered tickers, refreshed on the collection cycle (about hourly) — not a live wire. Titles are the standard Item headings; read the filing for substance.",
+    "krev.title": "Korean company events (주요사항보고)", "krev.copy": "Material-event report filings from KOSPI and KOSDAQ listings, straight from the DART index. Titles are the filings’ own titles; refreshed on the collection cycle (about hourly), not live.",
+    "krev.colDate": "Received", "krev.colCompany": "Company", "krev.colName": "Filing title", "krev.colLink": "Filing", "krev.view": "View",
     "ev.colDate": "Filed", "ev.colCompany": "Company", "ev.colItems": "Items", "ev.colLink": "Filing", "ev.view": "View",
     "landing.copy": "From around-the-clock references for Samsung Electronics and SK Hynix to US macro — only connected data, nothing estimated.",
     "landing.krLink": "Korea markets page", "landing.krDesc": "24h references · official closes · KOSPI index family · ETF board · NPS 5% filings",
@@ -709,6 +713,7 @@ function renderJumpNav() {
   [{ id: "kr-overnight", text: t("kro.title") },
     { id: "kr-indices", text: t("kridx.title") },
     { id: "kr-etf", text: t("kre.title") },
+    { id: "kr-events", text: t("krev.title") },
     { id: "kr-pension", text: t("krp.title") },
     { id: "constituent-heatmap", text: t("tv.title") },
     { id: "us-ptr", text: t("ptr.title") },
@@ -918,6 +923,7 @@ const PAGE_FETCHES = {
   krIndices: ["kr"],
   krOvernight: ["landing", "kr"],
   krPension: ["kr"],
+  krEvents: ["kr"],
   krEtf: ["kr"],
   usPtr: ["us"],
   usEvents: ["us"],
@@ -928,24 +934,25 @@ async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension, krEtf, usPtr, usEvents, calendar] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension, krEvents, krEtf, usPtr, usEvents, calendar] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/kr/indices", "krIndices"),
     request("/api/kr/overnight", "krOvernight"), request("/api/kr/pension", "krPension"),
+    request("/api/kr/events", "krEvents"),
     request("/api/kr/etf", "krEtf"), request("/api/us/ptr", "usPtr"),
     request("/api/us/events", "usEvents"),
     request("/api/calendar", "calendar"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
   state.stress = stress; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension;
-  state.krEtf = krEtf; state.usPtr = usPtr; state.usEvents = usEvents; state.calendar = calendar;
+  state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usEvents = usEvents; state.calendar = calendar;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets");
   renderAll(); $("#refresh-button")?.removeAttribute("aria-busy");
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKrPension(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKrPension(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -1486,6 +1493,37 @@ function renderFomcDots() {
   const source = sourceInfo(median);
   const sepDate = String(median?.last_updated || "").slice(0, 10) || latest(median).date;
   $("#dots-footer").textContent = `${t("dots.asof", { date: dateText(sepDate) })} · ${source.name}`;
+}
+
+function renderKrEvents() {
+  const section = $("#kr-events");
+  if (!section) return;
+  const payload = state.krEvents;
+  const events = Array.isArray(payload?.events) ? payload.events : [];
+  if (!events.length) { section.hidden = true; return; }
+  section.hidden = false;
+
+  const table = document.createElement("table"); table.className = "accessible-table";
+  table.innerHTML = `<thead><tr><th>${t("krev.colDate")}</th><th>${t("krev.colCompany")}</th><th>${t("krev.colName")}</th><th>${t("krev.colLink")}</th></tr></thead>`;
+  const tbody = document.createElement("tbody");
+  for (const event of events) {
+    const tr = document.createElement("tr");
+    const date = document.createElement("td"); date.textContent = dateText(event.filed_at);
+    const company = document.createElement("td");
+    const code = document.createElement("code"); code.textContent = event.stock_code || "";
+    company.append(code, document.createTextNode(` ${event.company || ""}`));
+    const name = document.createElement("td"); name.textContent = event.report_name || "—";
+    const linkTd = document.createElement("td");
+    const link = document.createElement("a"); link.href = event.url; link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.textContent = t("krev.view");
+    linkTd.append(link);
+    tr.append(date, company, name, linkTd); tbody.append(tr);
+  }
+  table.append(tbody);
+  const scroll = document.createElement("div"); scroll.className = "table-scroll"; scroll.append(table);
+  $("#krev-body").replaceChildren(scroll);
+  const notice = state.lang === "ko" ? payload.source?.notice : (payload.source?.notice_en || payload.source?.notice);
+  $("#krev-footer").textContent = `${state.lang === "ko" ? payload.basis_ko : payload.basis_en} · ${notice || ""}`;
 }
 
 function renderUsEvents() {

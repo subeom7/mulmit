@@ -25,6 +25,7 @@ from . import (
     data_rights,
     econ_calendar,
     ingest,
+    kr_events,
     kr_fundamentals,
     kr_insider,
     kr_pension,
@@ -540,6 +541,30 @@ def kr_pension_filings(request: Request, response: Response) -> dict:
     except DataUnavailable as exc:
         raise HTTPException(
             status_code=503, detail="NPS major-holding filings not collected yet"
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "FSS DART"
+    return payload
+
+
+@app.get("/api/kr/events")
+@limiter.limit(config.RATE_LIMIT)
+def kr_events_feed(request: Request, response: Response) -> dict:
+    """주요사항보고 공시 속보. ingest 배치가 저장한 결과만 읽는다."""
+    try:
+        payload = kr_events.get_events()
+    except kr_events.KrEventsDisabled as exc:
+        detail = (
+            data_rights.KR_PENSION_NOT_CONFIGURED
+            if exc.reason == "not_configured"
+            else data_rights.KR_PENSION_DISABLED
+        )
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    except DataUnavailable as exc:
+        raise HTTPException(
+            status_code=503, detail="Korean material-event filings not collected yet"
         ) from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "FSS DART"
