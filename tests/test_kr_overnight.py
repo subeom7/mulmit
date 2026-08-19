@@ -78,6 +78,7 @@ ALL_MARKETS = [
     ("xyz:SKHX", _context("1210.0", "1171.6")),
     ("xyz:HYUNDAI", _context("325.29", "319.96")),
     ("xyz:KR200", _context("1131.5", "1095.8")),
+    ("xyz:SKHY", _context("154.41", "151.2")),
 ]
 
 
@@ -235,7 +236,7 @@ def test_delisted_and_absent_markets_read_as_market_unavailable(full_lanes):
     assert _card(payload, "sk_hynix")["status"] == "market_unavailable"
     assert _card(payload, "sk_hynix")["perp"] is None
     assert _card(payload, "hyundai_motor")["status"] == "market_unavailable"
-    assert payload["coverage"] == {"available": 2, "total": 4}
+    assert payload["coverage"] == {"available": 3, "total": 5}
 
 
 def test_dex_outage_degrades_to_cards_without_marks(full_lanes):
@@ -267,7 +268,7 @@ def test_route_serves_the_assembled_payload_with_the_gate_open(
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["coverage"] == {"available": 4, "total": 4}
+    assert payload["coverage"] == {"available": 5, "total": 5}
     assert response.headers["x-data-source"] == "Hyperliquid HIP-3 + FSC + Federal Reserve H.10"
     smsn = _card(payload, "samsung_electronics")
     assert smsn["implied"]["value"] == pytest.approx(198.98 * 1414.29)
@@ -277,3 +278,35 @@ def test_basis_dates_are_served_as_iso(full_lanes):
     payload = build_kr_overnight(FixtureProvider(ALL_MARKETS))
     assert _card(payload, "samsung_electronics")["official"]["date"] == "2026-08-13"
     assert _card(payload, "kospi_200")["official"]["date"] == "2026-08-13"
+
+
+def test_the_adr_card_converts_through_the_disclosed_ratio(db, hip3_public_display, monkeypatch):
+    """SKHY는 원주 1주 = 10 ADR — 환산가 = 마크 × 10 × 환율, 원주 종가 대비."""
+    monkeypatch.setattr(config, "FSC_ENABLED", True)
+    monkeypatch.setattr(config, "FEDBOARD_ENABLED", True)
+    _seed_roster(db)
+    _seed_fx(db)
+
+    payload = kr_overnight.build_kr_overnight(FixtureProvider(ALL_MARKETS))
+
+    adr = next(card for card in payload["cards"] if card["id"] == "sk_hynix_adr")
+    assert adr["kind"] == "adr"
+    assert adr["adr"]["per_ordinary"] == 10
+    expected = 154.41 * 10 * 1414.29
+    assert adr["implied"]["value"] == pytest.approx(expected)
+    assert adr["official"]["close"] == 1593000.0  # 원주(000660) 종가
+    assert adr["implied"]["vs_official_percent"] == pytest.approx(
+        (expected / 1593000.0 - 1) * 100, abs=1e-3)
+    assert adr["status"] == "ok"
+
+
+def test_the_adr_card_withholds_conversion_without_fx(db, hip3_public_display, monkeypatch):
+    monkeypatch.setattr(config, "FSC_ENABLED", True)
+    _seed_roster(db)  # 환율 미시드
+
+    payload = kr_overnight.build_kr_overnight(FixtureProvider(ALL_MARKETS))
+
+    adr = next(card for card in payload["cards"] if card["id"] == "sk_hynix_adr")
+    assert adr["status"] == "no_fx"
+    assert adr["implied"]["value"] is None
+    assert adr["perp"]["mark"] == 154.41  # 마크 자체는 보류하지 않는다

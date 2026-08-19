@@ -399,7 +399,7 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 .zone-divider { display: flex; align-items: baseline; gap: 10px; margin: 58px 0 24px; padding-top: 18px; border-top: 1px solid var(--line-strong); }
 .zone-divider span { color: var(--ink); font: 800 15px/1 var(--sans); letter-spacing: -.01em; }
 .zone-divider small { color: var(--faint); font: 700 9px/1 var(--mono); letter-spacing: .18em; }
-.kro-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.kro-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 9px; }
 .kro-card { min-width: 0; padding: 17px 16px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); box-shadow: var(--shadow); }
 .kro-card.up { border-top: 2px solid color-mix(in srgb, var(--green) 55%, var(--line)); }
 .kro-card.down { border-top: 2px solid color-mix(in srgb, var(--red) 55%, var(--line)); }
