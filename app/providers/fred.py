@@ -242,6 +242,43 @@ FRED_SERIES = (
         _NY_FED, _NY_FED_URL,
         public_web=True,
     ),
+    # FOMC dot plot: the committee's own year-end fed-funds projections from the
+    # quarterly Summary of Economic Projections. Annual series dated by the
+    # projection target year, so observations legitimately sit in the future —
+    # same forward-dating convention as `recession_prob`. The longer-run median
+    # is dated by SEP release day instead, its latest value being current.
+    FredSeriesSpec(
+        "FEDTARMD", "fedfunds_proj_median", "rates", "연준 점도표 중앙값",
+        "Fed dot plot median",
+        "FOMC 위원들의 연말 기준금리 전망 중앙값(SEP). 날짜는 전망 대상 연도입니다",
+        "Median of FOMC participants' year-end fed funds projections (SEP). "
+        "Dates mark the projection target year", _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "FEDTARCTH", "fedfunds_proj_ct_high", "rates", "점도표 중앙경향 상단",
+        "Dot plot central tendency, high",
+        "SEP 기준금리 전망 중앙경향(상·하위 3명 제외)의 상단",
+        "Upper bound of the SEP central tendency (trims the three highest and "
+        "lowest projections)", _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "FEDTARCTL", "fedfunds_proj_ct_low", "rates", "점도표 중앙경향 하단",
+        "Dot plot central tendency, low",
+        "SEP 기준금리 전망 중앙경향(상·하위 3명 제외)의 하단",
+        "Lower bound of the SEP central tendency (trims the three highest and "
+        "lowest projections)", _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
+    FredSeriesSpec(
+        "FEDTARMDLR", "fedfunds_proj_longer_run", "rates", "점도표 장기 중앙값",
+        "Dot plot longer-run median",
+        "FOMC 위원들이 보는 장기(중립) 기준금리 전망의 중앙값. 날짜는 SEP 발표일입니다",
+        "Median of FOMC participants' longer-run fed funds projections. "
+        "Dates mark the SEP release day", _FED_BOARD, _FED_BOARD_URL,
+        public_web=True,
+    ),
     FredSeriesSpec(
         "IORB", "reserve_interest", "rates", "지급준비금 이자율",
         "Interest on Reserve Balances", "연준이 지급준비금에 적용하는 이자율",
