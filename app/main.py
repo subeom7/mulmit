@@ -169,6 +169,15 @@ def stock_analytics() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "index.html")
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> FileResponse:
+    # Browsers probe this path on their own; modern ones accept an SVG body
+    # here, and every page also declares the icon with a <link> tag.
+    return FileResponse(
+        config.STATIC_DIR / "brand" / "mulmit-favicon.svg", media_type="image/svg+xml"
+    )
+
+
 @app.get("/robots.txt", include_in_schema=False)
 def robots() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "robots.txt", media_type="text/plain")
