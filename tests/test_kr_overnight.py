@@ -245,6 +245,34 @@ def test_session_reference_is_pure_perp_move_and_needs_no_lanes(db, monkeypatch)
     assert kospi["vs_percent"] == pytest.approx((1131.5 / 1100.0 - 1.0) * 100.0, abs=1e-3)
 
 
+def test_session_boundary_skips_curated_holidays(full_lanes):
+    provider = BaselineFixtureProvider(ALL_MARKETS, baselines={"xyz:SMSN": 190.0})
+
+    # 2026-10-05(월)은 대체공휴일(개천절), 10/3은 토요일: 화요일 아침의 직전
+    # 거래일 15:30은 월요일도 금요일(10/2)도 아닌 — 월요일은 휴장, 10/3·4는
+    # 주말 — 금요일 10/2다.
+    tuesday_after_holiday = dt.datetime(2026, 10, 6, 1, 0, tzinfo=dt.UTC)  # 화 10:00 KST
+    payload = build_kr_overnight(provider, now=tuesday_after_holiday)
+    ref = _card(payload, "samsung_electronics")["session_reference"]
+    assert ref["boundary_kst"] == "2026-10-02T15:30:00+09:00"
+    assert payload["market_days"]["krx_closed_today"] is False
+
+    holiday_morning = dt.datetime(2026, 10, 5, 1, 0, tzinfo=dt.UTC)  # 월(휴장) 10:00 KST
+    payload = build_kr_overnight(provider, now=holiday_morning)
+    assert payload["market_days"]["krx_closed_today"] is True
+    ref = _card(payload, "samsung_electronics")["session_reference"]
+    assert ref["boundary_kst"] == "2026-10-02T15:30:00+09:00"
+
+
+def test_market_days_flags_nyse_closures(full_lanes):
+    provider = BaselineFixtureProvider(ALL_MARKETS, baselines={})
+    # 2026-11-26 Thanksgiving: KST 저녁은 뉴욕 목요일 아침.
+    thanksgiving = dt.datetime(2026, 11, 26, 13, 0, tzinfo=dt.UTC)
+    payload = build_kr_overnight(provider, now=thanksgiving)
+    assert payload["market_days"]["nyse_closed_today"] is True
+    assert payload["market_days"]["krx_closed_today"] is False
+
+
 def test_session_boundary_skips_the_weekend_and_rolls_after_close(full_lanes):
     provider = BaselineFixtureProvider(ALL_MARKETS, baselines={"xyz:SMSN": 190.0})
 

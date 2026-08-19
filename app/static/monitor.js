@@ -41,6 +41,8 @@ const TEXT = {
     "landing.title.krOpen": "장중입니다. 마감 후에도, 여기서 이어집니다.",
     "landing.title.usOpen": "서울은 밤, 뉴욕은 장중입니다.",
     "landing.title.weekend": "주말에도, 시장은 움직입니다.",
+    "landing.title.holiday": "휴장일에도, 시장은 움직입니다.",
+    "session.holiday": "휴장일",
     "landing.copy": "삼성전자·SK하이닉스의 24시간 참고가부터 미국 매크로까지, 연결된 데이터만 보여줍니다. 연결되지 않은 값은 추정하지 않습니다.",
     "landing.krLink": "한국 시장 페이지", "landing.krDesc": "24시간 참고가 · 공식 종가 · 코스피 지수군 · ETF 보드 · 국민연금 5% 공시",
     "landing.usLink": "미국·글로벌 페이지", "landing.usDesc": "S&P 500 히트맵 · 하원 의원 거래 · 스트레스 지수 · 매크로 · 유동성",
@@ -117,6 +119,8 @@ const TEXT = {
     "landing.title.krOpen": "Seoul is trading. It carries on here after the close.",
     "landing.title.usOpen": "Night in Seoul, open in New York.",
     "landing.title.weekend": "Even on weekends, markets move.",
+    "landing.title.holiday": "Even on market holidays, markets move.",
+    "session.holiday": "Market holiday",
     "landing.copy": "From around-the-clock references for Samsung Electronics and SK Hynix to US macro — only connected data, nothing estimated.",
     "landing.krLink": "Korea markets page", "landing.krDesc": "24h references · official closes · KOSPI index family · ETF board · NPS 5% filings",
     "landing.usLink": "US & global page", "landing.usDesc": "S&P 500 heatmap · House trades · stress index · macro · liquidity",
@@ -1212,10 +1216,16 @@ function zoneClock(timeZone) {
 }
 
 function heroTitleKey() {
+  // 시계는 개장 시간대를, 서버의 큐레이션 달력(market_days)은 휴장일을 판정한다.
+  // 페이로드가 아직 없으면 시계만으로 판단한다 — 휴장일 오탐 가능성은 연 몇 회의
+  // 짧은 첫 로딩 구간뿐이다.
+  const days = state.krOvernight?.market_days;
   const newYork = zoneClock("America/New_York");
-  if (!newYork.weekend && newYork.minutes >= 9 * 60 + 30 && newYork.minutes < 16 * 60) return "landing.title.usOpen";
+  if (!newYork.weekend && !days?.nyse_closed_today
+    && newYork.minutes >= 9 * 60 + 30 && newYork.minutes < 16 * 60) return "landing.title.usOpen";
   const seoul = zoneClock("Asia/Seoul");
   if (seoul.weekend) return "landing.title.weekend";
+  if (days?.krx_closed_today) return "landing.title.holiday";
   if (seoul.minutes >= 9 * 60 && seoul.minutes < 15 * 60 + 30) return "landing.title.krOpen";
   return "landing.title";
 }
@@ -1234,9 +1244,13 @@ function updateSessionBadge() {
   if (!badge) return;
   const info = krSessionInfo();
   badge.hidden = false;
-  badge.classList.toggle("open", info.open);
+  // 시계는 열렸다고 하지만 큐레이션 달력이 휴장일이라면, 개장 표시도 다음 개장
+  // 카운트다운도 둘 다 거짓이 된다 — 휴장일 라벨만 보여준다.
+  const holiday = Boolean(state.krOvernight?.market_days?.krx_closed_today);
+  badge.classList.toggle("open", info.open && !holiday);
   badge.title = t("session.note");
   const label = $("span", badge);
+  if (holiday) { label.textContent = t("session.holiday"); return; }
   if (info.open) { label.textContent = t("session.open"); return; }
   const h = Math.floor(info.minutesToOpen / 60), m = info.minutesToOpen % 60;
   label.textContent = `${t("session.closed")} · ${t("session.until", { time: t("session.hm", { h: String(h), m: String(m) }) })}`;
