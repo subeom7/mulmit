@@ -1693,7 +1693,17 @@ function renderKrOvernight() {
     article.className = `kro-card ${changeClass(percent)}`;
 
     const header = document.createElement("header");
-    const title = document.createElement("h3"); title.textContent = localValue(card.label, state.lang);
+    const title = document.createElement("h3");
+    if (card.code) {
+      // 종목 허브로 가는 문 — 카드가 곧 그 종목의 랜딩이 된다.
+      const nameLink = document.createElement("a");
+      nameLink.href = `/stock/${card.code}`;
+      nameLink.textContent = localValue(card.label, state.lang);
+      nameLink.style.color = "inherit";
+      title.append(nameLink);
+    } else {
+      title.textContent = localValue(card.label, state.lang);
+    }
     const symbol = document.createElement("a");
     symbol.className = "kro-sym"; symbol.textContent = String(card.symbol || "").toUpperCase();
     if (card.perp?.source_url) { symbol.href = card.perp.source_url; symbol.target = "_blank"; symbol.rel = "noopener noreferrer"; }

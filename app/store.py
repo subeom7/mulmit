@@ -1692,3 +1692,13 @@ def traffic_stats(days: int = 14, *, today: dt.date | None = None) -> dict:
         "by_path": [{"path": p, "count": int(c)} for p, c in by_path],
         "top_referrers": [{"host": h, "count": int(c)} for h, c in referrers],
     }
+
+
+def list_kr_codes() -> list[tuple[str, str]]:
+    """전 상장 종목의 (코드, 이름) — 종목 허브 사이트맵용."""
+    with engine().begin() as conn:
+        rows = conn.execute(
+            sa.select(kr_listings.c.srtn_cd, kr_listings.c.itms_nm)
+            .order_by(kr_listings.c.srtn_cd)
+        ).all()
+    return [(str(code), str(name or "")) for code, name in rows]
