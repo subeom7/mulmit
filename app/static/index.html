@@ -14,7 +14,7 @@
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260819-12">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260819-13">
 <style>
 /* ---------------------------------------------------------------------------
    디자인 토큰은 monitor.css가 단일 원본이다. 이 페이지의 예전 변수명은 아래
@@ -316,6 +316,10 @@ ul.notes li::before { content: ""; position: absolute; left: 0; top: 9px; width:
   .field, .field input, .field select, button.primary { width: 100%; }
   .examples button { min-height: 42px; }
   .view-tab { min-height: 42px; display: inline-flex; align-items: center; }
+}
+@media (max-width: 560px) {
+  /* 7열 내부자·재무 표는 셀을 찌그러뜨리는 대신 .table-wrap 안에서 가로 스크롤 */
+  .insider-table { min-width: 600px; }
 }
 @media (max-width: 430px) {
   .market-pulse { grid-template-columns: 1fr 1fr; }
