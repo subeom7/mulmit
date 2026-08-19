@@ -70,9 +70,13 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-    # 외부로 열지 않는다. 접속이 필요하면 SSM으로 들어와 compose exec를 쓴다.
-    expose:
-      - "5432"
+    # 인터넷에는 열지 않는다. 인스턴스 루프백(127.0.0.1)에만 바인딩하고,
+    # 로컬 GUI(DBeaver 등)는 SSM 포트포워딩 터널로 들어온다:
+    #   aws ssm start-session --target <instance> \
+    #     --document-name AWS-StartPortForwardingSession \
+    #     --parameters portNumber=5433,localPortNumber=15432
+    ports:
+      - "127.0.0.1:5433:5432"
 
   web:
     <<: *app
