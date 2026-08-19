@@ -46,6 +46,22 @@ def make_provider(transport=None):
                          retry_backoff=0.0, sleep=lambda _s: None)
 
 
+class GkgProvider:
+    """refresh()가 쓰는 벌크 경로의 픽스처 — 파싱은 provider 테스트가 따로 고정한다."""
+
+    def fetch_latest_gkg_titles(self):
+        return [
+            {"title": "Samsung Electronics beats estimates", "url": "https://ex.com/a",
+             "domain": "ex.com", "seendate": "2026-08-19T22:15:00Z", "language": "English", "country": ""},
+            {"title": "Applebee's opens new branch", "url": "https://ex.com/b",
+             "domain": "ex.com", "seendate": "2026-08-19T22:00:00Z", "language": "English", "country": ""},
+            {"title": "Nvidia and Microsoft rally", "url": "https://ex.com/c",
+             "domain": "ex.com", "seendate": "2026-08-19T21:00:00Z", "language": "English", "country": ""},
+            {"title": "Local bake sale raises funds", "url": "https://ex.com/d",
+             "domain": "ex.com", "seendate": "2026-08-19T20:00:00Z", "language": "English", "country": ""},
+        ]
+
+
 def test_seendate_becomes_iso():
     assert _seen_iso("20260819T221500Z") == "2026-08-19T22:15:00Z"
     assert _seen_iso("garbage") is None
@@ -68,8 +84,8 @@ def test_refresh_tags_titles_with_word_boundaries_and_kr_moves(gdelt):
           "clpr": 268500.0, "flt_rt": -2.19, "mrkt_tot_amt": 1.6e15}],
         "20260819",
     )
-    result = news_feed.refresh(make_provider())
-    assert result["kept"] == 3
+    result = news_feed.refresh(GkgProvider())
+    assert result["kept"] == 2  # 무관 기사(Applebee·bake sale)는 키워드·사전 모두 불통과
 
     payload = news_feed.get_news()
     by_url = {a["url"]: a for a in payload["articles"]}
@@ -77,8 +93,8 @@ def test_refresh_tags_titles_with_word_boundaries_and_kr_moves(gdelt):
     assert samsung["tags"][0]["symbol"] == "005930"
     assert samsung["tags"][0]["change_percent"] == pytest.approx(-2.19)
     assert samsung["tags"][0]["change_basis"] == "t1_close"
-    # 단어 경계: Applebee's는 Apple이 아니다.
-    assert by_url["https://ex.com/b"]["tags"] == []
+    # 단어 경계: Applebee's는 Apple이 아니라 아예 걸러졌다.
+    assert "https://ex.com/b" not in by_url
     multi = by_url["https://ex.com/c"]
     assert {t["symbol"] for t in multi["tags"]} == {"NVDA", "MSFT"}
     assert multi["tags"][0]["hub"].startswith("/stock/")
@@ -89,22 +105,59 @@ def test_gate_and_route(db, gdelt):
     client = TestClient(app)
     assert client.get("/api/news").status_code == 503  # 첫 배치 전
 
-    news_feed.refresh(make_provider())
+    news_feed.refresh(GkgProvider())
     ok = client.get("/api/news")
     assert ok.status_code == 200
     assert ok.headers["X-Data-Source"] == "GDELT"
-    assert ok.json()["count"] == 3
+    assert ok.json()["count"] == 2
 
 
 def test_feed_carries_news_with_attribution(db, gdelt, monkeypatch):
-    news_feed.refresh(make_provider())
+    news_feed.refresh(GkgProvider())
     feed = signal_feed.build_feed()
 
     news = [i for i in feed["items"] if i["kind"] == "news"]
-    assert len(news) == 3
+    assert len(news) == 2
     assert news[0]["domain"] == "ex.com"
     assert feed["attribution"]["text"].startswith("News metadata: The GDELT Project")
 
 
 def test_gate_closed_reads_as_503(db):
     assert TestClient(app).get("/api/news").status_code == 503
+
+
+def test_gkg_archive_parses_titles_urls_and_stamps():
+    import io as _io
+    import zipfile
+
+    TAB = chr(9)
+    NL = chr(10)
+    row = TAB.join(
+        ["20260819221500-1", "20260819221500", "1", "ex.com", "https://ex.com/a"]
+        + [""] * 21
+        + ["<PAGE_TITLE>Samsung Electronics beats estimates</PAGE_TITLE>"]
+    )
+    no_title = TAB.join(["id", "20260819220000", "1", "ex.com", "https://ex.com/b"] + [""] * 22)
+    buffer = _io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("x.gkg.csv", row + NL + no_title + NL)
+    zip_bytes = buffer.getvalue()
+
+    listing = NL.join([
+        "78917 md5 http://data.gdeltproject.org/gdeltv2/x.export.CSV.zip",
+        "122971 md5 http://data.gdeltproject.org/gdeltv2/x.mentions.CSV.zip",
+        "7103994 md5 http://data.gdeltproject.org/gdeltv2/x.gkg.csv.zip",
+    ]).encode()
+
+    class BulkTransport:
+        def __call__(self, request, timeout):
+            return listing if request.full_url.endswith("lastupdate.txt") else zip_bytes
+
+    provider = GdeltProvider(http_get=BulkTransport(), request_interval=0.0,
+                             retry_backoff=0.0, sleep=lambda _s: None)
+    articles = provider.fetch_latest_gkg_titles()
+    assert articles == [{
+        "title": "Samsung Electronics beats estimates", "url": "https://ex.com/a",
+        "domain": "ex.com", "seendate": "2026-08-19T22:15:00Z",
+        "language": "English", "country": "",
+    }]
