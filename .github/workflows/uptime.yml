@@ -1,0 +1,33 @@
+# 10분마다 프로덕션을 밖에서 두드린다. 실패하면 워크플로가 빨갛게 되고,
+# GitHub 기본 알림이 저장소 소유자에게 이메일을 보낸다 — 별도 서비스 없이
+# "사이트가 죽으면 아무도 모른다" 구멍을 막는 최소 구성.
+#
+# 검사 셋: 헬스(DB 연결 포함) · 데이터(퍼프 카드 1장 이상) · 홈 HTML 200.
+# 데이터 검사가 있는 이유: 2026-08-19 프런트 TDZ 장애처럼 API는 살았는데
+# 화면이 죽는 부류는 헬스만으로 못 잡는다 — 최소한 데이터 계약까지 본다.
+name: uptime
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: health (incl. DB)
+        run: |
+          code=$(curl -s -o /dev/null -m 20 -w "%{http_code}" https://mulmit.com/api/health)
+          echo "health: $code"
+          test "$code" = "200"
+      - name: data contract (overnight cards)
+        run: |
+          curl -s -m 20 https://mulmit.com/api/kr/overnight -o body.json
+          python3 -c "import json; d=json.load(open('body.json')); assert d['coverage']['available'] >= 1, d['coverage']"
+      - name: homepage
+        run: |
+          code=$(curl -s -o /dev/null -m 20 -w "%{http_code}" https://mulmit.com/)
+          echo "home: $code"
+          test "$code" = "200"
