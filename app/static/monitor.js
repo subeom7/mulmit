@@ -46,6 +46,7 @@ const TEXT = {
     "presence.now": "{n}명 보는 중", "presence.note": "최근 90초 하트비트 기준 열린 브라우저 수 — 사람 수가 아닙니다.",
     "ev.title": "미국 기업 공시 속보 (8-K)", "ev.copy": "커버 중인 티커의 8-K(주요 이벤트 보고)입니다. 수집 주기(약 1시간)로 갱신되며 실시간 속보가 아닙니다. 제목은 공식 Item 번호의 표준 제목이고, 내용은 원문에서 확인하세요.",
     "krev.title": "한국 기업 공시 속보 (주요사항보고)", "krev.copy": "유가증권·코스닥 상장사의 주요사항보고서 접수 목록입니다. 제목은 공시 원문 제목이며, 수집 주기(약 1시간)로 갱신되어 실시간 속보가 아닙니다.",
+    "feed.title": "지금 일어나는 일", "feed.copy": "공시와 일정 lane을 시간순 한 줄기로 모았습니다. 수집 주기(약 1시간) 기반이며 실시간 속보가 아닙니다.",
     "kro.officialStrip": "확정 종가", "kro.stripKospi": "코스피", "kro.stripKosdaq": "코스닥",
     "krev.colDate": "접수일", "krev.colCompany": "회사", "krev.colName": "보고서명", "krev.colLink": "원문", "krev.view": "보기",
     "ev.colDate": "제출일", "ev.colCompany": "회사", "ev.colItems": "내용 (Item)", "ev.colLink": "원문", "ev.view": "보기",
@@ -130,6 +131,7 @@ const TEXT = {
     "presence.now": "{n} viewing", "presence.note": "Open browsers heard from in the last 90 seconds — not unique people.",
     "ev.title": "US company events (8-K)", "ev.copy": "8-K current reports for covered tickers, refreshed on the collection cycle (about hourly) — not a live wire. Titles are the standard Item headings; read the filing for substance.",
     "krev.title": "Korean company events (주요사항보고)", "krev.copy": "Material-event report filings from KOSPI and KOSDAQ listings, straight from the DART index. Titles are the filings’ own titles; refreshed on the collection cycle (about hourly), not live.",
+    "feed.title": "Happening now", "feed.copy": "Filing and schedule lanes merged into one timeline. Refreshed on the collection cycle (about hourly) — not a live wire.",
     "kro.officialStrip": "Official closes", "kro.stripKospi": "KOSPI", "kro.stripKosdaq": "KOSDAQ",
     "krev.colDate": "Received", "krev.colCompany": "Company", "krev.colName": "Filing title", "krev.colLink": "Filing", "krev.view": "View",
     "ev.colDate": "Filed", "ev.colCompany": "Company", "ev.colItems": "Items", "ev.colLink": "Filing", "ev.view": "View",
@@ -931,6 +933,7 @@ const PAGE_FETCHES = {
   stress: ["landing", "us"],
   krIndices: ["kr"],
   krOvernight: ["landing", "kr"],
+  feed: ["landing"],
   krPension: ["kr"],
   krEvents: ["kr"],
   krEtf: ["kr"],
@@ -943,7 +946,7 @@ async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension, krEvents, krEtf, usPtr, usEvents, calendar] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension, krEvents, krEtf, usPtr, usEvents, calendar, feed] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/kr/indices", "krIndices"),
@@ -952,16 +955,17 @@ async function loadCore() {
     request("/api/kr/etf", "krEtf"), request("/api/us/ptr", "usPtr"),
     request("/api/us/events", "usEvents"),
     request("/api/calendar", "calendar"),
+    request("/api/feed", "feed"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
   state.stress = stress; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension;
-  state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usEvents = usEvents; state.calendar = calendar;
+  state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets");
   renderAll(); $("#refresh-button")?.removeAttribute("aria-busy");
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderKrPension(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -1506,6 +1510,57 @@ function renderFomcDots() {
 
 // 코스피·코스닥 확정 종가 스트립. 히어로 제거 후에도 두 지수의 수준 자체는
 // 첫 화면에서 보여야 한다 — 표 형태 대신 한 줄, 날짜쌍 라벨로 정직하게.
+const FEED_KIND = {
+  us_8k: { label: LABEL("8-K", "8-K"), cls: "us" },
+  kr_material: { label: LABEL("주요사항", "Material"), cls: "kr" },
+  us_ptr: { label: LABEL("의원거래", "Congress"), cls: "us" },
+  kr_pension: { label: LABEL("국민연금", "NPS"), cls: "kr" },
+};
+
+function renderFeed() {
+  const section = $("#signal-feed");
+  if (!section) return;
+  const payload = state.feed;
+  const items = Array.isArray(payload?.items) ? payload.items : [];
+  if (!items.length) { section.hidden = true; return; }
+  section.hidden = false;
+
+  const upcoming = $("#feed-upcoming");
+  const soon = Array.isArray(payload.upcoming) ? payload.upcoming : [];
+  upcoming.hidden = !soon.length;
+  if (soon.length) {
+    upcoming.replaceChildren(...soon.map((event) => {
+      const chip = document.createElement("a");
+      chip.className = "feed-soon";
+      if (event.url) { chip.href = event.url; chip.target = "_blank"; chip.rel = "noopener noreferrer"; }
+      const dday = event.d_day === 0 ? "D-DAY" : `D-${event.d_day}`;
+      chip.textContent = `${dday} ${localValue(event.title, state.lang)}`;
+      return chip;
+    }));
+  }
+
+  const body = $("#feed-body");
+  body.replaceChildren(...items.map((item) => {
+    const row = document.createElement("div"); row.className = "feed-row";
+    const date = document.createElement("small"); date.className = "feed-date";
+    date.textContent = kroDate(item.date);
+    const kind = FEED_KIND[item.kind] || { label: LABEL(item.kind, item.kind), cls: "" };
+    const tag = document.createElement("span"); tag.className = `feed-tag ${kind.cls}`;
+    tag.textContent = localValue(kind.label, state.lang);
+    const title = document.createElement(item.url ? "a" : "span"); title.className = "feed-text";
+    if (item.url) { title.href = item.url; title.target = "_blank"; title.rel = "noopener noreferrer"; }
+    title.textContent = localValue(item.title, state.lang);
+    row.append(date, tag, title);
+    if (item.hub) {
+      const hub = document.createElement("a"); hub.className = "feed-hub"; hub.href = item.hub;
+      hub.textContent = state.lang === "ko" ? "종목 →" : "stock →";
+      row.append(hub);
+    }
+    return row;
+  }));
+  $("#feed-footer").textContent = localValue({ ko: payload.basis_ko, en: payload.basis_en }, state.lang);
+}
+
 function renderKroOfficialStrip() {
   const strip = $("#kro-official-strip");
   if (!strip) return;
