@@ -86,6 +86,7 @@ const TEXT = {
     "kro.fxOfficial": "공식환율 환산 · 실시간 환율 아님", "kro.vsClose": "{date} 종가 대비", "kro.mark": "마크", "kro.official": "공식 종가", "kro.fx": "환산 환율",
     "kro.adrRatio": "ADR 비율", "kro.noFx": "환율 미확보 · 환산 보류", "kro.noClose": "공식 종가 미확보", "kro.noMarket": "표시할 시장 없음", "kro.session": "주말 내부 가격발견 중",
     "kro.vsSession": "{date} 15:30 퍼프가 대비 · 참고", "kro.vsSessionNote": "퍼프 5분봉 기준 · 공식 종가 아님",
+    "kro.usEtf": "미국 상장 ETF · 종가 비교 없음", "kro.leverage": "레버리지",
     "kro.vsPremium": "원주 {date} 종가 대비 프리미엄", "kro.adrImpliedNote": "마크 × {ratio}(공시 비율) × 환율 = 원주 1주 환산가 — ADR 가격 상승률이 아니라 원주 대비 괴리입니다",
     "dots.title": "연준 점도표", "dots.copy": "FOMC 위원들이 분기 SEP에서 스스로 전망한 연말 기준금리입니다. 시장 내재 확률이 아니라 위원 전망의 중앙값과 중앙경향입니다.",
     "dots.target": "전망 대상", "dots.median": "중앙값", "dots.band": "중앙경향", "dots.year": "{year}년 말", "dots.longerRun": "장기 (중립)",
@@ -171,6 +172,7 @@ const TEXT = {
     "kro.fxOfficial": "Official-rate conversion · not a live FX rate", "kro.vsClose": "vs {date} close", "kro.mark": "Mark", "kro.official": "Official close", "kro.fx": "FX applied",
     "kro.adrRatio": "ADR ratio", "kro.noFx": "No official FX yet · conversion withheld", "kro.noClose": "Official close unavailable", "kro.noMarket": "No live market", "kro.session": "Weekend internal price discovery",
     "kro.vsSession": "vs perp @ {date} 15:30 KST · reference", "kro.vsSessionNote": "Perp 5-minute candle basis · not an official close",
+    "kro.usEtf": "US-listed ETF · no close comparison", "kro.leverage": "leveraged",
     "kro.vsPremium": "premium vs ordinary {date} close", "kro.adrImpliedNote": "Mark × {ratio} (disclosed ratio) × FX = per-ordinary-share equivalent — a cross-listing premium, not the ADR's price change",
     "dots.title": "Fed dot plot", "dots.copy": "Year-end fed funds projections FOMC participants publish themselves in the quarterly SEP — the committee's own medians and central tendency, not market-implied odds.",
     "dots.target": "Target", "dots.median": "Median", "dots.band": "Central tendency", "dots.year": "End of {year}", "dots.longerRun": "Longer run (neutral)",
@@ -409,6 +411,19 @@ const state = {
 };
 
 let presenceCount = null;
+
+// 종목명이 보이는 모든 곳을 종목 허브의 문으로 만든다. 코드가 형식에 맞을
+// 때만 링크를 건다 — 허브가 404를 돌려줄 심볼에 죽은 문을 달지 않는다.
+function hubLink(text, code, { us = false } = {}) {
+  const symbol = String(code || "").trim().toUpperCase();
+  const valid = us ? /^[A-Z][A-Z0-9.-]{0,9}$/.test(symbol) : /^\d{6}$/.test(symbol);
+  if (!valid) { const span = document.createElement("span"); span.textContent = text; return span; }
+  const link = document.createElement("a");
+  link.href = `/stock/${symbol}`;
+  link.textContent = text;
+  link.style.color = "inherit";
+  return link;
+}
 
 function trNode(root = document) {
   $$('[data-i18n]', root).forEach((node) => { node.textContent = t(node.dataset.i18n); });
@@ -1104,10 +1119,13 @@ function renderKrPension() {
     const dateTd = document.createElement("td");
     dateTd.textContent = kroDate(filing.report_date);
     const companyTd = document.createElement("td"); companyTd.className = "krp-company";
-    const link = document.createElement("a");
-    link.href = filing.report_url; link.target = "_blank"; link.rel = "noopener noreferrer";
-    link.textContent = filing.company || "—";
-    companyTd.append(link);
+    companyTd.append(hubLink(filing.company || "—", filing.stock_code));
+    if (filing.report_url) {
+      const source = document.createElement("a");
+      source.href = filing.report_url; source.target = "_blank"; source.rel = "noopener noreferrer";
+      source.className = "krp-source"; source.textContent = "원문";
+      companyTd.append(source);
+    }
     if (filing.market) {
       const chip = document.createElement("small"); chip.className = "krp-market";
       chip.textContent = localValue(filing.market, state.lang);
@@ -1515,6 +1533,7 @@ const FEED_KIND = {
   kr_material: { label: LABEL("주요사항", "Material"), cls: "kr" },
   us_ptr: { label: LABEL("의원거래", "Congress"), cls: "us" },
   kr_pension: { label: LABEL("국민연금", "NPS"), cls: "kr" },
+  index_move: { label: LABEL("지수 급변", "Index move"), cls: "kr" },
 };
 
 function renderFeed() {
@@ -1606,7 +1625,7 @@ function renderKrEvents() {
     const date = document.createElement("td"); date.textContent = dateText(event.filed_at);
     const company = document.createElement("td");
     const code = document.createElement("code"); code.textContent = event.stock_code || "";
-    company.append(code, document.createTextNode(` ${event.company || ""}`));
+    company.append(code, document.createTextNode(" "), hubLink(event.company || "", event.stock_code));
     const name = document.createElement("td"); name.textContent = event.report_name || "—";
     const linkTd = document.createElement("td");
     const link = document.createElement("a"); link.href = event.url; link.target = "_blank"; link.rel = "noopener noreferrer";
@@ -1637,7 +1656,7 @@ function renderUsEvents() {
     const date = document.createElement("td"); date.textContent = dateText(event.filed_at);
     const company = document.createElement("td");
     const code = document.createElement("code"); code.textContent = event.ticker;
-    company.append(code, document.createTextNode(` ${event.company || ""}`));
+    company.append(code, document.createTextNode(" "), hubLink(event.company || "", event.ticker, { us: true }));
     const items = document.createElement("td");
     items.textContent = (event.items || []).map((item) => localValue(item.label, state.lang) || item.code).join(" · ") || "—";
     const linkTd = document.createElement("td");
@@ -1779,6 +1798,11 @@ function renderKrOvernight() {
     // 30% 오른 것처럼 읽힌다. 프리미엄임을 문구로 박는다.
     const vsKey = card.kind === "adr" ? "kro.vsPremium" : "kro.vsClose";
     if (percent !== null) vs.textContent = `${formatSigned(percent)} · ${t(vsKey, { date: kroDate(card.official?.date) })}`;
+    else if (card.status === "reference_only") {
+      // 미국 상장 ETF — 이 섹션의 종가 체계 밖. 24시간 변화가 주 표기다.
+      vs.className = `kro-vs ${changeClass(change24h)}`;
+      vs.textContent = change24h === null ? t("kro.usEtf") : `24h ${formatSigned(change24h)} · ${t("kro.usEtf")}`;
+    }
     else if (card.status === "no_fx") vs.textContent = t("kro.noFx");
     else vs.textContent = t("kro.noClose");
     if (card.kind === "adr" && card.adr?.per_ordinary) {
@@ -1821,6 +1845,7 @@ function renderKrOvernight() {
     const badge = (text, cls = "warn") => { const span = document.createElement("span"); span.className = `status-badge ${cls}`; span.textContent = text; badges.append(span); };
     if (card.perp?.stale) badge(t("badge.stale"));
     if (card.perp?.liquidity_status === "low") badge(t("weekend.liquidity"));
+    if (card.leverage && card.leverage !== 1) badge(`${card.leverage}× ${t("kro.leverage")}`);
     if (payload.session?.active) badge(t("kro.session"), "info");
 
     article.append(header, price, vs);

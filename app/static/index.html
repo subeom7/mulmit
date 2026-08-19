@@ -14,7 +14,7 @@
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260819-24">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260819-26">
 <style>
 /* ---------------------------------------------------------------------------
    디자인 토큰은 monitor.css가 단일 원본이다. 이 페이지의 예전 변수명은 아래
@@ -260,6 +260,8 @@ ul.notes li::before { content: ""; position: absolute; left: 0; top: 9px; width:
 .usfund-toggle button { padding: 6px 14px; border: 0; background: transparent; color: inherit; opacity: .55; cursor: pointer; font: inherit; font-size: 12px; }
 .usfund-toggle button.active { opacity: 1; background: rgba(128,128,128,.16); font-weight: 700; }
 .table-wrap { overflow-x: auto; }
+.hub-badge { margin-left: 10px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 700 10px/1.2 var(--mono); text-decoration: none; vertical-align: middle; }
+.hub-badge:hover { color: var(--ink); border-color: var(--line-strong); }
 
 /* --- 차트 ----------------------------------------------------------------- */
 .chart { position: relative; width: 100%; }
@@ -2558,7 +2560,21 @@ function renderKrStock(data) {
   const dates = observations.map((o) => o.date);
   const closes = observations.map((o) => o.close);
   const drawdowns = observations.map((o) => o.drawdown);
-  document.getElementById("kr-price-title").textContent = `${data.name} (${data.code})`;
+  {
+    // 결과 제목이 곧 종목 허브의 문이다.
+    const heading = document.getElementById("kr-price-title");
+    heading.replaceChildren();
+    const link = document.createElement("a");
+    link.href = `/stock/${data.code}`;
+    link.style.color = "inherit";
+    link.textContent = `${data.name} (${data.code})`;
+    heading.append(link, document.createTextNode(" "));
+    const badge = document.createElement("a");
+    badge.href = `/stock/${data.code}`;
+    badge.className = "hub-badge";
+    badge.textContent = uiLang === "ko" ? "종목 허브 →" : "stock hub →";
+    heading.append(badge);
+  }
   document.getElementById("kr-price-sub").textContent = t("kr.priceSub", {
     start: dates[0] || "", end: dates[dates.length - 1] || "",
   });
