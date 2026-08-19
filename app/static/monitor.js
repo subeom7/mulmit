@@ -75,6 +75,9 @@ const TEXT = {
     "kro.adrRatio": "ADR 비율", "kro.noFx": "환율 미확보 · 환산 보류", "kro.noClose": "공식 종가 미확보", "kro.noMarket": "표시할 시장 없음", "kro.session": "주말 내부 가격발견 중",
     "kro.vsSession": "{date} 15:30 퍼프가 대비 · 참고", "kro.vsSessionNote": "퍼프 5분봉 기준 · 공식 종가 아님",
     "kro.vsPremium": "원주 {date} 종가 대비 프리미엄", "kro.adrImpliedNote": "마크 × {ratio}(공시 비율) × 환율 = 원주 1주 환산가 — ADR 가격 상승률이 아니라 원주 대비 괴리입니다",
+    "dots.title": "연준 점도표", "dots.copy": "FOMC 위원들이 분기 SEP에서 스스로 전망한 연말 기준금리입니다. 시장 내재 확률이 아니라 위원 전망의 중앙값과 중앙경향입니다.",
+    "dots.target": "전망 대상", "dots.median": "중앙값", "dots.band": "중앙경향", "dots.year": "{year}년 말", "dots.longerRun": "장기 (중립)",
+    "dots.asof": "SEP {date} 기준 · 분기 FOMC(3·6·9·12월)마다 갱신 · 중앙경향은 상·하위 3명 제외 범위",
     "krp.title": "국민연금 5% 공시", "krp.copy": "주식등의 대량보유 상황보고(5% 룰) 중 국민연금공단 제출분입니다. 보고서 단위의 보유비율 변동이며, 통상 한 달치가 월초에 일괄 공시됩니다. 일별 매매가 아닙니다.",
     "krp.colDate": "보고일", "krp.colCompany": "회사", "krp.colRatio": "보유비율", "krp.colChange": "증감", "krp.colShares": "보유주식수", "krp.colReason": "보고사유",
     "krp.detailPending": "상세 미확보", "krp.window": "최근 {days}일 공시 {total}건 중 {count}건",
@@ -145,6 +148,9 @@ const TEXT = {
     "kro.adrRatio": "ADR ratio", "kro.noFx": "No official FX yet · conversion withheld", "kro.noClose": "Official close unavailable", "kro.noMarket": "No live market", "kro.session": "Weekend internal price discovery",
     "kro.vsSession": "vs perp @ {date} 15:30 KST · reference", "kro.vsSessionNote": "Perp 5-minute candle basis · not an official close",
     "kro.vsPremium": "premium vs ordinary {date} close", "kro.adrImpliedNote": "Mark × {ratio} (disclosed ratio) × FX = per-ordinary-share equivalent — a cross-listing premium, not the ADR's price change",
+    "dots.title": "Fed dot plot", "dots.copy": "Year-end fed funds projections FOMC participants publish themselves in the quarterly SEP — the committee's own medians and central tendency, not market-implied odds.",
+    "dots.target": "Target", "dots.median": "Median", "dots.band": "Central tendency", "dots.year": "End of {year}", "dots.longerRun": "Longer run (neutral)",
+    "dots.asof": "As of the {date} SEP · updates at quarterly FOMCs (Mar·Jun·Sep·Dec) · central tendency trims the three highest and lowest",
     "krp.title": "NPS 5% filings", "krp.copy": "Large-holding (5% rule) reports filed by the National Pension Service. Report-level stake changes, usually filed as one early-month batch covering the prior month — not daily trades.",
     "krp.colDate": "Filed", "krp.colCompany": "Company", "krp.colRatio": "Stake", "krp.colChange": "Change", "krp.colShares": "Shares held", "krp.colReason": "Reason",
     "krp.detailPending": "Detail pending", "krp.window": "{count} of {total} filings in the last {days} days",
@@ -691,6 +697,7 @@ function renderJumpNav() {
     { id: "constituent-heatmap", text: t("tv.title") },
     { id: "us-ptr", text: t("ptr.title") },
     { id: "econ-calendar", text: t("cal.title") },
+    { id: "fomc-dots", text: t("dots.title") },
     ...numbered,
     { id: "liquidity-comparisons", text: `${String(sections.length + 1).padStart(2, "0")} ${state.lang === "ko" ? "유동성 비교" : "Comparisons"}` },
     { id: "sector-flow", text: t("sector.title") }, { id: "correlation", text: t("corr.title") }]
@@ -919,7 +926,7 @@ async function loadCore() {
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKrPension(); renderKrEtf(); renderUsPtr(); renderCalendar();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKrPension(); renderKrEtf(); renderUsPtr(); renderCalendar(); renderFomcDots();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -1363,6 +1370,60 @@ function renderUsPtr() {
   legal.textContent = state.lang === "ko"
     ? (payload.legal?.notice_ko || "") : (payload.legal?.notice || "");
   footer.append(...parts, basis, legal);
+}
+
+// FOMC dot plot: the committee's own year-end projections (SEP), rendered as a
+// small table instead of generic metric cards — the newest observation of each
+// series is the FARTHEST projection year, so a "latest value" headline would
+// front the wrong number.
+function renderFomcDots() {
+  const section = $("#fomc-dots");
+  if (!section) return;
+  const median = state.records.get("fedfunds_proj_median");
+  const rows = observations(median)
+    .map((o) => ({ date: String(o.date || ""), value: safeNumber(o.value) }))
+    .filter((o) => o.value !== null && o.date)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  if (!rows.length) { section.hidden = true; return; }
+  section.hidden = false;
+
+  const bandMap = (key) => new Map(observations(state.records.get(key))
+    .map((o) => [String(o.date || ""), safeNumber(o.value)]));
+  const highs = bandMap("fedfunds_proj_ct_high"), lows = bandMap("fedfunds_proj_ct_low");
+  const pct = (v) => v === null || v === undefined ? "—" : `${parseFloat(v.toFixed(2))}%`;
+
+  const table = document.createElement("table"); table.className = "accessible-table";
+  table.innerHTML = `<thead><tr><th>${t("dots.target")}</th><th>${t("dots.median")}</th><th>${t("dots.band")}</th></tr></thead>`;
+  const tbody = document.createElement("tbody");
+  rows.forEach((row) => {
+    const tr = document.createElement("tr");
+    const high = highs.get(row.date), low = lows.get(row.date);
+    const band = low !== null && low !== undefined && high !== null && high !== undefined
+      ? `${pct(low)} – ${pct(high)}` : "—";
+    [t("dots.year", { year: row.date.slice(0, 4) }), pct(row.value), band].forEach((text) => {
+      const td = document.createElement("td"); td.textContent = text; tr.append(td);
+    });
+    tbody.append(tr);
+  });
+  const longerRun = observations(state.records.get("fedfunds_proj_longer_run"))
+    .map((o) => ({ date: String(o.date || ""), value: safeNumber(o.value) }))
+    .filter((o) => o.value !== null)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .pop();
+  if (longerRun) {
+    const tr = document.createElement("tr");
+    [t("dots.longerRun"), pct(longerRun.value), "—"].forEach((text) => {
+      const td = document.createElement("td"); td.textContent = text; tr.append(td);
+    });
+    tbody.append(tr);
+  }
+  table.append(tbody);
+  const scroll = document.createElement("div"); scroll.className = "table-scroll"; scroll.append(table);
+  $("#dots-body").replaceChildren(scroll);
+
+  const source = sourceInfo(median);
+  const sepDate = String(median?.last_updated || "").slice(0, 10) || latest(median).date;
+  $("#dots-footer").textContent = `${t("dots.asof", { date: dateText(sepDate) })} · ${source.name}`;
 }
 
 function renderCalendar() {

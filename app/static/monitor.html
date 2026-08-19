@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark light">
   <meta name="description" content="Mulmit 글로벌 자산·거시경제·유동성 모니터">
   <title>Market Monitor · Mulmit</title>
-  <link rel="stylesheet" href="/static/monitor.css?v=20260819-8">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260819-9">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -189,6 +189,18 @@
       </div>
     </section>
 
+    <section class="dashboard-section" id="fomc-dots" hidden aria-labelledby="dots-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">FOMC · SUMMARY OF ECONOMIC PROJECTIONS</p><h2 id="dots-title" data-i18n="dots.title">연준 점도표</h2></div>
+        <span class="source-pill">FED BOARD × FRED</span>
+      </div>
+      <div class="panel">
+        <p class="section-copy" data-i18n="dots.copy" style="margin:0 0 12px">FOMC 위원들이 분기 SEP에서 스스로 전망한 연말 기준금리입니다. 시장 내재 확률이 아니라 위원 전망의 중앙값과 중앙경향입니다.</p>
+        <div id="dots-body"></div>
+        <footer class="panel-footer" id="dots-footer"></footer>
+      </div>
+    </section>
+
     <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
 
     <div id="deep-sections"></div>
@@ -256,6 +268,6 @@
       <footer></footer>
     </article>
   </template>
-  <script src="/static/monitor.js?v=20260819-8" defer></script>
+  <script src="/static/monitor.js?v=20260819-9" defer></script>
 </body>
 </html>
