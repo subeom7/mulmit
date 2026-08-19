@@ -1718,3 +1718,12 @@ setupControls(); applyLocale(); setupLazySections(); loadCore();
 setInterval(() => { if (!document.hidden) loadCore(); }, 15 * 60 * 1000);
 // 세션 배지는 데이터가 아니라 시계라 1분마다 자체 갱신한다.
 setInterval(updateSessionBadge, 60 * 1000);
+// 24시간 참고가 카드의 마크가격은 실시간 소스라, 페이지 전체 주기(15분)와
+// 별개로 1분마다 가볍게 갱신한다. API 캐시가 15초라 서버 부담은 미미하다.
+if (onPage(...PAGE_FETCHES.krOvernight)) {
+  setInterval(async () => {
+    if (document.hidden || !document.getElementById("kr-overnight")) return;
+    const payload = await fetchJson("/api/kr/overnight", "krOvernight");
+    if (payload) { state.krOvernight = payload; renderKrOvernight(); }
+  }, 60 * 1000);
+}
