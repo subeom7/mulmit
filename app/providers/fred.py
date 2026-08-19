@@ -337,6 +337,13 @@ FRED_SERIES = (
         public_web=True,
     ),
     FredSeriesSpec(
+        "ECOS_901Y027", "kr_unemployment", "korea", "실업률 (한국)", "Korea unemployment",
+        "통계청 경제활동인구조사 실업률, 한국은행 ECOS 제공",
+        "Korean unemployment rate from the economically active population survey, via ECOS",
+        "한국은행", "https://ecos.bok.or.kr/",
+        public_web=True,
+    ),
+    FredSeriesSpec(
         "ECOS_901Y009", "kr_cpi", "korea", "소비자물가지수 (한국)", "Korea CPI",
         "통계청 소비자물가지수 총지수(2020=100), 한국은행 ECOS 제공",
         "Korean Consumer Price Index, all items (2020=100), via the Bank of Korea's ECOS",

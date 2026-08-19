@@ -1,7 +1,8 @@
 """한국은행 경제통계시스템(ECOS) OpenAPI 클라이언트 — 한국 거시 lane.
 
 미국 FRED lane의 한국 대칭이다. v1 시리즈는 실측으로 코드가 검증된 둘:
-기준금리(722Y001/0101000, 월)와 소비자물가지수 총지수(901Y009/0, 2020=100, 월).
+기준금리(722Y001/0101000, 월), 소비자물가지수 총지수(901Y009/0, 2020=100, 월),
+실업률(901Y027/I61BC, %, 월).
 
 권리: 인증키 발급 시 동의하는 이용약관이 근거 문서다. 약관 전문이 확인·기록될
 때까지 lane 게이트(ECOS_ENABLED)는 꺼진 채 배포된다 — fail-closed. 출처표시
@@ -69,6 +70,18 @@ ECOS_SERIES: tuple[EcosSeriesSpec, ...] = (
         frequency_short="M",
         title="한국은행 기준금리",
         title_en="Bank of Korea Base Rate",
+    ),
+    EcosSeriesSpec(
+        series_key="kr_unemployment",
+        stat_code="901Y027",
+        item_code="I61BC",
+        cycle="M",
+        units="%",
+        units_short="%",
+        frequency="Monthly",
+        frequency_short="M",
+        title="실업률",
+        title_en="Unemployment Rate (Korea)",
     ),
     EcosSeriesSpec(
         series_key="kr_cpi",
