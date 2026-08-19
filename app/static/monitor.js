@@ -44,7 +44,7 @@ const TEXT = {
     "session.open": "정규장 진행 중", "session.closed": "국내장 마감", "session.until": "개장까지 약 {time}",
     "session.hm": "{h}시간 {m}분", "session.note": "시계 기준 · 휴장일 미반영 · 평일 09:00–15:30 KST",
     "ticker.note": "미 연준 H.10 공식 고시 환율 · 실시간 아님",
-    "landing.krMini.kospi": "코스피 종가", "landing.usMini.sp500": "S&P 500 퍼프", "landing.usMini.stress": "스트레스",
+    "landing.krMini.kospi": "코스피 200 퍼프", "landing.usMini.sp500": "S&P 500 퍼프", "landing.usMini.stress": "스트레스",
     "krpage.kicker": "KOREA MARKETS", "krpage.title": "한국 주식, 장 밖에서도 한눈에.",
     "krpage.copy": "24시간 참고가, 공식 종가, 코스피 지수군, 국민연금 대량보유 공시를 한 페이지에서 봅니다.",
     "uspage.kicker": "US & GLOBAL MARKETS", "uspage.title": "미국·글로벌 시장.",
@@ -114,7 +114,7 @@ const TEXT = {
     "session.open": "KRX session open", "session.closed": "KRX closed", "session.until": "opens in ~{time}",
     "session.hm": "{h}h {m}m", "session.note": "Clock-based; holidays not reflected. Weekdays 09:00–15:30 KST.",
     "ticker.note": "Federal Reserve H.10 official rate · not live",
-    "landing.krMini.kospi": "KOSPI close", "landing.usMini.sp500": "S&P 500 perp", "landing.usMini.stress": "Stress",
+    "landing.krMini.kospi": "KOSPI 200 perp", "landing.usMini.sp500": "S&P 500 perp", "landing.usMini.stress": "Stress",
     "krpage.kicker": "KOREA MARKETS", "krpage.title": "Korean stocks, beyond market hours.",
     "krpage.copy": "Around-the-clock references, official closes, the KOSPI index family and NPS large-holding filings on one page.",
     "uspage.kicker": "US & GLOBAL MARKETS", "uspage.title": "US & global markets.",
@@ -336,7 +336,6 @@ const INSIGHTS = {
 
 const OVERVIEW = [
   { id: "global", label: LABEL("글로벌 자산", "Global assets"), keys: ["sp500", "nasdaq", "gold", "bitcoin"] },
-  { id: "korea", label: LABEL("한국 자산", "Korean assets"), keys: ["kospi_exact", "kosdaq_exact", "samsung_exact", "fx_usdkrw"] },
   { id: "emerging", label: LABEL("글로벌 ETF", "Global ETFs"), keys: ["ewz", "inda", "vnm", "ewj"] },
   { id: "risk", label: LABEL("시장 위험", "Market risk"), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread"] },
   { id: "fx", label: LABEL("환율", "Exchange rates"), keys: ["fx_usdkrw", "fx_usdjpy", "fx_eurusd", "fx_usdcny"] },
@@ -346,9 +345,9 @@ const OVERVIEW = [
 ];
 
 const SECTIONS = [
-  // korea-official leads: it renders into the deep flow with the others, then
-  // the whole section is moved up into the Korea zone beside #kr-overnight.
-  { id: "korea-official", zone: "kr", eyebrow: "KOREA · OFFICIAL CLOSE", title: LABEL("한국 공식 종가", "Korean official closes"), copy: LABEL("한국거래소 장 마감 확정값입니다. 금융위원회가 공공데이터로 개방한 자료로, 기준일 다음 영업일에 공개됩니다. 위의 24시간 참고가와 같은 값이 아닙니다.", "Confirmed Korea Exchange closes, opened as public data by the Financial Services Commission and published the next business day. These are not the around-the-clock references above."), keys: ["kospi_exact", "kosdaq_exact", "samsung_exact", "sk_hynix_exact"] },
+  // 한국 공식 종가 히어로 섹션은 2026-08-19 제거: T+1 확정값이 실시간처럼 생긴
+  // 큰 카드로 나가 장중마다 오독을 낳았다(8/14 기준일, −1.55% 소동). 기준선
+  // 역할은 kr-overnight 카드의 메타 행이, 기록은 kr-indices 표와 분석 페이지가 맡는다.
   { id: "global-assets", zone: "us", eyebrow: "GLOBAL PRICES", title: LABEL("글로벌 자산", "Global assets"), copy: LABEL("전고점 대비 위치와 최근 가격 흐름을 함께 봅니다.", "View recent prices alongside distance from prior highs."), keys: ["sp500", "nasdaq", "gold", "bitcoin"] },
   { id: "global-etfs", zone: "us", eyebrow: "CROSS-BORDER ETFs", title: LABEL("글로벌 지역 ETF", "Regional ETFs"), copy: LABEL("미국 상장 ETF를 통해 지역별 위험선호를 확인합니다.", "Use US-listed ETFs to compare regional risk appetite."), keys: ["ewz", "inda", "vnm", "ewj"] },
   { id: "market-risk", zone: "us", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("시장심리·변동성·금리곡선·신용스프레드·금융스트레스를 나란히 봅니다.", "Compare sentiment, volatility, the yield curve, credit spread and financial stress."), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread", "financial_stress"] },
@@ -418,6 +417,14 @@ function change(record) {
   if (!record) return { value: null, percent: null };
   const raw = record.change && typeof record.change === "object" ? record.change : {};
   return { value: safeNumber(raw.value ?? record.change_value), percent: safeNumber(raw.percent ?? raw.percentage ?? record.change_percent ?? record.percent_change) };
+}
+
+// 날짜 없는 "직전 관측 대비"는 폭락장에 이틀 전 종가를 오늘 시세처럼 읽게
+// 만들었다. 두 관측일이 있으면 라벨에 박아 무엇 대 무엇인지 그 자리에서 보인다.
+function changeLabel(record) {
+  const latestDate = record?.latest?.date, previousDate = record?.previous?.date;
+  if (latestDate && previousDate) return `${kroDate(latestDate)} vs ${kroDate(previousDate)}`;
+  return t("change.previous");
 }
 
 function observations(record) {
@@ -609,10 +616,6 @@ function renderSkeleton() {
   const deep = $("#deep-sections");
   if (deep) {
     deep.replaceChildren();
-    // A previous skeleton pass may have moved #korea-official out of the deep
-    // container, where replaceChildren cannot reach it; a fresh copy is about to
-    // be built, so the stray one must go first or the id would duplicate.
-    document.getElementById("korea-official")?.remove();
     pageSections().forEach((section, index) => {
       const block = document.createElement("section"); block.className = "dashboard-section"; block.id = section.id;
       block.innerHTML = `<div class="section-heading"><span class="section-index">${String(index + 1).padStart(2, "0")}</span><div><p class="eyebrow">${section.eyebrow}</p><h2></h2></div></div><p class="section-copy"></p><div class="metric-grid"></div>`;
@@ -631,10 +634,6 @@ function renderSkeleton() {
       });
       deep.append(compare);
     }
-    // The official-close cards belong in the Korea zone, between the 24-hour
-    // references and the index-family table, not in the middle of the deep flow.
-    const koreaOfficial = $("#korea-official"), krIndicesSection = $("#kr-indices");
-    if (koreaOfficial && krIndicesSection) krIndicesSection.insertAdjacentElement("beforebegin", koreaOfficial);
   }
   renderJumpNav(); setupLazyCharts();
 }
@@ -671,9 +670,7 @@ function pruneEmpty() {
   $$(".overview-group").forEach((group) => {
     group.hidden = $$(".summary-card", group).every((card) => card.hidden);
   });
-  // #korea-official is relocated out of #deep-sections into the Korea zone,
-  // so the selector must name it or an all-empty section would keep its header.
-  $$("#deep-sections .dashboard-section, #korea-official").forEach((section) => {
+  $$("#deep-sections .dashboard-section").forEach((section) => {
     const cards = $$(".metric-card", section);
     if (cards.length) section.hidden = cards.every((card) => card.hidden);
   });
@@ -687,14 +684,13 @@ function renderJumpNav() {
   const sections = pageSections();
   const numbered = sections.map((section, index) => ({ id: section.id, text: `${String(index + 1).padStart(2, "0")} ${localValue(section.title, state.lang)}` }));
   [{ id: "kr-overnight", text: t("kro.title") },
-    ...numbered.filter((item) => item.id === "korea-official"),
     { id: "kr-indices", text: t("kridx.title") },
     { id: "kr-etf", text: t("kre.title") },
     { id: "kr-pension", text: t("krp.title") },
     { id: "constituent-heatmap", text: t("tv.title") },
     { id: "us-ptr", text: t("ptr.title") },
     { id: "econ-calendar", text: t("cal.title") },
-    ...numbered.filter((item) => item.id !== "korea-official"),
+    ...numbered,
     { id: "liquidity-comparisons", text: `${String(sections.length + 1).padStart(2, "0")} ${state.lang === "ko" ? "유동성 비교" : "Comparisons"}` },
     { id: "sector-flow", text: t("sector.title") }, { id: "correlation", text: t("corr.title") }]
     // A split page carries only its own sections; links must not point at ids
@@ -714,7 +710,7 @@ function renderSummary() {
     card.classList.toggle("stale", record?.freshness?.status === "stale");
     $(".summary-value", card).textContent = useDd ? formatSigned(value) : formatNumber(value, definition, record, true);
     const delta = change(record); const changeNode = $(".summary-change", card); changeNode.className = `summary-change ${withheld ? "" : changeClass(delta.percent)}`;
-    changeNode.textContent = info.badge || (delta.percent === null ? (record ? t("change.previous") : t("status.unavailable")) : `${formatSigned(delta.percent)} · ${t("change.previous")}`);
+    changeNode.textContent = info.badge || (delta.percent === null ? (record ? t("change.previous") : t("status.unavailable")) : `${formatSigned(delta.percent)} · ${changeLabel(record)}`);
     const meta = $(".summary-meta", card); const metaParts = [];
     if (record?.freshness?.status === "stale") metaParts.push(t("badge.stale"));
     if (record?._restrictedSeries) metaParts.push(t("badge.proxyAlternative"));
@@ -743,7 +739,7 @@ function renderMetricCards() {
     $(".metric-primary strong", card).textContent = formatNumber(withheld ? null : recent.value, definition, record);
     $(".metric-unit", card).textContent = withheld ? "" : unitFor(record, definition);
     const changeNode = $(".metric-change", card); changeNode.className = `metric-change ${withheld ? "" : changeClass(delta.percent)}`;
-    changeNode.textContent = withheld || delta.percent === null ? "—" : `${formatSigned(delta.percent)} · ${t("change.previous")}`;
+    changeNode.textContent = withheld || delta.percent === null ? "—" : `${formatSigned(delta.percent)} · ${changeLabel(record)}`;
     const insight = INSIGHTS[key];
     $(".metric-description", card).textContent = info.copy || localValue(record?.description, state.lang) || localValue(definition.description, state.lang) || localValue(insight?.description, state.lang) || t("status.unavailable");
     const hints = $(".metric-hints", card); hints.replaceChildren(); hints.setAttribute("aria-label", state.lang === "ko" ? "해석 참고" : "Interpretation guide");
@@ -1231,14 +1227,17 @@ function renderZonePreviews() {
     return wrap;
   };
   if (krMini) {
-    const kospi = state.records.get("kospi_exact");
-    const recent = latest(kospi), delta = change(kospi);
-    krMini.hidden = !kospi || recent.value === null;
+    // 확정 종가(T+1)가 아니라 살아 있는 KR200 퍼프를 보여준다. 종가는 폭락장
+    // 한복판에 이틀 전 숫자를 "지금"처럼 내보내 오독을 낳았다.
+    const kro = (state.krOvernight?.cards || []).find((card) => card.id === "kospi_200");
+    const value = safeNumber(kro?.implied?.value);
+    const percent = safeNumber(kro?.implied?.vs_official_percent);
+    krMini.hidden = value === null;
     if (!krMini.hidden) {
       krMini.replaceChildren(entry(
         t("landing.krMini.kospi"),
-        recent.value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-        delta.percent,
+        value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        percent,
       ));
     }
   }
@@ -1764,6 +1763,6 @@ if (onPage(...PAGE_FETCHES.krOvernight)) {
   setInterval(async () => {
     if (document.hidden || !document.getElementById("kr-overnight")) return;
     const payload = await fetchJson("/api/kr/overnight", "krOvernight");
-    if (payload) { state.krOvernight = payload; renderKrOvernight(); }
+    if (payload) { state.krOvernight = payload; renderKrOvernight(); renderZonePreviews(); }
   }, 5 * 1000);
 }
