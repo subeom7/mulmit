@@ -19,6 +19,7 @@ API가 주는 것은 기사 제목·URL·출처 도메인·시각·언어까지�
 from __future__ import annotations
 
 import datetime as dt
+import io
 import json
 import threading
 import time
@@ -32,6 +33,11 @@ from urllib.request import Request, urlopen
 from .base import DataUnavailable, RateLimited
 
 GDELT_API_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
+# 벌크(15분 익스포트) 채널 — 정적 파일 호스팅이라 대화형 WAF가 없다. AWS IP의
+# DOC API 차단(2026-08-20 실측: compatible UA로도 두 사이클 연속 제한)을 겪은 뒤
+# GDELT 자신의 권고("switch to bulk")대로 이 경로가 기본 수집로가 됐다.
+GDELT_LASTUPDATE_URL = "http://data.gdeltproject.org/gdeltv2/lastupdate.txt"
+GKG_MAX_ZIP_BYTES = 40 * 1024 * 1024
 GDELT_PROVIDER_ID = "gdelt"
 GDELT_PUBLISHER = "The GDELT Project"
 GDELT_PUBLISHER_URL = "https://www.gdeltproject.org/"
@@ -171,3 +177,71 @@ class GdeltProvider:
                 })
             return articles
         raise AssertionError("unreachable")
+
+    def _get_bytes(self, url: str, *, limit: int) -> bytes:
+        request = Request(url, headers={"User-Agent": GDELT_USER_AGENT})
+        self._throttle()
+        try:
+            raw = self._http_get(request, self.timeout)
+        except (HTTPError, URLError, TimeoutError, OSError) as exc:
+            raise DataUnavailable(f"GDELT file unusable at {url}") from exc
+        if len(raw) > limit:
+            raise DataUnavailable(f"GDELT file exceeds the {limit}-byte guard")
+        return raw
+
+    def fetch_latest_gkg_titles(self) -> list[dict[str, Any]]:
+        """최신 15분 GKG 파일에서 (제목, URL, 도메인, 시각)만 뽑는다.
+
+        GKG 2.1 탭 구분 레코드: [1]=DATE(yyyymmddhhmmss), [3]=출처 도메인,
+        [4]=문서 URL, 마지막 필드 V2EXTRASXML 안의 <PAGE_TITLE>이 기사 제목이다.
+        제목이 없는 레코드는 버린다 — 제목이 이 lane의 존재 이유다.
+        """
+        import re as _re
+        import zipfile
+
+        listing = self._get_bytes(GDELT_LASTUPDATE_URL, limit=64 * 1024).decode(
+            "utf-8", errors="replace"
+        )
+        gkg_url = None
+        for line in listing.splitlines():
+            parts = line.split()
+            if len(parts) == 3 and parts[2].endswith(".gkg.csv.zip"):
+                gkg_url = parts[2]
+        if not gkg_url:
+            raise DataUnavailable("GDELT lastupdate has no gkg file")
+
+        blob = self._get_bytes(gkg_url, limit=GKG_MAX_ZIP_BYTES)
+        try:
+            archive = zipfile.ZipFile(io.BytesIO(blob))
+            name = archive.namelist()[0]
+            text = archive.read(name).decode("utf-8", errors="replace")
+        except Exception as exc:
+            raise DataUnavailable("GDELT gkg archive unreadable") from exc
+
+        title_pattern = _re.compile(r"<PAGE_TITLE>(.*?)</PAGE_TITLE>", _re.S)
+        articles: list[dict[str, Any]] = []
+        for line in text.splitlines():
+            fields = line.split('	')
+            if len(fields) < 5:
+                continue
+            match = title_pattern.search(fields[-1]) if len(fields) > 5 else None
+            if not match:
+                continue
+            title = match.group(1).strip()
+            url = fields[4].strip()
+            stamp = fields[1].strip()
+            if not title or not url.startswith("http") or len(stamp) != 14 or not stamp.isdigit():
+                continue
+            seen = (
+                f"{stamp[:4]}-{stamp[4:6]}-{stamp[6:8]}T"
+                f"{stamp[8:10]}:{stamp[10:12]}:{stamp[12:]}Z"
+            )
+            articles.append({
+                "title": title,
+                "url": url,
+                "domain": fields[3].strip(),
+                "seendate": seen,
+                "language": "English",
+                "country": "",
+            })
+        return articles

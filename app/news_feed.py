@@ -32,12 +32,13 @@ log = logging.getLogger(__name__)
 
 CACHE_KEY = "gdelt_news_v1"
 MAX_ARTICLES = 40
-TIMESPAN = "12h"
 
-# 배치가 도는 쿼리. 넓은 시장 축 + 한국 노출 축.
-QUERIES = (
-    '("Federal Reserve" OR "S&P 500" OR "Nasdaq" OR inflation) sourcelang:eng',
-    '("Samsung Electronics" OR "SK Hynix" OR "Bank of Korea" OR KOSPI) sourcelang:eng',
+# GKG 15분 파일에서 제목으로 거르는 키워드 — 시장 축 + 한국 노출 축.
+# 여기 걸리거나 종목 사전에 매칭되는 제목만 남는다.
+TITLE_KEYWORDS = (
+    "federal reserve", "s&p 500", "nasdaq", "inflation", "interest rate",
+    "stock market", "wall street", "treasury yield",
+    "samsung", "sk hynix", "bank of korea", "kospi", "korea",
 )
 
 # 닫힌 이름 사전 — 제목의 단어 경계 매칭으로만 태깅한다. 여기 없는 회사는
@@ -116,17 +117,16 @@ def refresh(provider: GdeltProvider | None = None) -> dict:
     by_url: dict[str, dict[str, Any]] = {
         article["url"]: article for article in previous.get("articles", [])
     }
+    # 벌크 채널: 15분 GKG 파일 하나에서 제목을 뽑아 키워드·종목 사전으로 거른다.
+    # (DOC API는 AWS IP에서 지속 차단 — 등록부 §6.1, GDELT의 벌크 전환 권고 준수)
     fetched = 0
-    for query in QUERIES:
-        articles = provider.fetch_articles(
-            query, timespan=TIMESPAN, max_records=MAX_ARTICLES
-        )
-        fetched += len(articles)
-        for article in articles:
-            by_url[article["url"]] = {
-                **article,
-                "tags": _tags_for(article["title"]),
-            }
+    for article in provider.fetch_latest_gkg_titles():
+        title_lower = article["title"].lower()
+        tags = _tags_for(article["title"])
+        if not tags and not any(keyword in title_lower for keyword in TITLE_KEYWORDS):
+            continue
+        fetched += 1
+        by_url[article["url"]] = {**article, "tags": tags}
 
     merged = sorted(by_url.values(), key=lambda a: a["seendate"], reverse=True)[:MAX_ARTICLES]
     payload = {
