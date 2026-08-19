@@ -142,11 +142,13 @@ async function loadKr() {
     const a = await fetchJson("/api/kr/stock/" + SYMBOL);
     const kpis = $id("stock-kpis"); kpis.hidden = false;
     const latest = a.latest || {};
+    const range = (a.low_52w != null && a.high_52w != null)
+      ? `52주 ₩${num(a.low_52w)}–₩${num(a.high_52w)}` : "";
     kpis.append(
-      kpi("공식 종가", latest.close != null ? "₩" + num(latest.close) : "—", (latest.date || "") + " · T+1 확정값"),
-      kpi("전일 대비", pct(latest.change_percent), ""),
-      kpi("52주 범위 내 위치", a.stats && a.stats.range_position_52w != null ? pct(a.stats.range_position_52w * 100) : "—", ""),
-      kpi("최대 낙폭 (5년)", a.stats ? pct((a.stats.max_drawdown ?? 0) * 100) : "—", ""),
+      kpi("공식 종가", latest.value != null ? "₩" + num(latest.value) : "—", (latest.date || "") + " · T+1 확정값"),
+      kpi("전일 대비", pct(a.change && a.change.percent), range),
+      kpi("전고점 대비", pct(a.drawdown_current), ""),
+      kpi("최대 낙폭 (5년)", pct(a.mdd && a.mdd.value), a.mdd && a.mdd.trough_date ? "저점 " + a.mdd.trough_date : ""),
     );
     $id("head-state").hidden = true;
   } catch (e) { $id("head-state").textContent = "시세 데이터가 아직 없습니다. 잠시 후 새로고침해 주세요."; }
