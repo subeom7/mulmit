@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="dark light">
+  <meta name="color-scheme" content="dark">
   <meta name="description" content="Mulmit 글로벌 자산·거시경제·유동성 모니터">
   <title>Market Monitor · Mulmit</title>
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260819-15">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260819-16">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -30,7 +30,6 @@
       <span class="mast-ticker" id="mast-ticker" hidden title=""></span>
       <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
       <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
-      <button class="icon-button" id="theme-toggle" type="button" data-i18n-aria="theme.toggle" aria-label="테마 전환">◐</button>
     </div>
   </header>
 
@@ -72,6 +71,7 @@
       </div>
       <div id="kro-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
       <div id="kro-grid" class="kro-grid" hidden></div>
+      <div id="kro-official-strip" class="kro-official-strip" hidden></div>
       <footer class="kro-footer" id="kro-footer" hidden></footer>
     </section>
 
@@ -293,6 +293,6 @@
       <footer></footer>
     </article>
   </template>
-  <script src="/static/monitor.js?v=20260819-15" defer></script>
+  <script src="/static/monitor.js?v=20260819-16" defer></script>
 </body>
 </html>

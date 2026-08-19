@@ -46,6 +46,7 @@ const TEXT = {
     "presence.now": "{n}명 보는 중", "presence.note": "최근 90초 하트비트 기준 열린 브라우저 수 — 사람 수가 아닙니다.",
     "ev.title": "미국 기업 공시 속보 (8-K)", "ev.copy": "커버 중인 티커의 8-K(주요 이벤트 보고)입니다. 수집 주기(약 1시간)로 갱신되며 실시간 속보가 아닙니다. 제목은 공식 Item 번호의 표준 제목이고, 내용은 원문에서 확인하세요.",
     "krev.title": "한국 기업 공시 속보 (주요사항보고)", "krev.copy": "유가증권·코스닥 상장사의 주요사항보고서 접수 목록입니다. 제목은 공시 원문 제목이며, 수집 주기(약 1시간)로 갱신되어 실시간 속보가 아닙니다.",
+    "kro.officialStrip": "확정 종가", "kro.stripKospi": "코스피", "kro.stripKosdaq": "코스닥",
     "krev.colDate": "접수일", "krev.colCompany": "회사", "krev.colName": "보고서명", "krev.colLink": "원문", "krev.view": "보기",
     "ev.colDate": "제출일", "ev.colCompany": "회사", "ev.colItems": "내용 (Item)", "ev.colLink": "원문", "ev.view": "보기",
     "landing.copy": "삼성전자·SK하이닉스의 24시간 참고가부터 미국 매크로까지, 연결된 데이터만 보여줍니다. 연결되지 않은 값은 추정하지 않습니다.",
@@ -129,6 +130,7 @@ const TEXT = {
     "presence.now": "{n} viewing", "presence.note": "Open browsers heard from in the last 90 seconds — not unique people.",
     "ev.title": "US company events (8-K)", "ev.copy": "8-K current reports for covered tickers, refreshed on the collection cycle (about hourly) — not a live wire. Titles are the standard Item headings; read the filing for substance.",
     "krev.title": "Korean company events (주요사항보고)", "krev.copy": "Material-event report filings from KOSPI and KOSDAQ listings, straight from the DART index. Titles are the filings’ own titles; refreshed on the collection cycle (about hourly), not live.",
+    "kro.officialStrip": "Official closes", "kro.stripKospi": "KOSPI", "kro.stripKosdaq": "KOSDAQ",
     "krev.colDate": "Received", "krev.colCompany": "Company", "krev.colName": "Filing title", "krev.colLink": "Filing", "krev.view": "View",
     "ev.colDate": "Filed", "ev.colCompany": "Company", "ev.colItems": "Items", "ev.colLink": "Filing", "ev.view": "View",
     "landing.copy": "From around-the-clock references for Samsung Electronics and SK Hynix to US macro — only connected data, nothing estimated.",
@@ -952,7 +954,7 @@ async function loadCore() {
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKrPension(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderKrPension(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -1495,6 +1497,37 @@ function renderFomcDots() {
   $("#dots-footer").textContent = `${t("dots.asof", { date: dateText(sepDate) })} · ${source.name}`;
 }
 
+// 코스피·코스닥 확정 종가 스트립. 히어로 제거 후에도 두 지수의 수준 자체는
+// 첫 화면에서 보여야 한다 — 표 형태 대신 한 줄, 날짜쌍 라벨로 정직하게.
+function renderKroOfficialStrip() {
+  const strip = $("#kro-official-strip");
+  if (!strip) return;
+  const parts = [];
+  for (const [key, labelKey] of [["kospi_exact", "kro.stripKospi"], ["kosdaq_exact", "kro.stripKosdaq"]]) {
+    const record = state.records.get(key);
+    const recent = latest(record);
+    if (!record || recent.value === null) continue;
+    const delta = change(record);
+    const wrap = document.createElement("span"); wrap.className = "kro-strip-item";
+    const name = document.createElement("small"); name.textContent = t(labelKey);
+    const value = document.createElement("strong");
+    value.textContent = recent.value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    wrap.append(name, value);
+    if (delta.percent !== null) {
+      const move = document.createElement("em"); move.className = changeClass(delta.percent);
+      move.textContent = `${formatSigned(delta.percent)} · ${changeLabel(record)}`;
+      wrap.append(move);
+    }
+    parts.push(wrap);
+  }
+  strip.hidden = !parts.length;
+  if (parts.length) {
+    const label = document.createElement("small"); label.className = "kro-strip-label";
+    label.textContent = t("kro.officialStrip");
+    strip.replaceChildren(label, ...parts);
+  }
+}
+
 function renderKrEvents() {
   const section = $("#kr-events");
   if (!section) return;
@@ -1906,7 +1939,7 @@ function renderTradingView() {
   state.tvLoaded = true; const host = $("#tradingview-host"); host.replaceChildren(); const container = document.createElement("div"); container.className = "tradingview-widget-container"; const widget = document.createElement("div"); widget.className = "tradingview-widget-container__widget";
   const script = document.createElement("script"); script.type = "text/javascript"; script.src = "https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js"; script.async = true;
   const blockColors = { "1d": "change", "1w": "Perf.W", "1m": "Perf.1M", "1y": "Perf.Y" };
-  script.textContent = JSON.stringify({ exchanges: [], dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: blockColors[state.tvPeriod], locale: state.lang, symbolUrl: "", colorTheme: document.documentElement.dataset.theme === "light" ? "light" : "dark", hasTopBar: true, isDataSetEnabled: true, isZoomEnabled: true, hasSymbolTooltip: true, isMonoSize: false, width: "100%", height: "100%" });
+  script.textContent = JSON.stringify({ exchanges: [], dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: blockColors[state.tvPeriod], locale: state.lang, symbolUrl: "", colorTheme: "dark", hasTopBar: true, isDataSetEnabled: true, isZoomEnabled: true, hasSymbolTooltip: true, isMonoSize: false, width: "100%", height: "100%" });
   container.append(widget, script); host.append(container);
 }
 
@@ -1936,8 +1969,8 @@ function applyLocale() {
 
 function setupControls() {
   $("#locale-toggle").addEventListener("click", () => { state.lang = state.lang === "ko" ? "en" : "ko"; localStorage.setItem("monitor.locale", state.lang); applyLocale(); });
-  $("#theme-toggle").addEventListener("click", () => { const next = document.documentElement.dataset.theme === "light" ? "dark" : "light"; document.documentElement.dataset.theme = next; localStorage.setItem("monitor.theme", next); if (state.tvLoaded) renderTradingView(); });
-  const theme = localStorage.getItem("monitor.theme"); if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+  // 다크 고정(2026-08-19 운영자 결정): 라이트 팔레트가 데이터 밀도 높은 화면과
+  // 어울리지 않아 토글을 제거했다. 과거에 저장된 라이트 선택도 무시한다.
   $("#refresh-button")?.addEventListener("click", loadCore);
   $("#sector-period")?.addEventListener("click", (event) => { const button = event.target.closest("button[data-period]"); if (!button) return; state.sectorPeriod = button.dataset.period; localStorage.setItem("monitor.sectorPeriod", state.sectorPeriod); renderSectors(); });
   $("#tv-period")?.addEventListener("click", (event) => { const button = event.target.closest("button[data-period]"); if (!button) return; state.tvPeriod = button.dataset.period; localStorage.setItem("monitor.tvPeriod", state.tvPeriod); $$("#tv-period button").forEach((node) => { const active = node === button; node.classList.toggle("active", active); node.setAttribute("aria-pressed", String(active)); }); if (state.tvLoaded) renderTradingView(); });
@@ -1998,3 +2031,6 @@ async function presenceBeat() {
 }
 presenceBeat();
 setInterval(presenceBeat, 30 * 1000);
+// 백그라운드로 열린 탭은 숨김 상태의 박동을 건너뛰므로(집계 정직성),
+// 화면에 나타나는 순간 즉시 한 번 박동해 배지가 바로 뜨게 한다.
+document.addEventListener("visibilitychange", () => { if (!document.hidden) presenceBeat(); });
