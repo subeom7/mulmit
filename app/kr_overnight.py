@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import datetime as dt
 import math
+import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib.parse import quote
@@ -50,6 +52,16 @@ FX_SERIES_KEY = "fx_usdkrw"
 FX_LOOKBACK_DAYS = 45
 KR_INDEX_CLASS = "KOSPI시리즈"
 KR200_INDEX_NAME = "코스피 200"
+KST = dt.timezone(dt.timedelta(hours=9), "KST")
+# 정규장 마감 시각. 공식 종가는 다음 영업일 13시에나 나오므로, 그 공백 동안
+# "직전 15:30 시점의 퍼프 5분봉 종가"를 참고 기준선으로 쓴다. 시계 기준
+# 평일 판정이라 휴장일은 반영하지 못한다 — 그 한계는 문구로 동봉한다.
+SESSION_CLOSE_HOUR = 15
+SESSION_CLOSE_MINUTE = 30
+# 경계에 정확히 걸린 캔들(T=15:30:00.000)이 벤더의 종료시각 표기 방식과 무관하게
+# 포함되도록 30초 여유를 두고 조회한다. 다음 5분봉은 15:35에나 닫히므로 안전하다.
+SESSION_BOUNDARY_SLACK = dt.timedelta(seconds=30)
+SESSION_REF_RETRY_SECONDS = 120.0
 
 _DEFAULT_PROVIDER = HyperliquidProvider(
     timeout=2.5,
@@ -57,6 +69,16 @@ _DEFAULT_PROVIDER = HyperliquidProvider(
     max_request_seconds=3.0,
     ttl=OVERNIGHT_CACHE_TTL_SECONDS,
     stale_ttl=OVERNIGHT_STALE_TTL_SECONDS,
+)
+
+# 기준선 캔들은 경계가 하루 한 번 바뀌므로 시세와 TTL을 분리한다. 캐시 키에
+# 캔들 창(start/end)이 포함되어 경계가 넘어가면 자연히 새로 받는다.
+_BASELINE_PROVIDER = HyperliquidProvider(
+    timeout=2.5,
+    retries=0,
+    max_request_seconds=3.0,
+    ttl=6 * 3600.0,
+    stale_ttl=24 * 3600.0,
 )
 
 
@@ -112,6 +134,128 @@ def _iso_date(value: Any) -> str | None:
     if len(text) == 8 and text.isdigit():
         return f"{text[:4]}-{text[4:6]}-{text[6:]}"
     return text or None
+
+
+def _last_session_boundary(moment: dt.datetime) -> dt.datetime:
+    """The most recent weekday 15:30 KST strictly before ``moment``.
+
+    Clock-based weekday logic: Korean market holidays are not consulted, so on
+    a holiday this points at a moment when the perp traded but KRX did not.
+    The payload labels the value as a perp reference, never as a close.
+    """
+    local = moment.astimezone(KST)
+    boundary = local.replace(
+        hour=SESSION_CLOSE_HOUR, minute=SESSION_CLOSE_MINUTE, second=0, microsecond=0
+    )
+    if boundary >= local:
+        boundary -= dt.timedelta(days=1)
+    while boundary.weekday() >= 5:
+        boundary -= dt.timedelta(days=1)
+    return boundary
+
+
+# 프로세스 수명 동안 경계당 한 번만 캔들을 받도록 하는 메모. 실패한 심볼은
+# 백오프 후에만 재시도해, 상류 장애가 5초 폴링 경로의 지연으로 번지지 않게 한다.
+# 단일 uvicorn 프로세스 전제의 관대한 동시성(중복 조회 허용, GIL 원자성 의존)이다.
+_session_refs_memo: dict[str, Any] = {"boundary": None, "refs": {}, "failed_at": {}}
+
+
+def _session_refs(
+    client: Any, boundary: dt.datetime, *, use_memo: bool
+) -> dict[str, dict[str, Any]]:
+    fetch_baseline = getattr(client, "fetch_session_baseline", None)
+    if not callable(fetch_baseline):
+        return {}
+    memo = _session_refs_memo if use_memo else {"boundary": None, "refs": {}, "failed_at": {}}
+    key = boundary.isoformat()
+    if memo["boundary"] != key:
+        memo["boundary"] = key
+        memo["refs"] = {}
+        memo["failed_at"] = {}
+    now_mono = time.monotonic()
+    pending = [
+        target
+        for target in TARGETS
+        if target.symbol not in memo["refs"]
+        and (
+            memo["failed_at"].get(target.symbol) is None
+            or now_mono - memo["failed_at"][target.symbol] >= SESSION_REF_RETRY_SECONDS
+        )
+    ]
+    if pending:
+        slack_boundary = boundary + SESSION_BOUNDARY_SLACK
+        with ThreadPoolExecutor(
+            max_workers=min(8, len(pending)), thread_name_prefix="kro-session-ref"
+        ) as pool:
+            futures = {
+                target.symbol: pool.submit(
+                    fetch_baseline, target.symbol, slack_boundary, interval="5m"
+                )
+                for target in pending
+            }
+            for target in pending:
+                try:
+                    baseline = futures[target.symbol].result()
+                except (RateLimited, DataUnavailable):
+                    memo["failed_at"][target.symbol] = now_mono
+                    continue
+                if baseline is None:
+                    memo["failed_at"][target.symbol] = now_mono
+                else:
+                    memo["refs"][target.symbol] = baseline
+                    memo["failed_at"].pop(target.symbol, None)
+    return memo["refs"]
+
+
+def _session_reference_block(
+    target: OvernightTarget,
+    perp: dict[str, Any] | None,
+    ref: dict[str, Any] | None,
+    fx: dict[str, Any],
+    boundary: dt.datetime,
+) -> dict[str, Any] | None:
+    """Perp-versus-its-own-15:30-candle move; FX cancels out of the percent."""
+    if perp is None:
+        return None
+    basis_ko = (
+        "가장 최근 평일 15:30(KST) 직전 퍼프 5분봉 종가 대비 변동률 — 공식 종가가 "
+        "아닌 참고값이며 휴장일은 반영하지 않습니다."
+    )
+    basis_en = (
+        "Move versus the perp's own 5-minute candle close just before the most recent "
+        "weekday 15:30 KST — a reference, not an official close; market holidays are "
+        "not reflected."
+    )
+    block: dict[str, Any] = {
+        "status": "unavailable",
+        "boundary_kst": boundary.isoformat(),
+        "mark": None,
+        "implied_value": None,
+        "unit": "pt" if target.kind == "index" else "KRW",
+        "vs_percent": None,
+        "proximity_quality": None,
+        "candle_close_at": None,
+        "interval": "5m",
+        "basis_ko": basis_ko,
+        "basis_en": basis_en,
+    }
+    ref_price = _number(ref.get("price")) if ref else None
+    if ref is None or ref_price is None or ref_price <= 0:
+        return block
+    block["mark"] = ref_price
+    block["proximity_quality"] = ref.get("proximity_quality")
+    block["candle_close_at"] = ref.get("candle_close_at")
+    # 현재 마크 ÷ 경계 시점 마크 − 1: 양쪽에 같은 환율이 곱해지므로 환산 없이
+    # 성립하는 순수 퍼프 변동률이다. FX·FSC lane이 닫혀도 이 수치는 산다.
+    block["vs_percent"] = round((perp["mark"] / ref_price - 1.0) * 100.0, 4)
+    if target.kind == "index":
+        block["implied_value"] = ref_price
+    elif fx["status"] == "ok":
+        block["implied_value"] = ref_price * (target.adr_per_ordinary or 1) * fx["rate"]
+    # 경계에서 2시간 넘게 떨어진 캔들이 마지막이라면 그 시장은 그때 이미 얇았다는
+    # 뜻이라, 값은 주되 상태로 구분해 UI가 숨길 수 있게 한다.
+    block["status"] = "low_proximity" if ref.get("proximity_quality") == "low" else "ok"
+    return block
 
 
 def _fsc_servable() -> bool:
@@ -241,6 +385,8 @@ def _card(
     snapshot: dict[str, Any],
     fx: dict[str, Any],
     fsc_ok: bool,
+    session_ref: dict[str, Any] | None,
+    boundary: dt.datetime,
 ) -> dict[str, Any]:
     perp = _perp_block(market, snapshot, target.symbol)
     official = _official_close(target, fsc_ok)
@@ -297,6 +443,7 @@ def _card(
         "perp": perp,
         "official": official,
         "implied": implied,
+        "session_reference": _session_reference_block(target, perp, session_ref, fx, boundary),
         "basis": {
             "ko": (
                 "지수 무기한선물 마크(포인트)를 코스피 200 공식 종가와 직접 비교"
@@ -319,9 +466,19 @@ def _card(
 def build_kr_overnight(
     provider: DexProvider | None = None,
     *,
+    baseline_provider: Any | None = None,
     now: dt.datetime | None = None,
 ) -> dict[str, Any]:
     client = provider or _DEFAULT_PROVIDER
+    # 시세(5초 TTL)와 기준선 캔들(6시간 TTL)은 캐시 수명이 달라 프로바이더를
+    # 나눈다. 테스트가 provider 하나만 주입하면 그걸로 둘 다 처리하고 메모는 끈다.
+    if baseline_provider is not None:
+        baseline_client = baseline_provider
+    elif provider is not None:
+        baseline_client = provider
+    else:
+        baseline_client = _BASELINE_PROVIDER
+    use_memo = baseline_client is _BASELINE_PROVIDER
     moment = now or dt.datetime.now(dt.UTC)
     if moment.tzinfo is None:
         moment = moment.replace(tzinfo=dt.UTC)
@@ -342,8 +499,20 @@ def build_kr_overnight(
 
     fx = _load_fx()
     fsc_ok = _fsc_servable()
+    boundary = _last_session_boundary(moment)
+    session_refs = (
+        _session_refs(baseline_client, boundary, use_memo=use_memo) if error is None else {}
+    )
     cards = [
-        _card(target, markets.get(target.symbol.casefold()), snapshot, fx, fsc_ok)
+        _card(
+            target,
+            markets.get(target.symbol.casefold()),
+            snapshot,
+            fx,
+            fsc_ok,
+            session_refs.get(target.symbol),
+            boundary,
+        )
         for target in TARGETS
     ]
     available = sum(1 for card in cards if card["status"] == "ok")
@@ -359,14 +528,19 @@ def build_kr_overnight(
             "ko": (
                 "환산가 = 마크가격 × 원/달러(H.10 공식 고시, 날짜 표기). 기준가 대비 % = "
                 "환산가 ÷ 마지막 공식 종가 − 1. 코스피 200은 포인트 단위가 같아 환산 없이 "
-                "직접 비교합니다. ADR 카드는 마크 × 공시 비율(10 ADR = 원주 1주) × 환율을 원주 종가와 비교한 프리미엄 참고값입니다. 김치프리미엄 조정은 하지 않습니다."
+                "직접 비교합니다. ADR 카드는 마크 × 공시 비율(10 ADR = 원주 1주) × 환율을 원주 종가와 비교한 프리미엄 참고값입니다. 김치프리미엄 조정은 하지 않습니다. "
+                "공식 종가가 아직 전전일이면 직전 평일 15:30 시점 퍼프 5분봉 종가 대비 변동률을 "
+                "참고로 함께 표시합니다(공식 종가 아님, 휴장일 미반영)."
             ),
             "en": (
                 "Implied price = mark × won/dollar (official H.10 quotation, date shown). "
                 "Percent versus close = implied ÷ last official close − 1. KOSPI 200 shares "
                 "the official point scale and is compared without conversion. The ADR card is a "
                 "premium reference: mark × disclosed ratio (10 ADRs = 1 ordinary) × FX versus "
-                "the ordinary close. No kimchi-premium adjustment is applied."
+                "the ordinary close. No kimchi-premium adjustment is applied. While the official "
+                "close lags, the move versus the perp's own 5-minute candle close at the most "
+                "recent weekday 15:30 KST is shown as a reference (not an official close; "
+                "holidays not reflected)."
             ),
         },
         "disclaimer": {
