@@ -14,7 +14,7 @@
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260819-15">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260819-16">
 <style>
 /* ---------------------------------------------------------------------------
    디자인 토큰은 monitor.css가 단일 원본이다. 이 페이지의 예전 변수명은 아래
@@ -111,11 +111,6 @@ html[lang="en"] .monitor-link .label-en { display: inline; }
 .analysis-block { scroll-margin-top: 18px; }
 
 /* --- 헤더 & 필터 ---------------------------------------------------------- */
-#theme-toggle {
-  background: none; border: 1px solid var(--border); color: var(--text-secondary);
-  border-radius: 8px; padding: 5px 11px; font-size: 12px; cursor: pointer; font-family: inherit;
-}
-#theme-toggle:hover { background: var(--wash); }
 
 /* 필터는 한 줄에 모아 아래 전체를 스코프한다 (차트 카드 안에 두지 않는다) */
 .filters {
@@ -367,7 +362,6 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
   </nav>
   <div class="mast-actions">
     <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
-    <button class="icon-button" id="theme-toggle" type="button" aria-label="테마 전환">◐</button>
   </div>
 </header>
 
@@ -1021,8 +1015,6 @@ function applyLocale() {
   const localeButton = document.getElementById("locale-toggle");
   localeButton.textContent = uiLang === "ko" ? "EN" : "KO";
   localeButton.setAttribute("aria-label", t("language.aria"));
-  document.getElementById("theme-toggle").setAttribute("aria-label", t("theme.aria"));
-  document.getElementById("theme-toggle").textContent = "◐";
   document.querySelector('meta[name="description"]').content = t("doc.description");
   document.title = lastReport ? `${lastReport.ticker} · Mulmit` : t("doc.title");
   renderExamples();
@@ -2230,22 +2222,7 @@ function renderExamples() {
   }
 }
 
-/* 테마·언어 선택은 기기에 저장한다. */
-const themeToggle = document.getElementById("theme-toggle");
-// 모니터와 같은 키를 읽어야 페이지를 오갈 때 테마가 유지된다.
-const savedTheme = localStorage.getItem("monitor.theme") || localStorage.getItem("theme");
-if (savedTheme === "light" || savedTheme === "dark") document.documentElement.dataset.theme = savedTheme;
-function updateThemeControl() {
-  const theme = document.documentElement.dataset.theme || "dark";
-  themeToggle.setAttribute("aria-pressed", String(theme === "dark"));
-}
-themeToggle.addEventListener("click", () => {
-  const current = document.documentElement.dataset.theme || "dark";
-  const next = current === "dark" ? "light" : "dark";
-  document.documentElement.dataset.theme = next;
-  localStorage.setItem("monitor.theme", next);
-  updateThemeControl();
-});
+/* 다크 고정(2026-08-19): 테마 토글 제거. 과거 저장된 라이트 선택은 무시한다. */
 document.getElementById("locale-toggle").addEventListener("click", () => {
   uiLang = uiLang === "ko" ? "en" : "ko";
   localStorage.setItem("monitor.locale", uiLang);
@@ -2260,7 +2237,6 @@ for (const key of ["ticker", "horizon", "drift", "lookback"]) {
 }
 applyLocale();
 syncPeriodButtons();
-updateThemeControl();
 
 /* =========================================================================
    국내 종목 분석 — FSC lane
@@ -2715,6 +2691,7 @@ async function presenceBeat() {
 }
 presenceBeat();
 setInterval(presenceBeat, 30 * 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) presenceBeat(); });
 </script>
 </body>
 </html>

@@ -22,27 +22,7 @@
   --sans: Inter, Pretendard, system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
 }
 
-:root[data-theme="light"] {
-  color-scheme: light;
-  --bg: #f4f5f3;
-  --panel: #ffffff;
-  --panel-2: #f8f9f7;
-  --ink: #101316;
-  --muted: #5f6870;
-  --faint: #8c949a;
-  --line: #dce0e2;
-  --line-strong: #c8ced2;
-  --accent: #0878d1;
-  --accent-soft: rgba(8, 120, 209, .09);
-  --green: #087f61;
-  --red: #c93c55;
-  --amber: #a96600;
-  --violet: #7653c9;
-  --cyan: #0878aa;
-  --chart: #0878d1;
-  --chart-fill: rgba(8, 120, 209, .08);
-  --shadow: 0 18px 55px rgba(16, 19, 22, .08);
-}
+/* 다크 고정(2026-08-19): 라이트 팔레트 제거. 페이지 정체성은 다크 단일이다. */
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -451,6 +431,14 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 
 /* P2: 헤더 세션 배지 · H.10 환율 티커 */
 .session-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 650 9.5px/1 var(--mono); white-space: nowrap; }
+.kro-official-strip { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 18px; margin: 14px 2px 0; color: var(--muted); font: 650 11px/1.4 var(--mono); font-variant-numeric: tabular-nums; }
+.kro-official-strip .kro-strip-label { color: var(--faint); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.kro-strip-item { display: inline-flex; align-items: baseline; gap: 6px; }
+.kro-strip-item small { color: var(--faint); font-size: 10px; }
+.kro-strip-item strong { color: var(--ink); font-size: 12.5px; }
+.kro-strip-item em { font-style: normal; font-size: 10px; }
+.kro-strip-item em.up { color: var(--green); }
+.kro-strip-item em.down { color: var(--red); }
 .presence-badge { display: inline-flex; align-items: center; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--green); font: 650 9.5px/1 var(--mono); white-space: nowrap; }
 @media (max-width: 430px) { .presence-badge { display: none; } }
 .session-badge i { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }

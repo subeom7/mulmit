@@ -16,17 +16,6 @@
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
-:root[data-theme="light"] {
-  color-scheme: light;
-  --bg: #f4f5f3;
-  --panel: #ffffff;
-  --ink: #101316;
-  --muted: #5f6870;
-  --faint: #8c949a;
-  --line: #dce0e2;
-  --accent: #0878d1;
-  --amber: #a96600;
-}
 
 * { box-sizing: border-box; }
 
