@@ -66,10 +66,12 @@ class DexProvider(Protocol):
 class OvernightTarget:
     id: str
     symbol: str
-    kind: str  # "equity" | "index"
+    kind: str  # "equity" | "index" | "adr"
     code: str | None
     label_ko: str
     label_en: str
+    # ADR 전용: 원주 1주가 몇 ADR인지. 발행사 공시로 검증된 값만 넣는다.
+    adr_per_ordinary: int | None = None
 
 
 TARGETS = (
@@ -81,6 +83,12 @@ TARGETS = (
         "hyundai_motor", "xyz:HYUNDAI", "equity", "005380", "현대자동차", "Hyundai Motor"
     ),
     OvernightTarget("kospi_200", "xyz:KR200", "index", None, "코스피 200", "KOSPI 200"),
+    # 나스닥 상장 SK하이닉스 ADR 퍼프. 비율은 발행사 공시(10 ADR = 원주 1주,
+    # 2026-08-19 확인: SK하이닉스 뉴스룸·SEC F-1)로 검증된 값이다.
+    OvernightTarget(
+        "sk_hynix_adr", "xyz:SKHY", "adr", "000660",
+        "SK하이닉스 ADR", "SK hynix ADR", adr_per_ordinary=10,
+    ),
 )
 
 
@@ -161,16 +169,16 @@ def _official_close(target: OvernightTarget, fsc_ok: bool) -> dict[str, Any]:
         "status": "unavailable",
         "close": None,
         "date": None,
-        "unit": "KRW" if target.kind == "equity" else "pt",
+        "unit": "pt" if target.kind == "index" else "KRW",
         "publisher": FSC_PUBLISHER,
         "dataset_url": (
-            FSC_STOCK_DATASET_URL if target.kind == "equity" else FSC_INDEX_DATASET_URL
+            FSC_INDEX_DATASET_URL if target.kind == "index" else FSC_STOCK_DATASET_URL
         ),
     }
     if not fsc_ok:
         base["status"] = "lane_disabled"
         return base
-    if target.kind == "equity" and target.code:
+    if target.kind in ("equity", "adr") and target.code:
         row = store.get_kr_listing(target.code)
         close = _number(row.get("clpr")) if row else None
         if row is None or close is None or close <= 0:
@@ -238,14 +246,15 @@ def _card(
     implied: dict[str, Any] = {
         "status": "unavailable",
         "value": None,
-        "unit": "KRW" if target.kind == "equity" else "pt",
-        "fx_applied": target.kind == "equity",
+        "unit": "pt" if target.kind == "index" else "KRW",
+        "fx_applied": target.kind != "index",
         "vs_official_percent": None,
     }
     if perp is not None:
-        if target.kind == "equity":
+        if target.kind in ("equity", "adr"):
             if fx["status"] == "ok":
-                implied["value"] = perp["mark"] * fx["rate"]
+                ratio = target.adr_per_ordinary or 1
+                implied["value"] = perp["mark"] * ratio * fx["rate"]
                 implied["status"] = "ok"
             else:
                 implied["status"] = "no_fx"
@@ -273,20 +282,33 @@ def _card(
         "code": target.code,
         "kind": target.kind,
         "label": {"ko": target.label_ko, "en": target.label_en},
+        "adr": (
+            {
+                "per_ordinary": target.adr_per_ordinary,
+                "note_ko": f"{target.adr_per_ordinary} ADR = 원주 1주 (발행사 공시, 2026-08-19 확인)",
+                "note_en": f"{target.adr_per_ordinary} ADRs = 1 ordinary share (issuer filings, verified 2026-08-19)",
+            }
+            if target.kind == "adr" and target.adr_per_ordinary
+            else None
+        ),
         "status": status,
         "perp": perp,
         "official": official,
         "implied": implied,
         "basis": {
             "ko": (
-                "합성 무기한선물 마크가격 × H.10 공식환율을 마지막 공식 종가와 비교"
-                if target.kind == "equity"
-                else "지수 무기한선물 마크(포인트)를 코스피 200 공식 종가와 직접 비교"
+                "지수 무기한선물 마크(포인트)를 코스피 200 공식 종가와 직접 비교"
+                if target.kind == "index"
+                else "ADR 퍼프 마크 × 비율 × H.10 공식환율을 원주 마지막 공식 종가와 비교"
+                if target.kind == "adr"
+                else "합성 무기한선물 마크가격 × H.10 공식환율을 마지막 공식 종가와 비교"
             ),
             "en": (
-                "Synthetic-perpetual mark × official H.10 rate versus the last official close"
-                if target.kind == "equity"
-                else "Index-perpetual mark (points) compared directly with the official KOSPI 200 close"
+                "Index-perpetual mark (points) compared directly with the official KOSPI 200 close"
+                if target.kind == "index"
+                else "ADR-perpetual mark × ratio × official H.10 rate versus the ordinary share's last official close"
+                if target.kind == "adr"
+                else "Synthetic-perpetual mark × official H.10 rate versus the last official close"
             ),
         },
     }
@@ -335,13 +357,14 @@ def build_kr_overnight(
             "ko": (
                 "환산가 = 마크가격 × 원/달러(H.10 공식 고시, 날짜 표기). 기준가 대비 % = "
                 "환산가 ÷ 마지막 공식 종가 − 1. 코스피 200은 포인트 단위가 같아 환산 없이 "
-                "직접 비교합니다. 김치프리미엄 조정은 하지 않습니다."
+                "직접 비교합니다. ADR 카드는 마크 × 공시 비율(10 ADR = 원주 1주) × 환율을 원주 종가와 비교한 프리미엄 참고값입니다. 김치프리미엄 조정은 하지 않습니다."
             ),
             "en": (
                 "Implied price = mark × won/dollar (official H.10 quotation, date shown). "
                 "Percent versus close = implied ÷ last official close − 1. KOSPI 200 shares "
-                "the official point scale and is compared without conversion. No kimchi-"
-                "premium adjustment is applied."
+                "the official point scale and is compared without conversion. The ADR card is a "
+                "premium reference: mark × disclosed ratio (10 ADRs = 1 ordinary) × FX versus "
+                "the ordinary close. No kimchi-premium adjustment is applied."
             ),
         },
         "disclaimer": {
