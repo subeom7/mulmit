@@ -8,9 +8,12 @@ fee"이고 재배포·재게시가 명시 허용된다. 조건은 GDELT 인용�
 API가 주는 것은 기사 제목·URL·출처 도메인·시각·언어까지다. 본문은 없다 —
 그래서 이 lane은 언론사 본문 저작권 문제가 구조적으로 발생하지 않는다.
 
-운영 예절 (2026-08-19 실측): 키 없음, **5초당 1요청** 상한이며 위반 시 분 단위
-쿨다운이 걸린다. 요청 간격을 6초로 두고, 429는 RateLimited로 올려 배치가
-다음 주기로 물러나게 한다.
+운영 예절 (2026-08-19~20 실측): 키 없음, **5초당 1요청** 상한이며 위반 시 분
+단위 쿨다운이 걸린다. 요청 간격을 6초로 두고, 429는 RateLimited로 올려 배치가
+다음 주기로 물러나게 한다. UA는 표준 compatible 봇 형식이어야 한다 — 순수 봇
+토큰("Mulmit/1.0")은 WAF가 첫 요청부터 거르고, Googlebot식의 진실한
+자기표기("Mozilla/5.0 (compatible; Mulmit/1.0; +https://mulmit.com)")는
+통과함을 판별 실험으로 확인했다. 위장이 아니라 관례를 따른 자기소개다.
 """
 
 from __future__ import annotations
@@ -36,6 +39,9 @@ GDELT_TERMS_URL = "https://www.gdeltproject.org/about.html"
 # 약관이 요구하는 인용 + 링크. UI는 이 문구를 링크와 함께 노출해야 한다.
 GDELT_ATTRIBUTION = "News metadata: The GDELT Project (gdeltproject.org)"
 GDELT_ATTRIBUTION_KO = "뉴스 메타데이터: The GDELT Project (gdeltproject.org)"
+
+# 표준 compatible 봇 형식 — 실측상 이 형식만 WAF를 통과한다 (모듈 독스트링 참조).
+GDELT_USER_AGENT = "Mozilla/5.0 (compatible; Mulmit/1.0; +https://mulmit.com)"
 
 # 실측 상한 5초/1요청에 여유를 둔 기본 간격.
 REQUEST_INTERVAL_SECONDS = 6.0
@@ -117,7 +123,7 @@ class GdeltProvider:
         })
         request = Request(
             f"{self.api_url}?{params}",
-            headers={"Accept": "application/json", "User-Agent": "Mulmit/1.0"},
+            headers={"Accept": "application/json", "User-Agent": GDELT_USER_AGENT},
         )
         for attempt in range(self.retries + 1):
             self._throttle()
