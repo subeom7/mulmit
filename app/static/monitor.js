@@ -1534,6 +1534,7 @@ const FEED_KIND = {
   us_ptr: { label: LABEL("의원거래", "Congress"), cls: "us" },
   kr_pension: { label: LABEL("국민연금", "NPS"), cls: "kr" },
   index_move: { label: LABEL("지수 급변", "Index move"), cls: "kr" },
+  news: { label: LABEL("뉴스", "News"), cls: "news" },
 };
 
 function renderFeed() {
@@ -1570,14 +1571,37 @@ function renderFeed() {
     if (item.url) { title.href = item.url; title.target = "_blank"; title.rel = "noopener noreferrer"; }
     title.textContent = localValue(item.title, state.lang);
     row.append(date, tag, title);
-    if (item.hub) {
+    if (item.domain) {
+      const domain = document.createElement("small"); domain.className = "feed-domain";
+      domain.textContent = item.domain; row.append(domain);
+    }
+    // 연관 종목 등락 칩 — %는 뉴스 벤더가 아니라 우리 확정 종가 데이터다.
+    for (const chip of (item.tags || []).slice(0, 3)) {
+      const move = safeNumber(chip.change_percent);
+      const link = document.createElement("a");
+      link.className = `feed-move ${changeClass(move)}`;
+      link.href = chip.hub || "#";
+      link.textContent = move === null ? chip.symbol : `${chip.symbol} ${formatSigned(move)}`;
+      if (move !== null) link.title = state.lang === "ko" ? "전일 확정 종가 기준" : "T+1 official close basis";
+      row.append(link);
+    }
+    if (item.hub && !(item.tags || []).length) {
       const hub = document.createElement("a"); hub.className = "feed-hub"; hub.href = item.hub;
       hub.textContent = state.lang === "ko" ? "종목 →" : "stock →";
       row.append(hub);
     }
     return row;
   }));
-  $("#feed-footer").textContent = localValue({ ko: payload.basis_ko, en: payload.basis_en }, state.lang);
+  const footer = $("#feed-footer");
+  footer.replaceChildren(document.createTextNode(localValue({ ko: payload.basis_ko, en: payload.basis_en }, state.lang)));
+  if (payload.attribution) {
+    // GDELT 약관 조건: 인용 + 링크가 사용처에 함께 보여야 한다.
+    footer.append(document.createTextNode(" · "));
+    const cite = document.createElement("a");
+    cite.href = payload.attribution.url; cite.target = "_blank"; cite.rel = "noopener noreferrer";
+    cite.textContent = state.lang === "ko" ? payload.attribution.text_ko : payload.attribution.text;
+    footer.append(cite);
+  }
 }
 
 function renderKroOfficialStrip() {

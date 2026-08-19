@@ -31,6 +31,7 @@ from . import (
     kr_insider,
     kr_pension,
     kr_stocks,
+    news_feed,
     service,
     signal_feed,
     store,
@@ -687,6 +688,25 @@ def kr_pension_filings(request: Request, response: Response) -> dict:
         ) from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "FSS DART"
+    return payload
+
+
+@app.get("/api/news")
+@limiter.limit(config.RATE_LIMIT)
+def news_headlines(request: Request, response: Response) -> dict:
+    """GDELT 뉴스 헤드라인. ingest 배치가 저장한 결과만 읽는다."""
+    try:
+        payload = news_feed.get_news()
+    except news_feed.NewsFeedDisabled as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "news_disabled", "message": "News lane is disabled."},
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    except DataUnavailable as exc:
+        raise HTTPException(status_code=503, detail="news not collected yet") from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "GDELT"
     return payload
 
 

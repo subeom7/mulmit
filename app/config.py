@@ -135,6 +135,13 @@ ECOS_REQUEST_INTERVAL = _float("ECOS_REQUEST_INTERVAL", 0.2)
 ECOS_MAX_AGE = _int("ECOS_MAX_AGE", 60 * 60 * 6)
 ECOS_HISTORY_DAYS = _int("ECOS_HISTORY_DAYS", 366 * 10)
 
+# GDELT 뉴스 메타데이터 lane. 약관상 상업·재배포 명시 허용(§6.1) — 게이트는
+# lane 규율의 일관성 때문에 두고, 배포에서 켠다.
+GDELT_ENABLED = _bool("GDELT_ENABLED", False)
+GDELT_TIMEOUT = _float("GDELT_TIMEOUT", 15.0)
+GDELT_RETRIES = _int("GDELT_RETRIES", 1)
+GDELT_MAX_AGE = _int("GDELT_MAX_AGE", 60 * 30)
+
 FSC_ENABLED = _bool("FSC_ENABLED", False)
 FSC_API_KEY = os.environ.get("FSC_API_KEY", "").strip()
 FSC_TIMEOUT = _float("FSC_TIMEOUT", 20.0)
