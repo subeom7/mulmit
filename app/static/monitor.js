@@ -955,7 +955,7 @@ async function loadCore() {
 
 function renderAll() {
   renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderKrPension(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
-  renderMastTicker(); renderZonePreviews(); updateSessionBadge();
+  renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
   // not failing — they are absent by decision, so they are hidden rather than
@@ -2005,6 +2005,25 @@ function presenceId() {
   return id;
 }
 
+// 마지막 수신 값은 캐시에 두고 그리기만 다시 한다 — 언어 전환(renderAll)이
+// 다음 박동을 기다리지 않고 즉시 새 언어로 배지를 다시 그리게 하기 위해서다.
+let presenceCount = null;
+
+function renderPresenceBadge() {
+  if (presenceCount === null) return;
+  let badge = document.getElementById("presence-badge");
+  if (!badge) {
+    const host = document.querySelector(".mast-actions");
+    if (!host) return;
+    badge = document.createElement("span");
+    badge.id = "presence-badge";
+    badge.className = "presence-badge";
+    host.prepend(badge);
+  }
+  badge.title = t("presence.note");
+  badge.textContent = t("presence.now", { n: presenceCount });
+}
+
 async function presenceBeat() {
   if (document.hidden) return;
   try {
@@ -2016,17 +2035,8 @@ async function presenceBeat() {
     if (!res.ok) return;
     const data = await res.json();
     if (!Number.isFinite(data.count)) return;
-    let badge = document.getElementById("presence-badge");
-    if (!badge) {
-      const host = document.querySelector(".mast-actions");
-      if (!host) return;
-      badge = document.createElement("span");
-      badge.id = "presence-badge";
-      badge.className = "presence-badge";
-      host.prepend(badge);
-    }
-    badge.title = t("presence.note");
-    badge.textContent = t("presence.now", { n: data.count });
+    presenceCount = data.count;
+    renderPresenceBadge();
   } catch (error) { /* 하트비트 실패는 조용히 넘어간다 — 배지는 다음 박동에 */ }
 }
 presenceBeat();
