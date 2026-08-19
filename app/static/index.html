@@ -475,16 +475,6 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
     <p class="kr-meta" id="kr-source"></p>
 
     <div class="card" id="kr-insider" hidden>
-    "krfund.title": "연간 재무제표 (DART)", "krfund.sub": "사업보고서 주요계정을 그대로 옮깁니다(연결 우선). 마진은 같은 보고서의 이익 ÷ 매출이며, 분기 손익은 누적 구분이 없어 다루지 않습니다. 금액 단위 KRW.",
-    "krfund.caption": "연간 주요 재무계정", "krfund.colYear": "사업연도", "krfund.colRevenue": "매출", "krfund.colOpInc": "영업이익", "krfund.colNetInc": "순이익",
-    "krfund.colOpMargin": "영업이익률", "krfund.colNetMargin": "순이익률", "krfund.colEquity": "자본총계",
-    "krfund.loading": "재무제표를 불러오는 중입니다.", "krfund.none": "표시할 재무 데이터가 없습니다.", "krfund.error": "재무제표를 불러오지 못했습니다.",
-    "krfund.statement": "{statement} 기준", "krfund.revenueAccount": "매출 계정: {name}",
-    "krfund.title": "Annual financials (DART)", "krfund.sub": "Key accounts from annual reports, relayed as filed (consolidated preferred). Margins are income ÷ revenue from the same filing; quarterly income lines are omitted because cumulative and in-quarter figures are not distinguished. Amounts in KRW.",
-    "krfund.caption": "Annual key accounts", "krfund.colYear": "Fiscal year", "krfund.colRevenue": "Revenue", "krfund.colOpInc": "Operating income", "krfund.colNetInc": "Net income",
-    "krfund.colOpMargin": "Op. margin", "krfund.colNetMargin": "Net margin", "krfund.colEquity": "Total equity",
-    "krfund.loading": "Loading financial statements.", "krfund.none": "No financial data to display.", "krfund.error": "Failed to load financial statements.",
-    "krfund.statement": "Basis: {statement}", "krfund.revenueAccount": "Revenue account: {name}",
       <h2 data-i18n="krins.title">임원·주요주주 소유보고</h2>
       <p class="sub" id="kr-insider-basis"></p>
       <div id="kr-insider-state" class="state-block" role="status" aria-live="polite" hidden></div>
@@ -579,7 +569,7 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
 <!-- 내부자거래는 가격 분석과 독립된 lane이다. /api/metrics가 막혀 있어도 보인다. -->
 <section class="card insider-card" id="insider" hidden aria-labelledby="insider-title">
   <h2 id="insider-title" data-i18n="insider.title">내부자거래 공시</h2>
-  <p class="sub" data-i18n="insider.sub">SEC EDGAR Form 3·4·5 원문에서 임원·이사·10% 주주의 보고 내역을 그대로 옮깁니다.</p>
+  <p class="sub" data-i18n="insider.sub">미국 상장사 전용 — SEC EDGAR Form 3·4·5 원문에서 임원·이사·10% 주주의 보고 내역을 그대로 옮깁니다. 국내 종목은 위의 국내 종목 분석에서 임원·주요주주 소유보고로 제공됩니다.</p>
   <div id="insider-state" class="state-block" role="status" aria-live="polite"></div>
   <div id="insider-body" hidden>
     <div class="insider-summary" id="insider-summary"></div>
@@ -729,8 +719,8 @@ const I18N = {
     "app.tagline": "MARKET SIGNAL CONSOLE", "app.live": "LIVE DATA",
     "intro.eyebrow": "MULMIT MARKET MONITOR", "intro.title": "시장의 흐름과 종목의 위험을 한 화면에서.",
     "intro.copy": "S&P 500 섹터 강약을 먼저 읽고, 원하는 종목의 수익률·낙폭·CAPM·미래 MDD 분포까지 같은 맥락에서 분석하세요.",
-    "mode.insiderTitle": "내부자거래 공시 조회", "mode.insiderTag": "SEC EDGAR · FORM 3·4·5",
-    "mode.insiderLede": "티커를 입력하면 임원·이사·10% 주주의 Form 3·4·5 보고 내역을 EDGAR 원문 그대로 보여줍니다.",
+    "mode.insiderTitle": "내부자거래 공시 조회", "mode.insiderTag": "미국 상장사 전용 · SEC EDGAR · FORM 3·4·5",
+    "mode.insiderLede": "미국 상장사 전용입니다. 티커를 입력하면 임원·이사·10% 주주의 Form 3·4·5 보고 내역을 EDGAR 원문 그대로 보여줍니다. 국내 종목의 임원·주요주주 소유보고는 국내 종목 분석 결과에 함께 표시됩니다.",
     "mode.introTitle": "미국 상장사 내부자거래를 원문 그대로.",
     "mode.introCopy": "가격·유동성·거시 흐름은 시장 모니터에서 보고, 여기서는 SEC EDGAR 지분 공시를 조회합니다. 가격 분석 기능은 승인된 가격 데이터 공급자가 연결되면 다시 열립니다.",
     "form.lookup": "조회", "example.msft": "마이크로소프트", "example.googl": "알파벳",
@@ -754,6 +744,11 @@ const I18N = {
     "krins.colOwned": "소유수량", "krins.colChange": "증감", "krins.colRatio": "비율", "krins.colReport": "원문",
     "krins.none": "수집된 소유상황 보고가 없습니다.", "krins.view": "보기",
     "krins.source": "{notice} · 최근 {count}건",
+    "krfund.title": "연간 재무제표 (DART)", "krfund.sub": "사업보고서 주요계정을 그대로 옮깁니다(연결 우선). 마진은 같은 보고서의 이익 ÷ 매출이며, 분기 손익은 누적 구분이 없어 다루지 않습니다. 금액 단위 KRW.",
+    "krfund.caption": "연간 주요 재무계정", "krfund.colYear": "사업연도", "krfund.colRevenue": "매출", "krfund.colOpInc": "영업이익", "krfund.colNetInc": "순이익",
+    "krfund.colOpMargin": "영업이익률", "krfund.colNetMargin": "순이익률", "krfund.colEquity": "자본총계",
+    "krfund.loading": "재무제표를 불러오는 중입니다.", "krfund.none": "표시할 재무 데이터가 없습니다.", "krfund.error": "재무제표를 불러오지 못했습니다.",
+    "krfund.statement": "{statement} 기준", "krfund.revenueAccount": "매출 계정: {name}",
     "market.title": "S&P 500 섹터 모니터", "market.tag": "11 SECTOR ETFs · ADJUSTED CLOSE", "market.summaryAria": "섹터 요약",
     "market.lede": "일간·주간·월간·연간 흐름을 전환해 시장의 리더십과 확산도를 빠르게 확인합니다.",
     "pulse.best": "가장 강한 섹터", "pulse.worst": "가장 약한 섹터", "pulse.breadth": "상승 섹터", "pulse.asof": "기준일",
@@ -775,7 +770,7 @@ const I18N = {
     "nav.monitor": "시장 모니터", "nav.analytics": "종목 분석",
     "legal.privacy": "개인정보처리방침", "legal.terms": "이용약관", "legal.disclaimer": "면책 고지",
     "legal.notAdvice": "Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.",
-    "insider.title": "내부자거래 공시", "insider.sub": "SEC EDGAR Form 3·4·5 원문에서 임원·이사·10% 주주의 보고 내역을 그대로 옮깁니다.",
+    "insider.title": "내부자거래 공시", "insider.sub": "미국 상장사 전용 — SEC EDGAR Form 3·4·5 원문에서 임원·이사·10% 주주의 보고 내역을 그대로 옮깁니다. 국내 종목은 위의 국내 종목 분석에서 임원·주요주주 소유보고로 제공됩니다.",
     "insider.tableCaption": "보고된 내부자 거래 내역", "insider.loading": "{ticker} 공시를 불러오는 중입니다.",
     "insider.queued": "{ticker}는 아직 수집되지 않았습니다. 다음 수집 주기에 포함되며, 잠시 뒤 다시 조회하면 표시됩니다.",
     "insider.noFilings": "{ticker}에 대해 수집된 Form 3·4·5 공시가 없습니다.",
@@ -854,8 +849,8 @@ const I18N = {
     "app.tagline": "MARKET SIGNAL CONSOLE", "app.live": "LIVE DATA",
     "intro.eyebrow": "MULMIT MARKET MONITOR", "intro.title": "Market leadership and stock risk, in one view.",
     "intro.copy": "Read S&P 500 sector strength first, then analyze returns, drawdowns, CAPM and the forward MDD distribution for any ticker in the same context.",
-    "mode.insiderTitle": "Insider filings lookup", "mode.insiderTag": "SEC EDGAR · FORM 3·4·5",
-    "mode.insiderLede": "Enter a ticker to see officer, director and 10% owner transactions relayed verbatim from EDGAR Forms 3, 4 and 5.",
+    "mode.insiderTitle": "Insider filings lookup", "mode.insiderTag": "US-LISTED ONLY · SEC EDGAR · FORM 3·4·5",
+    "mode.insiderLede": "US-listed companies only. Enter a ticker to see officer, director and 10% owner transactions relayed verbatim from EDGAR Forms 3, 4 and 5. For Korean listings, officer and major-shareholder reports appear with the Korean stock analysis above.",
     "mode.introTitle": "US insider filings, straight from the source.",
     "mode.introCopy": "Prices, liquidity and macro live on the market monitor; this page looks up SEC EDGAR ownership filings. Price analytics return when a licensed price provider is connected.",
     "form.lookup": "Look up", "example.msft": "Microsoft", "example.googl": "Alphabet",
@@ -879,6 +874,11 @@ const I18N = {
     "krins.colOwned": "Shares owned", "krins.colChange": "Change", "krins.colRatio": "Ratio", "krins.colReport": "Filing",
     "krins.none": "No ownership reports collected.", "krins.view": "View",
     "krins.source": "{notice} · latest {count} reports",
+    "krfund.title": "Annual financials (DART)", "krfund.sub": "Key accounts from annual reports, relayed as filed (consolidated preferred). Margins are income ÷ revenue from the same filing; quarterly income lines are omitted because cumulative and in-quarter figures are not distinguished. Amounts in KRW.",
+    "krfund.caption": "Annual key accounts", "krfund.colYear": "Fiscal year", "krfund.colRevenue": "Revenue", "krfund.colOpInc": "Operating income", "krfund.colNetInc": "Net income",
+    "krfund.colOpMargin": "Op. margin", "krfund.colNetMargin": "Net margin", "krfund.colEquity": "Total equity",
+    "krfund.loading": "Loading financial statements.", "krfund.none": "No financial data to display.", "krfund.error": "Failed to load financial statements.",
+    "krfund.statement": "Basis: {statement}", "krfund.revenueAccount": "Revenue account: {name}",
     "market.title": "S&P 500 Sector Monitor", "market.tag": "11 SECTOR ETFs · ADJUSTED CLOSE", "market.summaryAria": "Sector summary",
     "market.lede": "Switch between daily, weekly, monthly and yearly returns to see leadership and market breadth at a glance.",
     "pulse.best": "Strongest sector", "pulse.worst": "Weakest sector", "pulse.breadth": "Sectors up", "pulse.asof": "As of",
@@ -900,7 +900,7 @@ const I18N = {
     "nav.monitor": "Market monitor", "nav.analytics": "Stock analytics",
     "legal.privacy": "Privacy policy", "legal.terms": "Terms of use", "legal.disclaimer": "Disclaimer",
     "legal.notAdvice": "Mulmit is an information service, not investment advice or a solicitation to trade.",
-    "insider.title": "Insider filings", "insider.sub": "Officer, director and 10% owner transactions relayed verbatim from SEC EDGAR Forms 3, 4 and 5.",
+    "insider.title": "Insider filings", "insider.sub": "US-listed companies only — officer, director and 10% owner transactions relayed verbatim from SEC EDGAR Forms 3, 4 and 5. Korean listings are covered by the officer and major-shareholder reports in the Korean stock analysis above.",
     "insider.tableCaption": "Reported insider transactions", "insider.loading": "Loading filings for {ticker}.",
     "insider.queued": "{ticker} has not been collected yet. It is queued for the next ingest cycle — check back shortly.",
     "insider.noFilings": "No Form 3, 4 or 5 filings have been collected for {ticker}.",
