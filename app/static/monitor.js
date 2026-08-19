@@ -74,6 +74,7 @@ const TEXT = {
     "kro.fxOfficial": "공식환율 환산 · 실시간 환율 아님", "kro.vsClose": "{date} 종가 대비", "kro.mark": "마크", "kro.official": "공식 종가", "kro.fx": "환산 환율",
     "kro.adrRatio": "ADR 비율", "kro.noFx": "환율 미확보 · 환산 보류", "kro.noClose": "공식 종가 미확보", "kro.noMarket": "표시할 시장 없음", "kro.session": "주말 내부 가격발견 중",
     "kro.vsSession": "{date} 15:30 퍼프가 대비 · 참고", "kro.vsSessionNote": "퍼프 5분봉 기준 · 공식 종가 아님",
+    "kro.vsPremium": "원주 {date} 종가 대비 프리미엄", "kro.adrImpliedNote": "마크 × {ratio}(공시 비율) × 환율 = 원주 1주 환산가 — ADR 가격 상승률이 아니라 원주 대비 괴리입니다",
     "krp.title": "국민연금 5% 공시", "krp.copy": "주식등의 대량보유 상황보고(5% 룰) 중 국민연금공단 제출분입니다. 보고서 단위의 보유비율 변동이며, 통상 한 달치가 월초에 일괄 공시됩니다. 일별 매매가 아닙니다.",
     "krp.colDate": "보고일", "krp.colCompany": "회사", "krp.colRatio": "보유비율", "krp.colChange": "증감", "krp.colShares": "보유주식수", "krp.colReason": "보고사유",
     "krp.detailPending": "상세 미확보", "krp.window": "최근 {days}일 공시 {total}건 중 {count}건",
@@ -143,6 +144,7 @@ const TEXT = {
     "kro.fxOfficial": "Official-rate conversion · not a live FX rate", "kro.vsClose": "vs {date} close", "kro.mark": "Mark", "kro.official": "Official close", "kro.fx": "FX applied",
     "kro.adrRatio": "ADR ratio", "kro.noFx": "No official FX yet · conversion withheld", "kro.noClose": "Official close unavailable", "kro.noMarket": "No live market", "kro.session": "Weekend internal price discovery",
     "kro.vsSession": "vs perp @ {date} 15:30 KST · reference", "kro.vsSessionNote": "Perp 5-minute candle basis · not an official close",
+    "kro.vsPremium": "premium vs ordinary {date} close", "kro.adrImpliedNote": "Mark × {ratio} (disclosed ratio) × FX = per-ordinary-share equivalent — a cross-listing premium, not the ADR's price change",
     "krp.title": "NPS 5% filings", "krp.copy": "Large-holding (5% rule) reports filed by the National Pension Service. Report-level stake changes, usually filed as one early-month batch covering the prior month — not daily trades.",
     "krp.colDate": "Filed", "krp.colCompany": "Company", "krp.colRatio": "Stake", "krp.colChange": "Change", "krp.colShares": "Shares held", "krp.colReason": "Reason",
     "krp.detailPending": "Detail pending", "krp.window": "{count} of {total} filings in the last {days} days",
@@ -1476,9 +1478,16 @@ function renderKrOvernight() {
     if (tickValue !== null) kroPrevValues.set(card.id, tickValue);
 
     const vs = document.createElement("div"); vs.className = `kro-vs ${changeClass(percent)}`;
-    if (percent !== null) vs.textContent = `${formatSigned(percent)} · ${t("kro.vsClose", { date: kroDate(card.official?.date) })}`;
+    // ADR 카드의 %는 가격 상승률이 아니라 원주 대비 괴리라, "종가 대비"로 두면
+    // 30% 오른 것처럼 읽힌다. 프리미엄임을 문구로 박는다.
+    const vsKey = card.kind === "adr" ? "kro.vsPremium" : "kro.vsClose";
+    if (percent !== null) vs.textContent = `${formatSigned(percent)} · ${t(vsKey, { date: kroDate(card.official?.date) })}`;
     else if (card.status === "no_fx") vs.textContent = t("kro.noFx");
     else vs.textContent = t("kro.noClose");
+    if (card.kind === "adr" && card.adr?.per_ordinary) {
+      const note = t("kro.adrImpliedNote", { ratio: card.adr.per_ordinary });
+      vs.title = note; price.title = note;
+    }
 
     // 공식 종가가 직전 세션보다 늦을 때(아침·연휴)만 직전 15:30 퍼프가 대비를
     // 참고선으로 덧붙인다. 공식 종가가 따라잡으면 두 수치가 겹치므로 숨긴다.
