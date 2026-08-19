@@ -445,6 +445,11 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 .feed-tag.kr { color: var(--green); } .feed-tag.us { color: var(--accent); }
 .feed-text { min-width: 0; color: var(--muted); font-size: 12px; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 a.feed-text:hover { color: var(--ink); }
+.feed-tag.news { color: var(--amber); }
+.feed-domain { color: var(--faint); font: 650 9.5px/1.3 var(--mono); }
+.feed-move { flex: 0 0 auto; padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 700 9.5px/1.3 var(--mono); text-decoration: none; }
+.feed-move.up { color: var(--green); } .feed-move.down { color: var(--red); }
+.feed-move:hover { border-color: var(--line-strong); }
 .feed-hub { margin-left: auto; flex: 0 0 auto; color: var(--faint); font: 700 10px/1.3 var(--mono); text-decoration: none; }
 .feed-hub:hover { color: var(--ink); }
 @media (max-width: 560px) { .feed-text { white-space: normal; } .feed-date { flex-basis: 38px; } }

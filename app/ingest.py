@@ -22,7 +22,17 @@ import logging
 import threading
 import time
 
-from . import config, data, econ_calendar, kr_events, kr_pension, store, us_fundamentals, us_ptr
+from . import (
+    config,
+    data,
+    econ_calendar,
+    kr_events,
+    kr_pension,
+    news_feed,
+    store,
+    us_fundamentals,
+    us_ptr,
+)
 from .market_assets import ASSET_TICKERS, CORRELATION_TICKERS
 from .providers import DataUnavailable, RateLimited, get_provider
 from .providers.bls import (
@@ -649,6 +659,24 @@ def refresh_kr_events(*, force: bool = False) -> dict:
         return {"failed": str(exc)}
 
 
+def refresh_gdelt_news(*, force: bool = False) -> dict:
+    """GDELT 헤드라인 갱신. 쿼리 2개·6초 간격 — 배치 전용이다."""
+    if not config.GDELT_ENABLED:
+        return {"skipped": "disabled"}
+    if not force and store.load_report(news_feed.CACHE_KEY, config.GDELT_MAX_AGE) is not None:
+        return {"skipped": "fresh"}
+    try:
+        result = news_feed.refresh()
+        log.info("뉴스 헤드라인 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("GDELT 요청 제한 — 뉴스는 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("뉴스 헤드라인 갱신 실패: %s", exc)
+        return {"failed": str(exc)}
+
+
 def refresh_econ_calendar(*, force: bool = False) -> dict:
     """경제 캘린더의 FRED 릴리스 예정일 갱신. 큐레이션 부분은 코드에 있다."""
     if not config.FRED_ENABLED:
@@ -903,6 +931,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             insider_result = refresh_insider_filings()
             pension_result = refresh_kr_pension()
             kr_events_result = refresh_kr_events()
+            refresh_gdelt_news()
             ptr_result = refresh_us_ptr()
             fund_result = refresh_us_fundamentals()
             refresh_econ_calendar()
@@ -945,6 +974,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             insider_result = refresh_insider_filings()
             pension_result = refresh_kr_pension()
             kr_events_result = refresh_kr_events()
+            refresh_gdelt_news()
             refresh_us_ptr()
             refresh_us_fundamentals()
             refresh_econ_calendar()
@@ -1020,6 +1050,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         insider_result = refresh_insider_filings()
         pension_result = refresh_kr_pension()
         kr_events_result = refresh_kr_events()
+        refresh_gdelt_news()
         ptr_result = refresh_us_ptr()
         fund_result = refresh_us_fundamentals()
         refresh_econ_calendar()

@@ -17,7 +17,7 @@ import datetime as dt
 import logging
 from typing import Any
 
-from . import config, econ_calendar, kr_events, kr_pension, store, us_ptr
+from . import config, econ_calendar, kr_events, kr_pension, news_feed, store, us_ptr
 
 log = logging.getLogger(__name__)
 
@@ -205,6 +205,25 @@ def _index_move_items() -> list[dict[str, Any]]:
     return items
 
 
+def _news_items() -> list[dict[str, Any]]:
+    blob = store.load_report(news_feed.CACHE_KEY, config.REPORT_TTL * 2)
+    items = []
+    for article in (blob or {}).get("articles", [])[:8]:
+        tags = article.get("tags") or []
+        items.append({
+            "at": str(article.get("seendate") or ""),
+            "date": str(article.get("seendate") or "")[:10],
+            "kind": "news",
+            "symbol": tags[0]["symbol"] if tags else None,
+            "title": {"ko": article.get("title"), "en": article.get("title")},
+            "url": article.get("url"),
+            "hub": tags[0].get("hub") if tags else None,
+            "domain": article.get("domain"),
+            "tags": tags,
+        })
+    return items
+
+
 def _upcoming_items(today: dt.date) -> list[dict[str, Any]]:
     try:
         calendar = econ_calendar.build_calendar()
@@ -237,7 +256,7 @@ def _upcoming_items(today: dt.date) -> list[dict[str, Any]]:
 def build_feed(*, today: dt.date | None = None) -> dict[str, Any]:
     today = today or dt.datetime.now(_KST).date()
     items: list[dict[str, Any]] = []
-    for source in (_us_8k_items, _kr_material_items, _us_ptr_items, _kr_pension_items, _index_move_items):
+    for source in (_us_8k_items, _kr_material_items, _us_ptr_items, _kr_pension_items, _index_move_items, _news_items):
         try:
             items.extend(source())
         except Exception as exc:  # noqa: BLE001 - 소스 하나의 실패는 그 소스만 지운다
@@ -246,9 +265,20 @@ def build_feed(*, today: dt.date | None = None) -> dict[str, Any]:
     # 날짜뿐인 항목보다 뒤가 아니라 앞에 오도록 문자열 비교가 그대로 맞는다.
     items = [item for item in items if item["at"]]
     items.sort(key=lambda item: item["at"], reverse=True)
+    kept = items[:MAX_ITEMS]
+    attribution = None
+    if any(item["kind"] == "news" for item in kept):
+        from .providers.gdelt import GDELT_ATTRIBUTION, GDELT_ATTRIBUTION_KO, GDELT_PUBLISHER_URL
+
+        attribution = {
+            "text": GDELT_ATTRIBUTION,
+            "text_ko": GDELT_ATTRIBUTION_KO,
+            "url": GDELT_PUBLISHER_URL,
+        }
     return {
         "generated_at": dt.datetime.now(dt.UTC).isoformat().replace("+00:00", "Z"),
-        "items": items[:MAX_ITEMS],
+        "items": kept,
+        "attribution": attribution,
         "upcoming": _upcoming_items(today),
         "count": min(len(items), MAX_ITEMS),
         "basis_ko": (
