@@ -366,6 +366,19 @@ class SecEdgarProvider:
             raise DataUnavailable(f"EDGAR concept response malformed for {tag}")
         return payload
 
+    def fetch_company_facts(self, cik: str) -> dict[str, Any]:
+        """회사의 전체 XBRL 팩트 한 파일 — companyconcept의 폴백 경로.
+
+        EDGAR 두 엔드포인트가 불일치하는 회사가 있다(실측 2026-08-20: KO의
+        Revenues가 companyconcept에선 200 + 빈 USD 배열, companyfacts에는
+        연간 24행). 태그가 아니라 경로를 갈아타야 하는 경우다.
+        """
+        url = f"{SEC_DATA_BASE}/api/xbrl/companyfacts/CIK{int(cik):010d}.json"
+        payload = self._request_json(url)
+        if not isinstance(payload, dict) or not isinstance(payload.get("facts"), dict):
+            raise DataUnavailable(f"EDGAR companyfacts malformed for CIK {cik}")
+        return payload
+
     def fetch_company(self, cik: str, *, form_limit: int = 40) -> CompanyFilings:
         """Company metadata plus parsed transactions from its recent Form 3/4/5s."""
         cik = normalize_cik(cik)
