@@ -119,3 +119,51 @@ def test_index_move_records_threshold_crossings_once(db, monkeypatch):
     moves = [item for item in feed["items"] if item["kind"] == "index_move"]
     assert len(moves) == 2
     assert "회복" in moves[0]["title"]["ko"]
+
+
+def test_recovery_needs_hysteresis_clearance(db, monkeypatch):
+    """선 위 진동은 뉴스가 아니다 — 회복은 선 안쪽 0.5%p를 확보해야 한 번 찍힌다."""
+    monkeypatch.setattr(kr_overnight, "build_kr_overnight", _kro_with(-4.2))
+    signal_feed.build_feed(today=TODAY)  # 이탈 1건
+
+    # -2.8: 선(-3%) 위로 올라왔지만 0.5 미확보 → 이벤트 없음, 구간 유지
+    monkeypatch.setattr(kr_overnight, "build_kr_overnight", _kro_with(-2.8))
+    feed = signal_feed.build_feed(today=TODAY)
+    assert sum(1 for i in feed["items"] if i["kind"] == "index_move") == 1
+
+    # 다시 -3.1: 구간이 안 바뀐 상태였으므로 "재이탈" 이벤트도 없다
+    monkeypatch.setattr(kr_overnight, "build_kr_overnight", _kro_with(-3.1))
+    feed = signal_feed.build_feed(today=TODAY)
+    assert sum(1 for i in feed["items"] if i["kind"] == "index_move") == 1
+
+    # -2.4: 확보 → 회복 1건. 아침 4연발이 이 규칙으로 2건이 된다.
+    monkeypatch.setattr(kr_overnight, "build_kr_overnight", _kro_with(-2.4))
+    feed = signal_feed.build_feed(today=TODAY)
+    moves = [i for i in feed["items"] if i["kind"] == "index_move"]
+    assert len(moves) == 2
+    assert "회복" in moves[0]["title"]["ko"]
+    assert "-2.4%" in moves[0]["title"]["ko"]
+
+
+def test_same_crossing_within_window_is_recorded_once(db, monkeypatch):
+    """워커 레이스 가드: 같은 선·같은 방향이 10분 안에 겹치면 한 건이다."""
+    monkeypatch.setattr(kr_overnight, "build_kr_overnight", _kro_with(-3.4))
+    signal_feed.build_feed(today=TODAY)
+    # 다른 워커가 낡은 상태(bucket=0)로 같은 이탈을 또 기록하려는 상황
+    state = store.load_report(signal_feed.MOVE_STATE_KEY, 90 * 24 * 3600)
+    state["bucket"] = 0
+    store.save_report(signal_feed.MOVE_STATE_KEY, state)
+    feed = signal_feed.build_feed(today=TODAY)
+    assert sum(1 for i in feed["items"] if i["kind"] == "index_move") == 1
+
+
+def test_every_item_carries_a_region(db, monkeypatch):
+    monkeypatch.setattr(kr_overnight, "build_kr_overnight", _kro_with(-5.4))
+    _seed(db)
+    feed = signal_feed.build_feed(today=TODAY)
+    regions = {i["kind"]: i["region"] for i in feed["items"]}
+    assert all(r in ("kr", "us") for r in regions.values())
+    for kind in [k for k in regions if k.startswith("kr_")] + ["index_move"]:
+        assert regions[kind] == "kr"
+    for kind in [k for k in regions if k.startswith("us_")]:
+        assert regions[kind] == "us"

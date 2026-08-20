@@ -17,7 +17,7 @@
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Mulmit","alternateName":["물밑","물밑 대시보드"],"url":"https://mulmit.com/"}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Mulmit","url":"https://mulmit.com/","logo":"https://mulmit.com/static/brand/mulmit-favicon.svg"}</script>
-  <link rel="stylesheet" href="/static/monitor.css?v=20260820-2">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260820-3">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -81,6 +81,7 @@
       </div>
       <p class="section-copy" data-i18n="feed.copy">공시와 일정 lane을 시간순 한 줄기로 모았습니다. 수집 주기(약 1시간) 기반이며 실시간 속보가 아닙니다.</p>
       <div class="panel">
+        <div id="feed-filter" class="feed-filter" hidden></div>
         <div id="feed-upcoming" class="feed-upcoming" hidden></div>
         <div id="feed-body"></div>
         <footer class="panel-footer" id="feed-footer"></footer>
@@ -144,6 +145,6 @@
     else if (us.indexOf(id) >= 0) location.replace("/us" + location.hash);
   })();
   </script>
-  <script src="/static/monitor.js?v=20260820-2" defer></script>
+  <script src="/static/monitor.js?v=20260820-3" defer></script>
 </body>
 </html>
