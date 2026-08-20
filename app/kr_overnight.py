@@ -2,15 +2,15 @@
 
 The one number this section exists for: how far the HIP-3 synthetic perpetual
 has moved since the last confirmed Korea Exchange close.  Equity marks are
-quoted in USD, so they are converted through the latest official H.10 won/dollar
+quoted in USD, so they are converted through the latest official won/dollar
 rate before the comparison; the KR200 index perpetual trades on the same point
 scale as the official KOSPI 200 close and is compared directly, no FX involved.
 
 Three lanes meet here and each keeps its own gate: the route refuses entirely
 while HIP-3 public display is off, official closes disappear when the FSC lane
-closes, and the conversion disappears when the H.10 series may not be served.
+closes, and the conversion disappears when the FX series may not be served.
 A missing input nulls the fields that depend on it — nothing is estimated.
-The H.10 rate is a daily official quotation from a weekly release, not a live
+The rate is the daily official quotation (BOK ECOS trading-reference rate), not a live
 rate, so both the FX date and the close date travel with every derived value.
 """
 
@@ -47,7 +47,7 @@ OVERNIGHT_DEX = "xyz"
 OVERNIGHT_CACHE_TTL_SECONDS = 5.0
 OVERNIGHT_STALE_TTL_SECONDS = 300.0
 FX_SERIES_KEY = "fx_usdkrw"
-# The H.10 release publishes daily rates weekly; beyond this window the stored
+# Official daily quotations (with holiday gaps); beyond this window the stored
 # tail is a data problem worth surfacing as "unavailable", not a usable rate.
 FX_LOOKBACK_DAYS = 45
 KR_INDEX_CLASS = "KOSPI시리즈"
@@ -273,14 +273,14 @@ def _fsc_servable() -> bool:
 
 
 def _load_fx() -> dict[str, Any]:
-    """Latest storable H.10 won/dollar rate, or an honest unavailable block.
+    """Latest stored official won/dollar rate, or an honest unavailable block.
 
     Same double gate as the stress composite: the stored series row names its
     provider and rights status, and both must pass before the value ships.
     """
-    basis_ko = "미 연준 H.10 주간 릴리스의 일별 공식 고시값 — 실시간 환율이 아닙니다."
+    basis_ko = "한국은행 ECOS 원/달러 매매기준율(일별 공식 고시) — 실시간 환율이 아닙니다."
     basis_en = (
-        "Daily official quotation from the Federal Reserve's weekly H.10 release; "
+        "Daily official won/dollar trading-reference rate from the Bank of Korea's ECOS; "
         "not a live exchange rate."
     )
     unavailable = {
@@ -468,18 +468,18 @@ def _card(
                 if target.kind == "us_etf"
                 else "지수 무기한선물 마크(포인트)를 코스피 200 공식 종가와 직접 비교"
                 if target.kind == "index"
-                else "ADR 퍼프 마크 × 비율 × H.10 공식환율을 원주 마지막 공식 종가와 비교"
+                else "ADR 퍼프 마크 × 비율 × 공식 고시환율을 원주 마지막 공식 종가와 비교"
                 if target.kind == "adr"
-                else "합성 무기한선물 마크가격 × H.10 공식환율을 마지막 공식 종가와 비교"
+                else "합성 무기한선물 마크가격 × 공식 고시환율을 마지막 공식 종가와 비교"
             ),
             "en": (
                 "US-listed Korea-exposure ETF perp — no KRW conversion or official-close comparison; only the 15:30 session reference applies"
                 if target.kind == "us_etf"
                 else "Index-perpetual mark (points) compared directly with the official KOSPI 200 close"
                 if target.kind == "index"
-                else "ADR-perpetual mark × ratio × official H.10 rate versus the ordinary share's last official close"
+                else "ADR-perpetual mark × ratio × the official published rate versus the ordinary share's last official close"
                 if target.kind == "adr"
-                else "Synthetic-perpetual mark × official H.10 rate versus the last official close"
+                else "Synthetic-perpetual mark × the official published rate versus the last official close"
             ),
         },
     }
@@ -565,14 +565,14 @@ def build_kr_overnight(
         "coverage": {"available": available, "total": len(cards)},
         "methodology": {
             "ko": (
-                "환산가 = 마크가격 × 원/달러(H.10 공식 고시, 날짜 표기). 기준가 대비 % = "
+                "환산가 = 마크가격 × 원/달러(공식 고시 환율, 날짜 표기). 기준가 대비 % = "
                 "환산가 ÷ 마지막 공식 종가 − 1. 코스피 200은 포인트 단위가 같아 환산 없이 "
                 "직접 비교합니다. ADR 카드는 마크 × 공시 비율(10 ADR = 원주 1주) × 환율을 원주 종가와 비교한 프리미엄 참고값입니다. 김치프리미엄 조정은 하지 않습니다. "
                 "공식 종가가 아직 전전일이면 직전 거래일 15:30 시점 퍼프 5분봉 종가 대비 변동률을 "
                 "참고로 함께 표시합니다(공식 종가 아님, 휴장일은 큐레이션 달력 기준)."
             ),
             "en": (
-                "Implied price = mark × won/dollar (official H.10 quotation, date shown). "
+                "Implied price = mark × won/dollar (official quotation, date shown). "
                 "Percent versus close = implied ÷ last official close − 1. KOSPI 200 shares "
                 "the official point scale and is compared without conversion. The ADR card is a "
                 "premium reference: mark × disclosed ratio (10 ADRs = 1 ordinary) × FX versus "

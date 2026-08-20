@@ -55,7 +55,7 @@ const TEXT = {
     "landing.usLink": "미국·글로벌 페이지", "landing.usDesc": "S&P 500 히트맵 · 하원 의원 거래 · 스트레스 지수 · 매크로 · 유동성",
     "session.open": "정규장 진행 중", "session.closed": "국내장 마감", "session.until": "개장까지 약 {time}",
     "session.hm": "{h}시간 {m}분", "session.note": "시계 기준 · 휴장일 미반영 · 평일 09:00–15:30 KST",
-    "ticker.note": "미 연준 H.10 공식 고시 환율 · 실시간 아님",
+    "ticker.note": "한국은행 ECOS 매매기준율 · 실시간 아님",
     "landing.krMini.kospi": "코스피 200 퍼프", "landing.usMini.sp500": "S&P 500 퍼프", "landing.usMini.stress": "스트레스",
     "krpage.kicker": "KOREA MARKETS", "krpage.title": "한국 주식, 장 밖에서도 한눈에.",
     "krpage.copy": "24시간 참고가, 공식 종가, 코스피 지수군, 국민연금 대량보유 공시를 한 페이지에서 봅니다.",
@@ -144,7 +144,7 @@ const TEXT = {
     "landing.usLink": "US & global page", "landing.usDesc": "S&P 500 heatmap · House trades · stress index · macro · liquidity",
     "session.open": "KRX session open", "session.closed": "KRX closed", "session.until": "opens in ~{time}",
     "session.hm": "{h}h {m}m", "session.note": "Clock-based; holidays not reflected. Weekdays 09:00–15:30 KST.",
-    "ticker.note": "Federal Reserve H.10 official rate · not live",
+    "ticker.note": "BOK ECOS official rate · not live",
     "landing.krMini.kospi": "KOSPI 200 perp", "landing.usMini.sp500": "S&P 500 perp", "landing.usMini.stress": "Stress",
     "krpage.kicker": "KOREA MARKETS", "krpage.title": "Korean stocks, beyond market hours.",
     "krpage.copy": "Around-the-clock references, official closes, the KOSPI index family and NPS large-holding filings on one page.",
@@ -268,7 +268,7 @@ const METRICS = {
   treasury_general_account: { aliases: ["treasury_general_account", "tga", "wtregen"], label: LABEL("재무부 TGA", "Treasury General Account"), group: "liquidity", format: "compact", accent: "#38bdf8" },
   m2: { aliases: ["m2", "m2sl"], label: LABEL("미국 M2", "US M2"), group: "liquidity", format: "compact", accent: "#38bdf8" },
   retail_money_market_funds: { aliases: ["retail_money_market_funds", "wrmfns", "mmf"], label: LABEL("리테일 MMF", "Retail money market funds"), group: "liquidity", format: "compact", accent: "#38bdf8" },
-  fx_usdkrw: { aliases: ["fx_usdkrw", "rxi_n.b.ko"], label: LABEL("원·달러", "USD/KRW"), group: "fx", format: "rate", accent: "#2dd4a3", description: LABEL("달러 한 단위당 원화. 미 연준 H.10 공식 고시값입니다.", "Korean won per US dollar, from the Federal Reserve's official H.10 release.") },
+  fx_usdkrw: { aliases: ["fx_usdkrw", "rxi_n.b.ko"], label: LABEL("원·달러", "USD/KRW"), group: "fx", format: "rate", accent: "#2dd4a3", description: LABEL("달러 한 단위당 원화. 한국은행 ECOS 매매기준율입니다.", "Korean won per US dollar — the Bank of Korea's official ECOS trading-reference rate.") },
   fx_usdjpy: { aliases: ["fx_usdjpy", "rxi_n.b.ja"], label: LABEL("엔·달러", "USD/JPY"), group: "fx", format: "rate", accent: "#a78bfa", description: LABEL("달러 한 단위당 엔화", "Japanese yen per US dollar") },
   fx_usdcny: { aliases: ["fx_usdcny", "rxi_n.b.ch"], label: LABEL("위안·달러", "USD/CNY"), group: "fx", format: "rate", accent: "#f5b942", description: LABEL("달러 한 단위당 위안화", "Chinese yuan per US dollar") },
   fx_eurusd: { aliases: ["fx_eurusd", "rxi$us_n.b.eu"], label: LABEL("유로·달러", "EUR/USD"), group: "fx", format: "rate", accent: "#38bdf8", description: LABEL("유로 한 단위당 달러. 위 세 개와 방향이 반대입니다.", "US dollars per euro — quoted the opposite way round to the three above.") },
@@ -353,7 +353,7 @@ const INSIGHTS = {
     description: LABEL("개인 투자자용 머니마켓펀드 잔액으로 단기 대기자금의 한 부분입니다.", "Retail money-market-fund balances, one component of short-term parked cash."),
     hints: [LABEL("증가는 현금성 자산 선호와 나란히 볼 수 있음", "A rise can align with preference for cash-like assets"), LABEL("감소분이 반드시 주식으로 이동하는 것은 아님", "A decline does not imply the money went to equities")],
   },
-  fx_usdkrw: { aliases: ["fx_usdkrw", "rxi_n.b.ko"], label: LABEL("원·달러", "USD/KRW"), group: "fx", format: "rate", accent: "#2dd4a3", description: LABEL("달러 한 단위당 원화. 미 연준 H.10 공식 고시값입니다.", "Korean won per US dollar, from the Federal Reserve's official H.10 release.") },
+  fx_usdkrw: { aliases: ["fx_usdkrw", "rxi_n.b.ko"], label: LABEL("원·달러", "USD/KRW"), group: "fx", format: "rate", accent: "#2dd4a3", description: LABEL("달러 한 단위당 원화. 한국은행 ECOS 매매기준율입니다.", "Korean won per US dollar — the Bank of Korea's official ECOS trading-reference rate.") },
   fx_usdjpy: { aliases: ["fx_usdjpy", "rxi_n.b.ja"], label: LABEL("엔·달러", "USD/JPY"), group: "fx", format: "rate", accent: "#a78bfa", description: LABEL("달러 한 단위당 엔화", "Japanese yen per US dollar") },
   fx_usdcny: { aliases: ["fx_usdcny", "rxi_n.b.ch"], label: LABEL("위안·달러", "USD/CNY"), group: "fx", format: "rate", accent: "#f5b942", description: LABEL("달러 한 단위당 위안화", "Chinese yuan per US dollar") },
   fx_eurusd: { aliases: ["fx_eurusd", "rxi$us_n.b.eu"], label: LABEL("유로·달러", "EUR/USD"), group: "fx", format: "rate", accent: "#38bdf8", description: LABEL("유로 한 단위당 달러. 위 세 개와 방향이 반대입니다.", "US dollars per euro — quoted the opposite way round to the three above.") },
@@ -396,7 +396,7 @@ const SECTIONS = [
   { id: "market-risk", zone: "us", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("시장심리·변동성·금리곡선·신용스프레드·금융스트레스를 나란히 봅니다.", "Compare sentiment, volatility, the yield curve, credit spread and financial stress."), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread", "financial_stress", "recession_prob"] },
   { id: "macro-regime", zone: "us", eyebrow: "MACRO REGIME", title: LABEL("매크로 환경", "Macro regime"), copy: LABEL("달러·금리·원자재·고용의 방향을 확인합니다.", "Track the dollar, rates, commodities and labor conditions."), keys: ["dollar_index_broad", "dxy", "usdjpy", "treasury_10y", "wti", "copper", "unemployment", "initial_claims"] },
   { id: "liquidity", zone: "us", eyebrow: "FED & LIQUIDITY", title: LABEL("유동성 대차대조표", "Liquidity balance sheet"), copy: LABEL("연준·재무부·단기자금시장 유동성의 크기와 흐름입니다.", "Monitor Federal Reserve, Treasury and money-market liquidity."), keys: ["fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account", "m2", "retail_money_market_funds"] },
-  { id: "exchange-rates", zone: "us", eyebrow: "OFFICIAL FX · FEDERAL RESERVE H.10", title: LABEL("환율", "Exchange rates"), copy: LABEL("미 연준이 매 영업일 고시하는 공식 환율입니다. 앞의 세 개는 달러당 외화, 뒤의 두 개는 외화당 달러로 방향이 반대입니다.", "Official rates published each business day by the Federal Reserve. The first three are foreign currency per dollar; the last two are quoted the other way round."), keys: ["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd", "dollar_index_afe", "dollar_index_eme"] },
+  { id: "exchange-rates", zone: "us", eyebrow: "OFFICIAL FX · BOK ECOS × FED H.10", title: LABEL("환율", "Exchange rates"), copy: LABEL("원·달러, 엔·달러, 유로·달러, 파운드·달러는 한국은행 ECOS의 일별 고시(당일 반영), 위안·달러와 달러지수는 미 연준 H.10 주간 릴리스입니다. 앞의 세 개는 달러당 외화, 뒤의 두 개는 외화당 달러로 방향이 반대입니다.", "USD/KRW, USD/JPY, EUR/USD and GBP/USD are the Bank of Korea's daily ECOS quotations (same-day); USD/CNY and the dollar indexes come from the Fed's weekly H.10 release. The first three are foreign currency per dollar; the last two are quoted the other way round."), keys: ["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd", "dollar_index_afe", "dollar_index_eme"] },
   { id: "funding", zone: "us", eyebrow: "OVERNIGHT FUNDING", title: LABEL("단기자금 조달금리", "Overnight funding"), copy: LABEL("담보·무담보 금리와 지급준비금 이자율의 간격을 봅니다.", "Compare secured, unsecured and reserve remuneration rates."), keys: ["sofr", "effective_fed_funds", "reserve_interest"] },
   { id: "options-risk", zone: "us", eyebrow: "DERIVATIVES", title: LABEL("옵션과 변동성", "Options and volatility"), copy: LABEL("공식 라이선스가 필요한 값은 계약 전까지 빈 상태로 표시합니다.", "Values requiring official display licenses remain blank until licensed."), keys: ["skew", "vvix", "ovx", "pcr"] },
 ];
@@ -1243,7 +1243,7 @@ function renderKrEtf() {
 }
 
 // P2: 헤더 상태줄 — 세션 배지(시계 기준, 휴장일 미반영을 툴팁에 명시)와
-// H.10 공식 환율 미니 티커, 랜딩 존 카드의 라이브 미니 프리뷰.
+// 공식 환율 미니 티커(ECOS 매매기준율), 랜딩 존 카드의 라이브 미니 프리뷰.
 function krSessionInfo(now = new Date()) {
   const kst = new Date(now.getTime() + (now.getTimezoneOffset() + 540) * 60000);
   const day = kst.getDay(), minutes = kst.getHours() * 60 + kst.getMinutes();
@@ -1323,7 +1323,7 @@ function renderMastTicker() {
   node.hidden = false;
   node.title = t("ticker.note");
   const date = document.createElement("small");
-  date.textContent = `H.10 ${kroDate(recent.date)}`;
+  date.textContent = `${state.lang === "ko" ? "고시" : "official"} ${kroDate(recent.date)}`;
   node.replaceChildren(
     document.createTextNode(`USD/KRW ${recent.value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`),
     date,
@@ -1966,7 +1966,7 @@ function renderKrOvernight() {
       meta.append(row(t("kro.adrRatio"), `${card.adr.per_ordinary} ADR = 1`));
     }
     if (card.kind !== "index" && payload.fx?.status === "ok") {
-      meta.append(row(t("kro.fx"), `${payload.fx.rate.toLocaleString("en-US", { maximumFractionDigits: 2 })} · ${kroDate(payload.fx.date)} H.10`));
+      meta.append(row(t("kro.fx"), `${payload.fx.rate.toLocaleString("en-US", { maximumFractionDigits: 2 })} · ${kroDate(payload.fx.date)} ${state.lang === "ko" ? "고시" : "official"}`));
     }
 
     const badges = document.createElement("div"); badges.className = "kro-badges";

@@ -73,7 +73,7 @@ FEDBOARD_RETRIES = _int("FEDBOARD_RETRIES", 2)
 FEDBOARD_REQUEST_INTERVAL = _float("FEDBOARD_REQUEST_INTERVAL", 0.5)
 # The archives are multi-megabyte and the releases update daily at most, so a
 # long refresh window keeps one download serving every series in it.
-FEDBOARD_MAX_AGE = _int("FEDBOARD_MAX_AGE", 60 * 60 * 12)
+FEDBOARD_MAX_AGE = _int("FEDBOARD_MAX_AGE", 60 * 60 * 4)  # H.15 일별 발행을 T+1 새벽에 집도록
 FEDBOARD_HISTORY_DAYS = _int("FEDBOARD_HISTORY_DAYS", 366 * 25)
 
 # Federal Reserve Bank of New York markets API (SOFR, EFFR, overnight RRP).

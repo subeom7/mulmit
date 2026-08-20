@@ -113,10 +113,11 @@ def test_the_cards_are_served_with_their_own_provider(db, fedboard):
     served = {item["key"]: item for item in body["series"]}
 
     assert {"treasury_10y", "treasury_2y", "yield_curve"} <= set(served)
-    # H.10 rates arrive from the same lane and the same archive mechanism.
-    assert served["fx_usdkrw"]["latest"] == {"date": "2026-08-13", "value": 1409.94}
-    assert served["fx_usdkrw"]["units"]["short"] == "KRW/USD"
-    assert served["fx_eurusd"]["units"]["short"] == "USD/EUR"
+    # H.10 잔류분(위안·달러지수)은 같은 lane·같은 아카이브 메커니즘으로 온다.
+    # 원·엔·유로·파운드 크로스는 2026-08-20 ECOS 일별로 이관됐다.
+    assert served["fx_usdcny"]["latest"] == {"date": "2026-08-13", "value": 1409.94}
+    assert served["fx_usdcny"]["units"]["short"] == "CNY/USD"
+    assert "fx_usdkrw" not in served
     assert served["treasury_10y"]["latest"] == {"date": "2026-08-13", "value": 4.63}
     assert served["yield_curve"]["latest"] == {"date": "2026-08-13", "value": 0.48}
     assert served["treasury_10y"]["source"]["provider"] == "federal_reserve"

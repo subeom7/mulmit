@@ -415,7 +415,7 @@ def test_route_serves_the_assembled_payload_with_the_gate_open(
     assert response.status_code == 200
     payload = response.json()
     assert payload["coverage"] == {"available": 5, "total": 7}
-    assert response.headers["x-data-source"] == "Hyperliquid HIP-3 + FSC + Federal Reserve H.10"
+    assert response.headers["x-data-source"] == "Hyperliquid HIP-3 + FSC + BOK ECOS"
     smsn = _card(payload, "samsung_electronics")
     assert smsn["implied"]["value"] == pytest.approx(198.98 * 1414.29)
 

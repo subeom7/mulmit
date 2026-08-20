@@ -168,17 +168,11 @@ FEDBOARD_SERIES: tuple[FedBoardSeriesSpec, ...] = (
         frequency="Daily, business days",
         frequency_short="D",
     ),
-    # Units spell out the direction because the two conventions differ.
-    _fx("fx_usdkrw", "RXI_N.B.KO", "Korean won per US dollar",
-        "Korean won per US dollar", "KRW/USD"),
-    _fx("fx_usdjpy", "RXI_N.B.JA", "Japanese yen per US dollar",
-        "Japanese yen per US dollar", "JPY/USD"),
+    # 원달러·엔달러·유로달러·파운드달러는 2026-08-20 ECOS 일별 매매기준율로
+    # 이관됐다 — H.10은 주간 발행이라 최대 6영업일 지연이 소스의 본질이었다.
+    # 위안/달러만 잔류: ECOS 731Y002/0000027은 카탈로그에만 있고 실데이터가 없다.
     _fx("fx_usdcny", "RXI_N.B.CH", "Chinese yuan per US dollar",
         "Chinese yuan per US dollar", "CNY/USD"),
-    _fx("fx_eurusd", "RXI$US_N.B.EU", "US dollars per euro",
-        "US dollars per euro", "USD/EUR"),
-    _fx("fx_gbpusd", "RXI$US_N.B.UK", "US dollars per British pound",
-        "US dollars per British pound", "USD/GBP"),
 
     # The Board's own trade-weighted dollar indexes, published in the same H.10
     # archive as the bilateral rates above. They are **not** the ICE Dollar

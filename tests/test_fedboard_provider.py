@@ -238,9 +238,9 @@ H10_XML = """<?xml version="1.0" encoding="UTF-8"?>
                       xmlns:frb="http://www.federalreserve.gov/common"
                       xmlns:kf="http://www.federalreserve.gov/H10">
   <frb:DataSet id="H10">
-    <kf:Series SERIES_NAME="RXI_N.B.KO" CURRENCY="KRW">
-      <frb:Obs TIME_PERIOD="2026-08-06" OBS_VALUE="1413.50" OBS_STATUS="A"/>
-      <frb:Obs TIME_PERIOD="2026-08-07" OBS_VALUE="1409.94" OBS_STATUS="A"/>
+    <kf:Series SERIES_NAME="RXI_N.B.CH" CURRENCY="CNY">
+      <frb:Obs TIME_PERIOD="2026-08-06" OBS_VALUE="6.7412" OBS_STATUS="A"/>
+      <frb:Obs TIME_PERIOD="2026-08-07" OBS_VALUE="6.7301" OBS_STATUS="A"/>
     </kf:Series>
     <kf:Series SERIES_NAME="RXI$US_N.B.EU" CURRENCY="EUR">
       <frb:Obs TIME_PERIOD="2026-08-07" OBS_VALUE="1.1559" OBS_STATUS="A"/>
@@ -263,24 +263,22 @@ def test_the_two_quote_directions_are_told_apart_by_the_series_name():
 
 
 def test_fx_units_state_the_direction_rather_than_leaving_it_implicit():
-    won = FEDBOARD_SERIES_BY_KEY["fx_usdkrw"]
-    euro = FEDBOARD_SERIES_BY_KEY["fx_eurusd"]
+    # 원·엔·유로·파운드 크로스는 2026-08-20 ECOS 일별로 이관 — H.10 잔류분만 본다.
+    yuan = FEDBOARD_SERIES_BY_KEY["fx_usdcny"]
 
-    assert won.units_short == "KRW/USD"
-    assert euro.units_short == "USD/EUR"
-    assert won.units == "Korean won per US dollar"
-    assert euro.units == "US dollars per euro"
+    assert yuan.units_short == "CNY/USD"
+    assert yuan.units == "Chinese yuan per US dollar"
+    assert "fx_usdkrw" not in FEDBOARD_SERIES_BY_KEY  # 이관 확인
 
 
 def test_fx_series_are_read_from_the_h10_archive():
     transport = Transport(_archive(member="H10_data.xml", body=H10_XML))
     provider = make_provider(transport)
 
-    _, won = provider.fetch_series(FEDBOARD_SERIES_BY_KEY["fx_usdkrw"])
-    _, euro = provider.fetch_series(FEDBOARD_SERIES_BY_KEY["fx_eurusd"])
+    _, yuan = provider.fetch_series(FEDBOARD_SERIES_BY_KEY["fx_usdcny"])
 
-    assert dict(won)[dt.date(2026, 8, 7)] == 1409.94
-    assert dict(euro)[dt.date(2026, 8, 7)] == 1.1559
+    assert dict(yuan)[dt.date(2026, 8, 7)] == 6.7301
+    assert dict(yuan)[dt.date(2026, 8, 6)] == 6.7412
     # One archive, both currencies.
     assert len(transport.requests) == 1
     assert "h10" in transport.requests[0].full_url.lower()
