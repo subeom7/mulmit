@@ -39,6 +39,11 @@ TITLE_KEYWORDS = (
     "federal reserve", "s&p 500", "nasdaq", "inflation", "interest rate",
     "stock market", "wall street", "treasury yield",
     "samsung", "sk hynix", "bank of korea", "kospi", "korea",
+    # 지정학·제재·거시 축 (등록부 §6.1 2026-08-20 — 텔레그램 스쿽 기각의 합법
+    # 대체). 부분 문자열 매칭이므로 짧은 일반어("oil", "won")는 넣지 않는다.
+    "sanction", "embargo", "tariff", "trade deal", "trade war", "opec",
+    "crude oil", "oil price", "rate cut", "rate hike", "recession",
+    "central bank", "ecb", "fomc", "gdp", "geopolitic", "iran",
 )
 
 # 닫힌 이름 사전 — 제목의 단어 경계 매칭으로만 태깅한다. 여기 없는 회사는

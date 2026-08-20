@@ -101,6 +101,24 @@ def test_refresh_tags_titles_with_word_boundaries_and_kr_moves(gdelt):
     assert payload["attribution"]["url"] == "https://www.gdeltproject.org/"
 
 
+def test_geopolitics_keywords_pass_without_ticker_tags(gdelt):
+    class GeoProvider:
+        def fetch_latest_gkg_titles(self):
+            return [
+                {"title": "U.S. sanctions target oil smuggling network", "url": "https://ex.com/s",
+                 "domain": "ex.com", "seendate": "2026-08-20T00:10:00Z", "language": "English", "country": ""},
+                {"title": "New tariff schedule rattles exporters", "url": "https://ex.com/t",
+                 "domain": "ex.com", "seendate": "2026-08-20T00:05:00Z", "language": "English", "country": ""},
+                {"title": "Local bake sale raises funds", "url": "https://ex.com/d",
+                 "domain": "ex.com", "seendate": "2026-08-20T00:00:00Z", "language": "English", "country": ""},
+            ]
+
+    assert news_feed.refresh(GeoProvider())["kept"] == 2
+    articles = news_feed.get_news()["articles"]
+    assert {a["url"] for a in articles} == {"https://ex.com/s", "https://ex.com/t"}
+    assert all(a["tags"] == [] for a in articles)  # 사전에 없는 회사는 무태깅
+
+
 def test_gate_and_route(db, gdelt):
     client = TestClient(app)
     assert client.get("/api/news").status_code == 503  # 첫 배치 전
