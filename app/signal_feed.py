@@ -25,6 +25,12 @@ MAX_ITEMS = 30
 # 지수 급변: 3% 계단(±3·6·9…)을 "넘는 순간"만 이벤트다. 같은 구간에 머무는
 # 동안은 반복하지 않고, 회복 방향의 계단 통과도 똑같이 기록한다.
 MOVE_STEP = 3.0
+# 회복 히스테리시스: 이탈은 선을 넘는 순간이 뉴스지만, 회복은 선 안쪽으로
+# 이만큼 들어와야 인정한다 — 선 위 진동이 같은 뉴스를 반복 생성하는 것을
+# 막는다(2026-08-20 아침 -3% 선 4연발 실측이 이 상수의 이유다).
+MOVE_REARM = 0.5
+# 워커 동시 기록 대비: 같은 선·같은 방향 이벤트가 이 간격 안에 또 오면 중복이다.
+MOVE_DEDUPE_MINUTES = 10
 MOVE_STATE_KEY = "feed_index_move_v1"
 MOVE_HISTORY = 8
 MAX_UPCOMING = 5
@@ -57,6 +63,7 @@ def _us_8k_items() -> list[dict[str, Any]]:
             "at": str(row.get("accepted_at") or filed_iso),
             "date": filed_iso,
             "kind": "us_8k",
+            "region": "us",
             "symbol": row["ticker"],
             "title": {
                 "ko": f"{row['ticker']} 8-K — {summary_ko}",
@@ -76,6 +83,7 @@ def _kr_material_items() -> list[dict[str, Any]]:
             "at": str(event.get("filed_at") or ""),
             "date": str(event.get("filed_at") or ""),
             "kind": "kr_material",
+            "region": "kr",
             "symbol": event.get("stock_code"),
             "title": {
                 "ko": f"{event.get('company')} — {event.get('report_name')}",
@@ -104,6 +112,7 @@ def _us_ptr_items() -> list[dict[str, Any]]:
             "at": str(filing.get("filed_date") or ""),
             "date": str(filing.get("filed_date") or ""),
             "kind": "us_ptr",
+            "region": "us",
             "symbol": tickers[0] if len(tickers) == 1 else None,
             "title": {
                 "ko": f"{filing.get('name')} 의원 주식거래 보고 — {detail_ko}",
@@ -125,6 +134,7 @@ def _kr_pension_items() -> list[dict[str, Any]]:
             "at": str(filing.get("report_date") or ""),
             "date": str(filing.get("report_date") or ""),
             "kind": "kr_pension",
+            "region": "kr",
             "symbol": filing.get("stock_code"),
             "title": {
                 "ko": f"국민연금 5% 공시 — {filing.get('company')}{move_ko}",
@@ -165,20 +175,38 @@ def _index_move_items() -> list[dict[str, Any]]:
         official_date = None
     if percent is not None:
         bucket = _move_bucket(float(percent))
-        if bucket != int(state.get("bucket", 0)):
-            line = int(max(abs(bucket), abs(int(state.get("bucket", 0))))) * MOVE_STEP
-            direction_ko = "이탈" if abs(bucket) > abs(int(state.get("bucket", 0))) else "회복"
-            direction_en = "crossed below" if bucket < int(state.get("bucket", 0)) else "crossed above"
-            sign = "-" if (bucket < 0 or (bucket == 0 and int(state.get("bucket", 0)) < 0)) else "+"
-            now_iso = dt.datetime.now(_KST).isoformat(timespec="minutes")
-            state["events"] = ([{
-                "at": now_iso,
-                "percent": round(float(percent), 2),
-                "line": f"{sign}{line:g}%",
-                "direction_ko": direction_ko,
-                "direction_en": direction_en,
-                "official_date": official_date,
-            }] + list(state.get("events", [])))[:MOVE_HISTORY]
+        previous = int(state.get("bucket", 0))
+        recovering = abs(bucket) < abs(previous)
+        # 회복은 방금 통과한 선 안쪽으로 MOVE_REARM 이상 들어와야 확정 —
+        # 그 전까지는 구간이 안 바뀐 것으로 본다(이탈은 즉시 뉴스).
+        settled = (
+            not recovering
+            or abs(float(percent)) <= (abs(bucket) + 1) * MOVE_STEP - MOVE_REARM
+        )
+        if bucket != previous and settled:
+            line = int(max(abs(bucket), abs(previous))) * MOVE_STEP
+            direction_ko = "이탈" if not recovering else "회복"
+            direction_en = "crossed below" if bucket < previous else "crossed above"
+            sign = "-" if (bucket < 0 or (bucket == 0 and previous < 0)) else "+"
+            now = dt.datetime.now(_KST)
+            line_text = f"{sign}{line:g}%"
+            newest = next(iter(state.get("events", [])), None)
+            repeated = False
+            if newest and newest.get("line") == line_text and newest.get("direction_ko") == direction_ko:
+                try:
+                    newest_at = dt.datetime.fromisoformat(str(newest.get("at")))
+                    repeated = (now - newest_at) <= dt.timedelta(minutes=MOVE_DEDUPE_MINUTES)
+                except ValueError:
+                    repeated = False
+            if not repeated:
+                state["events"] = ([{
+                    "at": now.isoformat(timespec="minutes"),
+                    "percent": round(float(percent), 2),
+                    "line": line_text,
+                    "direction_ko": direction_ko,
+                    "direction_en": direction_en,
+                    "official_date": official_date,
+                }] + list(state.get("events", [])))[:MOVE_HISTORY]
             state["bucket"] = bucket
             store.save_report(MOVE_STATE_KEY, state)
     items = []
@@ -188,6 +216,7 @@ def _index_move_items() -> list[dict[str, Any]]:
             "at": str(event.get("at", "")),
             "date": date_part,
             "kind": "index_move",
+            "region": "kr",
             "symbol": None,
             "title": {
                 "ko": (
@@ -213,6 +242,7 @@ def _kr_press_items() -> list[dict[str, Any]]:
             "at": str(entry.get("at") or ""),
             "date": str(entry.get("at") or "")[:10],
             "kind": "kr_press",
+            "region": "kr",
             "symbol": None,
             "title": {
                 "ko": f"[{entry.get('agency')}] {entry.get('title')}",
@@ -235,6 +265,8 @@ def _news_items() -> list[dict[str, Any]]:
             "at": str(article.get("seendate") or ""),
             "date": str(article.get("seendate") or "")[:10],
             "kind": "news",
+            # GDELT 축은 영문 매체 기반 — 한국 종목 태그가 붙은 기사만 한국으로 분류한다.
+            "region": "kr" if any(str(tag.get("symbol", "")).isdigit() for tag in tags) else "us",
             "symbol": tags[0]["symbol"] if tags else None,
             "title": {"ko": article.get("title"), "en": article.get("title")},
             "url": article.get("url"),

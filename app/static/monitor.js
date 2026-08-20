@@ -411,6 +411,9 @@ const state = {
 };
 
 let presenceCount = null;
+// 피드 지역 필터 — renderFeed보다 먼저 초기화돼야 한다(파일 하단 let 금지, TDZ).
+let feedRegion = ["kr", "us"].includes(localStorage.getItem("monitor.feedRegion"))
+  ? localStorage.getItem("monitor.feedRegion") : "all";
 
 // 종목명이 보이는 모든 곳을 종목 허브의 문으로 만든다. 코드가 형식에 맞을
 // 때만 링크를 건다 — 허브가 404를 돌려줄 심볼에 죽은 문을 달지 않는다.
@@ -1560,8 +1563,29 @@ function renderFeed() {
     }));
   }
 
+  // 한국/미국·해외 분리 — region은 서버가 소스별로 판정해 보낸다.
+  const filter = $("#feed-filter");
+  if (filter) {
+    filter.hidden = false;
+    filter.replaceChildren(...[
+      ["all", state.lang === "ko" ? "전체" : "All"],
+      ["kr", state.lang === "ko" ? "한국" : "Korea"],
+      ["us", state.lang === "ko" ? "미국·해외" : "US & Global"],
+    ].map(([value, label]) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = `feed-region${feedRegion === value ? " active" : ""}`;
+      chip.textContent = label;
+      chip.addEventListener("click", () => {
+        feedRegion = value; localStorage.setItem("monitor.feedRegion", value); renderFeed();
+      });
+      return chip;
+    }));
+  }
+  const shown = feedRegion === "all" ? items : items.filter((item) => item.region === feedRegion);
+
   const body = $("#feed-body");
-  body.replaceChildren(...items.map((item) => {
+  body.replaceChildren(...shown.map((item) => {
     const row = document.createElement("div"); row.className = "feed-row";
     const date = document.createElement("small"); date.className = "feed-date";
     date.textContent = kroDate(item.date);
@@ -1595,6 +1619,11 @@ function renderFeed() {
     }
     return row;
   }));
+  if (!shown.length) {
+    const empty = document.createElement("small"); empty.className = "feed-empty";
+    empty.textContent = state.lang === "ko" ? "이 지역의 최근 신호가 없습니다." : "No recent signals for this region.";
+    body.replaceChildren(empty);
+  }
   const footer = $("#feed-footer");
   footer.replaceChildren(document.createTextNode(localValue({ ko: payload.basis_ko, en: payload.basis_en }, state.lang)));
   if (payload.attribution) {
