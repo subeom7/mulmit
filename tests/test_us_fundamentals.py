@@ -34,15 +34,23 @@ def _instant(end, val, *, filed="2026-08-01"):
 
 
 class FakeProvider:
-    def __init__(self, concepts):
+    def __init__(self, concepts, facts=None):
         self.concepts = concepts
+        self.facts = facts
         self.calls: list[str] = []
+        self.facts_calls = 0
 
     def fetch_company_concept(self, cik, tag, *, taxonomy="us-gaap"):
         self.calls.append(tag)
         if tag not in self.concepts:
             raise EdgarNotFound(tag)
         return {"units": self.concepts[tag]}
+
+    def fetch_company_facts(self, cik):
+        self.facts_calls += 1
+        if self.facts is None:
+            raise EdgarNotFound("no companyfacts either")
+        return self.facts
 
 
 def _seed_provider():
@@ -183,3 +191,52 @@ def test_ingest_targets_collected_insider_companies_only(db, edgar_lane, monkeyp
 
     monkeypatch.setattr(config, "SEC_EDGAR_ENABLED", False)
     assert ingest.refresh_us_fundamentals() == {"skipped": "disabled"}
+
+
+def test_including_assessed_tax_variant_is_on_the_ladder(db, edgar_lane):
+    """CRWD 실측(2026-08-20): 세금 포함 변형으로만 매출을 신고하는 회사."""
+    provider = FakeProvider({
+        "RevenueFromContractWithCustomerIncludingAssessedTax": {"USD": [
+            _flow("2025-02-01", "2026-01-31", 4_812_005_000.0),
+        ]},
+        "NetIncomeLoss": {"USD": [_flow("2025-02-01", "2026-01-31", 100_000_000.0)]},
+    })
+    us_fundamentals.refresh_for(provider, "CRWD", "1535527", "CrowdStrike")
+    payload = us_fundamentals.build_report("CRWD")
+    assert payload["concepts_used"]["revenue"] == (
+        "RevenueFromContractWithCustomerIncludingAssessedTax"
+    )
+    assert payload["annual"][0]["revenue"] == 4_812_005_000.0
+    assert provider.facts_calls == 0  # 사다리에서 해결 — 폴백 경로는 안 탄다
+
+
+def test_empty_companyconcept_falls_back_to_companyfacts(db, edgar_lane):
+    """KO 실측(2026-08-20): companyconcept은 200 + 빈 배열, companyfacts에는
+    같은 태그의 연간 행이 있다 — EDGAR 두 엔드포인트의 불일치(함정 4호)."""
+    provider = FakeProvider(
+        {"Revenues": {"USD": []}},  # 200이지만 비어 있음 — 404가 아니다
+        facts={"facts": {"us-gaap": {
+            "Revenues": {"units": {"USD": [
+                _flow("2025-01-01", "2025-12-31", 47_941_000_000.0),
+                _flow("2024-01-01", "2024-12-31", 46_000_000_000.0),
+            ]}},
+            "NetIncomeLoss": {"units": {"USD": [
+                _flow("2025-01-01", "2025-12-31", 10_000_000_000.0),
+            ]}},
+        }}},
+    )
+    us_fundamentals.refresh_for(provider, "KO", "21344", "Coca-Cola")
+    assert provider.facts_calls == 1
+    payload = us_fundamentals.build_report("KO")
+    # 출처가 폴백 경로였음이 응답에 남는다.
+    assert payload["concepts_used"]["revenue"] == "Revenues (companyfacts)"
+    assert payload["concepts_used"]["net_income"] == "NetIncomeLoss (companyfacts)"
+    assert payload["annual"][0]["revenue"] == 47_941_000_000.0
+    assert payload["annual"][0]["net_margin"] == pytest.approx(20.9, abs=0.1)
+
+
+def test_no_revenue_anywhere_still_fails_closed(db, edgar_lane):
+    provider = FakeProvider({})  # concept 전부 404, companyfacts도 없음
+    with pytest.raises(DataUnavailable):
+        us_fundamentals.refresh_for(provider, "XXXX", "999", "Nothing Inc.")
+    assert provider.facts_calls == 1

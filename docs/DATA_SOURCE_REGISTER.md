@@ -288,6 +288,13 @@ notes: >
 - 회사마다 같은 항목의 XBRL 태그가 다르고 **갈아타기도 한다**(실측: NVIDIA는
   RevenueFromContractWithCustomer…를 2022년에 끊음). 태그 사다리에서 "가장 최신
   보고 기간을 가진" 태그를 고르고, 실제 사용 태그를 응답 `concepts_used`에 싣는다.
+  매출 사다리에는 세금 포함 변형(…IncludingAssessedTax)도 있다 — CRWD는 이
+  변형으로만 신고한다(2026-08-20 실측).
+- **함정 4호 — 엔드포인트 불일치**(2026-08-20, KO 실측): companyconcept API가
+  200 + 빈 USD 배열을 주는데 같은 태그(Revenues)가 companyfacts API에는 연간
+  24행으로 존재한다. 사다리 전체가 비면 태그가 아니라 **경로를 폴백**한다 —
+  companyfacts 1파일에서 같은 사다리를 다시 찾고, 출처를 `concepts_used`에
+  "(companyfacts)" 접미로 남긴다. 그래도 없으면 기존대로 실패(fail-closed).
 - 10-Q의 흐름 항목은 분기값과 YTD가 섞여 온다. 보고 기간 길이로 분류하고
   (분기 75~105일, 연간 340~380일) YTD는 어느 표에도 넣지 않는다. 같은 기간의
   정정 공시는 최신 제출분이 이긴다.
@@ -1165,6 +1172,7 @@ notes: "No confidential contract language here"
 | 2026-08-19 | 경제 캘린더 추가(`/api/calendar`) — 미국 데이터 발표일은 FRED 릴리스 메타데이터(승인 lane, 실측 검증), FOMC·금통위는 공식 페이지에서 확인한 큐레이션(확인일 2026-08-19 동봉, "직전 회의 전 잠정" 고지). 일정은 공표된 사실이되 변경 가능함을 basis로 전달 | Claude assisted |
 | 2026-08-19 | DART 연간 재무제표 추가(`/api/kr/fundamentals/{code}`, §3.10 확장) — 주요계정 원문 전달, 연간 한정(분기 손익 누적 구분 부재), 연결 우선, 금융사 매출 부재는 사실로 표시. 미국 패널과 대칭 | Claude assisted |
 | 2026-08-19 | EDGAR 재무제표 추가(`/api/us/fundamentals/{ticker}`, §3.5 확장) — XBRL companyconcept, 내부자 lane과 같은 티커 큐·게이트. 태그 사다리는 최신 보고 기간 기준(NVIDIA 태그 전환 실측), YTD 배제·정정 우선, 파생은 마진 2종뿐 | Claude assisted |
+| 2026-08-20 | EDGAR 재무 함정 4호 실측·수리(§3.5) — CRWD는 IncludingAssessedTax 변형만 신고(사다리 추가), KO는 companyconcept 200+빈 배열 vs companyfacts 존재(경로 폴백 추가, 출처 접미 표기) | Claude assisted |
 | 2026-08-20 | 텔레그램 스쿽 채널 유형 ❌ 기각(§6.1 — 채널은 권리자 아님·근거 부재·가짜 속보 경로) + GDELT TITLE_KEYWORDS 지정학·제재·거시 17종 확장 | Claude assisted |
 | 2026-08-20 | ECOS 활성화(§3.16 — 키 도착·영리 승인 증빙·3시리즈 서빙) + 정부 보도자료 lane(`/api/kr/press`, 금융위·기재부 RSS 제목·링크만, first_seen 정직 표기) + GDELT 제목 중복 접기(+N곳) | Claude assisted |
 | 2026-08-20 | GDELT 뉴스 lane 구축·배포(§6.1, `/api/news` + 통합 피드 합류) — 제목·출처·링크만(본문 무전달), 종목 태그는 닫힌 사전 단어경계 매칭, 등락 칩은 금융위 전일 확정값, 인용+링크 조건은 payload attribution으로 상시 동반, 6초 간격·배치 전용 | Claude assisted |

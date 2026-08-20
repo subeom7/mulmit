@@ -44,6 +44,8 @@ log = logging.getLogger(__name__)
 CONCEPTS: tuple[tuple[str, tuple[str, ...], str, str], ...] = (
     ("revenue", (
         "RevenueFromContractWithCustomerExcludingAssessedTax",
+        # 세금 포함 표기 쌍둥이 — CRWD는 이 변형으로만 신고한다(2026-08-20 실측).
+        "RevenueFromContractWithCustomerIncludingAssessedTax",
         "Revenues",
         "SalesRevenueNet",
     ), "USD", "flow"),
@@ -110,6 +112,26 @@ def _dedupe_latest_filed(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return list(best.values())
 
 
+def _candidate(tag: str, entries: Any) -> tuple[str, str, list[dict[str, Any]]] | None:
+    if not isinstance(entries, list) or not entries:
+        return None
+    rows = [e for e in entries if isinstance(e, dict) and e.get("val") is not None]
+    if not rows:
+        return None
+    newest = max(str(e.get("end") or "") for e in rows)
+    return (newest, tag, _dedupe_latest_filed(rows))
+
+
+def _pick_newest(
+    candidates: list[tuple[str, str, list[dict[str, Any]]]],
+) -> tuple[str, list[dict[str, Any]]] | None:
+    if not candidates:
+        return None
+    # 최신 기간 우선, 같으면 사다리 앞쪽 우선(리스트 순서가 이미 그렇다).
+    newest, tag, rows = max(candidates, key=lambda item: item[0])
+    return tag, rows
+
+
 def _collect_concept(
     provider: SecEdgarProvider, cik: str, ladder: tuple[str, ...], unit: str
 ) -> tuple[str, list[dict[str, Any]]] | None:
@@ -119,24 +141,29 @@ def _collect_concept(
     끊었다(실측: 그 태그의 마지막 기간이 2022년). "존재하는 첫 태그"를 고르면
     몇 년 묵은 표가 되므로, 존재하는 태그 전부의 마지막 보고 기간을 비교한다.
     """
-    candidates: list[tuple[str, str, list[dict[str, Any]]]] = []
+    candidates = []
     for tag in ladder:
         try:
             payload = provider.fetch_company_concept(cik, tag)
         except EdgarNotFound:
             continue
-        entries = payload.get("units", {}).get(unit)
-        if not isinstance(entries, list) or not entries:
-            continue
-        rows = [e for e in entries if isinstance(e, dict) and e.get("val") is not None]
-        if rows:
-            newest = max(str(e.get("end") or "") for e in rows)
-            candidates.append((newest, tag, _dedupe_latest_filed(rows)))
-    if not candidates:
-        return None
-    # 최신 기간 우선, 같으면 사다리 앞쪽 우선(리스트 순서가 이미 그렇다).
-    newest, tag, rows = max(candidates, key=lambda item: item[0])
-    return tag, rows
+        found = _candidate(tag, payload.get("units", {}).get(unit))
+        if found:
+            candidates.append(found)
+    return _pick_newest(candidates)
+
+
+def _collect_from_facts(
+    gaap: dict[str, Any], ladder: tuple[str, ...], unit: str
+) -> tuple[str, list[dict[str, Any]]] | None:
+    """companyfacts 페이로드의 us-gaap 사전에서 같은 사다리를 찾는다."""
+    candidates = []
+    for tag in ladder:
+        entries = ((gaap.get(tag) or {}).get("units") or {}).get(unit)
+        found = _candidate(tag, entries)
+        if found:
+            candidates.append(found)
+    return _pick_newest(candidates)
 
 
 def _split_periods(entries: list[dict[str, Any]], kind: str) -> dict[str, dict]:
@@ -174,6 +201,27 @@ def refresh_for(provider: SecEdgarProvider, ticker: str, cik: str, name: str) ->
         tag, entries = found
         concepts_used[metric] = tag
         collected[metric] = _split_periods(entries, kind)
+
+    if "revenue" not in collected:
+        # EDGAR 함정 4호(2026-08-20, KO 실측): companyconcept이 200 + 빈 배열을
+        # 주는데 같은 태그가 companyfacts에는 있다 — 두 엔드포인트의 불일치.
+        # 태그가 아니라 **경로**를 폴백한다: 회사 전체 팩트 1파일에서 같은
+        # 사다리를 다시 찾고, 출처를 concepts_used에 남긴다.
+        try:
+            facts = provider.fetch_company_facts(cik)
+        except DataUnavailable:
+            facts = None
+        gaap = ((facts or {}).get("facts") or {}).get("us-gaap") or {}
+        if gaap:
+            for metric, ladder, unit, kind in CONCEPTS:
+                if metric in collected:
+                    continue
+                found = _collect_from_facts(gaap, ladder, unit)
+                if found is None:
+                    continue
+                tag, entries = found
+                concepts_used[metric] = f"{tag} (companyfacts)"
+                collected[metric] = _split_periods(entries, kind)
 
     if "revenue" not in collected:
         # 매출조차 없으면 표가 성립하지 않는다(IFRS 제출사 등). 저장하지 않고
