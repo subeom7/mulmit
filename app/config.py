@@ -140,12 +140,12 @@ ECOS_HISTORY_DAYS = _int("ECOS_HISTORY_DAYS", 366 * 10)
 GDELT_ENABLED = _bool("GDELT_ENABLED", False)
 GDELT_TIMEOUT = _float("GDELT_TIMEOUT", 15.0)
 GDELT_RETRIES = _int("GDELT_RETRIES", 1)
-GDELT_MAX_AGE = _int("GDELT_MAX_AGE", 60 * 30)
+GDELT_MAX_AGE = _int("GDELT_MAX_AGE", 60 * 15)  # 벌크 파일 발행 주기와 동일
 
 # 정부 보도자료 RSS (금융위·기재부) — 제목·기관·링크만. 뉴스의 한국어 축.
 KR_PRESS_ENABLED = _bool("KR_PRESS_ENABLED", False)
 KR_PRESS_TIMEOUT = _float("KR_PRESS_TIMEOUT", 15.0)
-KR_PRESS_MAX_AGE = _int("KR_PRESS_MAX_AGE", 60 * 30)
+KR_PRESS_MAX_AGE = _int("KR_PRESS_MAX_AGE", 60 * 15)
 
 FSC_ENABLED = _bool("FSC_ENABLED", False)
 FSC_API_KEY = os.environ.get("FSC_API_KEY", "").strip()
@@ -169,7 +169,7 @@ DART_REQUEST_INTERVAL = _float("DART_REQUEST_INTERVAL", 0.25)
 # 보고서 목록 캐시. 공시는 수시 제출이라 반나절 신선도면 충분하다.
 DART_MAX_AGE = _int("DART_MAX_AGE", 60 * 60 * 12)
 # 주요사항보고 속보 피드는 공시 lane과 별개 주기로 더 자주 돈다 (요청 수 ~3/회).
-KR_EVENTS_MAX_AGE = _int("KR_EVENTS_MAX_AGE", 60 * 60)
+KR_EVENTS_MAX_AGE = _int("KR_EVENTS_MAX_AGE", 60 * 15)
 # 법인코드 매핑(zip)은 거의 안 바뀐다.
 DART_CORP_MAX_AGE = _int("DART_CORP_MAX_AGE", 60 * 60 * 24 * 7)
 
@@ -195,7 +195,10 @@ NEGATIVE_TTL = _int("NEGATIVE_TTL", 60 * 60 * 6)
 
 # --- 수집 배치 ---------------------------------------------------------------
 INGEST_ENABLED = _bool("INGEST_ENABLED", True)
-INGEST_INTERVAL = _int("INGEST_INTERVAL", 60 * 60)  # 스케줄러 기동 주기(초)
+# 스케줄러 "틱"(초). 틱은 샘플링 주기일 뿐이고 실제 갱신 주기는 lane별
+# max-age가 정한다 — 뉴스류(GDELT·보도자료·주요사항)는 15분, 거시·공시류는
+# 각자의 시간 단위 게이트로 틱 대부분을 fresh 스킵한다.
+INGEST_INTERVAL = _int("INGEST_INTERVAL", 60 * 15)
 INGEST_BATCH_SIZE = _int("INGEST_BATCH_SIZE", 40)  # 1회 실행당 최대 티커 수
 INGEST_DELAY = _float("INGEST_DELAY", 1.5)  # 티커 사이 간격(초). 야후 배려용
 # 레이트리밋을 맞으면 지수적으로 물러선다. 막힌 상태에서 계속 노크하면

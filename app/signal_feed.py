@@ -338,12 +338,14 @@ def build_feed(*, today: dt.date | None = None) -> dict[str, Any]:
         "basis_ko": (
             "기존 공시·일정 lane의 재조립입니다 — 8-K와 주요사항보고는 원문 제목, "
             "PTR 금액은 공시 구간 그대로. 지수 급변은 퍼프 참고가의 3% 계단 통과 기록입니다. "
-            "수집 주기 기반이라 실시간 속보가 아니며, 비어 있는 소스는 표시되지 않습니다."
+            "뉴스·보도자료·주요사항은 약 15분, 나머지는 시간 단위 수집 주기라 "
+            "실시간 속보가 아니며, 비어 있는 소스는 표시되지 않습니다."
         ),
         "basis_en": (
             "A reassembly of existing filing and schedule lanes — 8-K and Korean "
             "material-event titles verbatim, PTR amounts as disclosed ranges. "
-            "Refreshed on the collection cycle (about hourly), not a live wire; "
+            "News, press releases and Korean material events refresh about every "
+            "15 minutes, other lanes hourly or slower — not a live wire; "
             "empty sources simply do not appear."
         ),
     }

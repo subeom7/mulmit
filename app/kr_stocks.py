@@ -9,7 +9,7 @@ The US half stays down until a licensed price provider exists.
 
 Two deliberate deviations from the macro lanes:
 
-* **On-demand fetch.** The ingest loop runs hourly; a stock someone just
+* **On-demand fetch.** The ingest tick is minutes but lane gates are hourly; a stock someone just
   searched for cannot wait that long. A cache miss fetches synchronously under
   a process-wide lock — one fetch at a time, two or three requests per stock,
   written straight to the store so every later request is a database read.
