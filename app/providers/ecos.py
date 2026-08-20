@@ -39,7 +39,7 @@ ECOS_ATTRIBUTION = "출처: 한국은행 경제통계시스템(ECOS)"
 ECOS_ATTRIBUTION_EN = "Source: Bank of Korea Economic Statistics System (ECOS)"
 
 # 한 번에 받는 최대 행 수. 월 주기 10년치(120행)를 넉넉히 덮는다.
-MAX_ROWS = 1200
+MAX_ROWS = 5000  # 10년 일별 시리즈(~2,600행)도 한 요청에 담긴다
 
 
 @dataclass(frozen=True)
@@ -49,7 +49,7 @@ class EcosSeriesSpec:
     series_key: str
     stat_code: str
     item_code: str
-    cycle: str  # 현재 "M"만 지원
+    cycle: str  # "M"(월별) 또는 "D"(일별)
     units: str
     units_short: str
     frequency: str
@@ -97,6 +97,31 @@ ECOS_SERIES: tuple[EcosSeriesSpec, ...] = (
     ),
 )
 
+_FX_DAILY = (
+    # (key, stat, item, title_ko, title_en, units, units_short)
+    # 라이브 검증 2026-08-20: 네 시리즈 모두 당일(T+0) 고시값까지 온다.
+    # 위안/달러(731Y002/0000027)는 항목 목록에만 있고 실데이터가 없어 제외 —
+    # 위안·달러 카드는 연준 H.10(주간 발행) 잔류.
+    ("fx_usdkrw", "731Y001", "0000001", "원/달러 환율(매매기준율)",
+     "KRW per USD (trading-reference rate)", "원", "KRW"),
+    ("fx_usdjpy", "731Y002", "0000002", "엔/달러 환율",
+     "JPY per USD", "달러당 엔", "JPY"),
+    ("fx_eurusd", "731Y002", "0000003", "달러/유로 환율",
+     "USD per EUR", "유로당 달러", "USD"),
+    ("fx_gbpusd", "731Y002", "0000012", "달러/파운드 환율",
+     "USD per GBP", "파운드당 달러", "USD"),
+)
+
+ECOS_SERIES = ECOS_SERIES + tuple(
+    EcosSeriesSpec(
+        series_key=key, stat_code=stat, item_code=item, cycle="D",
+        units=units, units_short=short,
+        frequency="Daily", frequency_short="D",
+        title=title, title_en=title_en,
+    )
+    for key, stat, item, title, title_en, units, short in _FX_DAILY
+)
+
 ECOS_SERIES_BY_KEY = {spec.series_key: spec for spec in ECOS_SERIES}
 
 HttpGet = Callable[[Request, float], bytes]
@@ -105,6 +130,16 @@ HttpGet = Callable[[Request, float], bytes]
 def _stdlib_http_get(request: Request, timeout: float) -> bytes:
     with urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed HTTPS base
         return response.read()
+
+
+def _day_date(raw: Any) -> dt.date | None:
+    text = str(raw or "").strip()
+    if len(text) != 8 or not text.isdigit():
+        return None
+    try:
+        return dt.date(int(text[:4]), int(text[4:6]), int(text[6:]))
+    except ValueError:
+        return None
 
 
 def _month_date(raw: Any) -> dt.date | None:
@@ -203,14 +238,16 @@ class EcosProvider:
         end: dt.date | None = None,
     ) -> tuple[dict[str, Any], tuple[tuple[dt.date, float], ...]]:
         """Return ``(metadata, observations)`` sorted oldest first."""
-        if spec.cycle != "M":
+        if spec.cycle not in ("M", "D"):
             raise ValueError(f"unsupported ECOS cycle: {spec.cycle}")
         end = end or dt.date.today()
         if end < start:
             raise ValueError("end must not precede start")
         url = (
             f"{self.api_base}/StatisticSearch/{self.api_key}/json/kr/1/{MAX_ROWS}/"
-            f"{spec.stat_code}/{spec.cycle}/{start.strftime('%Y%m')}/{end.strftime('%Y%m')}/"
+            f"{spec.stat_code}/{spec.cycle}/"
+            f"{start.strftime('%Y%m%d' if spec.cycle == 'D' else '%Y%m')}/"
+            f"{end.strftime('%Y%m%d' if spec.cycle == 'D' else '%Y%m')}/"
             f"{spec.item_code}"
         )
         payload = self._request_json(url)
@@ -231,7 +268,7 @@ class EcosProvider:
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            date = _month_date(row.get("TIME"))
+            date = (_day_date if spec.cycle == "D" else _month_date)(row.get("TIME"))
             value = _number(row.get("DATA_VALUE"))
             # 발표 전이거나 결측인 달은 그대로 결측 — 0으로 채우지 않는다.
             if date is not None and value is not None:

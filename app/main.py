@@ -575,7 +575,7 @@ def kr_overnight(request: Request, response: Response) -> dict:
     """
     require_hip3_public_display()
     response.headers["Cache-Control"] = "private, max-age=3, stale-while-revalidate=300"
-    response.headers["X-Data-Source"] = "Hyperliquid HIP-3 + FSC + Federal Reserve H.10"
+    response.headers["X-Data-Source"] = "Hyperliquid HIP-3 + FSC + BOK ECOS"
     return build_kr_overnight()
 
 

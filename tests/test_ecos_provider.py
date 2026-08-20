@@ -88,3 +88,33 @@ def test_lane_closed_by_default_calls_nothing(db, monkeypatch):
 
     monkeypatch.setattr(config, "ECOS_ENABLED", True)
     assert ingest.refresh_ecos()["skipped"] == "not_configured"
+
+
+def test_daily_cycle_builds_yyyymmdd_urls_and_parses_eight_digit_times():
+    """환율 시리즈(D 주기): 요청 날짜와 TIME 모두 YYYYMMDD 형식이다."""
+    from app.providers.ecos import ECOS_SERIES_BY_KEY
+
+    spec = ECOS_SERIES_BY_KEY["fx_usdkrw"]
+    assert spec.cycle == "D" and spec.stat_code == "731Y001"
+
+    captured = {}
+
+    def http_get(request, timeout):
+        captured["url"] = request.full_url
+        return json.dumps({"StatisticSearch": {"row": [
+            {"TIME": "20260819", "DATA_VALUE": "1411"},
+            {"TIME": "20260820", "DATA_VALUE": "1402.5"},
+            {"TIME": "20260821", "DATA_VALUE": ""},  # 휴장/미고시 — 결측 유지
+        ]}}).encode("utf-8")
+
+    provider = EcosProvider("k", http_get=http_get, retries=0, request_interval=0.0)
+    metadata, observations = provider.fetch_series(
+        spec, start=dt.date(2026, 8, 14), end=dt.date(2026, 8, 21)
+    )
+
+    assert "/731Y001/D/20260814/20260821/0000001" in captured["url"]
+    assert observations == (
+        (dt.date(2026, 8, 19), 1411.0),
+        (dt.date(2026, 8, 20), 1402.5),
+    )
+    assert metadata["frequency_short"] == "D"
