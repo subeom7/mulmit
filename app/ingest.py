@@ -1092,6 +1092,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
 
 def run_forever(stop: threading.Event | None = None) -> None:
     stop = stop or threading.Event()
+    log.info("수집 루프 시작 — 틱 %d초 (실제 주기는 lane별 max-age)", config.INGEST_INTERVAL)
     while not stop.is_set():
         try:
             run_once()

@@ -97,7 +97,7 @@ services:
     environment:
       <<: *app-env
       INGEST_ENABLED: "true"
-      INGEST_INTERVAL: ${INGEST_INTERVAL:-3600}
+      INGEST_INTERVAL: ${INGEST_INTERVAL:-900}
       INGEST_BATCH_SIZE: ${INGEST_BATCH_SIZE:-40}
       INGEST_DELAY: ${INGEST_DELAY:-1.5}
       # 키와 수집 튜닝값은 수집 프로세스에만 필요하다. 게이트 자체는 x-app에 있다.

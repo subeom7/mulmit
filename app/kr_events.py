@@ -130,13 +130,13 @@ def refresh(provider: DartProvider | None = None, *, today: dt.date | None = Non
         "total_in_window": len(listed),
         "basis_ko": (
             "금융감독원 DART 접수 목록의 주요사항보고서(유가증권·코스닥 상장사)를 "
-            "그대로 옮깁니다. 제목은 공시 원문 제목이며, 수집 주기(약 1시간)로 "
+            "그대로 옮깁니다. 제목은 공시 원문 제목이며, 수집 주기(약 15분)로 "
             "갱신되는 목록이라 실시간 속보가 아닙니다. 내용 판단은 원문에서 하세요."
         ),
         "basis_en": (
             "Material-event reports (주요사항보고서) from the DART filing index for "
             "KOSPI and KOSDAQ listings, relayed verbatim. Titles are the filings' own "
-            "titles; the list refreshes on the collection cycle (about hourly), not "
+            "titles; the list refreshes on the collection cycle (about every 15 minutes), not "
             "live. Read the filing itself for substance."
         ),
         "source": {
