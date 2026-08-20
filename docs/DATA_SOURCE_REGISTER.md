@@ -574,7 +574,7 @@ notes: >
 | 현재 상태 | `approved` (아래 근거·범위 한정) |
 | 코드 위치 | `app/providers/dart.py`, `app/kr_insider.py`, `tests/test_kr_insider.py` |
 | 배포 기본값 | `DART_ENABLED=false`, `DART_API_KEY=` (미설정이면 lane이 닫힘) |
-| 현재 사용 | `corpCode.xml`(매핑), `elestock.json`(소유상황 보고), `list.json`+`majorstock.json`(국민연금 대량보유), **`fnlttSinglAcnt.json`(연간 주요계정 재무제표 — `/api/kr/fundamentals/{code}`)** |
+| 현재 사용 | `corpCode.xml`(매핑), `elestock.json`(소유상황 보고), `list.json`+`majorstock.json`(대량보유 5% — 국민연금 `/api/kr/pension` + **전체 보고자 `/api/kr/holdings`**, 2026-08-20 일반화: 같은 크롤의 두 산출물), **`fnlttSinglAcnt.json`(연간 주요계정 재무제표 — `/api/kr/fundamentals/{code}`)** |
 
 재무제표(2026-08-19 추가) 표시 규칙: **연간(사업보고서)만** 다룬다 — 분기
 손익은 누적·분기 구분이 API 응답에 없어 추측 대신 범위를 좁혔다. 연결(CFS)
@@ -1172,6 +1172,7 @@ notes: "No confidential contract language here"
 | 2026-08-19 | 경제 캘린더 추가(`/api/calendar`) — 미국 데이터 발표일은 FRED 릴리스 메타데이터(승인 lane, 실측 검증), FOMC·금통위는 공식 페이지에서 확인한 큐레이션(확인일 2026-08-19 동봉, "직전 회의 전 잠정" 고지). 일정은 공표된 사실이되 변경 가능함을 basis로 전달 | Claude assisted |
 | 2026-08-19 | DART 연간 재무제표 추가(`/api/kr/fundamentals/{code}`, §3.10 확장) — 주요계정 원문 전달, 연간 한정(분기 손익 누적 구분 부재), 연결 우선, 금융사 매출 부재는 사실로 표시. 미국 패널과 대칭 | Claude assisted |
 | 2026-08-19 | EDGAR 재무제표 추가(`/api/us/fundamentals/{ticker}`, §3.5 확장) — XBRL companyconcept, 내부자 lane과 같은 티커 큐·게이트. 태그 사다리는 최신 보고 기간 기준(NVIDIA 태그 전환 실측), YTD 배제·정정 우선, 파생은 마진 2종뿐 | Claude assisted |
+| 2026-08-20 | 대량보유(5%) 전체 보고자 lane(`/api/kr/holdings`) — 기존 국민연금 크롤의 필터 일반화(같은 걷기, 두 blob), 신규 소스·권리·요청 예산 증가 없음(상세 합집합만 확대). 피드는 신규 진입·보유목적 변경·±2%p 이상 변동만 큐레이션, 국민연금 행은 중복 탑재 안 함 | Claude assisted |
 | 2026-08-20 | EDGAR 재무 함정 4호 실측·수리(§3.5) — CRWD는 IncludingAssessedTax 변형만 신고(사다리 추가), KO는 companyconcept 200+빈 배열 vs companyfacts 존재(경로 폴백 추가, 출처 접미 표기) | Claude assisted |
 | 2026-08-20 | 텔레그램 스쿽 채널 유형 ❌ 기각(§6.1 — 채널은 권리자 아님·근거 부재·가짜 속보 경로) + GDELT TITLE_KEYWORDS 지정학·제재·거시 17종 확장 | Claude assisted |
 | 2026-08-20 | ECOS 활성화(§3.16 — 키 도착·영리 승인 증빙·3시리즈 서빙) + 정부 보도자료 lane(`/api/kr/press`, 금융위·기재부 RSS 제목·링크만, first_seen 정직 표기) + GDELT 제목 중복 접기(+N곳) | Claude assisted |

@@ -10,6 +10,9 @@ hlkr '연기금 매매' 섹션의 대응물이다. KRX 투자자별 매매 데�
 전체를 페이징으로 걷어야 하고(90일 ≈ 40여 요청), 표시분에는 majorstock 상세를
 회사별로 한 번씩 더 붙인다. 이 비용은 요청 경로에 둘 수 없으므로 web은 저장된
 결과만 읽고, 배치가 실패하면 섹션은 데이터 없음으로 닫힌다.
+
+이 크롤은 두 blob을 만든다(2026-08-20): 국민연금 필터 전의 **전체 보고자**
+목록이 kr_holdings lane으로 함께 저장된다 — 같은 걷기, 넓은 서빙.
 """
 
 from __future__ import annotations
@@ -18,7 +21,7 @@ import datetime as dt
 import logging
 from typing import Any
 
-from . import config, store
+from . import config, kr_holdings, store
 from .providers.base import DataError, DataUnavailable, RateLimited
 from .providers.dart import (
     DART_ATTRIBUTION,
@@ -96,20 +99,23 @@ def refresh(provider: DartProvider | None = None, *, today: dt.date | None = Non
     )
 
     seen: set[str] = set()
-    nps: list[dict[str, Any]] = []
+    everyone: list[dict[str, Any]] = []
     for row in rows:
-        if REPORTER_KEYWORD not in row["flr_nm"] or row["rcept_no"] in seen:
+        if row["rcept_no"] in seen:
             continue
         seen.add(row["rcept_no"])
-        nps.append(row)
-    nps.sort(key=lambda row: (row["rcept_dt"], row["rcept_no"]), reverse=True)
+        everyone.append(row)
+    everyone.sort(key=lambda row: (row["rcept_dt"], row["rcept_no"]), reverse=True)
+    nps = [row for row in everyone if REPORTER_KEYWORD in row["flr_nm"]]
     kept = nps[:MAX_FILINGS]
+    kept_all = everyone[:kr_holdings.MAX_FILINGS]
 
     # 상세는 회사당 한 번: majorstock 응답이 그 회사의 전 보고서를 담으므로
     # rcept_no로 조인한다. 실패한 회사의 수치는 null로 남는다 — 만들어내지 않는다.
+    # 두 산출물(국민연금·전체)의 회사 합집합을 한 번에 걷는다.
     details: dict[str, dict[str, Any]] = {}
     detail_failed = 0
-    for corp_code in dict.fromkeys(row["corp_code"] for row in kept):
+    for corp_code in dict.fromkeys(row["corp_code"] for row in [*kept, *kept_all]):
         try:
             for holding in provider.fetch_major_holdings(corp_code):
                 details[holding["rcept_no"]] = holding
@@ -121,10 +127,9 @@ def refresh(provider: DartProvider | None = None, *, today: dt.date | None = Non
             detail_failed += 1
             log.warning("대량보유 상세 조회 실패 %s: %s", corp_code, exc)
 
-    filings = []
-    for row in kept:
+    def _filing_row(row: dict[str, Any]) -> dict[str, Any]:
         holding = details.get(row["rcept_no"])
-        filings.append({
+        return {
             "rcept_no": row["rcept_no"],
             "report_date": _iso_date(row["rcept_dt"]),
             "company": row["corp_name"],
@@ -140,7 +145,9 @@ def refresh(provider: DartProvider | None = None, *, today: dt.date | None = Non
             "reason": holding["reason"] if holding else None,
             "report_url": DART_REPORT_URL.format(rcept_no=row["rcept_no"]),
             "detail_status": "ok" if holding else "unavailable",
-        })
+        }
+
+    filings = [_filing_row(row) for row in kept]
 
     payload = {
         "generated_at": dt.datetime.now(dt.UTC).isoformat().replace("+00:00", "Z"),
@@ -178,8 +185,17 @@ def refresh(provider: DartProvider | None = None, *, today: dt.date | None = Non
         "rights": {"status": "approved", "notice": DART_ATTRIBUTION},
     }
     store.save_report(CACHE_KEY, payload)
+
+    # 같은 크롤의 두 번째 산출물: 전체 보고자 lane.
+    kr_holdings.save_payload(
+        [_filing_row(row) for row in kept_all],
+        {"from": begin.isoformat(), "to": today.isoformat(),
+         "days": WINDOW_DAYS, "truncated": truncated},
+        total=len(everyone),
+    )
     return {
         "filings": len(filings),
+        "holdings": len(kept_all),
         "total_in_window": len(nps),
         "detail_failed": detail_failed,
         "truncated": truncated,

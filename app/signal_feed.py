@@ -17,7 +17,17 @@ import datetime as dt
 import logging
 from typing import Any
 
-from . import config, econ_calendar, kr_events, kr_pension, kr_press, news_feed, store, us_ptr
+from . import (
+    config,
+    econ_calendar,
+    kr_events,
+    kr_holdings,
+    kr_pension,
+    kr_press,
+    news_feed,
+    store,
+    us_ptr,
+)
 
 log = logging.getLogger(__name__)
 
@@ -234,6 +244,53 @@ def _index_move_items() -> list[dict[str, Any]]:
     return items
 
 
+# 대량보유 보고는 1%p 변동마다 의무라 하루 수십 건이다 — "지속 상태는 뉴스가
+# 아니다"의 재적용으로, 피드에는 신규 진입·보유목적 변경·이 폭 이상의 변동만
+# 올린다. 전체 목록은 /api/kr/holdings 표가 담당한다.
+HOLDINGS_MIN_SWING = 2.0
+MAX_HOLDINGS_ITEMS = 6
+
+
+def _kr_holdings_items() -> list[dict[str, Any]]:
+    blob = store.load_report(kr_holdings.CACHE_KEY, config.REPORT_TTL * 2)
+    items: list[dict[str, Any]] = []
+    for filing in (blob or {}).get("filings", []):
+        reporter = str(filing.get("reporter") or "")
+        if "국민연금" in reporter:
+            continue  # kr_pension 소스가 이미 나른다 — 같은 보고서를 두 번 싣지 않는다
+        report_type = str(filing.get("report_type") or "")
+        reason = f"{filing.get('reason') or ''} {filing.get('filing_name') or ''}"
+        change = filing.get("ratio_change")
+        newsworthy = (
+            "신규" in report_type
+            or "보유목적" in reason
+            or (isinstance(change, (int, float)) and abs(change) >= HOLDINGS_MIN_SWING)
+        )
+        if not newsworthy:
+            continue
+        ratio = filing.get("ratio")
+        if isinstance(ratio, (int, float)):
+            move = f" ({change:+.2f}%p)" if isinstance(change, (int, float)) else ""
+            title_ko = f"{filing.get('company')} — {reporter} 대량보유 {ratio:.2f}%{move}"
+            title_en = f"{filing.get('company')} — {reporter} holds {ratio:.2f}%{move}"
+        else:
+            # 상세 미확보 행은 공시 원문 제목으로만 말한다.
+            title_ko = title_en = f"{filing.get('company')} — {filing.get('filing_name')}"
+        items.append({
+            "at": str(filing.get("report_date") or ""),
+            "date": str(filing.get("report_date") or ""),
+            "kind": "kr_holdings",
+            "region": "kr",
+            "symbol": filing.get("stock_code"),
+            "title": {"ko": title_ko, "en": title_en},
+            "url": filing.get("report_url"),
+            "hub": _hub_link(filing.get("stock_code"), korean=True),
+        })
+        if len(items) >= MAX_HOLDINGS_ITEMS:
+            break
+    return items
+
+
 def _kr_press_items() -> list[dict[str, Any]]:
     blob = store.load_report(kr_press.CACHE_KEY, config.REPORT_TTL * 2)
     items = []
@@ -310,7 +367,7 @@ def _upcoming_items(today: dt.date) -> list[dict[str, Any]]:
 def build_feed(*, today: dt.date | None = None) -> dict[str, Any]:
     today = today or dt.datetime.now(_KST).date()
     items: list[dict[str, Any]] = []
-    for source in (_us_8k_items, _kr_material_items, _us_ptr_items, _kr_pension_items, _index_move_items, _news_items, _kr_press_items):
+    for source in (_us_8k_items, _kr_material_items, _us_ptr_items, _kr_pension_items, _kr_holdings_items, _index_move_items, _news_items, _kr_press_items):
         try:
             items.extend(source())
         except Exception as exc:  # noqa: BLE001 - 소스 하나의 실패는 그 소스만 지운다
