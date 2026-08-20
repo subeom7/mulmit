@@ -14,7 +14,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from app import config, ingest, kr_pension
+from app import config, ingest, kr_holdings, kr_pension
 from app.main import app
 from app.providers.base import DataUnavailable, RateLimited
 from app.providers.dart import DartProvider
@@ -148,9 +148,11 @@ def test_refresh_keeps_only_nps_filings_and_joins_details(db, dart_lane):
 
     stats = kr_pension.refresh(provider, today=TODAY)
 
-    assert stats == {"filings": 1, "total_in_window": 1, "detail_failed": 0, "truncated": False}
+    assert stats == {"filings": 1, "holdings": 2, "total_in_window": 1,
+                     "detail_failed": 0, "truncated": False}
     assert provider.index_calls == [("D001", "20260520", "20260818")]
-    assert provider.detail_calls == ["00413046"]
+    # 상세는 두 산출물(국민연금·전체)의 회사 합집합을 한 번씩 걷는다.
+    assert provider.detail_calls == ["00413046", "00126380"]
 
     payload = kr_pension.get_filings()
     filing = payload["filings"][0]
@@ -291,10 +293,16 @@ def test_ingest_respects_the_gate_and_freshness(db, dart_lane, monkeypatch):
     assert ingest.refresh_kr_pension() == {"filings": 0}
     assert calls == [1]
 
-    # 신선한 결과가 있으면 배치는 다시 걷지 않는다.
+    # pension blob만 있고 holdings blob이 없으면 다시 걷는다 — 한 크롤이
+    # 두 산출물을 책임지기 때문이다.
     db.save_report(kr_pension.CACHE_KEY, {"filings": []})
+    assert ingest.refresh_kr_pension() == {"filings": 0}
+    assert calls == [1, 1]
+
+    # 두 blob이 모두 신선하면 배치는 다시 걷지 않는다.
+    db.save_report(kr_holdings.CACHE_KEY, {"filings": []})
     assert ingest.refresh_kr_pension() == {"skipped": "fresh"}
-    assert calls == [1]
+    assert calls == [1, 1]
 
 
 def test_ingest_swallows_a_rate_limit_into_a_skip(db, dart_lane, monkeypatch):

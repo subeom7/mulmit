@@ -28,6 +28,7 @@ from . import (
     ingest,
     kr_events,
     kr_fundamentals,
+    kr_holdings,
     kr_insider,
     kr_pension,
     kr_press,
@@ -665,6 +666,30 @@ def kr_fundamentals_report(code: str, request: Request, response: Response) -> d
         raise HTTPException(status_code=503, detail="DART fundamentals unavailable") from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "FSS DART"
+    return payload
+
+
+@app.get("/api/kr/holdings")
+@limiter.limit(config.RATE_LIMIT)
+def kr_holdings_filings(request: Request, response: Response) -> dict:
+    """대량보유(5% 룰) 공시 — 전체 보고자. 배치가 저장한 결과만 읽는다."""
+    try:
+        payload = kr_holdings.get_holdings()
+    except kr_holdings.KrHoldingsDisabled as exc:
+        # kr_pension과 같은 DART 게이트에서 갈라진 lane이라 안내문을 공유한다.
+        detail = (
+            data_rights.KR_PENSION_NOT_CONFIGURED
+            if exc.reason == "not_configured"
+            else data_rights.KR_PENSION_DISABLED
+        )
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    except DataUnavailable as exc:
+        raise HTTPException(
+            status_code=503, detail="major-holding filings not collected yet"
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
     return payload
 
 

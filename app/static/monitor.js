@@ -94,6 +94,9 @@ const TEXT = {
     "krp.title": "국민연금 5% 공시", "krp.copy": "주식등의 대량보유 상황보고(5% 룰) 중 국민연금공단 제출분입니다. 보고서 단위의 보유비율 변동이며, 통상 한 달치가 월초에 일괄 공시됩니다. 일별 매매가 아닙니다.",
     "krp.colDate": "보고일", "krp.colCompany": "회사", "krp.colRatio": "보유비율", "krp.colChange": "증감", "krp.colShares": "보유주식수", "krp.colReason": "보고사유",
     "krp.detailPending": "상세 미확보", "krp.window": "최근 {days}일 공시 {total}건 중 {count}건",
+    "krh.title": "대량보유 5% 공시 — 전체 보고자", "krh.copy": "자본시장법 5% 룰에 따른 주식등의 대량보유 상황보고 전체입니다 — 운용사·펀드·대주주 모두. 보고 기한이 5영업일이라 보고일은 변동일과 다를 수 있습니다. 일별 매매가 아닙니다.",
+    "krh.colReporter": "보고자", "krh.colType": "보고구분",
+    "krh.window": "최근 {days}일 공시 {total}건 중 {count}건",
     "kre.title": "ETF 보드", "kre.copy": "거래대금 상위 ETF의 종가·NAV·괴리율입니다. 장 마감 확정값이며 실시간이 아닙니다.",
     "kre.colName": "종목", "kre.colClose": "종가", "kre.colDay": "등락", "kre.colNav": "NAV", "kre.colPremium": "괴리율", "kre.colIndex": "기초지수", "kre.colValue": "거래대금",
     "kre.window": "상장 {total}종목 중 거래대금 상위 {count}", "kre.asof": "기준 {date}",
@@ -178,6 +181,9 @@ const TEXT = {
     "dots.target": "Target", "dots.median": "Median", "dots.band": "Central tendency", "dots.year": "End of {year}", "dots.longerRun": "Longer run (neutral)",
     "dots.asof": "As of the {date} SEP · updates at quarterly FOMCs (Mar·Jun·Sep·Dec) · central tendency trims the three highest and lowest",
     "krp.title": "NPS 5% filings", "krp.copy": "Large-holding (5% rule) reports filed by the National Pension Service. Report-level stake changes, usually filed as one early-month batch covering the prior month — not daily trades.",
+    "krh.title": "5% filings — all filers", "krh.copy": "Every large-holding (5% rule) report: asset managers, funds, major shareholders. The filing deadline is five business days, so the report date can trail the change — not daily trades.",
+    "krh.colReporter": "Filer", "krh.colType": "Type",
+    "krh.window": "{count} of {total} filings in the last {days} days",
     "krp.colDate": "Filed", "krp.colCompany": "Company", "krp.colRatio": "Stake", "krp.colChange": "Change", "krp.colShares": "Shares held", "krp.colReason": "Reason",
     "krp.detailPending": "Detail pending", "krp.window": "{count} of {total} filings in the last {days} days",
     "kre.title": "ETF board", "kre.copy": "Top ETFs by traded value with close, NAV and the premium/discount. Confirmed end-of-day values, not live quotes.",
@@ -405,7 +411,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, krOvernight: null, krPension: null, krEtf: null, usPtr: null, calendar: null,
+  stress: null, krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -953,6 +959,7 @@ const PAGE_FETCHES = {
   krOvernight: ["landing", "kr"],
   feed: ["landing"],
   krPension: ["kr"],
+  krHoldings: ["kr"],
   krEvents: ["kr"],
   krEtf: ["kr"],
   usPtr: ["us"],
@@ -964,11 +971,12 @@ async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension, krEvents, krEtf, usPtr, usEvents, calendar, feed] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/kr/indices", "krIndices"),
     request("/api/kr/overnight", "krOvernight"), request("/api/kr/pension", "krPension"),
+    request("/api/kr/holdings", "krHoldings"),
     request("/api/kr/events", "krEvents"),
     request("/api/kr/etf", "krEtf"), request("/api/us/ptr", "usPtr"),
     request("/api/us/events", "usEvents"),
@@ -976,14 +984,14 @@ async function loadCore() {
     request("/api/feed", "feed"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
-  state.stress = stress; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension;
+  state.stress = stress; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krHoldings = krHoldings;
   state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets");
   renderAll(); $("#refresh-button")?.removeAttribute("aria-busy");
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -1539,6 +1547,7 @@ const FEED_KIND = {
   index_move: { label: LABEL("지수 급변", "Index move"), cls: "kr" },
   news: { label: LABEL("뉴스", "News"), cls: "news" },
   kr_press: { label: LABEL("보도자료", "Press"), cls: "kr" },
+  kr_holdings: { label: LABEL("대량보유", "5% filing"), cls: "kr" },
 };
 
 function renderFeed() {
@@ -1663,6 +1672,69 @@ function renderKroOfficialStrip() {
     label.textContent = t("kro.officialStrip");
     strip.replaceChildren(label, ...parts);
   }
+}
+
+function renderKrHoldings() {
+  const section = $("#kr-holdings");
+  if (!section) return;
+  const payload = state.krHoldings;
+  const filings = Array.isArray(payload?.filings) ? payload.filings : [];
+  if (!filings.length) { section.hidden = true; return; }
+  section.hidden = false;
+
+  const body = $("#krh-body");
+  body.replaceChildren();
+  const scroll = document.createElement("div"); scroll.className = "table-scroll";
+  const table = document.createElement("table"); table.className = "accessible-table kridx-table";
+  table.innerHTML = `<thead><tr>
+    <th scope="col">${t("krp.colDate")}</th><th scope="col">${t("krp.colCompany")}</th>
+    <th scope="col">${t("krh.colReporter")}</th><th scope="col">${t("krh.colType")}</th>
+    <th scope="col" class="num">${t("krp.colRatio")}</th><th scope="col" class="num">${t("krp.colChange")}</th>
+    <th scope="col">${t("krp.colReason")}</th>
+  </tr></thead>`;
+  const tbody = document.createElement("tbody");
+  const signClass = (value) => value == null ? "" : value > 0 ? "up" : value < 0 ? "down" : "";
+  for (const filing of filings) {
+    const tr = document.createElement("tr");
+    const dateTd = document.createElement("td");
+    dateTd.textContent = kroDate(filing.report_date);
+    const companyTd = document.createElement("td"); companyTd.className = "krp-company";
+    companyTd.append(hubLink(filing.company || "—", filing.stock_code));
+    if (filing.report_url) {
+      const source = document.createElement("a");
+      source.href = filing.report_url; source.target = "_blank"; source.rel = "noopener noreferrer";
+      source.className = "krp-source"; source.textContent = "원문";
+      companyTd.append(source);
+    }
+    const reporterTd = document.createElement("td");
+    reporterTd.textContent = filing.reporter || "—";
+    const typeTd = document.createElement("td");
+    typeTd.textContent = filing.report_type || (filing.detail_status === "unavailable" ? t("krp.detailPending") : "—");
+    const ratio = safeNumber(filing.ratio); const ratioChange = safeNumber(filing.ratio_change);
+    const ratioTd = document.createElement("td"); ratioTd.className = "num";
+    ratioTd.textContent = ratio === null ? "—" : `${ratio.toFixed(2)}%`;
+    const changeTd = document.createElement("td"); changeTd.className = `num ${signClass(ratioChange)}`;
+    changeTd.textContent = ratioChange === null ? "—" : `${ratioChange > 0 ? "+" : ""}${ratioChange.toFixed(2)}%p`;
+    const reasonTd = document.createElement("td");
+    const reason = filing.reason || "";
+    reasonTd.textContent = reason
+      ? (state.lang === "en" ? (KRP_REASON_EN[reason] || reason) : reason)
+      : "—";
+    tr.append(dateTd, companyTd, reporterTd, typeTd, ratioTd, changeTd, reasonTd);
+    tbody.append(tr);
+  }
+  table.append(tbody); scroll.append(table); body.append(scroll);
+
+  const footer = $("#krh-footer");
+  footer.replaceChildren();
+  const source = payload.source || {};
+  const link = document.createElement("a");
+  link.href = source.url || "#"; link.target = "_blank"; link.rel = "noopener noreferrer";
+  link.textContent = source.provider_name || "금융감독원";
+  const window_ = payload.window || {};
+  footer.append(document.createTextNode(
+    t("krh.window", { days: window_.days ?? "—", total: payload.total_in_window ?? "—", count: payload.count ?? "—" }) + " · "
+  ), link);
 }
 
 function renderKrEvents() {

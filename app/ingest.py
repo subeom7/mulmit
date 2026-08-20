@@ -27,6 +27,7 @@ from . import (
     data,
     econ_calendar,
     kr_events,
+    kr_holdings,
     kr_pension,
     kr_press,
     news_feed,
@@ -626,7 +627,12 @@ def refresh_kr_pension(*, force: bool = False) -> dict:
         return {"skipped": "disabled"}
     if not config.DART_API_KEY:
         return {"skipped": "not_configured"}
-    if not force and store.load_report(kr_pension.CACHE_KEY, config.DART_MAX_AGE) is not None:
+    if (
+        not force
+        and store.load_report(kr_pension.CACHE_KEY, config.DART_MAX_AGE) is not None
+        and store.load_report(kr_holdings.CACHE_KEY, config.DART_MAX_AGE) is not None
+    ):
+        # 한 크롤이 두 blob(국민연금·전체 보고자)을 만든다 — 둘 다 신선해야 스킵.
         return {"skipped": "fresh"}
     try:
         result = kr_pension.refresh()

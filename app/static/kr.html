@@ -15,7 +15,7 @@
   <meta property="og:locale" content="ko_KR">
   <meta name="twitter:card" content="summary">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260820-4">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260820-5">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -118,6 +118,18 @@
       </div>
     </section>
 
+    <section class="dashboard-section" id="kr-holdings" hidden aria-labelledby="krh-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">KOREA · 5% RULE · ALL FILERS · DART</p><h2 id="krh-title" data-i18n="krh.title">대량보유 5% 공시 — 전체 보고자</h2></div>
+        <span class="source-pill">DART</span>
+      </div>
+      <div class="panel">
+        <p class="section-copy" data-i18n="krh.copy" style="margin:0 0 12px">자본시장법 5% 룰에 따른 주식등의 대량보유 상황보고 전체입니다 — 운용사·펀드·대주주 모두. 보고 기한이 5영업일이라 보고일은 변동일과 다를 수 있습니다. 일별 매매가 아닙니다.</p>
+        <div id="krh-body"></div>
+        <footer class="panel-footer" id="krh-footer"></footer>
+      </div>
+    </section>
+
     <section class="weekend-pulse" id="weekend-pulse" aria-labelledby="weekend-title">
       <div class="section-heading compact">
         <span class="section-index">W</span>
@@ -171,6 +183,6 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "kr";</script>
-  <script src="/static/monitor.js?v=20260820-4" defer></script>
+  <script src="/static/monitor.js?v=20260820-5" defer></script>
 </body>
 </html>
