@@ -272,9 +272,9 @@ def cmc_ingest_enabled() -> bool:
 
 
 def cmc_status() -> str:
-    if not cmc_serving_enabled():
-        return "disabled"
-    return "enabled" if config.CMC_API_KEY else "not_configured"
+    """Serving state only — the key lives in the ingest process, so a web worker
+    without it is not "not configured"; it simply never fetches."""
+    return "enabled" if cmc_serving_enabled() else "disabled"
 
 
 def upbit_serving_enabled() -> bool:
@@ -342,7 +342,9 @@ def lane_report() -> dict[str, dict[str, str]]:
         },
         COINMARKETCAP: {
             "status": cmc_status(),
-            "gate": "CRYPTO_SECTION_ENABLED + CMC_ENABLED (+ CMC_API_KEY in ingest)",
+            "gate": "CRYPTO_SECTION_ENABLED + CMC_ENABLED",
+            "fetch_key": "present" if config.CMC_API_KEY else "absent_in_this_process",
+            "fetch_gate": "CMC_API_KEY (ingest only)",
         },
         UPBIT: {
             "status": "enabled" if upbit_serving_enabled() else "pending_rights",
