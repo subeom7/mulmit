@@ -187,10 +187,14 @@ def stock_analytics() -> FileResponse:
 
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon() -> FileResponse:
-    # Browsers probe this path on their own; modern ones accept an SVG body
-    # here, and every page also declares the icon with a <link> tag.
+    # Browsers and search engines (Naver reads exactly this path; Google wants a
+    # square raster) probe here on their own, so it must be a real ICO. The
+    # pages also declare PNG/SVG/apple-touch variants with <link> tags.
+    # Regenerate the set with scripts/make_favicons.py.
     return FileResponse(
-        config.STATIC_DIR / "brand" / "mulmit-favicon.svg", media_type="image/svg+xml"
+        config.STATIC_DIR / "brand" / "favicon.ico",
+        media_type="image/x-icon",
+        headers={"Cache-Control": "public, max-age=86400"},
     )
 
 
