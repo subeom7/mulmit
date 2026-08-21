@@ -116,7 +116,7 @@ const TEXT = {
     "tv.terms": "데이터·표시 조건은 제공자 정책을 따릅니다.", "corr.title": "자산군 상관관계", "corr.note": "서로 다른 시장 시간대는 동시 일간 수익률 상관을 왜곡할 수 있습니다.", "corr.scale": "+1은 같은 방향, 0은 약한 선형 관계, −1은 반대 방향입니다. 상관은 인과관계가 아닙니다.",
     "period.label": "기간", "method.title": "숫자를 다루는 원칙", "method.one.title": "출처를 함께 표시", "method.one.copy": "각 수치는 공급자, 기준일, 신선도를 함께 보여줍니다.",
     "method.two.title": "단위를 추측하지 않음", "method.two.copy": "API가 제공한 단위와 배율만 사용합니다.", "method.three.title": "미연결은 미연결로",
-    "method.three.copy": "라이선스나 API가 없는 지표는 숫자 대신 상태를 표시합니다.", "badge.fresh": "최신", "badge.stale": "지연", "badge.missing": "미연결",
+    "method.three.copy": "라이선스가 없는 지표는 빈 카드 대신 숨기고, 연결이 끊긴 지표는 숫자를 지어내는 대신 상태를 표시합니다.", "badge.fresh": "최신", "badge.stale": "지연", "badge.missing": "미연결",
     "badge.licensed": "라이선스 필요", "badge.pendingRights": "권리 확인 중", "badge.disabled": "비활성", "badge.rights": "표시권리 확인", "badge.sourceTerms": "출처 조건", "badge.synthetic": "합성 무기한선물", "badge.perpetual": "무기한선물", "badge.proxyAlternative": "제한 지표의 대체 참고값", "notice.market": "자산 데이터 표시 조건", "date.asof": "기준", "change.previous": "직전 관측치 대비", "chart.normalized": "각 시계열 시작값 = 100으로 정규화",
     "legal.privacy": "개인정보처리방침", "legal.terms": "이용약관", "legal.disclaimer": "면책 고지",
     "legal.notAdvice": "Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.",
@@ -205,7 +205,7 @@ const TEXT = {
     "tv.terms": "Provider data and display terms apply.", "corr.title": "Cross-asset correlation", "corr.note": "Different market hours can distort same-day return correlations.", "corr.scale": "+1 moves together, 0 indicates a weak linear link, and −1 moves oppositely. Correlation is not causation.",
     "period.label": "Period", "method.title": "How we handle numbers", "method.one.title": "Show the source", "method.one.copy": "Every value carries its provider, observation date and freshness.",
     "method.two.title": "Never guess units", "method.two.copy": "Only API-supplied units and scales are used.", "method.three.title": "Missing stays missing",
-    "method.three.copy": "Unlicensed or disconnected indicators show a state instead of an invented number.", "badge.fresh": "Fresh", "badge.stale": "Stale", "badge.missing": "Not connected",
+    "method.three.copy": "Unlicensed indicators are hidden rather than shown blank; disconnected ones show a state instead of an invented number.", "badge.fresh": "Fresh", "badge.stale": "Stale", "badge.missing": "Not connected",
     "badge.licensed": "License required", "badge.pendingRights": "Rights pending", "badge.disabled": "Disabled", "badge.rights": "Display rights", "badge.sourceTerms": "Source terms", "badge.synthetic": "Synthetic perpetual", "badge.perpetual": "Perpetual", "badge.proxyAlternative": "Alternative to restricted series", "notice.market": "Asset-data display terms", "date.asof": "As of", "change.previous": "vs previous observation", "chart.normalized": "Each series rebased to 100 at start",
     "legal.privacy": "Privacy policy", "legal.terms": "Terms of use", "legal.disclaimer": "Disclaimer",
     "legal.notAdvice": "Mulmit is an information service, not investment advice or a solicitation to trade.",
@@ -726,8 +726,14 @@ function pruneEmpty() {
     // without a contract no matter what any endpoint says, so they hide on the
     // same rule without needing a lane to have answered.
     const definition = METRICS[key] || {};
-    card.hidden = !state.records.get(key)
-      && (laneLoaded(key) || Boolean(definition.licensed) || Boolean(definition.reserved));
+    const record = state.records.get(key);
+    // Operator decision 2026-08-21: a card that can only ever say "license
+    // required" (Cboe VIX, ICE BofA HY spread) is hidden on the public pages
+    // rather than shown blank. The API still reports it as license_required,
+    // so the distinction survives — only the empty tile goes.
+    const licensedPlaceholder = Boolean(record) && cardState(key, record, definition).kind === "licensed";
+    card.hidden = licensedPlaceholder || (!record
+      && (laneLoaded(key) || Boolean(definition.licensed) || Boolean(definition.reserved)));
   });
   $$(".overview-group").forEach((group) => {
     group.hidden = $$(".summary-card", group).every((card) => card.hidden);
