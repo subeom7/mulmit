@@ -3,29 +3,45 @@
 Google's search-result favicon wants a square raster in multiples of 48px and
 Naver reads /favicon.ico directly; an SVG-only setup left a blank globe in
 both. These pin the served formats and the <link> declarations on every page.
+The headers are parsed by hand so the test suite needs no imaging library —
+Pillow is only a dev dependency of scripts/make_favicons.py.
 """
 
 from __future__ import annotations
 
-import io
+import struct
 from pathlib import Path
 
 from fastapi.testclient import TestClient
-from PIL import Image
 
 from app import config
 from app.main import app
 
 BRAND = Path(config.STATIC_DIR) / "brand"
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+
+
+def _ico_sizes(data: bytes) -> set[tuple[int, int]]:
+    reserved, kind, count = struct.unpack("<HHH", data[:6])
+    assert reserved == 0 and kind == 1, "not an ICO header"
+    sizes = set()
+    for index in range(count):
+        width, height = data[6 + index * 16], data[7 + index * 16]
+        sizes.add((width or 256, height or 256))
+    return sizes
+
+
+def _png_size(data: bytes) -> tuple[int, int]:
+    assert data[:8] == PNG_SIGNATURE, "not a PNG"
+    assert data[12:16] == b"IHDR"
+    return struct.unpack(">II", data[16:24])
 
 
 def test_favicon_ico_is_a_real_multi_size_ico():
     response = TestClient(app).get("/favicon.ico")
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("image/x-icon")
-    icon = Image.open(io.BytesIO(response.content))
-    assert icon.format == "ICO"
-    assert {(16, 16), (32, 32), (48, 48)} <= set(icon.info["sizes"])
+    assert {(16, 16), (32, 32), (48, 48)} <= _ico_sizes(response.content)
 
 
 def test_png_set_is_square_at_the_sizes_the_pages_declare():
@@ -35,9 +51,7 @@ def test_png_set_is_square_at_the_sizes_the_pages_declare():
         ("favicon-512.png", 512),
         ("apple-touch-icon.png", 180),
     ):
-        image = Image.open(BRAND / name)
-        assert image.size == (size, size), name
-        assert image.format == "PNG", name
+        assert _png_size((BRAND / name).read_bytes()) == (size, size), name
 
 
 def test_every_public_page_declares_ico_png_svg_and_apple_touch_icons():
