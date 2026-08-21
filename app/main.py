@@ -210,6 +210,18 @@ def naver_site_verification() -> FileResponse:
     )
 
 
+@app.get("/google973105e75489d5bc.html", include_in_schema=False)
+def google_site_verification() -> FileResponse:
+    """Google Search Console 소유확인 파일(URL 접두어 속성 https://mulmit.com/).
+
+    내용은 구글이 지정한 고정 문자열 한 줄이며, 확인이 끝난 뒤에도 지우면
+    소유권이 풀리므로 유지한다.
+    """
+    return FileResponse(
+        config.STATIC_DIR / "google973105e75489d5bc.html", media_type="text/html"
+    )
+
+
 @app.get("/robots.txt", include_in_schema=False)
 def robots() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "robots.txt", media_type="text/plain")

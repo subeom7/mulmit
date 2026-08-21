@@ -55,7 +55,11 @@ def test_png_set_is_square_at_the_sizes_the_pages_declare():
 
 
 def test_every_public_page_declares_ico_png_svg_and_apple_touch_icons():
-    pages = [p for p in Path(config.STATIC_DIR).glob("*.html") if not p.name.startswith("naver")]
+    # Search-engine ownership files live beside the pages but are not pages.
+    pages = [
+        p for p in Path(config.STATIC_DIR).glob("*.html")
+        if not p.name.startswith(("naver", "google"))
+    ]
     assert pages
     for page in pages:
         head = page.read_text(encoding="utf-8").split("</head>", 1)[0]
