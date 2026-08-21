@@ -32,7 +32,7 @@ def test_kr_hub_renders_server_side_title(db):
 
     assert response.status_code == 200
     body = response.text
-    assert "<title>삼성전자 (005930) 주가·재무·내부자 공시 | Mulmit</title>" in body
+    assert "<title>삼성전자 (005930) 주가·재무·내부자 공시 | 물밑 Mulmit</title>" in body
     assert 'canonical" href="https://mulmit.com/stock/005930"' in body
     assert "KOSPI" in body
 
@@ -42,7 +42,7 @@ def test_us_hub_renders_company_name(db):
     response = TestClient(app).get("/stock/AAPL")
 
     assert response.status_code == 200
-    assert "<title>Apple Inc. (AAPL) financials, insiders &amp; 8-K | Mulmit</title>" in response.text
+    assert "<title>Apple Inc. (AAPL) financials, insiders &amp; 8-K | 물밑 Mulmit</title>" in response.text
 
 
 def test_unknown_symbols_are_404_not_infinite_pages(db):

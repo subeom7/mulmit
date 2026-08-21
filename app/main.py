@@ -243,7 +243,7 @@ def stock_hub(symbol: str) -> HTMLResponse:
             raise HTTPException(status_code=404, detail="unknown KRX code")
         name = str(listing.get("itms_nm") or symbol)
         market = str(listing.get("mrkt_ctg") or "KRX")
-        title = f"{name} ({symbol}) 주가·재무·내부자 공시 | Mulmit"
+        title = f"{name} ({symbol}) 주가·재무·내부자 공시 | 물밑 Mulmit"
         description = (
             f"{name} 공식 종가와 낙폭·변동성, 연간 재무제표와 ROE·부채비율·후행 PER, "
             "임원·주요주주 소유보고, 주요사항보고 공시를 한 페이지에서."
@@ -254,7 +254,7 @@ def stock_hub(symbol: str) -> HTMLResponse:
             raise HTTPException(status_code=404, detail="ticker not in covered roster")
         name = str(company.get("name") or symbol)
         market = str(company.get("exchange") or "US")
-        title = f"{name} ({symbol}) financials, insiders & 8-K | Mulmit"
+        title = f"{name} ({symbol}) financials, insiders & 8-K | 물밑 Mulmit"
         description = (
             f"{name} annual financials with ROE and revenue growth, insider Forms "
             "3/4/5, 8-K events and congressional trades, on one page."
