@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import datetime as dt
+import math
+import statistics
 from typing import Any
 
 import pytest
@@ -7,7 +10,13 @@ from fastapi.testclient import TestClient
 
 from app import config, hip3_history, store
 from app.main import app
-from app.market_assets import ASSETS, MAX_PUBLIC_OBSERVATIONS, build_asset_snapshot
+from app.market_assets import (
+    ASSETS,
+    MAX_PUBLIC_OBSERVATIONS,
+    REALIZED_VOL_WINDOW,
+    build_asset_snapshot,
+    realized_volatility_series,
+)
 from app.providers.base import DataUnavailable
 
 
@@ -353,3 +362,73 @@ def test_snapshot_withholds_history_while_history_gate_closed(db, hip3_public_di
     assert asset["history_status"] == "withheld_pending_rights"
     assert asset["observations"] == []
     assert snapshot["history_lane"]["status"] == "withheld_pending_rights"
+
+
+def _closes(values: list[float], start: dt.date = dt.date(2026, 7, 1)) -> list[dict]:
+    return [
+        {"date": (start + dt.timedelta(days=index)).isoformat(), "value": value}
+        for index, value in enumerate(values)
+    ]
+
+
+def test_realized_volatility_is_log_return_stdev_annualized_by_sqrt_252():
+    # 21 closes alternating 100/110: 20 log returns of ±ln(1.1).
+    closes = _closes([100.0 if index % 2 == 0 else 110.0 for index in range(REALIZED_VOL_WINDOW + 1)])
+    series = realized_volatility_series(closes)
+    assert len(series) == 1
+    returns = [math.log(1.1), -math.log(1.1)] * (REALIZED_VOL_WINDOW // 2)
+    expected = round(statistics.stdev(returns) * math.sqrt(252) * 100.0, 4)
+    assert series[0] == {"date": closes[-1]["date"], "value": expected}
+    # One close short: no series rather than a padded one.
+    assert realized_volatility_series(closes[:-1]) == []
+    # A non-positive close is dropped, which shortens the usable run below the window.
+    broken = closes[:]
+    broken[5] = {**broken[5], "value": 0}
+    assert realized_volatility_series(broken) == []
+
+
+def test_snapshot_adds_realized_vol_cards_only_with_enough_closes(db, hip3_public_display, monkeypatch):
+    monkeypatch.setattr(config, "HIP3_HISTORY_ENABLED", True)
+    hip3_history.clear_cache()
+    sp500 = _closes([100.0 + (index % 3) for index in range(REALIZED_VOL_WINDOW + 2)])
+    kr200 = _closes([1000.0, 1010.0])  # too short for a window
+    blob = {
+        "generated_at": "2026-08-21T12:00:00Z", "interval": "1d", "window_days": 366,
+        "basis": hip3_history.BASIS,
+        "series": {
+            "xyz:SP500": {"as_of": "2026-08-21T23:59:59Z", "interval": "1d", "observations": sp500},
+            "xyz:KR200": {"as_of": "2026-08-21T23:59:59Z", "interval": "1d", "observations": kr200},
+        },
+    }
+    store.save_report(hip3_history.CACHE_KEY, blob)
+    provider = FixtureProvider(
+        [("xyz:SP500", _context("7700", "7600")), ("xyz:KR200", _context("1087", "1080"))]
+    )
+    snapshot = build_asset_snapshot("1y", provider=provider)
+    hip3_history.clear_cache()
+
+    by_id = {asset["id"]: asset for asset in snapshot["assets"]}
+    assert "kr200_realized_vol" not in by_id
+    card = by_id["sp500_realized_vol"]
+    expected = realized_volatility_series(sp500)
+    assert card["latest"] == {"date": expected[-1]["date"], "value": expected[-1]["value"]}
+    assert card["previous"]["value"] == expected[-2]["value"]
+    assert card["change"]["value"] == pytest.approx(expected[-1]["value"] - expected[-2]["value"])
+    assert card["observations"] == expected[-2:] or card["observations"] == expected
+    assert card["source"]["derived"] is True
+    assert card["instrument_kind"] == "derived_realized_volatility"
+    assert card["units"]["short"] == "%"
+    assert card["derived"]["window_days"] == REALIZED_VOL_WINDOW
+    assert "implied" in card["derived"]["not"]
+    assert card["history_status"] == "stored_daily_candles"
+    # The live request path is unchanged: one context call per venue, no candles.
+    assert sorted(provider.calls) == ["main", "xyz"]
+
+
+def test_snapshot_has_no_derived_cards_when_history_is_withheld(db, hip3_public_display, monkeypatch):
+    monkeypatch.setattr(config, "HIP3_HISTORY_ENABLED", False)
+    hip3_history.clear_cache()
+    snapshot = build_asset_snapshot(
+        "1y", provider=FixtureProvider([("xyz:SP500", _context("7700", "7600"))])
+    )
+    assert [asset["id"] for asset in snapshot["assets"]] == ["sp500"]
