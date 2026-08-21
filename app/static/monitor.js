@@ -252,11 +252,13 @@ const METRICS = {
   // reserved: no source can fill this yet by design (own index, not built).
   sentiment: { aliases: ["sentiment", "fear_greed", "mulmit_sentiment"], label: LABEL("시장 심리", "Market sentiment"), group: "risk", format: "number", reserved: true, accent: "#fb7185", description: LABEL("공식 입력과 공개된 방법론으로 산출하는 자체 지수 연결 대기", "Awaiting a proprietary index built from licensed inputs and a published methodology") },
   yield_curve: { aliases: ["yield_curve", "t10y2y", "yield_spread"], label: LABEL("장단기 금리차", "10Y–2Y curve"), group: "risk", format: "percentPoints", accent: "#fb7185" },
-  ofr_fsi: { aliases: ["ofr_fsi"], label: LABEL("OFR 금융스트레스 (종합)", "OFR financial stress"), group: "risk", format: "number", accent: "#fb7185" },
-  ofr_fsi_volatility: { aliases: ["ofr_fsi_volatility"], label: LABEL("변동성 스트레스 (OFR)", "Volatility stress (OFR)"), group: "risk", format: "number", accent: "#fb7185" },
-  ofr_fsi_credit: { aliases: ["ofr_fsi_credit"], label: LABEL("신용 스트레스 (OFR)", "Credit stress (OFR)"), group: "risk", format: "number", accent: "#fb7185" },
+  ofr_fsi: { aliases: ["ofr_fsi"], label: LABEL("OFR 금융스트레스 (종합)", "OFR financial stress"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185" },
+  ofr_fsi_volatility: { aliases: ["ofr_fsi_volatility"], label: LABEL("변동성 스트레스 (OFR)", "Volatility stress (OFR)"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185" },
+  ofr_fsi_credit: { aliases: ["ofr_fsi_credit"], label: LABEL("신용 스트레스 (OFR)", "Credit stress (OFR)"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185" },
+  sp500_realized_vol: { aliases: ["sp500_realized_vol"], label: LABEL("S&P 500 퍼프 실현 변동성 (20일)", "S&P 500 perp realized vol (20d)"), group: "risk", format: "percentPoints", changeMode: "points", accent: "#fb7185" },
+  kr200_realized_vol: { aliases: ["kr200_realized_vol"], label: LABEL("KR200 퍼프 실현 변동성 (20일)", "KR200 perp realized vol (20d)"), group: "risk", format: "percentPoints", changeMode: "points", accent: "#fb7185" },
   high_yield_spread: { aliases: ["high_yield_spread", "bamlh0a0hym2"], label: LABEL("하이일드 스프레드", "High-yield spread"), group: "risk", format: "percentPoints", accent: "#fb7185" },
-  financial_stress: { aliases: ["financial_stress", "stlfsi4"], label: LABEL("금융스트레스", "Financial stress"), group: "risk", format: "number", accent: "#fb7185" },
+  financial_stress: { aliases: ["financial_stress", "stlfsi4"], label: LABEL("금융스트레스", "Financial stress"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185" },
   recession_prob: { aliases: ["recession_prob", "rec_prob_12m"], label: LABEL("미국 침체 확률 (12개월 선행)", "US recession odds (12M ahead)"), group: "risk", format: "number", accent: "#fb7185", description: LABEL("뉴욕 연은이 국채 10년–3개월 스프레드로 추정한 12개월 뒤 침체 확률 — 날짜는 예측 대상 월", "NY Fed treasury-spread model: probability of a U.S. recession twelve months ahead — dates mark the predicted month") },
   dxy: { aliases: ["dxy", "dollar_index"], label: LABEL("달러인덱스", "Dollar index"), group: "macro", format: "number", accent: "#a78bfa" },
   usdjpy: { aliases: ["usdjpy", "jpy=x", "usd/jpy"], label: LABEL("달러·엔", "USD/JPY"), group: "macro", format: "currency", currency: "JPY", accent: "#a78bfa" },
@@ -311,6 +313,14 @@ const INSIGHTS = {
   ofr_fsi_credit: {
     description: LABEL("OFR 금융스트레스지수의 신용 범주 — 신용 스프레드 기여분입니다. 개별 하이일드 스프레드 값이 아닙니다.", "The credit category of the OFR FSI — credit-spread contributions. Not an individual high-yield spread."),
     hints: [LABEL("양수 확대는 신용시장 경계 심화", "Widening above zero: credit caution deepening"), LABEL("음수 지속은 차분한 신용 여건 참고 구간", "Sustained negative: a calm-credit reference range")],
+  },
+  sp500_realized_vol: {
+    description: LABEL("위 S&P 500 합성 무기한선물의 최근 일봉 종가 20개로 계산한 실현 변동성(연율화 √252)입니다. 옵션 내재변동성인 VIX가 아니며, 이미 일어난 가격 변동의 크기만 보여줍니다.", "Realized volatility from the last 20 daily closes of the S&P 500 synthetic perpetual above, annualized by √252. Not the VIX (implied volatility): it measures moves that already happened."),
+    hints: [LABEL("상승: 최근 20일 일일 변동 폭이 커진 상태", "Rising: daily swings over the last 20 days have widened"), LABEL("VIX와 수준을 직접 비교하지 않음 — 실현치와 내재치는 다른 양", "Do not compare levels with the VIX — realized and implied are different quantities")],
+  },
+  kr200_realized_vol: {
+    description: LABEL("xyz:KR200 합성 무기한선물의 최근 일봉 종가 20개로 계산한 실현 변동성(연율화 √252)입니다. VKOSPI 같은 내재변동성 지수가 아닙니다.", "Realized volatility from the last 20 daily closes of the xyz:KR200 synthetic perpetual, annualized by √252. Not an implied-volatility index such as VKOSPI."),
+    hints: [LABEL("상승: 최근 20일 일일 변동 폭이 커진 상태", "Rising: daily swings over the last 20 days have widened")],
   },
   financial_stress: {
     description: LABEL("STLFSI4는 금리 7개·스프레드 6개·기타 5개, 총 18개 주간 시계열을 묶은 금융여건 지표입니다.", "STLFSI4 combines 18 weekly series: seven rates, six spreads and five other indicators."),
@@ -408,7 +418,7 @@ const SECTIONS = [
   { id: "kr-macro", zone: "kr", eyebrow: "KOREA · MACRO · BANK OF KOREA ECOS", title: LABEL("한국 매크로", "Korea macro"), copy: LABEL("한국은행 경제통계시스템(ECOS)의 공식 통계입니다. 기준금리와 소비자물가부터 시작합니다.", "Official statistics from the Bank of Korea's ECOS — starting with the base rate and CPI."), keys: ["kr_base_rate", "kr_cpi", "kr_unemployment"] },
   { id: "global-assets", zone: "us", eyebrow: "GLOBAL PRICES", title: LABEL("글로벌 자산", "Global assets"), copy: LABEL("전고점 대비 위치와 최근 가격 흐름을 함께 봅니다.", "View recent prices alongside distance from prior highs."), keys: ["sp500", "nasdaq", "gold", "bitcoin"] },
   { id: "global-etfs", zone: "us", eyebrow: "CROSS-BORDER ETFs", title: LABEL("글로벌 지역 ETF", "Regional ETFs"), copy: LABEL("미국 상장 ETF를 통해 지역별 위험선호를 확인합니다.", "Use US-listed ETFs to compare regional risk appetite."), keys: ["ewz", "inda", "vnm", "ewj"] },
-  { id: "market-risk", zone: "us", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("변동성·신용 스트레스(미 재무부 OFR)·금리곡선·금융스트레스·침체 확률을 나란히 봅니다.", "Compare volatility and credit stress (U.S. Treasury OFR), the yield curve, financial stress and recession odds."), keys: ["sentiment", "ofr_fsi_volatility", "ofr_fsi_credit", "ofr_fsi", "yield_curve", "financial_stress", "recession_prob", "vix", "high_yield_spread"] },
+  { id: "market-risk", zone: "us", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("변동성·신용 스트레스(미 재무부 OFR)·금리곡선·금융스트레스·침체 확률을 나란히 봅니다.", "Compare volatility and credit stress (U.S. Treasury OFR), the yield curve, financial stress and recession odds."), keys: ["sentiment", "ofr_fsi_volatility", "ofr_fsi_credit", "sp500_realized_vol", "ofr_fsi", "yield_curve", "financial_stress", "recession_prob", "vix", "high_yield_spread"] },
   { id: "macro-regime", zone: "us", eyebrow: "MACRO REGIME", title: LABEL("매크로 환경", "Macro regime"), copy: LABEL("달러·금리·원자재·고용의 방향을 확인합니다.", "Track the dollar, rates, commodities and labor conditions."), keys: ["dollar_index_broad", "dxy", "usdjpy", "treasury_10y", "wti", "copper", "unemployment", "initial_claims"] },
   { id: "liquidity", zone: "us", eyebrow: "FED & LIQUIDITY", title: LABEL("유동성 대차대조표", "Liquidity balance sheet"), copy: LABEL("연준·재무부·단기자금시장 유동성의 크기와 흐름입니다.", "Monitor Federal Reserve, Treasury and money-market liquidity."), keys: ["fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account", "m2", "retail_money_market_funds"] },
   { id: "exchange-rates", zone: "us", eyebrow: "OFFICIAL FX · BOK ECOS × FED H.10", title: LABEL("환율", "Exchange rates"), copy: LABEL("원·달러, 엔·달러, 유로·달러, 파운드·달러는 한국은행 ECOS의 일별 고시(당일 반영), 위안·달러와 달러지수는 미 연준 H.10 주간 릴리스입니다. 앞의 세 개는 달러당 외화, 뒤의 두 개는 외화당 달러로 방향이 반대입니다.", "USD/KRW, USD/JPY, EUR/USD and GBP/USD are the Bank of Korea's daily ECOS quotations (same-day); USD/CNY and the dollar indexes come from the Fed's weekly H.10 release. The first three are foreign currency per dollar; the last two are quoted the other way round."), keys: ["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd", "dollar_index_afe", "dollar_index_eme"] },
@@ -544,7 +554,7 @@ const DISABLED_CODES = {
 // and misleading statement.
 const CARD_LANES = new Map([
   ...["sp500", "nasdaq", "gold", "bitcoin", "kospi", "kosdaq", "samsung", "usdkrw", "ewz", "inda",
-    "vnm", "ewj", "dxy", "usdjpy", "vix", "wti", "copper"].map((key) => [key, "assets"]),
+    "vnm", "ewj", "dxy", "usdjpy", "vix", "wti", "copper", "sp500_realized_vol", "kr200_realized_vol"].map((key) => [key, "assets"]),
   ...["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd",
     "treasury_2y", "yield_curve", "high_yield_spread", "financial_stress", "treasury_10y", "unemployment",
     "ofr_fsi", "ofr_fsi_volatility", "ofr_fsi_credit",
@@ -636,6 +646,19 @@ function formatSigned(value, suffix = "%") {
 }
 
 function changeClass(value) { return value > 0 ? "up" : value < 0 ? "down" : ""; }
+
+// Zero-centred indexes (OFR FSI, STLFSI) and volatility series change in points:
+// a move from −0.60 to −0.48 is "+0.12", not "−19.6%", and its colour follows the
+// point direction. Everything else keeps the percent move.
+function changeParts(delta, definition) {
+  if (definition?.changeMode === "points") {
+    if (delta.value === null) return null;
+    const suffix = definition.format === "percentPoints" ? "%p" : " pt";
+    return { text: formatSigned(delta.value, suffix), direction: delta.value };
+  }
+  if (delta.percent === null) return null;
+  return { text: formatSigned(delta.percent), direction: delta.percent };
+}
 function dateText(value) {
   if (!value) return "—";
   const date = new Date(value);
@@ -796,8 +819,8 @@ function renderSummary() {
     card.classList.toggle("unavailable", !record || value === null);
     card.classList.toggle("stale", record?.freshness?.status === "stale");
     $(".summary-value", card).textContent = useDd ? formatSigned(value) : formatNumber(value, definition, record, true);
-    const delta = change(record); const changeNode = $(".summary-change", card); changeNode.className = `summary-change ${withheld ? "" : changeClass(delta.percent)}`;
-    changeNode.textContent = info.badge || (delta.percent === null ? (record ? t("change.previous") : t("status.unavailable")) : `${formatSigned(delta.percent)} · ${changeLabel(record)}`);
+    const delta = change(record); const move = changeParts(delta, definition); const changeNode = $(".summary-change", card); changeNode.className = `summary-change ${withheld || !move ? "" : changeClass(move.direction)}`;
+    changeNode.textContent = info.badge || (!move ? (record ? t("change.previous") : t("status.unavailable")) : `${move.text} · ${changeLabel(record)}`);
     const meta = $(".summary-meta", card); const metaParts = [];
     if (record?.freshness?.status === "stale") metaParts.push(t("badge.stale"));
     if (record?._restrictedSeries) metaParts.push(t("badge.proxyAlternative"));
@@ -825,8 +848,8 @@ function renderMetricCards() {
     if (record?.rights?.copyrighted || rightsNotice) { const rights = document.createElement("span"); rights.className = "status-badge warn"; rights.textContent = t(record?.rights?.copyrighted ? "badge.rights" : "badge.sourceTerms"); rights.title = rightsNotice; badges.append(rights); }
     $(".metric-primary strong", card).textContent = formatNumber(withheld ? null : recent.value, definition, record);
     $(".metric-unit", card).textContent = withheld ? "" : unitFor(record, definition);
-    const changeNode = $(".metric-change", card); changeNode.className = `metric-change ${withheld ? "" : changeClass(delta.percent)}`;
-    changeNode.textContent = withheld || delta.percent === null ? "—" : `${formatSigned(delta.percent)} · ${changeLabel(record)}`;
+    const move = changeParts(delta, definition); const changeNode = $(".metric-change", card); changeNode.className = `metric-change ${withheld || !move ? "" : changeClass(move.direction)}`;
+    changeNode.textContent = withheld || !move ? "—" : `${move.text} · ${changeLabel(record)}`;
     const insight = INSIGHTS[key];
     $(".metric-description", card).textContent = info.copy || localValue(record?.description, state.lang) || localValue(definition.description, state.lang) || localValue(insight?.description, state.lang) || t("status.unavailable");
     const hints = $(".metric-hints", card); hints.replaceChildren(); hints.setAttribute("aria-label", state.lang === "ko" ? "해석 참고" : "Interpretation guide");

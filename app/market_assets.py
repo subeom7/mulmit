@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import datetime as dt
 import math
+import statistics
 from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib.parse import quote
@@ -344,6 +345,185 @@ GROUPS = (
 )
 
 
+@dataclass(frozen=True)
+class DerivedVolatilitySpec:
+    """A realized-volatility card computed from one asset's stored daily closes."""
+
+    asset_id: str
+    base_asset_id: str
+    label_ko: str
+    label_en: str
+    description_ko: str
+    description_en: str
+
+
+REALIZED_VOL_WINDOW = 20
+REALIZED_VOL_ANNUALIZATION_DAYS = 252
+
+# Derived, not collected: log-return sample standard deviation over the last
+# REALIZED_VOL_WINDOW daily closes of a card already on screen, annualized by
+# sqrt(252), in percent. Arithmetic on displayed values only — the project's
+# rule for derived numbers — and never presented as implied volatility.
+DERIVED_VOLATILITY: tuple[DerivedVolatilitySpec, ...] = (
+    DerivedVolatilitySpec(
+        "sp500_realized_vol", "sp500",
+        "S&P 500 퍼프 실현 변동성 (20일)", "S&P 500 perp realized volatility (20d)",
+        "위 S&P 500 합성 무기한선물의 최근 일봉 종가 20개로 계산한 실현 변동성(연율화 √252)입니다. "
+        "옵션 내재변동성인 VIX가 아니며, 이미 일어난 가격 변동의 크기만 보여줍니다.",
+        "Realized volatility from the last 20 daily closes of the S&P 500 synthetic perpetual "
+        "above, annualized by √252. Not the VIX (implied volatility): it measures moves that "
+        "already happened.",
+    ),
+    DerivedVolatilitySpec(
+        "kr200_realized_vol", "kospi",
+        "KR200 퍼프 실현 변동성 (20일)", "KR200 perp realized volatility (20d)",
+        "xyz:KR200 합성 무기한선물의 최근 일봉 종가 20개로 계산한 실현 변동성(연율화 √252)입니다. "
+        "VKOSPI 같은 내재변동성 지수가 아닙니다.",
+        "Realized volatility from the last 20 daily closes of the xyz:KR200 synthetic perpetual, "
+        "annualized by √252. Not an implied-volatility index such as VKOSPI.",
+    ),
+)
+
+_REALIZED_VOL_METHOD = (
+    f"Sample standard deviation of daily log returns over the last {REALIZED_VOL_WINDOW} "
+    f"daily closes, annualized by sqrt({REALIZED_VOL_ANNUALIZATION_DAYS}), in percent. "
+    "The last close is the running UTC day."
+)
+_REALIZED_VOL_BASIS = {
+    "ko": (
+        f"일봉 종가 {REALIZED_VOL_WINDOW}개의 로그수익률 표본표준편차 × √{REALIZED_VOL_ANNUALIZATION_DAYS} "
+        "(연율화, %). 마지막 종가는 진행 중인 UTC 당일. 표시값의 산술 파생이며 내재변동성이 아닙니다."
+    ),
+    "en": (
+        f"Sample standard deviation of log returns over {REALIZED_VOL_WINDOW} daily closes × "
+        f"sqrt({REALIZED_VOL_ANNUALIZATION_DAYS}), in percent; the last close is the running UTC day. "
+        "Arithmetic on displayed values, not implied volatility."
+    ),
+}
+
+
+def realized_volatility_series(
+    rows: list[dict[str, Any]],
+    window: int = REALIZED_VOL_WINDOW,
+    annualization_days: int = REALIZED_VOL_ANNUALIZATION_DAYS,
+) -> list[dict[str, Any]]:
+    """Rolling annualized realized volatility (%) from ``{date, value}`` closes.
+
+    Needs ``window + 1`` positive closes for the first point. Non-positive or
+    missing closes are dropped rather than bridged, so a gap shortens the
+    series instead of inventing a return.
+    """
+    closes: list[tuple[str, float]] = []
+    for row in rows:
+        value = _number(row.get("value")) if isinstance(row, dict) else None
+        date = str(row.get("date") or "") if isinstance(row, dict) else ""
+        if value is not None and value > 0 and date:
+            closes.append((date, value))
+    if len(closes) < window + 1:
+        return []
+    returns = [
+        math.log(closes[index][1] / closes[index - 1][1]) for index in range(1, len(closes))
+    ]
+    scale = math.sqrt(annualization_days) * 100.0
+    series: list[dict[str, Any]] = []
+    for end in range(window - 1, len(returns)):
+        sample = returns[end - window + 1 : end + 1]
+        series.append(
+            {"date": closes[end + 1][0], "value": round(statistics.stdev(sample) * scale, 4)}
+        )
+    return series
+
+
+def _derived_volatility_assets(
+    payloads: dict[str, dict[str, Any]],
+    blob: dict[str, Any] | None,
+    days: int | None,
+) -> list[dict[str, Any]]:
+    """Realized-volatility pseudo-assets for bases that have enough stored closes."""
+    if not hip3_history.enabled() or not blob:
+        return []
+    derived: list[dict[str, Any]] = []
+    for spec in DERIVED_VOLATILITY:
+        base = payloads.get(spec.base_asset_id)
+        if base is None or not base.get("symbol"):
+            continue
+        rows, _available = hip3_history.observations_for(
+            blob, base["symbol"], days=None, limit=0
+        )
+        series = realized_volatility_series(rows)
+        if not series:
+            continue
+        if days is not None:
+            cutoff = (dt.datetime.now(dt.UTC).date() - dt.timedelta(days=days)).isoformat()
+            shown = [row for row in series if row["date"] >= cutoff] or series[-1:]
+        else:
+            shown = series
+        shown = shown[-MAX_PUBLIC_OBSERVATIONS:]
+        latest = series[-1]
+        previous = series[-2] if len(series) > 1 else None
+        change_value = latest["value"] - previous["value"] if previous else None
+        derived.append(
+            {
+                "id": spec.asset_id,
+                "key": spec.asset_id,
+                "symbol": base["symbol"],
+                "display_symbol": f"{base.get('display_symbol') or base['symbol']} RV{REALIZED_VOL_WINDOW}",
+                "group": "risk",
+                "label": {"ko": spec.label_ko, "en": spec.label_en},
+                "description": {"ko": spec.description_ko, "en": spec.description_en},
+                "status": base.get("status"),
+                "source": {
+                    **base["source"],
+                    "derived": True,
+                    "method": _REALIZED_VOL_METHOD,
+                    "inputs": f"{base['symbol']} daily closes (Hyperliquid candleSnapshot 1d)",
+                },
+                "units": {
+                    "long": f"Annualized percent (sqrt({REALIZED_VOL_ANNUALIZATION_DAYS})), "
+                            f"{REALIZED_VOL_WINDOW} daily closes",
+                    "short": "%",
+                },
+                "currency": None,
+                "instrument_kind": "derived_realized_volatility",
+                "latest": {"date": latest["date"], "value": latest["value"]},
+                "previous": {
+                    "date": previous["date"] if previous else None,
+                    "value": previous["value"] if previous else None,
+                    "basis": "previous daily value of the same series",
+                },
+                "change": {
+                    "value": change_value,
+                    "percent": (
+                        change_value / previous["value"] * 100.0
+                        if previous and previous["value"] else None
+                    ),
+                    "basis": "latest versus the previous daily value, in volatility points",
+                },
+                "drawdown": {"value": None, "ath": None, "date": None, "status": "not_applicable"},
+                "market": None,
+                "freshness": base.get("freshness"),
+                "history_status": hip3_history.STATUS_STORED,
+                "history_basis": _REALIZED_VOL_BASIS,
+                "history_as_of": base.get("history_as_of"),
+                "observation_count": {
+                    "available": len(series),
+                    "returned": len(shown),
+                    "limit": MAX_PUBLIC_OBSERVATIONS,
+                },
+                "observations": shown,
+                "rights": base.get("rights"),
+                "derived": {
+                    "method": _REALIZED_VOL_METHOD,
+                    "window_days": REALIZED_VOL_WINDOW,
+                    "annualization_days": REALIZED_VOL_ANNUALIZATION_DAYS,
+                    "inputs": base["symbol"],
+                    "not": "implied volatility (VIX, VKOSPI)",
+                },
+            }
+        )
+    return derived
+
+
 class DexProvider(Protocol):
     def fetch_dex(self, dex: str) -> dict[str, Any]: ...
 
@@ -668,6 +848,9 @@ def build_asset_snapshot(
             continue
         _attach_history(payload, spec, history_blob, history_days)
         assets.append(payload)
+    assets.extend(
+        _derived_volatility_assets({item["id"]: item for item in assets}, history_blob, history_days)
+    )
 
     as_of = snapshot.get("as_of") or snapshot.get("fetched_at")
     age_seconds = _number(snapshot.get("age_seconds"))

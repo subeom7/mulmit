@@ -1037,6 +1037,23 @@ CNN Fear & Greed는 명칭도 점수도 복제하지 않는다. 그 지수의 7�
   요약할 뿐이며 예측이 아니다. 화면과 API의 면책에 그대로 적는다.
 - 값은 다른 심리 지수와 비교할 수 없다. 화면에 그렇게 적는다.
 
+#### 5.4.1 실현 변동성 카드 (자체 산출, 2026-08-21)
+
+`sp500_realized_vol`·`kr200_realized_vol` — `/api/market/assets`에 파생 레코드로 동봉
+(`source.derived: true`, `instrument_kind: derived_realized_volatility`). 코드
+`app/market_assets.py::realized_volatility_series`.
+
+- **입력**: 같은 응답에 이미 표시 중인 HIP-3 자산(`xyz:SP500`·`xyz:KR200`)의 일봉
+  종가(§3.1 이력 lane). 외부 호출 없음.
+- **산식** (응답 `derived.method`에 동일 기재): 최근 20개 일봉 종가의 로그수익률
+  표본표준편차 × √252, %. 마지막 종가는 진행 중인 UTC 당일. 양수 종가 20+1개가
+  안 되면 카드를 만들지 않는다(결측 보간 없음).
+- **표기 규칙**: "실현 변동성"으로만 부른다. VIX·VKOSPI(내재변동성)와 **수준 비교
+  금지**, 카드 설명·힌트에 "VIX가 아님" 명시. 변화는 %가 아니라 **변동성 포인트**
+  (`changeMode: points`)로 표시 — 0 중심 지수(OFR FSI·STLFSI)도 같은 규칙.
+- **권리**: 표시값의 산술 파생 — DS-2026-001 `derived_metrics: unconfirmed`의 범위
+  안이며(변화율·세션 기준 변화와 같은 부류), 거절 회신 시 이력 lane과 함께 꺼진다.
+
 ### 5.5 옵션·심리·분석
 
 | 기능 | 현재 상태 | 활성화 조건 |
@@ -1309,4 +1326,5 @@ notes: "No confidential contract language here"
 | 2026-08-21 | **DS-2026-001 개정** — 무응답→OFF 규칙 폐기(명시적 거절만 OFF), HIP-3 자산 카드 **일봉 이력 개방**(`historical_storage: true`, 운영자 위험 수용). 새 lane `app/hip3_history.py`: `candleSnapshot` 1d·1년·6h, report blob 1개, 별도 게이트 `HIP3_HISTORY_ENABLED`(기본 false), 요청 경로는 저장 블롭만 읽음, `/api/market/assets`에 `observations`·`history_status`(`withheld_pending_rights`/`collecting`/`stored_daily_candles`)·`history_lane`·`history_basis` 추가. `/api/status` 권리 요약에 `history` 게이트 표기 | Claude assisted |
 | 2026-08-21 | 운영자 결정 — 영구 `license_required` 플레이스홀더 카드(VIX·하이일드 스프레드)는 공개 페이지에서 **숨김**(빈 카드 대신). API는 여전히 `license_required`로 보고하고 권리 상태 구분(§9)은 유지. 옵션 지표 4종은 정의 수준에서 이미 숨겨져 있었음. VIX 대체 후보로 OFR 금융스트레스지수(미 재무부 OFR, 연방정부 저작물, 일별, 변동성·신용 하위지수) 조사 착수 | Claude assisted |
 | 2026-08-21 | **OFR 금융스트레스지수 lane 추가** (`DS-2026-009`, §3.17) — 미 재무부 OFR 연방 저작물(저작권 미주장·credit 요청·인장 금지 원문 인용), 일별 CSV 1개로 종합+5범주 수집, 게이트 `OFR_ENABLED`(기본 false), 인용문+접근일 `rights.citation` 동봉. 카드 `ofr_fsi`·`ofr_fsi_volatility`·`ofr_fsi_credit`가 숨긴 VIX·하이일드의 역할을 대신(“VIX 자체 아님” 표기). 요약 띠·RISK & CREDIT 섹션 키 재배치 | Claude assisted |
+| 2026-08-21 | **실현 변동성 카드** 자체 산출(§5.4.1) — HIP-3 일봉 종가 20개 로그수익률 표준편차 × √252, `sp500_realized_vol`(RISK & CREDIT 배치)·`kr200_realized_vol`(API). "VIX 아님" 표기, 내재변동성과 수준 비교 금지. 0 중심 지수(OFR FSI·STLFSI)와 변동성 계열의 변화 표시를 %에서 **포인트**로 교정(음수 기준값의 % 변화가 방향을 뒤집던 문제) | Claude assisted |
 
