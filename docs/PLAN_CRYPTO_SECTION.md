@@ -207,6 +207,18 @@ fail-closed, 수치 발명 금지)으로 하나씩 판정한 문서다. 소스�
 - 프런트: `/crypto`에 김치프리미엄(참고가 바로 아래)·도미넌스(공포·탐욕 아래) 섹션 추가, 게이트 닫힘 =
   섹션 숨김, 5초 폴링에 김치 합류.
 
+### 7.3 Phase 2b 메모 (2026-08-21)
+
+- **가스·전송 수수료 스트립** — `/api/crypto/gas`(`app/crypto_gas.py`, `providers/evm_rpc.py`). 퍼블릭 RPC 대신
+  운영자 RPC 계정 URL(`CHAIN_RPC_*_URL`, web 전용, 키 비노출)을 쓰는 주입형 lane. 게이트 `CHAIN_GAS_ENABLED`.
+  **운영자 액션**: Alchemy(권장, 무료 티어) 가입 → 앱 생성(Ethereum·Base·Arbitrum) → HTTPS URL 3개를 서버 .env에
+  (`CHAIN_GAS_ENABLED=true`, `CHAIN_RPC_PROVIDER_NAME=Alchemy`) → compose up web.
+- **문의**: Deribit(info@deribit.com)·Coinalyze(contact@coinalyze.net) 초안을 운영자 Gmail 임시보관함에 생성 —
+  발송은 운영자. 두나무는 지원센터 1:1 문의(INQUIRY §2 본문).
+- **업비트 김치프리미엄 개방 판단**: 회신 가능성 낮음(고객센터 보일러플레이트 예상) → 문의는 기록용으로 발송하되
+  HL 선례(DS-2026-001 개정: 명시 거절만 OFF)대로 운영자 위험수용으로 개방 가능. 결정 시 등록부 §3.19 YAML 확정.
+- UI: `cryptoUsd` compact에 T(조) 단위 추가(총시총 "$2.59T").
+
 ## 8. 실측 로그 (2026-08-21, 서울 KT 가정망)
 
 REST(curl, `Mozilla/5.0 mulmit-probe`):
@@ -258,6 +270,7 @@ WebSocket(python websockets, `origin=https://mulmit.com`):
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-08-21 | Phase 2b(§7.3) — 가스 스트립 lane(운영자 RPC 계정 주입형), T 단위 포맷, Deribit·Coinalyze 문의 초안 생성 |
 | 2026-08-21 | Phase 2 구현(§7.2) — 도미넌스(CMC, 키 대기)·김치프리미엄(업비트, pending_rights) 레인 + 가스 스트립 보류 판정 |
 | 2026-08-21 | Phase 1 구현(§7.1) — `/crypto`·`/api/crypto/{overview,sentiment,volatility}`, 게이트 2종, 등록부 §3.18 |
 | 2026-08-21 | 최초 작성 — 추천안 10항목 검증, 소스 17종 약관·한국망 실측, 인벤토리·Phase·아키텍처 확정. Binance 선물 WS legacy 경로 사망·새 `/market` 경로 실측, Deribit §4.6·OKX §9.4·Coinbase·Bybit 금지 조항 확인, CoinGecko/CoinPaprika/DefiLlama/Etherscan 무료 티어 비상업 확인, alternative.me·CMC Basic 상업 허용 확인 |

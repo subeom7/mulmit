@@ -176,6 +176,17 @@ CMC_ATTRIBUTION_TEXT = os.environ.get("CMC_ATTRIBUTION_TEXT", "Data provided by 
 UPBIT_ENABLED = _bool("UPBIT_ENABLED", False)
 UPBIT_TIMEOUT = _float("UPBIT_TIMEOUT", 5.0)
 UPBIT_RETRIES = _int("UPBIT_RETRIES", 1)
+# Gas / fee strip. Public chain state read through the operator's OWN RPC
+# provider account (Alchemy/Infura free tier …) — URLs (which embed the key)
+# come only from env and are never echoed. No public endpoint is baked in: the
+# ones checked either forbid redistribution (PublicNode ToS), are "not suitable
+# for production traffic" (Base docs) or need a paid plan (register §3.21).
+CHAIN_GAS_ENABLED = _bool("CHAIN_GAS_ENABLED", False)
+CHAIN_RPC_ETHEREUM_URL = os.environ.get("CHAIN_RPC_ETHEREUM_URL", "").strip()
+CHAIN_RPC_BASE_URL = os.environ.get("CHAIN_RPC_BASE_URL", "").strip()
+CHAIN_RPC_ARBITRUM_URL = os.environ.get("CHAIN_RPC_ARBITRUM_URL", "").strip()
+CHAIN_RPC_PROVIDER_NAME = os.environ.get("CHAIN_RPC_PROVIDER_NAME", "").strip()
+CHAIN_RPC_TIMEOUT = _float("CHAIN_RPC_TIMEOUT", 6.0)
 
 # Financial Services Commission end-of-day data on data.go.kr. The three
 # datasets used here are registered with 이용허락범위 "제한 없음" — the portal's

@@ -32,6 +32,7 @@ CRYPTO = "crypto"
 ALTERNATIVE_ME = "alternative_me"
 COINMARKETCAP = "coinmarketcap"
 UPBIT = "upbit"
+CHAIN_GAS = "chain_gas"
 OFR = "ofr"
 
 # --- structured client contracts --------------------------------------------
@@ -163,6 +164,21 @@ CRYPTO_STRUCTURE_COLLECTING = {
     ),
 }
 
+CHAIN_GAS_DISABLED = {
+    "code": "chain_gas_disabled",
+    "status": "disabled",
+    "message": "The gas/fee strip is disabled for this deployment.",
+}
+
+CHAIN_GAS_NOT_CONFIGURED = {
+    "code": "chain_gas_not_configured",
+    "status": "not_configured",
+    "message": (
+        "The gas/fee strip is switched on but no CHAIN_RPC_*_URL is set; the operator's "
+        "RPC-provider endpoint must be configured before any chain is read."
+    ),
+}
+
 UPBIT_PENDING_RIGHTS = {
     "code": "upbit_quotation_pending_rights",
     "status": "pending_rights",
@@ -282,6 +298,29 @@ def upbit_serving_enabled() -> bool:
     return crypto_section_enabled() and bool(config.UPBIT_ENABLED)
 
 
+def chain_gas_configured_chains() -> list[str]:
+    return [
+        name
+        for name, value in (
+            ("ethereum", config.CHAIN_RPC_ETHEREUM_URL),
+            ("base", config.CHAIN_RPC_BASE_URL),
+            ("arbitrum", config.CHAIN_RPC_ARBITRUM_URL),
+        )
+        if value
+    ]
+
+
+def chain_gas_serving_enabled() -> bool:
+    """Gas strip: section switch + its own switch + at least one operator RPC URL."""
+    return crypto_section_enabled() and bool(config.CHAIN_GAS_ENABLED) and bool(chain_gas_configured_chains())
+
+
+def chain_gas_status() -> str:
+    if not (crypto_section_enabled() and config.CHAIN_GAS_ENABLED):
+        return "disabled"
+    return "enabled" if chain_gas_configured_chains() else "not_configured"
+
+
 def dart_serving_enabled() -> bool:
     """The issued key is part of the permission: DART meters by key."""
     return bool(config.DART_ENABLED and config.DART_API_KEY)
@@ -349,6 +388,11 @@ def lane_report() -> dict[str, dict[str, str]]:
         UPBIT: {
             "status": "enabled" if upbit_serving_enabled() else "pending_rights",
             "gate": "CRYPTO_SECTION_ENABLED + UPBIT_ENABLED",
+        },
+        CHAIN_GAS: {
+            "status": chain_gas_status(),
+            "gate": "CRYPTO_SECTION_ENABLED + CHAIN_GAS_ENABLED + CHAIN_RPC_*_URL",
+            "chains": chain_gas_configured_chains(),
         },
     }
     for provider_id in _MACRO_LANES:

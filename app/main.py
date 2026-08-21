@@ -23,6 +23,7 @@ from slowapi.util import get_remote_address
 from . import (
     __version__,
     config,
+    crypto_gas,
     crypto_kimchi,
     crypto_market,
     crypto_structure,
@@ -621,6 +622,24 @@ def crypto_kimchi_route(request: Request, response: Response) -> dict:
     response.headers["Cache-Control"] = "private, max-age=15, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "Upbit + Hyperliquid + BOK ECOS"
     return crypto_kimchi.build_crypto_kimchi()
+
+
+@app.get("/api/crypto/gas")
+@limiter.limit(config.RATE_LIMIT)
+def crypto_gas_route(request: Request, response: Response) -> dict:
+    """가스·수수료 스트립 — 운영자 RPC 계정으로 읽는 공개 체인 상태. 서버 30초 캐시, URL·키 비노출."""
+    require_crypto_section()
+    status = data_rights.chain_gas_status()
+    if status != "enabled":
+        detail = (
+            data_rights.CHAIN_GAS_DISABLED if status == "disabled" else data_rights.CHAIN_GAS_NOT_CONFIGURED
+        )
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        )
+    response.headers["Cache-Control"] = "private, max-age=30, stale-while-revalidate=300"
+    response.headers["X-Data-Source"] = "EVM JSON-RPC (operator account)"
+    return crypto_gas.build_crypto_gas()
 
 
 @app.get("/api/kr/search")
