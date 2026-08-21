@@ -948,7 +948,7 @@ notes: "발행자 약관 페이지 문구 기반. 약관 변경 시 ALTERNATIVE_
 | 항목 | 기록 |
 |---|---|
 | 내부 ID | `upbit` |
-| 현재 상태 | **`pending_rights`** — 기본 OFF(`UPBIT_ENABLED=false`), 값 비공개. 서면 회신 또는 아래 위험수용 블록 기록 후 개방 |
+| 현재 상태 | **`pending_rights` + 운영자 위험수용 (2026-08-22, `DS-2026-012`)** — 서버 게이트 `UPBIT_ENABLED=true`로 개방. 두나무 1:1 문의는 기록용으로 발송(회신 시 이 블록 갱신, 거절이면 즉시 OFF) |
 | 코드 위치 | `app/providers/upbit.py`, `app/crypto_kimchi.py`, 라우트 `/api/crypto/kimchi` |
 | 게이트 | `CRYPTO_SECTION_ENABLED` + `UPBIT_ENABLED` (+ HIP-3 표시 게이트: 오라클 참고가) |
 | 현재 사용(설계) | `GET /v1/ticker?markets=KRW-BTC,KRW-ETH,KRW-SOL,KRW-XRP,KRW-DOGE,KRW-USDT` — 서버 relay, 15초 단일 비행 캐시·300초 stale, 호출량 ≈ 4/분/프로세스(한도 IP당 600/분의 1%). 브라우저 직결 없음(Origin 요청은 10초 1회 제한). 표시: 원화 최근 체결가·24h, 테더 프리미엄(KRW-USDT ÷ ECOS 일별 고시 − 1, 날짜 표시), 코인 프리미엄 USDT 기준((KRW-코인 ÷ KRW-USDT) ÷ HL 오라클 − 1)·공식환율 기준 |
@@ -962,28 +962,32 @@ notes: "발행자 약관 페이지 문구 기반. 약관 변경 시 ALTERNATIVE_
 금지하는 조항도 없다 — 침묵을 허가로 읽지 않는다. 시세 API는 인증 없이 제공되고(IP당 10회/초) 국내
 다수 사이트가 같은 방식으로 표시하지만 그 사실은 근거가 아니다.
 
-문의 초안: [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §2(발송 대기). 무응답 시 운영자
-선택지: ① 계속 대기 ② HL과 같은 위험수용 — 아래 블록을 채워 기록하고 `UPBIT_ENABLED=true`.
+**2026-08-22 운영자 결정 — 위험수용 개방.** 근거는 HL 선례(DS-2026-001 개정: 무응답 ≠ OFF, 명시적 거절만 OFF)와
+같다: ① 약관에 공개 재표시 금지 조항 없음(§5 저작권 주장뿐) ② 인증 없는 공개 시세 API(IP당 10회/초) ③ 출처 문구
+"시세: 업비트(두나무)" 고정, 로고 미사용 ④ 서버 relay 15초 캐시(한도의 1%), 브라우저 직결 없음 ⑤ 원화 최근 체결가·
+파생 프리미엄만 표시, 호가·체결 내역 미전달 ⑥ 거절 회신 시 `UPBIT_ENABLED=false`로 즉시 OFF. 두나무 1:1 문의
+([`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §2)는 기록용으로 발송하고 회신을 이 블록에 반영한다.
 
 ```yaml
-decision_id: DS-2026-0NN          # 운영자 기록 시 부여
+decision_id: DS-2026-012
 provider_id: upbit
-status: pending_rights            # 회신 승인 시 approved, 위험수용 시 pending_rights 유지 + notes
-reviewed_at: YYYY-MM-DD
+status: pending_rights            # 운영자 위험수용 — 서면 승인 시 approved로 갱신
+reviewed_at: 2026-08-22
 reviewer: repository owner
-evidence_type: official_terms | written_email
-evidence_reference: https://static.upbit.com/terms/legacy/openapi_agreement_20231215.html
+evidence_type: official_terms
+evidence_reference: https://static.upbit.com/terms/legacy/openapi_agreement_20231215.html (§2 시세 조회 정의, §5 저작권, 재표시 허가·금지 조항 없음) + https://docs.upbit.com/kr/reference/rate-limits
 approved_scope:
   public_display: true
   server_json_relay: true
   cache_ttl_seconds: 15
   stale_seconds: 300
   historical_storage: false
-  derived_metrics: true     # 프리미엄 = 표시값 산술
+  derived_metrics: true     # 테더 프리미엄·코인 프리미엄 = 표시값 산술
   advertising: true
 attribution: "시세: 업비트(두나무)"
-recheck_at: YYYY-MM-DD
-notes: "명시적 금지 없음 + 공개 시세 API + 출처 표기 + 서버 relay 저호출 + 로고 미사용. 거절 회신 시 즉시 OFF."
+expires_at: null
+recheck_at: 2026-09-16
+notes: "운영자 위험수용(2026-08-22). 명시적 금지 없음 + 공개 시세 API + 출처 표기 + 서버 relay 저호출 + 로고 미사용. 거절 회신 시 즉시 OFF. 문의 발송일과 회신은 §4.1에 기록."
 ```
 
 ### 3.20 CoinMarketCap API — 글로벌 메트릭(BTC·ETH 도미넌스, 총시총)
@@ -1078,9 +1082,9 @@ Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로
 | Federal Reserve Bank of St. Louis | `financial_stress`(STLFSI4). 뉴욕 연준과 같은 구조 — 연방기관이 아니라 저작권을 주장하지만, 명시적 이용허락을 주는지가 관건이다. 시리즈 태그가 "Copyrighted: Citation Required"(2026-08-17 확인)라 인용이 완결 조건인지 서면으로 묻는다. FRED 경유 복제는 하지 않는다 | **회신 수신 2026-08-18 — 조건부 승인** (조건과 구현은 §3.3에 기록). 이 항목은 종결 | [`INQUIRY_STLOUISFED_STLFSI.md`](INQUIRY_STLOUISFED_STLFSI.md) |
 | 한국거래소 | 실시간 시세와 KRX 통계정보 전체(§3.4). 장 마감값은 §3.9로 이미 해결됨 | 초안 없음. 우선순위 낮아짐 | — |
 | Cboe | VIX·SKEW·VVIX·OVX·Put/Call | 서면 허가가 명시적으로 필요하고 월 예산 안의 근거가 없어 **문의하지 않기로** 결정 | — |
-| Deribit (info@deribit.com) | BTC·ETH DVOL(크립토 내재변동성). ToS §4.6 "Market Data … is for personal use only … without explicit approval from us" — 서면 승인 전 `pending_rights`, 값 비공개 | 초안 작성 2026-08-21, **발송 대기(운영자)**. 무응답 시 위험수용 안 함(약관이 개인 용도를 명시). 회신 기한 2026-09-16 | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §1 |
-| 두나무(업비트 Open API) | KRW 시세·김치프리미엄(USDT 분모로 실시간 환율 소거). Open API 이용약관(2023-12-15) §5 저작권 조항, 공개 표시 허가·금지 조항 없음. Origin 요청 10초 1회라 서버 relay 전제 | 초안 작성 2026-08-21(국문), **발송 대기(운영자)**. 무응답 시 운영자 결정(계속 대기 또는 HL식 위험수용 + `recheck_at`) | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §2 |
-| Coinalyze | 거래소 집계 청산(1h/24h)·OI 히스토리. 문서 "The API is free, if you use the API/data in public places … please be kind and cite the data source" — 광고 사이트 포함 여부·하위 거래소 권리 확인 | 초안 작성 2026-08-21, **발송 대기(운영자)** | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §3 |
+| Deribit (info@deribit.com) | BTC·ETH DVOL(크립토 내재변동성). ToS §4.6 "Market Data … is for personal use only … without explicit approval from us" — 서면 승인 전 `pending_rights`, 값 비공개 | **발송 2026-08-22 (운영자 Gmail)**. 무응답 시 위험수용 안 함(약관이 개인 용도를 명시). 회신 기한 2026-09-16 | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §1 |
+| 두나무(업비트 Open API) | KRW 시세·김치프리미엄(USDT 분모로 실시간 환율 소거). Open API 이용약관(2023-12-15) §5 저작권 조항, 공개 표시 허가·금지 조항 없음. Origin 요청 10초 1회라 서버 relay 전제 | **운영자 위험수용으로 개방(2026-08-22, DS-2026-012, §3.19)**. 1:1 문의는 기록용 발송(지원센터 폼) — 회신 시 갱신, 거절 시 즉시 OFF | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §2 |
+| Coinalyze (contact@coinalyze.net) | 거래소 집계 청산(1h/24h)·OI 히스토리. 문서 "The API is free, if you use the API/data in public places … please be kind and cite the data source" — 광고 사이트 포함 여부·하위 거래소 권리 확인 | **발송 2026-08-22 (운영자 Gmail)**. 회신 기한 2026-09-16 | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §3 |
 
 뉴욕 연준 사례가 이 목록의 근거다. 약관을 실제로 읽기 전에는 “연준 계열이니
 공개겠지”와 “저작권을 주장하니 못 쓰겠지” 둘 다 추측이었고, 실제 약관은 저작권을
@@ -1533,3 +1537,4 @@ notes: "No confidential contract language here"
 | 2026-08-21 | 크립토 Phase 2 — §3.19 업비트 시세(`pending_rights`, 위험수용 템플릿), §3.20 CoinMarketCap 글로벌 메트릭(`pending_review`→키 발급 시 approved), §3.21 가스 스트립 조사 결과 보류(퍼블릭 RPC·mempool 약관). 코드는 게이트 기본 OFF로 배포 | Claude assisted |
 | 2026-08-21 | CoinMarketCap lane 승인·활성화(`DS-2026-011`, §3.20) — Basic 키 발급·서버 게이트 ON, 첫 blob 라이브 확인. lane report의 CMC 상태를 서빙 기준으로 정정(키는 ingest 전용) | Claude assisted |
 | 2026-08-21 | 가스 스트립 lane 추가(§3.21 후속, `/api/crypto/gas`, 운영자 RPC 계정 URL 주입형·게이트 OFF), 총시총 T 단위 포맷, Deribit·Coinalyze 문의 초안을 운영자 Gmail에 생성(발송 대기) | Claude assisted |
+| 2026-08-22 | 업비트 시세 lane 운영자 위험수용 개방(`DS-2026-012`, §3.19) — `UPBIT_ENABLED=true`; Deribit·Coinalyze 문의 발송(§4.1), 두나무 1:1 문의는 기록용 발송 예정 | Claude assisted |
