@@ -23,6 +23,7 @@ from slowapi.util import get_remote_address
 from . import (
     __version__,
     config,
+    crypto_market,
     data_rights,
     econ_calendar,
     ingest,
@@ -165,6 +166,12 @@ def korea_page() -> FileResponse:
 @app.get("/us", include_in_schema=False)
 def us_page() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "us.html")
+
+
+@app.get("/crypto", include_in_schema=False)
+def crypto_page() -> FileResponse:
+    """크립토 섹션(Phase 1). 페이지 자체는 항상 서빙하고, 값은 lane 게이트가 결정한다."""
+    return FileResponse(config.STATIC_DIR / "crypto.html")
 
 
 @app.get("/monitor", include_in_schema=False)
@@ -351,7 +358,7 @@ def presence_heartbeat(request: Request, response: Response, payload: dict) -> d
     }
 
 
-_PAGEVIEW_PATHS = {"/", "/kr", "/us", "/analytics", "/monitor", "/stock"}
+_PAGEVIEW_PATHS = {"/", "/kr", "/us", "/crypto", "/analytics", "/monitor", "/stock"}
 
 
 @app.post("/api/pageview")
@@ -517,6 +524,59 @@ def market_stress(request: Request, response: Response) -> dict:
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "Mulmit composite"
     return payload
+
+
+def require_crypto_section() -> None:
+    """The crypto page and its lanes are a deliberate rollout behind one switch."""
+    if not data_rights.crypto_section_enabled():
+        raise HTTPException(
+            status_code=503,
+            detail=data_rights.CRYPTO_SECTION_DISABLED,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        )
+
+
+@app.get("/api/crypto/overview")
+@limiter.limit(config.RATE_LIMIT)
+def crypto_overview(request: Request, response: Response) -> dict:
+    """Hyperliquid 자체 무기한선물 — 가격·24h·펀딩(APR)·OI·예상 펀딩(거래소별)·ETH/BTC."""
+    require_crypto_section()
+    require_hip3_public_display()
+    response.headers["Cache-Control"] = "private, max-age=15, stale-while-revalidate=300"
+    response.headers["X-Data-Source"] = "Hyperliquid"
+    return crypto_market.build_crypto_overview()
+
+
+@app.get("/api/crypto/sentiment")
+@limiter.limit(config.RATE_LIMIT)
+def crypto_sentiment(request: Request, response: Response) -> dict:
+    """alternative.me 크립토 공포·탐욕 — 저장된 일별 블롭만 읽는다(요청 경로 호출 없음)."""
+    require_crypto_section()
+    try:
+        payload = crypto_market.build_crypto_sentiment()
+    except crypto_market.CryptoSentimentUnavailable as exc:
+        detail = (
+            data_rights.CRYPTO_SENTIMENT_DISABLED
+            if exc.reason == "disabled"
+            else data_rights.CRYPTO_SENTIMENT_COLLECTING
+        )
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=3600"
+    response.headers["X-Data-Source"] = "alternative.me"
+    return payload
+
+
+@app.get("/api/crypto/volatility")
+@limiter.limit(config.RATE_LIMIT)
+def crypto_volatility(request: Request, response: Response) -> dict:
+    """저장된 일봉으로만 계산한 실현 변동성과 BTC 대 합성자산 상관 — 파생값, 공급자 호출 없음."""
+    require_crypto_section()
+    require_hip3_public_display()
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=3600"
+    response.headers["X-Data-Source"] = "Hyperliquid (derived)"
+    return crypto_market.build_crypto_volatility()
 
 
 @app.get("/api/kr/search")

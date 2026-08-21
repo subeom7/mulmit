@@ -23,6 +23,7 @@ from .base import DataUnavailable, RateLimited
 API_URL = "https://api.hyperliquid.xyz/info"
 REQUEST_TYPE = "metaAndAssetCtxs"
 CANDLE_REQUEST_TYPE = "candleSnapshot"
+PREDICTED_FUNDING_REQUEST_TYPE = "predictedFundings"
 # Hyperliquid's own perpetual venue. The API addresses it with an empty dex
 # name; this project spells it out so a blank value is never mistaken for one.
 MAIN_DEX = "main"
@@ -131,6 +132,44 @@ def _join_market_contexts(data: Any, dex: str) -> list[dict[str, Any]]:
             }
         )
     return markets
+
+
+def _join_predicted_fundings(data: Any) -> dict[str, list[dict[str, Any]]]:
+    """Validate ``predictedFundings``: ``[[coin, [[venue, {...}], ...]], ...]``.
+
+    Venues without a listing arrive as ``[venue, null]`` and are skipped; a
+    malformed row is dropped rather than guessed at.
+    """
+    if not isinstance(data, list):
+        raise DataUnavailable("Hyperliquid returned an invalid predicted-funding envelope")
+    coins: dict[str, list[dict[str, Any]]] = {}
+    for entry in data:
+        if not isinstance(entry, list) or len(entry) != 2:
+            continue
+        coin, venues = entry
+        if not isinstance(coin, str) or not coin.strip() or not isinstance(venues, list):
+            continue
+        rows: list[dict[str, Any]] = []
+        for venue_entry in venues:
+            if not isinstance(venue_entry, list) or len(venue_entry) != 2:
+                continue
+            venue, detail = venue_entry
+            if not isinstance(venue, str) or not isinstance(detail, dict):
+                continue
+            rate = _finite_number(detail.get("fundingRate"))
+            if rate is None:
+                continue
+            interval = _finite_number(detail.get("fundingIntervalHours"))
+            rows.append(
+                {
+                    "venue": venue,
+                    "funding_rate": rate,
+                    "interval_hours": interval,
+                    "next_funding_at": _millis_iso(detail.get("nextFundingTime")),
+                }
+            )
+        coins[coin.strip()] = rows
+    return coins
 
 
 class HyperliquidProvider:
@@ -359,6 +398,26 @@ class HyperliquidProvider:
             self._cache_key("dex", normalized_dex),
             load,
             label=f"{normalized_dex!r} market",
+        )
+
+    def fetch_predicted_fundings(self) -> dict[str, Any]:
+        """Venue-by-venue predicted funding for every perp, as Hyperliquid publishes it.
+
+        The Binance/Bybit rows are Hyperliquid's own published predictions; this
+        client never queries those venues.
+        """
+
+        def load() -> dict[str, Any]:
+            raw = self._request({"type": PREDICTED_FUNDING_REQUEST_TYPE}, "predicted funding")
+            fetched_at = _utc_iso(self._wall_clock())
+            return {
+                "fetched_at": fetched_at,
+                "as_of": fetched_at,
+                "coins": _join_predicted_fundings(raw),
+            }
+
+        return self._cached_fetch(
+            self._cache_key("predicted_fundings"), load, label="predicted funding"
         )
 
     def fetch_candles(

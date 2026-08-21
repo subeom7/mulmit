@@ -26,6 +26,10 @@ x-app: &app
     HIP3_PUBLIC_DISPLAY_ENABLED: ${HIP3_PUBLIC_DISPLAY_ENABLED:-false}
     # 같은 카드의 일봉 이력 저장. web(서빙 판정)·ingest(수집) 양쪽에 같은 값.
     HIP3_HISTORY_ENABLED: ${HIP3_HISTORY_ENABLED:-false}
+    # 크립토 섹션(페이지·/api/crypto 노출)과 alternative.me 공포·탐욕 relay.
+    # 게이트는 web(서빙 판정)·ingest(수집) 양쪽에 같은 값이어야 한다.
+    CRYPTO_SECTION_ENABLED: ${CRYPTO_SECTION_ENABLED:-false}
+    ALTERNATIVE_ME_ENABLED: ${ALTERNATIVE_ME_ENABLED:-false}
     NYFED_ENABLED: ${NYFED_ENABLED:-false}
     FEDBOARD_ENABLED: ${FEDBOARD_ENABLED:-false}
     # 미 재무부 OFR 금융스트레스지수(연방 저작물). web 판정·ingest 수집 양쪽.

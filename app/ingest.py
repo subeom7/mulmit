@@ -24,6 +24,7 @@ import time
 
 from . import (
     config,
+    crypto_market,
     data,
     econ_calendar,
     hip3_history,
@@ -838,6 +839,25 @@ def refresh_hip3_history(*, force: bool = False) -> dict:
         return {"failed": 1, "error": str(exc)}
 
 
+def refresh_crypto_sentiment(*, force: bool = False) -> dict:
+    """alternative.me 크립토 공포·탐욕 relay. 일 1회 갱신되는 지수를 시간 단위로 확인한다.
+
+    lane이 꺼져 있으면 네트워크 호출 0회. web은 저장된 블롭만 읽으므로 첫 수집
+    전에는 `crypto_sentiment_collecting`으로 답한다.
+    """
+    try:
+        result = crypto_market.refresh_crypto_sentiment(force=force)
+        if not result.get("skipped"):
+            log.info("크립토 공포·탐욕 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("alternative.me 요청 제한 — 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("크립토 공포·탐욕 갱신 실패: %s", exc)
+        return {"failed": str(exc)}
+
+
 def refresh_us_ptr(*, force: bool = False) -> dict:
     """미 하원 PTR 갱신. 인덱스 zip + 신규 PDF 상세라 배치 전용이다."""
     if not config.US_PTR_ENABLED:
@@ -1022,6 +1042,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         ptr_result = {"skipped": "explicit_price_refresh"}
         fund_result = {"skipped": "explicit_price_refresh"}
         hip3_result = {"skipped": "explicit_price_refresh"}
+        crypto_sentiment_result = {"skipped": "explicit_price_refresh"}
         if automatic:
             fred_result = refresh_fred()
             nyfed_result = refresh_nyfed()
@@ -1039,6 +1060,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             fund_result = refresh_us_fundamentals()
             refresh_econ_calendar()
             hip3_result = refresh_hip3_history()
+            crypto_sentiment_result = refresh_crypto_sentiment()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
             "skipped": "legacy_price_data_disabled",
@@ -1061,6 +1083,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             "us_ptr": ptr_result,
             "us_fundamentals": fund_result,
             "hip3_history": hip3_result,
+            "crypto_sentiment": crypto_sentiment_result,
             "elapsed": round(time.time() - started, 2),
         }
         log.info("레거시 가격 수집 비활성화: %s", result)
@@ -1087,6 +1110,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_us_fundamentals()
             refresh_econ_calendar()
             hip3_result = refresh_hip3_history()
+            refresh_crypto_sentiment()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
                 "skipped": "backoff",
@@ -1151,6 +1175,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     ptr_result = {"skipped": "explicit_price_refresh"}
     fund_result = {"skipped": "explicit_price_refresh"}
     hip3_result = {"skipped": "explicit_price_refresh"}
+    crypto_sentiment_result = {"skipped": "explicit_price_refresh"}
     if automatic:
         fred_result = refresh_fred()
         nyfed_result = refresh_nyfed()
@@ -1168,6 +1193,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         fund_result = refresh_us_fundamentals()
         refresh_econ_calendar()
         hip3_result = refresh_hip3_history()
+        crypto_sentiment_result = refresh_crypto_sentiment()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged
@@ -1182,6 +1208,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     result["us_ptr"] = ptr_result
     result["us_fundamentals"] = fund_result
     result["hip3_history"] = hip3_result
+    result["crypto_sentiment"] = crypto_sentiment_result
     result["elapsed"] = round(time.time() - started, 2)
     log.info("수집 완료: %s", result)
     return result
