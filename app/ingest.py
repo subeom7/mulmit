@@ -25,6 +25,7 @@ import time
 from . import (
     config,
     crypto_market,
+    crypto_structure,
     data,
     econ_calendar,
     hip3_history,
@@ -858,6 +859,21 @@ def refresh_crypto_sentiment(*, force: bool = False) -> dict:
         return {"failed": str(exc)}
 
 
+def refresh_crypto_structure(*, force: bool = False) -> dict:
+    """CoinMarketCap 글로벌 메트릭(도미넌스). 키는 여기(ingest)에만 있고 web은 블롭만 읽는다."""
+    try:
+        result = crypto_structure.refresh_crypto_structure(force=force)
+        if not result.get("skipped"):
+            log.info("크립토 도미넌스 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("CoinMarketCap 요청 제한/크레딧 — 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("크립토 도미넌스 갱신 실패: %s", exc)
+        return {"failed": str(exc)}
+
+
 def refresh_us_ptr(*, force: bool = False) -> dict:
     """미 하원 PTR 갱신. 인덱스 zip + 신규 PDF 상세라 배치 전용이다."""
     if not config.US_PTR_ENABLED:
@@ -1061,6 +1077,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_econ_calendar()
             hip3_result = refresh_hip3_history()
             crypto_sentiment_result = refresh_crypto_sentiment()
+            refresh_crypto_structure()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
             "skipped": "legacy_price_data_disabled",
@@ -1111,6 +1128,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_econ_calendar()
             hip3_result = refresh_hip3_history()
             refresh_crypto_sentiment()
+            refresh_crypto_structure()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
                 "skipped": "backoff",
@@ -1194,6 +1212,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         refresh_econ_calendar()
         hip3_result = refresh_hip3_history()
         crypto_sentiment_result = refresh_crypto_sentiment()
+        refresh_crypto_structure()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged
