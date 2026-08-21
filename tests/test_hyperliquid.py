@@ -482,6 +482,35 @@ def test_nasdaq_internal_session_boundaries(
     assert result["market_session"] == market_session
 
 
+def test_sessions_expose_next_internal_start_when_inactive():
+    provider = FixtureProvider({"xyz": [], "mkts": []})
+    # Friday 20:18 KST = 07:18 ET: Korea is inside its window, Nasdaq is not yet.
+    moment = datetime(2026, 8, 21, 20, 18, tzinfo=ZoneInfo("Asia/Seoul"))
+    result = build_weekend_signals(provider, now=moment)
+    korea = result["composites"]["korea_weekend"]["session"]
+    nasdaq = result["composites"]["nasdaq_weekend"]["session"]
+    assert korea["active"] is True
+    assert korea["next_start_at"] is None
+    assert nasdaq["active"] is False
+    assert result["composites"]["nasdaq_weekend"]["status"] == "outside_internal_session"
+    assert nasdaq["next_local_start"] == "2026-08-21T17:00:00-04:00"
+    assert nasdaq["next_start_at"] == "2026-08-21T21:00:00Z"
+    assert nasdaq["next_window"] == "weekend_internal"
+
+    # Monday 08:00 KST: the Korea window just closed; the next one is Friday 20:00 KST.
+    monday = datetime(2026, 8, 24, 8, 0, tzinfo=ZoneInfo("Asia/Seoul"))
+    korea = build_weekend_signals(provider, now=monday)["composites"]["korea_weekend"]["session"]
+    assert korea["active"] is False
+    assert korea["next_local_start"] == "2026-08-28T20:00:00+09:00"
+
+    # Sunday 18:00 ET: weekend window closed; next internal window is Monday's daily gap.
+    sunday = datetime(2026, 8, 23, 18, 0, tzinfo=ZoneInfo("America/New_York"))
+    nasdaq = build_weekend_signals(provider, now=sunday)["composites"]["nasdaq_weekend"]["session"]
+    assert nasdaq["active"] is False
+    assert nasdaq["next_local_start"] == "2026-08-24T17:00:00-04:00"
+    assert nasdaq["next_window"] == "daily_internal_gap"
+
+
 def test_weekend_contract_separates_rolling_24h_and_session_change():
     provider = FixtureProvider(
         {

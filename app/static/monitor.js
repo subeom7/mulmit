@@ -63,7 +63,7 @@ const TEXT = {
     "uspage.copy": "S&P 500 히트맵, 스트레스 지수, 매크로, 유동성, 공식 환율을 한 페이지에서 봅니다.",
     "status.connecting": "연결 중", "status.live": "데이터 연결", "status.partial": "일부 데이터", "status.offline": "연결 오류",
     "status.loading": "불러오는 중", "status.viewport": "화면에 표시되면 불러옵니다", "status.unavailable": "데이터 미연결",
-    "status.noSeries": "표시할 시계열이 없습니다", "status.retry": "새로고침 후 다시 시도해 주세요.", "status.staleData": "지연 데이터", "status.legacyDisabled": "라이선스 데이터 전환 중 · 공개 데이터 비활성",
+    "status.noSeries": "표시할 시계열이 없습니다", "status.historyPending": "이력 차트 미제공 · 표시 권리 확인 중 (최신값만 표시)", "status.retry": "새로고침 후 다시 시도해 주세요.", "status.staleData": "지연 데이터", "status.legacyDisabled": "라이선스 데이터 전환 중 · 공개 데이터 비활성",
     "stress.eyebrow": "MULMIT 자체 산출 · 산식 공개", "stress.title": "유동성·스트레스 지수", "stress.own": "자체 산출",
     "stress.scale": "0에 가까울수록 완화, 100에 가까울수록 긴축", "stress.caption": "지수를 구성하는 입력",
     "stress.colInput": "입력", "stress.colValue": "값", "stress.colPct": "5년 내 백분위", "stress.colScore": "스트레스 점수", "stress.colDir": "방향",
@@ -76,7 +76,7 @@ const TEXT = {
     "weekend.title": "Weekend Pulse · 주말 참고 신호", "weekend.notSpot": "현물가격 아님", "weekend.leverage": "레버리지 파생",
     "weekend.liquidity": "저유동성 가능", "weekend.noPromise": "월요일 방향 보장 안 됨", "weekend.syntheticPerp": "USD 환산 합성 무기한선물",
     "weekend.defaultDisclaimer": "주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.",
-    "weekend.proxy": "대체 신호", "weekend.direct": "직접 계약", "weekend.auxiliary": "24시간 보조", "weekend.consensus": "합성 신호", "weekend.referenceSignal": "주말 기준 신호", "weekend.funding": "시간당 펀딩", "weekend.volume": "24시간 거래대금", "weekend.openInterest": "미결제약정", "weekend.status": "상태", "weekend.confidence": "근거 품질", "weekend.session": "활성 세션", "weekend.sessionChange": "세션 기준", "weekend.change24h": "24시간 기준", "weekend.stale": "지연", "weekend.reference": "참고 품질",
+    "weekend.nextSession": "다음 내부 세션", "weekend.awaitingSession": "세션 대기", "weekend.proxy": "대체 신호", "weekend.direct": "직접 계약", "weekend.auxiliary": "24시간 보조", "weekend.consensus": "합성 신호", "weekend.referenceSignal": "주말 기준 신호", "weekend.funding": "시간당 펀딩", "weekend.volume": "24시간 거래대금", "weekend.openInterest": "미결제약정", "weekend.status": "상태", "weekend.confidence": "근거 품질", "weekend.session": "활성 세션", "weekend.sessionChange": "세션 기준", "weekend.change24h": "24시간 기준", "weekend.stale": "지연", "weekend.reference": "참고 품질",
     "weekend.samsungPerp": "삼성전자 USD 환산 합성 무기한선물 · 한국 현물 종가와 동일한 상품이 아닙니다.",
     "kridx.title": "코스피 지수군", "kridx.copy": "대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 52주 범위까지 한 표에서 봅니다.",
     "kridx.colName": "지수", "kridx.colClose": "종가", "kridx.colDay": "전일", "kridx.colYtd": "연초 대비", "kridx.colRange": "52주 범위", "kridx.colValue": "거래대금",
@@ -152,7 +152,7 @@ const TEXT = {
     "uspage.copy": "The S&P 500 heatmap, stress index, macro, liquidity and official FX on one page.",
     "status.connecting": "Connecting", "status.live": "Data live", "status.partial": "Partial data", "status.offline": "Connection error",
     "status.loading": "Loading", "status.viewport": "Loads when scrolled into view", "status.unavailable": "Data not connected",
-    "status.noSeries": "No series available", "status.retry": "Refresh and try again.", "status.staleData": "Stale data", "status.legacyDisabled": "Public data disabled during licensed-provider migration",
+    "status.noSeries": "No series available", "status.historyPending": "History chart withheld while display rights are confirmed · latest value only", "status.retry": "Refresh and try again.", "status.staleData": "Stale data", "status.legacyDisabled": "Public data disabled during licensed-provider migration",
     "stress.eyebrow": "MULMIT COMPOSITE · PUBLISHED METHOD", "stress.title": "Liquidity & Stress Index", "stress.own": "Own composite",
     "stress.scale": "Lower is looser, higher is tighter", "stress.caption": "Inputs that make up the index",
     "stress.colInput": "Input", "stress.colValue": "Value", "stress.colPct": "5-year percentile", "stress.colScore": "Stress score", "stress.colDir": "Direction",
@@ -165,7 +165,7 @@ const TEXT = {
     "weekend.title": "Weekend Pulse · Reference signals", "weekend.notSpot": "Not spot prices", "weekend.leverage": "Leveraged derivatives",
     "weekend.liquidity": "May be illiquid", "weekend.noPromise": "No Monday direction guarantee", "weekend.syntheticPerp": "USD-converted synthetic perpetuals",
     "weekend.defaultDisclaimer": "Weekend derivative prices can be heavily affected by shallow liquidity and leverage. Do not treat them as Monday spot-market forecasts.",
-    "weekend.proxy": "Proxy", "weekend.direct": "Direct contract", "weekend.auxiliary": "24h auxiliary", "weekend.consensus": "Composite", "weekend.referenceSignal": "Weekend reference", "weekend.funding": "Hourly funding", "weekend.volume": "24h notional", "weekend.openInterest": "Open interest", "weekend.status": "Status", "weekend.confidence": "Evidence quality", "weekend.session": "Active session", "weekend.sessionChange": "Session change", "weekend.change24h": "24-hour change", "weekend.stale": "Stale", "weekend.reference": "Reference quality",
+    "weekend.nextSession": "Next internal session", "weekend.awaitingSession": "Awaiting session", "weekend.proxy": "Proxy", "weekend.direct": "Direct contract", "weekend.auxiliary": "24h auxiliary", "weekend.consensus": "Composite", "weekend.referenceSignal": "Weekend reference", "weekend.funding": "Hourly funding", "weekend.volume": "24h notional", "weekend.openInterest": "Open interest", "weekend.status": "Status", "weekend.confidence": "Evidence quality", "weekend.session": "Active session", "weekend.sessionChange": "Session change", "weekend.change24h": "24-hour change", "weekend.stale": "Stale", "weekend.reference": "Reference quality",
     "weekend.samsungPerp": "Samsung Electronics USD-converted synthetic perpetual · not the Korean spot close.",
     "kridx.title": "KOSPI index family", "kridx.copy": "Confirmed closes for the headline indices and KOSPI 200 sectors, with YTD and the 52-week range in one table.",
     "kridx.colName": "Index", "kridx.colClose": "Close", "kridx.colDay": "Day", "kridx.colYtd": "YTD", "kridx.colRange": "52w range", "kridx.colValue": "Value traded",
@@ -839,7 +839,7 @@ function renderMetricChart(card) {
   const info = cardState(key, record, definition); slot.replaceChildren();
   if (info.badge) { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = info.badge; slot.append(empty); return; }
   const chart = lineChart(observations(record));
-  if (chart) slot.append(chart); else { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = t("status.noSeries"); slot.append(empty); }
+  if (chart) slot.append(chart); else { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = record?.history_status === "not_requested_to_bound_public_api_latency" ? t("status.historyPending") : t("status.noSeries"); slot.append(empty); }
 }
 
 function setupLazyCharts() {
@@ -2089,6 +2089,9 @@ function renderWeekend() {
     const composite = definition.composite ? payload.composites?.[definition.composite] : null; const signal = definition.composite ? null : definition.symbols.map((symbol) => bySymbol.get(symbol)).find(Boolean); const record = composite || signal;
     const mark = safeNumber(signal?.mark ?? signal?.oracle ?? record?.value); const usable = definition.composite ? Boolean(record && record.status !== "unavailable") : mark !== null;
     const role = signal?.session_role === "auxiliary_24h_only" ? "auxiliary" : signal ? "direct" : definition.kind;
+    // A composite outside its documented internal window is waiting, not broken:
+    // show the next opening time instead of "data not connected".
+    const awaiting = Boolean(definition.composite && record?.status === "outside_internal_session");
     const card = document.createElement("article"); card.className = `weekend-card ${role === "auxiliary" ? "proxy" : ""} ${usable ? "" : "unavailable"}`;
     const shownLabel = definition.composite ? localValue(definition.label, state.lang) : localValue(signal?.label, state.lang) || localValue(definition.label, state.lang);
     const sessionDelta = safeNumber(definition.composite ? record?.change_percent : record?.session_change_percent);
@@ -2099,15 +2102,16 @@ function renderWeekend() {
     if (signal?.source_url) { const link = document.createElement("a"); link.href = signal.source_url; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = symbolNode.textContent; symbolNode.replaceChildren(link); }
     if (!usable) { const unavailableBadge = document.createElement("span"); unavailableBadge.className = "status-badge error"; unavailableBadge.textContent = t("status.unavailable"); $(".weekend-badges", card).append(unavailableBadge); }
     if (signal && safeNumber(signal.mark) === null && safeNumber(signal.oracle) !== null) { const oracleBadge = document.createElement("span"); oracleBadge.className = "status-badge warn"; oracleBadge.textContent = "ORACLE"; oracleBadge.title = "mark unavailable · oracle fallback"; $(".weekend-badges", card).append(oracleBadge); }
-    const quality = signal?.reference_quality || record?.evidence_quality; if (quality) { const qualityBadge = document.createElement("span"); qualityBadge.className = "status-badge"; qualityBadge.textContent = enumText(quality); qualityBadge.title = `${t("weekend.reference")}: ${quality}`; $(".weekend-badges", card).append(qualityBadge); }
+    if (awaiting) { const waitBadge = document.createElement("span"); waitBadge.className = "status-badge"; waitBadge.textContent = t("weekend.awaitingSession"); $(".weekend-badges", card).append(waitBadge); }
+    const quality = awaiting ? null : (signal?.reference_quality || record?.evidence_quality); if (quality) { const qualityBadge = document.createElement("span"); qualityBadge.className = "status-badge"; qualityBadge.textContent = enumText(quality); qualityBadge.title = `${t("weekend.reference")}: ${quality}`; $(".weekend-badges", card).append(qualityBadge); }
     if (signal?.stale || record?.stale) { const staleBadge = document.createElement("span"); staleBadge.className = "status-badge stale"; staleBadge.textContent = t("weekend.stale"); const age = safeNumber(signal?.age_seconds ?? record?.age_seconds); if (age !== null) staleBadge.title = `${Math.round(age)}s`; $(".weekend-badges", card).append(staleBadge); }
-    $(".weekend-value", card).textContent = definition.composite ? enumText(record?.status) : formatWeekendValue(mark, signal); const ch = $(".weekend-change", card); ch.className = `weekend-change ${changeClass(delta)}`; ch.textContent = delta === null ? t("status.unavailable") : `${formatSigned(delta)} · ${deltaLabel}`;
+    $(".weekend-value", card).textContent = definition.composite ? enumText(record?.status) : formatWeekendValue(mark, signal); const ch = $(".weekend-change", card); ch.className = `weekend-change ${changeClass(delta)}`; ch.textContent = delta !== null ? `${formatSigned(delta)} · ${deltaLabel}` : awaiting && record?.session?.next_start_at ? `${t("weekend.nextSession")} · ${dateText(record.session.next_start_at)}` : t("status.unavailable");
     const baseline = safeNumber(signal?.session_baseline?.price ?? signal?.session_baseline); const previous24h = safeNumber(signal?.previous_24h); const baselines = [];
     if (baseline !== null) baselines.push(`${t("weekend.session")} baseline: ${formatWeekendValue(baseline, signal)}`);
     if (previous24h !== null) baselines.push(`24h baseline: ${formatWeekendValue(previous24h, signal)}`);
     if (baselines.length) ch.title = baselines.join(" · ");
     const strong = $$(".weekend-meta strong", card);
-    if (definition.composite) { strong[0].textContent = enumText(record?.status); strong[1].textContent = enumText(record?.evidence_quality || record?.reference_quality); strong[2].textContent = enumText(record?.session?.state || record?.session?.window); }
+    if (definition.composite) { strong[0].textContent = enumText(record?.status); strong[1].textContent = awaiting ? t("weekend.awaitingSession") : enumText(record?.evidence_quality || record?.reference_quality); strong[2].textContent = enumText(record?.session?.state || record?.session?.window); }
     else { strong[0].textContent = formatContractValue(safeNumber(signal?.funding_hourly_percent), "%/h"); strong[1].textContent = formatContractValue(safeNumber(signal?.open_interest_base_units), weekendUnit(signal, "open_interest_base_units"), true); strong[2].textContent = formatContractValue(safeNumber(signal?.day_volume_usd_notional ?? signal?.day_volume), weekendUnit(signal, "day_volume_usd_notional") || "USD", true); }
     const age = safeNumber(signal?.age_seconds ?? record?.age_seconds); card.title = `${signal?.kind || (definition.composite ? "composite_reference" : role)} · ${t("date.asof")} ${dateText(signal?.as_of || signal?.fetched_at || record?.as_of || payload.generated_at)}${age === null ? "" : ` · ${Math.round(age)}s`}`;
     host.append(card);
