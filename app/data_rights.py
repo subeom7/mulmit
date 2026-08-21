@@ -189,6 +189,11 @@ def hip3_public_display_enabled() -> bool:
     return bool(config.HIP3_PUBLIC_DISPLAY_ENABLED)
 
 
+def hip3_history_enabled() -> bool:
+    """Stored HIP-3 history needs its own opt-in on top of the display gate."""
+    return bool(config.HIP3_HISTORY_ENABLED) and hip3_public_display_enabled()
+
+
 def dart_serving_enabled() -> bool:
     """The issued key is part of the permission: DART meters by key."""
     return bool(config.DART_ENABLED and config.DART_API_KEY)
@@ -226,6 +231,8 @@ def lane_report() -> dict[str, dict[str, str]]:
         HYPERLIQUID_HIP3: {
             "status": "enabled" if hip3_public_display_enabled() else "pending_rights",
             "gate": "HIP3_PUBLIC_DISPLAY_ENABLED",
+            "history": "enabled" if hip3_history_enabled() else "withheld",
+            "history_gate": "HIP3_HISTORY_ENABLED",
         },
         SEC_EDGAR: {
             "status": sec_edgar_status(),

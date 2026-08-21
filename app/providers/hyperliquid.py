@@ -370,9 +370,11 @@ class HyperliquidProvider:
         end: datetime,
     ) -> dict[str, Any]:
         """Return an official candle snapshot for a bounded time window."""
+        # HIP-3 symbols carry their DEX prefix (``xyz:SP500``); Hyperliquid's
+        # own listings do not (``BTC``). Both are valid candle coins.
         normalized_symbol = symbol.strip()
-        if not normalized_symbol or ":" not in normalized_symbol:
-            raise ValueError("HIP-3 candle symbols must include their DEX prefix")
+        if not normalized_symbol:
+            raise ValueError("candle symbol must not be empty")
         if interval not in CANDLE_INTERVALS:
             raise ValueError(f"unsupported candle interval: {interval}")
         if start.tzinfo is None:
