@@ -69,9 +69,16 @@ def clear_cache() -> None:
 
 def _symbols() -> list[str]:
     # Imported here: market_assets imports this module for the request path.
+    from .crypto_market import history_symbols
     from .market_assets import ASSETS
 
-    return [spec.provider_symbol for spec in ASSETS if spec.provider_symbol]
+    symbols = [spec.provider_symbol for spec in ASSETS if spec.provider_symbol]
+    # The crypto section adds Hyperliquid's own coins while it is switched on;
+    # the same blob serves their realized volatility and the BTC correlations.
+    for symbol in history_symbols():
+        if symbol not in symbols:
+            symbols.append(symbol)
+    return symbols
 
 
 def _candle_rows(candles: list[dict[str, Any]]) -> list[dict[str, Any]]:

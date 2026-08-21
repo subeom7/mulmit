@@ -140,6 +140,21 @@ HIP3_HISTORY_ENABLED = _bool("HIP3_HISTORY_ENABLED", False)
 HIP3_HISTORY_MAX_AGE = _int("HIP3_HISTORY_MAX_AGE", 60 * 60 * 6)
 HIP3_HISTORY_DAYS = _int("HIP3_HISTORY_DAYS", 366)
 HIP3_HISTORY_TIMEOUT = _float("HIP3_HISTORY_TIMEOUT", 10.0)
+# --- 크립토 섹션 (docs/PLAN_CRYPTO_SECTION.md) ---------------------------------
+# Page and /api/crypto/* rollout switch. Hyperliquid's own perpetuals ride the
+# HIP-3 display gate above (same API, same posture: perpetual references, not
+# spot quotes); this flag only decides whether the section is exposed at all.
+CRYPTO_SECTION_ENABLED = _bool("CRYPTO_SECTION_ENABLED", False)
+# alternative.me Crypto Fear & Greed Index. The publisher's terms allow
+# commercial use "as long as the attribution is given right next to the display
+# of the data" (accessed 2026-08-21); the payload carries that attribution and
+# the UI must keep it beside the value. Daily index, polled hourly by ingest.
+# https://alternative.me/crypto/fear-and-greed-index/
+ALTERNATIVE_ME_ENABLED = _bool("ALTERNATIVE_ME_ENABLED", False)
+ALTERNATIVE_ME_TIMEOUT = _float("ALTERNATIVE_ME_TIMEOUT", 15.0)
+ALTERNATIVE_ME_RETRIES = _int("ALTERNATIVE_ME_RETRIES", 2)
+ALTERNATIVE_ME_MAX_AGE = _int("ALTERNATIVE_ME_MAX_AGE", 60 * 60)
+
 # Financial Services Commission end-of-day data on data.go.kr. The three
 # datasets used here are registered with 이용허락범위 "제한 없음" — the portal's
 # widest licence tier — which is a different and broader grant than the KRX

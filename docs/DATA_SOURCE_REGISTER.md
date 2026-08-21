@@ -148,6 +148,18 @@ notes: >
   재검토일이다(근거는 바로 위 "2026-08-21 개정" 단락).
 ```
 
+**2026-08-21 크립토 섹션(Phase 1) — 같은 게이트, 네이티브 퍼프.** `/api/crypto/overview`는
+접두사 없는 Hyperliquid 자체 상장 퍼프(BTC·ETH·SOL·XRP·BNB·DOGE·HYPE·SUI·LINK·AVAX)의
+`metaAndAssetCtxs`(마크·오라클·prevDayPx·funding·OI·거래대금)와 `predictedFundings`
+(HlPerp·BinPerp·BybitPerp 예상 펀딩 + interval)를 같은 `HIP3_PUBLIC_DISPLAY_ENABLED` 게이트와
+같은 위험수용(DS-2026-001 개정) 아래 전달한다. Binance·Bybit 값은 Hyperliquid가 산출·공표하는
+2차 데이터이며 Mulmit은 두 거래소를 조회하지 않는다 — 응답 `relayed_by: "Hyperliquid"`,
+화면은 "Hyperliquid 전달값" 라벨·보조 행·로고 없음·레퍼럴 링크 없음(`PLAN_CRYPTO_SECTION.md`
+§5). 이력 lane(`HIP3_HISTORY_ENABLED`)은 섹션이 켜진 동안 BTC·ETH·SOL 일봉을 추가 저장한다
+(코인당 가중치 ≈26, 한도 대비 미미) — `/api/crypto/volatility`의 실현 변동성(√365)·BTC 대
+합성자산 상관은 이 저장값의 산술 파생이다. 페이지 노출 스위치는 `CRYPTO_SECTION_ENABLED`
+(기본 false). 소스별 판정표는 `docs/PLAN_CRYPTO_SECTION.md` §3.
+
 ### 3.2 TradingView 공식 위젯
 
 | 항목 | 기록 |
@@ -881,6 +893,56 @@ expires_at: null
 recheck_at: 2027-02-21
 ```
 
+### 3.18 alternative.me — 크립토 공포·탐욕 지수 (Crypto Fear & Greed Index)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `alternative_me` |
+| 현재 상태 | **`approved` (official_terms, 2026-08-21)** — `DS-2026-010` |
+| 코드 위치 | `app/providers/alternative_me.py`, `app/crypto_market.py`(`refresh_crypto_sentiment`·`build_crypto_sentiment`), `app/ingest.py::refresh_crypto_sentiment`, 라우트 `/api/crypto/sentiment` |
+| 게이트 | `CRYPTO_SECTION_ENABLED` + `ALTERNATIVE_ME_ENABLED` (기본 false, web·ingest 공통) |
+| 현재 사용 | `GET https://api.alternative.me/fng/?limit=N&format=json` — 일별 값·분류·타임스탬프·다음 갱신까지 초. ingest가 1시간 주기로 확인해 blob(`crypto_fear_greed_v1`, 최근 366일)으로 저장하고 요청 경로는 blob만 읽는다. 화면: 현재값·분류·1d/7d/30d 변화·90일 차트·발행자 공개 가중치 |
+| 기술 비용 | 키·구독료 없음 |
+| 공식 근거 | [Crypto Fear & Greed Index](https://alternative.me/crypto/fear-and-greed-index/) (API 안내와 이용조건이 같은 페이지) |
+| 표시 경계 | 발행자 지수를 그대로 전달한다(명칭 변경·자체 지수화 금지). 비트코인 중심 지표이며 `Mulmit Market Sentiment Gauge`(§5.4.2)·CNN F&G와 정의가 달라 비교 불가 고지를 동봉한다 |
+
+약관 원문(접근 2026-08-21):
+
+> "Commercial use is allowed as long as the attribution is given right next to the
+> display of the data."
+>
+> "You must properly acknowledge the source of the data and prominently reference
+> it accordingly."
+>
+> "You may not use our data to impersonate us or to create a service that could be
+> confused with our offering."
+
+조건 구현: 응답 `attribution{text: "Crypto Fear & Greed Index — alternative.me", url,
+placement: "adjacent_to_value", required: true}`, 화면은 점수 바로 아래 `#cfng-attribution`에
+문구+링크를 고정한다. 자체 게이지와 나란히 둘 때 "정의가 달라 비교 대상 아님" 문구를 둔다.
+
+```yaml
+decision_id: DS-2026-010
+provider_id: alternative_me
+status: approved
+reviewed_at: 2026-08-21
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://alternative.me/crypto/fear-and-greed-index/
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  cache_ttl_seconds: 3600
+  stale_seconds: 172800
+  historical_storage: true   # 최근 366일 blob, 차트용
+  derived_metrics: true      # 1d/7d/30d 포인트 변화만, 지수 재산출 없음
+  advertising: true          # 약관이 상업 이용을 출처표기 조건으로 명시
+attribution: "Crypto Fear & Greed Index — alternative.me (값 바로 옆, 링크 포함)"
+expires_at: null
+recheck_at: 2026-11-21
+notes: "발행자 약관 페이지 문구 기반. 약관 변경 시 ALTERNATIVE_ME_ENABLED=false로 즉시 OFF. 명칭·브랜드 복제 금지 조항 준수."
+```
+
 ## 4. 원 발행기관 후보
 
 아래 표의 `pending_review`는 무료라고 단정하는 표시가 아니다. 다음 세션에서 정확한 endpoint, 이용조건, attribution, 저장·캐시·제3자 표시 범위를 다시 확인한 뒤 series 단위로 승인한다.
@@ -909,6 +971,9 @@ Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로
 | Federal Reserve Bank of St. Louis | `financial_stress`(STLFSI4). 뉴욕 연준과 같은 구조 — 연방기관이 아니라 저작권을 주장하지만, 명시적 이용허락을 주는지가 관건이다. 시리즈 태그가 "Copyrighted: Citation Required"(2026-08-17 확인)라 인용이 완결 조건인지 서면으로 묻는다. FRED 경유 복제는 하지 않는다 | **회신 수신 2026-08-18 — 조건부 승인** (조건과 구현은 §3.3에 기록). 이 항목은 종결 | [`INQUIRY_STLOUISFED_STLFSI.md`](INQUIRY_STLOUISFED_STLFSI.md) |
 | 한국거래소 | 실시간 시세와 KRX 통계정보 전체(§3.4). 장 마감값은 §3.9로 이미 해결됨 | 초안 없음. 우선순위 낮아짐 | — |
 | Cboe | VIX·SKEW·VVIX·OVX·Put/Call | 서면 허가가 명시적으로 필요하고 월 예산 안의 근거가 없어 **문의하지 않기로** 결정 | — |
+| Deribit (info@deribit.com) | BTC·ETH DVOL(크립토 내재변동성). ToS §4.6 "Market Data … is for personal use only … without explicit approval from us" — 서면 승인 전 `pending_rights`, 값 비공개 | 초안 작성 2026-08-21, **발송 대기(운영자)**. 무응답 시 위험수용 안 함(약관이 개인 용도를 명시). 회신 기한 2026-09-16 | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §1 |
+| 두나무(업비트 Open API) | KRW 시세·김치프리미엄(USDT 분모로 실시간 환율 소거). Open API 이용약관(2023-12-15) §5 저작권 조항, 공개 표시 허가·금지 조항 없음. Origin 요청 10초 1회라 서버 relay 전제 | 초안 작성 2026-08-21(국문), **발송 대기(운영자)**. 무응답 시 운영자 결정(계속 대기 또는 HL식 위험수용 + `recheck_at`) | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §2 |
+| Coinalyze | 거래소 집계 청산(1h/24h)·OI 히스토리. 문서 "The API is free, if you use the API/data in public places … please be kind and cite the data source" — 광고 사이트 포함 여부·하위 거래소 권리 확인 | 초안 작성 2026-08-21, **발송 대기(운영자)** | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §3 |
 
 뉴욕 연준 사례가 이 목록의 근거다. 약관을 실제로 읽기 전에는 “연준 계열이니
 공개겠지”와 “저작권을 주장하니 못 쓰겠지” 둘 다 추측이었고, 실제 약관은 저작권을
@@ -1357,3 +1422,4 @@ notes: "No confidential contract language here"
 | 2026-08-21 | **실현 변동성 카드** 자체 산출(§5.4.1) — HIP-3 일봉 종가 20개 로그수익률 표준편차 × √252, `sp500_realized_vol`(RISK & CREDIT 배치)·`kr200_realized_vol`(API). "VIX 아님" 표기, 내재변동성과 수준 비교 금지. 0 중심 지수(OFR FSI·STLFSI)와 변동성 계열의 변화 표시를 %에서 **포인트**로 교정(음수 기준값의 % 변화가 방향을 뒤집던 문제) | Claude assisted |
 | 2026-08-21 | **Mulmit 시장 심리 게이지(실험)** 자체 산출(§5.4.2, `/api/market/sentiment`) — OFR 변동성·신용 + HIP-3 퍼프 모멘텀·실현 변동성·주식 대 금, 자기 이력 백분위·방향 정렬·동일 가중·최소 3입력·180일 이력. CNN 명칭·밴드 불복제, 실험 표기. 예약돼 있던 `sentiment` 카드 슬롯 연결, `/us` 패널·랜딩 미니 추가 | Claude assisted |
 
+| 2026-08-21 | 크립토 섹션 Phase 1(ROADMAP #16) — §3.1 네이티브 퍼프 단락, §3.18 alternative.me 신설(`DS-2026-010`, official_terms, 출처 값 옆 조건), §4.1 Deribit·두나무·Coinalyze 문의 대기 3행. 소스 17종 판정·실측은 `PLAN_CRYPTO_SECTION.md` §3·§8 | Claude assisted |

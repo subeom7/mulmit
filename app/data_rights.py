@@ -28,6 +28,8 @@ FEDBOARD = "federal_reserve"
 BLS = "bls"
 FSC = "fsc"
 ECOS = "ecos"
+CRYPTO = "crypto"
+ALTERNATIVE_ME = "alternative_me"
 OFR = "ofr"
 
 # --- structured client contracts --------------------------------------------
@@ -123,6 +125,27 @@ US_FUNDAMENTALS_NOT_CONFIGURED = {
     "message": "SEC_EDGAR_USER_AGENT must declare a contact before EDGAR use.",
 }
 
+CRYPTO_SECTION_DISABLED = {
+    "code": "crypto_section_disabled",
+    "status": "disabled",
+    "message": "The crypto section is not enabled for this deployment.",
+}
+
+CRYPTO_SENTIMENT_DISABLED = {
+    "code": "crypto_sentiment_disabled",
+    "status": "disabled",
+    "message": "The alternative.me Crypto Fear & Greed relay is disabled for this deployment.",
+}
+
+CRYPTO_SENTIMENT_COLLECTING = {
+    "code": "crypto_sentiment_collecting",
+    "status": "collecting",
+    "message": (
+        "The Crypto Fear & Greed relay is enabled but has not stored its first "
+        "observation yet; values appear after the next ingest pass."
+    ),
+}
+
 US_PTR_DISABLED = {
     "code": "us_ptr_disabled",
     "status": "disabled",
@@ -197,6 +220,21 @@ def hip3_history_enabled() -> bool:
     return bool(config.HIP3_HISTORY_ENABLED) and hip3_public_display_enabled()
 
 
+def crypto_section_enabled() -> bool:
+    """The crypto page and /api/crypto/* are a deliberate rollout, not a side effect."""
+    return bool(config.CRYPTO_SECTION_ENABLED)
+
+
+def crypto_overview_enabled() -> bool:
+    """Hyperliquid native perps share the HIP-3 display gate and posture."""
+    return crypto_section_enabled() and hip3_public_display_enabled()
+
+
+def alternative_me_serving_enabled() -> bool:
+    """The alternative.me relay is its own lane under the section switch."""
+    return crypto_section_enabled() and bool(config.ALTERNATIVE_ME_ENABLED)
+
+
 def dart_serving_enabled() -> bool:
     """The issued key is part of the permission: DART meters by key."""
     return bool(config.DART_ENABLED and config.DART_API_KEY)
@@ -244,6 +282,16 @@ def lane_report() -> dict[str, dict[str, str]]:
         DART: {
             "status": dart_status(),
             "gate": "DART_ENABLED + DART_API_KEY",
+        },
+        CRYPTO: {
+            "status": "enabled" if crypto_section_enabled() else "disabled",
+            "gate": "CRYPTO_SECTION_ENABLED",
+            "overview": "enabled" if crypto_overview_enabled() else "withheld",
+            "overview_gate": "CRYPTO_SECTION_ENABLED + HIP3_PUBLIC_DISPLAY_ENABLED",
+        },
+        ALTERNATIVE_ME: {
+            "status": "enabled" if alternative_me_serving_enabled() else "disabled",
+            "gate": "CRYPTO_SECTION_ENABLED + ALTERNATIVE_ME_ENABLED",
         },
     }
     for provider_id in _MACRO_LANES:
