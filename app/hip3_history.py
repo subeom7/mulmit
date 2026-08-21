@@ -23,7 +23,7 @@ from collections.abc import Callable
 from typing import Any
 
 from . import config, data_rights, store
-from .providers.base import DataUnavailable, RateLimited
+from .providers.base import RateLimited
 from .providers.hyperliquid import HyperliquidProvider
 
 log = logging.getLogger(__name__)
