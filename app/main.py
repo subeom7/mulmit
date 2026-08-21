@@ -53,6 +53,7 @@ from .macro_dashboard import MacroDataDisabled, build_macro_series, build_macro_
 from .market_assets import build_asset_snapshot
 from .market_sectors import build_sector_snapshot
 from .metrics.correlation import correlation_matrix
+from .sentiment_index import SentimentIndexUnavailable, build_sentiment_index
 from .stress_index import StressIndexUnavailable, build_stress_index
 from .weekend_signals import build_weekend_signals
 
@@ -467,6 +468,30 @@ def market_macro_series(
         raise HTTPException(status_code=404, detail="아직 수집된 거시 데이터가 없습니다.")
     response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=3600"
     response.headers["X-Data-Source"] = _macro_data_source()
+    return payload
+
+
+@app.get("/api/market/sentiment")
+@limiter.limit(config.RATE_LIMIT)
+def market_sentiment(request: Request, response: Response) -> dict:
+    """Mulmit 자체 시장 심리 게이지(실험). 저장소만 읽는다 — OFR 행과 HIP-3 일봉 블롭."""
+    try:
+        payload = build_sentiment_index()
+    except SentimentIndexUnavailable as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "sentiment_index_unavailable",
+                "status": "insufficient_inputs",
+                "message": (
+                    f"Only {exc.available} of {exc.required} publishable inputs are "
+                    "available, so no gauge is published."
+                ),
+            },
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "Mulmit composite (OFR + Hyperliquid HIP-3 derived)"
     return payload
 
 

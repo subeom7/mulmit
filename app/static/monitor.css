@@ -371,6 +371,9 @@ button:focus-visible, a:focus-visible, select:focus-visible {
   background: var(--ink); box-shadow: 0 0 0 2px var(--panel);
 }
 .stress-scale-note { margin: 0; font-size: 11.5px; color: var(--faint); }
+/* Risk appetite runs the other way: red (risk-off) on the left, green (risk-on) on the right. */
+.sentiment-scale { background: linear-gradient(90deg, var(--red), var(--amber), var(--green)); }
+.sentiment-chart { height: 120px; margin: 6px 0 14px; }
 .stress-method, .stress-disclaimer {
   font-size: 11.5px; line-height: 1.6; color: var(--muted); margin: 12px 0 0;
 }
