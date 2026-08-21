@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260821-8">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260821-9">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -149,6 +149,17 @@
       </div>
     </section>
 
+    <section class="dashboard-section" id="crypto-gas" aria-labelledby="cgas-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">ON-CHAIN · GAS × TRANSFER COST</p><h2 id="cgas-title" data-i18n="crypto.gas.title">가스·전송 수수료</h2></div>
+        <span class="source-pill">EVM RPC</span>
+      </div>
+      <p class="section-copy" data-i18n="crypto.gas.copy">이더리움 메인넷과 주요 L2의 다음 블록 기본 수수료·우선 수수료(50분위)와 단순 전송(21,000 gas) 비용입니다. 운영자 RPC 계정으로 읽는 공개 체인 상태이며, L2 행은 L1 데이터 수수료를 포함하지 않습니다.</p>
+      <div id="cgas-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="cgas-grid" class="cvol-grid" hidden></div>
+      <footer class="kro-footer" id="cgas-footer" hidden></footer>
+    </section>
+
     <section class="dashboard-section" id="crypto-volatility" aria-labelledby="cvol-title">
       <div class="section-heading">
         <div><p class="eyebrow">DERIVED · REALIZED VOLATILITY × CORRELATION</p><h2 id="cvol-title" data-i18n="crypto.vol.title">실현 변동성 · 합성자산 상관</h2></div>
@@ -202,6 +213,6 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "crypto";</script>
-  <script src="/static/monitor.js?v=20260821-8" defer></script>
+  <script src="/static/monitor.js?v=20260821-9" defer></script>
 </body>
 </html>

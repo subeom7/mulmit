@@ -1039,8 +1039,16 @@ notes: "Basic 무료 15,000 credits/월 중 ≈2,900 사용. 키는 ingest 전�
 | mempool.space API | 무료 사용은 비상업 취지, 상업·고량은 Enterprise/유료(Pro 20 EUR/월) | 예산 내지만 가치 대비 보류 |
 | Alchemy/Infura 등 키 발급형 무료 티어 | 약관상 프로덕션 허용(계정·키 필요) | **운영자가 가입하면** env 주입형 lane으로 재개 |
 
-결론: Phase 2에서 가스 스트립은 **코드 없이 보류**. 재개 조건: 운영자 RPC provider 가입(무료 티어) +
-해당 약관 인용 기록 → 작은 lane(`eth_feeHistory`·L2 `eth_gasPrice`, 서버 30초 캐시).
+결론(1차): 퍼블릭 엔드포인트로는 열지 않는다.
+
+**2026-08-21 후속 — lane 코드 추가, 게이트 OFF, 운영자 RPC 계정 URL 주입형.** `/api/crypto/gas`
+(`app/crypto_gas.py`, `app/providers/evm_rpc.py`): `eth_feeHistory`(1블록·p50)로 다음 블록 기본 수수료·우선
+수수료, 미지원 체인은 `eth_gasPrice`; 단순 전송(21,000 gas) 비용을 ETH·USD(HL ETH 오라클)로 환산, L2는 L1 데이터
+수수료 제외 명시. 게이트 `CHAIN_GAS_ENABLED` + `CHAIN_RPC_{ETHEREUM,BASE,ARBITRUM}_URL`(web 전용 env, 키 내장 →
+응답·로그 비노출, 호스트명만 표시). 권장 계정: **Alchemy 무료 티어** — 지원 문서(접근 2026-08-21) 월 30M CU·
+500 CUPS, "sufficient for development and low-traffic production apps"; 대안 Infura/MetaMask Developer 무료
+Core(일 3M 크레딧, 500/초). 우리 호출량 ≈ 체인당 2,880/일(30초 캐시) ≪ 한도. 가스 값은 공개 체인 상태이고
+제공자 약관은 계정 소유자(운영자)에게 적용되므로 권리 항목은 `public_chain_state`로 기록한다.
 
 ## 4. 원 발행기관 후보
 
@@ -1524,3 +1532,4 @@ notes: "No confidential contract language here"
 | 2026-08-21 | 크립토 섹션 Phase 1(ROADMAP #16) — §3.1 네이티브 퍼프 단락, §3.18 alternative.me 신설(`DS-2026-010`, official_terms, 출처 값 옆 조건), §4.1 Deribit·두나무·Coinalyze 문의 대기 3행. 소스 17종 판정·실측은 `PLAN_CRYPTO_SECTION.md` §3·§8 | Claude assisted |
 | 2026-08-21 | 크립토 Phase 2 — §3.19 업비트 시세(`pending_rights`, 위험수용 템플릿), §3.20 CoinMarketCap 글로벌 메트릭(`pending_review`→키 발급 시 approved), §3.21 가스 스트립 조사 결과 보류(퍼블릭 RPC·mempool 약관). 코드는 게이트 기본 OFF로 배포 | Claude assisted |
 | 2026-08-21 | CoinMarketCap lane 승인·활성화(`DS-2026-011`, §3.20) — Basic 키 발급·서버 게이트 ON, 첫 blob 라이브 확인. lane report의 CMC 상태를 서빙 기준으로 정정(키는 ingest 전용) | Claude assisted |
+| 2026-08-21 | 가스 스트립 lane 추가(§3.21 후속, `/api/crypto/gas`, 운영자 RPC 계정 URL 주입형·게이트 OFF), 총시총 T 단위 포맷, Deribit·Coinalyze 문의 초안을 운영자 Gmail에 생성(발송 대기) | Claude assisted |
