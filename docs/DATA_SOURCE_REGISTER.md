@@ -829,7 +829,7 @@ Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로
 
 | 수신처 | 막고 있는 것 | 상태 | 초안 |
 |---|---|---|---|
-| trade.xyz **및** Hyperliquid (수신처 2곳) | 자산 카드 전체의 역사 차트. `historical_storage: false`라 현재는 최신값만 보인다 | **Hyperliquid 지원팀 회신 2026-08-18**: 플랫폼은 permissionless이며 공개 API 조회는 누구나 가능, 기술 문의는 Discord, **HIP-3 피드 관련은 xyz 팀에 직접 문의하라고 안내** — 권리 판단을 바꾸는 명시적 허락은 아니다. **xyz 회신 대기 유지**. `DS-2026-001`, `recheck_at: 2026-09-16` | [`INQUIRY_HYPERLIQUID_TRADE_XYZ.md`](INQUIRY_HYPERLIQUID_TRADE_XYZ.md) |
+| trade.xyz **및** Hyperliquid (수신처 2곳) | 자산 카드 전체의 역사 차트. `historical_storage: false`라 현재는 최신값만 보인다 | **Hyperliquid 지원팀 회신 2026-08-18**: 플랫폼은 permissionless이며 공개 API 조회는 누구나 가능, 기술 문의는 Discord, **HIP-3 피드 관련은 xyz 팀에 직접 문의하라고 안내** — 권리 판단을 바꾸는 명시적 허락은 아니다. **xyz 회신 대기 유지**. 2026-08-21 운영자 재확인 — 발송(08-17) 후 4일째 무응답, 같은 메일을 xyz 허가로 오인하지 않도록 여기 명시. 재발송 검토일 2026-08-31(+14일). `DS-2026-001`, `recheck_at: 2026-09-16` | [`INQUIRY_HYPERLIQUID_TRADE_XYZ.md`](INQUIRY_HYPERLIQUID_TRADE_XYZ.md) |
 | Federal Reserve Bank of St. Louis | `financial_stress`(STLFSI4). 뉴욕 연준과 같은 구조 — 연방기관이 아니라 저작권을 주장하지만, 명시적 이용허락을 주는지가 관건이다. 시리즈 태그가 "Copyrighted: Citation Required"(2026-08-17 확인)라 인용이 완결 조건인지 서면으로 묻는다. FRED 경유 복제는 하지 않는다 | **회신 수신 2026-08-18 — 조건부 승인** (조건과 구현은 §3.3에 기록). 이 항목은 종결 | [`INQUIRY_STLOUISFED_STLFSI.md`](INQUIRY_STLOUISFED_STLFSI.md) |
 | 한국거래소 | 실시간 시세와 KRX 통계정보 전체(§3.4). 장 마감값은 §3.9로 이미 해결됨 | 초안 없음. 우선순위 낮아짐 | — |
 | Cboe | VIX·SKEW·VVIX·OVX·Put/Call | 서면 허가가 명시적으로 필요하고 월 예산 안의 근거가 없어 **문의하지 않기로** 결정 | — |
@@ -862,7 +862,7 @@ Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로
 | `ewj` | `ewj`, `japan` | `xyz:EWJ` | ETF-linked 합성값 | 권리 승인 전 gate |
 | `dxy` | `dxy`, `dollar_index` | 상품 활성 여부에 따라 missing | 공식 ICE DXY 아님 | exact DXY는 ICE 권리 필요. 표시 가능한 대안으로 `dollar_index_broad`(Fed Board)를 **연결함** — 대체가 아니라 다른 지수다 |
 | `usdjpy` | `usdjpy`, `jpy=x` | `xyz:JPY` | 합성 FX reference | 방향·통화 단위 검증 유지 |
-| `vix` | `vix`, `vixcls` | `xyz:VIX` 가능 시 | 공식 Cboe VIX 아님 | 공식값은 별도 lane에서 계속 `license_required` |
+| `vix` | `vix`, `vixcls` | `xyz:VIX` — **상장폐지** (`isDelisted: true`, 마크 20.0 동결·OI 0·거래대금 0, 2026-08-21 라이브 확인. `xyz:VOL`·`xyz:DXY`·`xyz:KRW`도 같은 상태) | missing — 코드가 delisted 컨텍스트를 자동 제외하고 카드는 `license_required` 플레이스홀더로 남는다 | proxy 경로 **종결**. 공식값은 Cboe CGI(월 $1,000~) 밖이라 계속 `license_required` |
 | `wti` | `wti`, `dcoilwtico`, `cl=f` | `xyz:CL` | 공식 현물/결제값 아님 | EIA 공식값이 붙으면 `wti_exact` 신규 key로 분리 |
 | `copper` | `copper`, `pcoppusdm`, `hg=f` | `xyz:COPPER` | 합성 proxy | IMF 공식값은 `copper_exact` 신규 key로 분리 |
 | `sentiment` | `sentiment`, `fear_greed` | 없음 | missing | 권리 확인된 입력만으로 `Mulmit Market Sentiment` 자체 산식 |
@@ -1228,4 +1228,5 @@ notes: "No confidential contract language here"
 | 2026-08-17 | Fed Board 교역가중 달러지수 3종 연결(H.10, 기존 lane). Cboe 지수값 서면허가 조항 원문 인용 | Claude assisted |
 | 2026-08-17 | 금융위원회 공공데이터 lane 추가(`DS-2026-006`). 코스피·코스닥·삼성전자·SK하이닉스 공식 종가를 KRX 승인과 별개 근거로 연결. `samsung` alias에서 `005930` 제거 | Claude assisted |
 | 2026-08-17 | `Mulmit 유동성·스트레스 지수` 도입. CNN Fear & Greed 복제 대신 자체 산식 | Claude assisted |
+| 2026-08-21 | 운영자 실사용 피드백 "안 나오는 데이터" 3종 판정 — ① HIP-3 자산 카드 이력 차트: `historical_storage: false`(xyz 회신 대기)에 따른 의도된 미제공, ② 나스닥 주말 신호: 내부 세션(금 17:00 ET) 시작 전, ③ VIX·하이일드: Cboe·ICE 원 권리자 라이선스. 권리 결정 변경 없음. UI만 고장이 아닌 상태로 정직화 — "표시할 시계열이 없습니다"→"이력 차트 미제공 · 표시 권리 확인 중", "데이터 미연결"→"세션 대기 · 다음 내부 세션 {시각}"(`/api/market/weekend` session에 `next_start_at` 추가). `xyz:VIX` 상장폐지 확인으로 VIX proxy 경로 종결(§5 매핑표) | Claude assisted |
 

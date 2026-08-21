@@ -163,6 +163,19 @@ def _time_at(moment: datetime, local_time: time) -> datetime:
     return datetime.combine(moment.date(), local_time, tzinfo=moment.tzinfo)
 
 
+def _next_internal_start(local: datetime, local_time: time, weekdays: set[int]) -> datetime:
+    """First internal-session start strictly after ``local`` on an allowed weekday.
+
+    Surfaced so the UI can say *when* the next window opens instead of showing
+    an outside-session composite as if its data had failed.
+    """
+    for offset in range(8):
+        candidate = _time_at(local + timedelta(days=offset), local_time)
+        if candidate > local and candidate.weekday() in weekdays:
+            return candidate
+    raise RuntimeError("no internal-session start within a week")  # pragma: no cover
+
+
 def _korea_weekend_session(moment: datetime) -> dict[str, Any]:
     local = moment.astimezone(SEOUL)
     weekday = local.weekday()
@@ -179,6 +192,7 @@ def _korea_weekend_session(moment: datetime) -> dict[str, Any]:
         start = _time_at(friday, time(20, 0))
         monday = start + timedelta(days=3)
         end = _time_at(monday, time(8, 0))
+    next_start = None if active else _next_internal_start(local, time(20, 0), {4})
 
     return {
         "id": "korea_weekend_internal",
@@ -190,6 +204,8 @@ def _korea_weekend_session(moment: datetime) -> dict[str, Any]:
         "end_at": _iso_utc(end) if end is not None else None,
         "local_start": _local_iso(start) if start is not None else None,
         "local_end": _local_iso(end) if end is not None else None,
+        "next_start_at": _iso_utc(next_start) if next_start is not None else None,
+        "next_local_start": _local_iso(next_start) if next_start is not None else None,
         "baseline_boundary_at": _iso_utc(start) if start is not None else None,
         "official_spec_url": TRADE_XYZ_KOREA_SESSION_DOCS,
     }
@@ -220,6 +236,12 @@ def _nasdaq_internal_session(moment: datetime) -> dict[str, Any]:
         start = _time_at(local, time(17, 0))
         end = _time_at(local, time(18, 0))
         window = "daily_internal_gap"
+    next_start = None if active else _next_internal_start(local, time(17, 0), {0, 1, 2, 3, 4})
+    next_window = (
+        None if next_start is None
+        else "weekend_internal" if next_start.weekday() == 4
+        else "daily_internal_gap"
+    )
 
     return {
         "id": "xyz100_internal",
@@ -235,6 +257,9 @@ def _nasdaq_internal_session(moment: datetime) -> dict[str, Any]:
         "end_at": _iso_utc(end) if end is not None else None,
         "local_start": _local_iso(start) if start is not None else None,
         "local_end": _local_iso(end) if end is not None else None,
+        "next_start_at": _iso_utc(next_start) if next_start is not None else None,
+        "next_local_start": _local_iso(next_start) if next_start is not None else None,
+        "next_window": next_window,
         "baseline_boundary_at": _iso_utc(start) if start is not None else None,
         "schedule_basis_symbols": ["xyz:XYZ100"],
         "official_spec_url": TRADE_XYZ_EQUITY_INDEX_DOCS,
