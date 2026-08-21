@@ -991,7 +991,7 @@ notes: "명시적 금지 없음 + 공개 시세 API + 출처 표기 + 서버 rel
 | 항목 | 기록 |
 |---|---|
 | 내부 ID | `coinmarketcap` |
-| 현재 상태 | **`pending_review` → 키 발급·Commercial Terms 확인 후 `approved`** (기본 OFF) |
+| 현재 상태 | **`approved` (2026-08-21, `DS-2026-011`)** — 운영자가 Basic 키 발급 시 Commercial User Terms 수락, 서버 게이트 ON(2026-08-21 23:29 KST 첫 blob 저장·라이브 확인: BTC 59.83%·ETH 11.13%·총시총 $2.59T) |
 | 코드 위치 | `app/providers/coinmarketcap.py`, `app/crypto_structure.py`, `app/ingest.py::refresh_crypto_structure`, 라우트 `/api/crypto/structure` |
 | 게이트 | web: `CRYPTO_SECTION_ENABLED` + `CMC_ENABLED`; ingest 수집: + `CMC_API_KEY`(ingest 전용 env) |
 | 현재 사용(설계) | `GET /v1/global-metrics/quotes/latest?convert=USD` 1크레딧/회, `CMC_MAX_AGE`(기본 900초) 주기 → 월 ≈ 2,900크레딧(Basic 15,000의 1/5). blob 저장, 요청 경로는 blob만. 표시: BTC·ETH 도미넌스(24h 변화 p), 기타 = 100 − BTC − ETH, 총시총·24h, 스테이블코인 시총, 24h 거래대금 |
@@ -999,9 +999,34 @@ notes: "명시적 금지 없음 + 공개 시세 API + 출처 표기 + 서버 rel
 | 공식 근거 | [Pricing](https://coinmarketcap.com/api/pricing/) — "Commercial use rights — the free Basic tier included", 15,000 credits/월, 50 req/분(접근 2026-08-21); [Commercial Terms](https://pro.coinmarketcap.com/user-agreement-commercial/)(키 발급 시 원문 확인: 출처 문구, 1 product/100k users 한도, 독립 재배포 금지) |
 | 표시 경계 | 출처 문구(`CMC_ATTRIBUTION_TEXT`, 기본 "Data provided by CoinMarketCap" + 링크)를 값 바로 옆에, 도미넌스는 "CMC 유니버스 기준" 고지, 로고 미사용 |
 
-주의: 일부 3자 요약은 Basic을 개인용으로 표기한다. 가격표 원문이 상업 이용을 명시하므로 접근일과 문구를
-기록하고, 약관 원문이 다르면 Startup($79/월 — 예산 초과)로 가지 않고 lane을 끈다. 승인 블록(DS-2026-0NN)은
-키 발급 시 운영자가 채운다.
+가격표 재확인(2026-08-21 23:2x KST): 비교표의 "Commercial use"가 Basic~Professional 전 플랜에 표시되고,
+라이선스는 "limited, non-exclusive and non-transferable, and covers one product with up to 100k users",
+"may not redistribute or resell it as a standalone service, whether through your own API or as part of a data
+distribution product" — Mulmit은 대시보드 안의 통합 표시(1 product)이며 독립 재배포가 아니다. 가입 드롭다운의
+"Startup — For commercial use" 라벨은 크레딧 규모 안내로 보고 Basic을 선택했다(예산 0원). 약관 변경 시
+`CMC_ENABLED=false`로 즉시 OFF.
+
+```yaml
+decision_id: DS-2026-011
+provider_id: coinmarketcap
+status: approved
+reviewed_at: 2026-08-21
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://coinmarketcap.com/api/pricing/ (Commercial use — Basic 포함, 1 product/100k users, standalone 재배포 금지) + 키 발급 시 수락한 Commercial User Terms
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  cache_ttl_seconds: 900
+  stale_seconds: 43200
+  historical_storage: false     # 최신 blob 1개만
+  derived_metrics: true         # 기타 = 100 − BTC − ETH 산술
+  advertising: true
+attribution: "Data provided by CoinMarketCap" (링크, 값 바로 아래)
+expires_at: null
+recheck_at: 2026-11-21
+notes: "Basic 무료 15,000 credits/월 중 ≈2,900 사용. 키는 ingest 전용 env. 도미넌스는 CMC 유니버스 기준 고지."
+```
 
 ### 3.21 가스·온체인 수수료 스트립 — 조사 결과 **보류** (2026-08-21)
 
@@ -1498,3 +1523,4 @@ notes: "No confidential contract language here"
 
 | 2026-08-21 | 크립토 섹션 Phase 1(ROADMAP #16) — §3.1 네이티브 퍼프 단락, §3.18 alternative.me 신설(`DS-2026-010`, official_terms, 출처 값 옆 조건), §4.1 Deribit·두나무·Coinalyze 문의 대기 3행. 소스 17종 판정·실측은 `PLAN_CRYPTO_SECTION.md` §3·§8 | Claude assisted |
 | 2026-08-21 | 크립토 Phase 2 — §3.19 업비트 시세(`pending_rights`, 위험수용 템플릿), §3.20 CoinMarketCap 글로벌 메트릭(`pending_review`→키 발급 시 approved), §3.21 가스 스트립 조사 결과 보류(퍼블릭 RPC·mempool 약관). 코드는 게이트 기본 OFF로 배포 | Claude assisted |
+| 2026-08-21 | CoinMarketCap lane 승인·활성화(`DS-2026-011`, §3.20) — Basic 키 발급·서버 게이트 ON, 첫 blob 라이브 확인. lane report의 CMC 상태를 서빙 기준으로 정정(키는 ingest 전용) | Claude assisted |

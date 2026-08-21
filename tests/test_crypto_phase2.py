@@ -396,7 +396,8 @@ def test_lane_report_names_phase2_gates(db, monkeypatch):
     monkeypatch.setattr(config, "CMC_API_KEY", "")
     monkeypatch.setattr(config, "UPBIT_ENABLED", True)
     report = data_rights.lane_report()
-    assert report["coinmarketcap"]["status"] == "not_configured"
+    assert report["coinmarketcap"]["status"] == "enabled"
+    assert report["coinmarketcap"]["fetch_key"] == "absent_in_this_process"
     assert report["upbit"]["status"] == "enabled"
 
 
