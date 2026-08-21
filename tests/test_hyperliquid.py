@@ -482,6 +482,33 @@ def test_nasdaq_internal_session_boundaries(
     assert result["market_session"] == market_session
 
 
+def test_fetch_candles_accepts_main_dex_symbols_and_rejects_empty():
+    captured: dict = {}
+
+    def transport(payload: dict, timeout: float) -> list:
+        captured.update(payload)
+        return [_candle("BTC", "77000", datetime(2026, 8, 21, tzinfo=UTC))]
+
+    provider = HyperliquidProvider(transport=transport)
+    result = provider.fetch_candles(
+        "BTC",
+        interval="1d",
+        start=datetime(2026, 8, 1, tzinfo=UTC),
+        end=datetime(2026, 8, 21, tzinfo=UTC),
+    )
+    assert captured["req"]["coin"] == "BTC"
+    assert captured["req"]["interval"] == "1d"
+    assert result["symbol"] == "BTC"
+    assert result["candles"][0]["c"] == "77000"
+    with pytest.raises(ValueError):
+        provider.fetch_candles(
+            "  ",
+            interval="1d",
+            start=datetime(2026, 8, 1, tzinfo=UTC),
+            end=datetime(2026, 8, 21, tzinfo=UTC),
+        )
+
+
 def test_sessions_expose_next_internal_start_when_inactive():
     provider = FixtureProvider({"xyz": [], "mkts": []})
     # Friday 20:18 KST = 07:18 ET: Korea is inside its window, Nasdaq is not yet.

@@ -51,9 +51,9 @@ Mulmit의 `/api/market/*`는 인증 없이 열려 있으므로 누구나 응답 
 | 내부 ID | `hyperliquid_hip3_trade_xyz` |
 | 현재 상태 | `pending_rights` |
 | 코드 위치 | `app/providers/hyperliquid.py`, `app/market_assets.py`, `app/weekend_signals.py` |
-| 현재 사용 | `xyz`/`mkts` meta/context, mark, oracle, funding, OI, 24h notional, 일부 5분 기준 캔들 |
+| 현재 사용 | `xyz`/`mkts` meta/context, mark, oracle, funding, OI, 24h notional, 일부 5분 기준 캔들, **자산 카드 일봉 이력(`candleSnapshot` 1d, 1년, 6시간 주기 — 2026-08-21부터, `app/hip3_history.py`)** |
 | 기술 비용 | API 키·구독료 없음 |
-| 캐시 | 자산 30초/300초 stale, 주말 5분/30분 stale, 프로세스 로컬 |
+| 캐시 | 자산 30초/300초 stale, 주말 5분/30분 stale, 프로세스 로컬. 일봉 이력은 report blob(`hip3_history_daily_v1`) 1개, 서빙 TTL 7일 |
 | 공개 결정 | 서면 확인 전 권리 게이트 추가가 최우선 |
 | 표시 경계 | 합성 무기한선물 참고값이며 현물·공식 지수 종가·월요일 예측이 아님 |
 | 상장 주체 구분 | `xyz:` 접두사는 trade.xyz가 HIP-3로 배포한 상품, 접두사 없는 심볼(`BTC`)은 Hyperliquid 자체 DEX 상품이다. 같은 API·같은 게이트를 쓰지만 publisher가 다르므로 응답에서 구분한다 |
@@ -102,6 +102,24 @@ HIP3_PUBLIC_DISPLAY_ENABLED=false
 약화시키지 않고 오히려 명시적 금지가 없음을 확인했지만, 그것이 승인은 아니므로
 `recheck_at: 2026-09-16`도 그대로다.
 
+**2026-08-21 개정 — 무응답의 의미를 바꾼다.** 발송(08-17) 후 Hyperliquid Corp.는
+"permissionless, 공개 API는 누구나 조회 가능, HIP-3 피드는 xyz에 문의"라고 답했고
+XYZ Ltd는 무응답이다. 원래 기록은 "재검토일까지 회신이 없으면 공개값을 false로
+되돌린다"였는데, 이 규칙대로면 광고 출시 직후 자산 카드 전부를 꺼야 한다. 저장소
+소유자는 다음으로 개정했다:
+
+- **명시적 거절 → 즉시 OFF** (`HIP3_PUBLIC_DISPLAY_ENABLED=false`, 이력 블롭 삭제).
+- **무응답 → 운영자 위험 수용 계속.** 근거: 양사 약관 모두 재배포를 금지하지 않음,
+  XYZ §7.1은 프로토콜 데이터에 IP를 주장하지 않음, Hyperliquid 공식 채널의
+  "permissionless" 답변, 전 카드의 합성·비현물 표기와 권리 고지. `recheck_at`은
+  "자동 OFF일"이 아니라 "재검토일"이다.
+- **이력 저장도 같은 위험 수용으로 연다** (`historical_storage: true`). 별도 게이트
+  `HIP3_HISTORY_ENABLED`(기본 false, 서버 .env에서만 true), `candleSnapshot` 1d·1년·
+  6시간 주기, 자산당 가중치 약 26(20 + 366/60)·11자산 ≈ 290/회로 한도(1,200/분)의
+  한참 아래. 요청 경로는 저장 블롭만 읽는다(라이브 캔들 호출 없음). 거절 회신이
+  오면 플래그 하나로 끄고 블롭을 지운다.
+- 재발송 검토일 2026-08-31은 유지한다.
+
 ```yaml
 decision_id: DS-2026-001
 provider_id: hyperliquid_hip3_trade_xyz
@@ -115,17 +133,19 @@ approved_scope:
   server_json_relay: unconfirmed
   cache_ttl_seconds: 30
   stale_seconds: 300
-  historical_storage: false
+  historical_storage: true   # 2026-08-21 개정: 일봉 1년, HIP3_HISTORY_ENABLED 별도 게이트
   derived_metrics: unconfirmed
   advertising: unconfirmed
 attribution: "Hyperliquid HIP-3 / trade.xyz"
 expires_at: null
 recheck_at: 2026-09-16
 notes: >
-  코드 기본값은 HIP3_PUBLIC_DISPLAY_ENABLED=false. 서면 답변 도착 전까지 현행
-  공개 화면을 유지하기로 저장소 소유자가 결정하여 서버 .env에서만 true로 둔다.
-  이는 승인 근거가 아니라 명시적으로 기록된 운영자 위험 수용이다. recheck_at까지
-  답변이 없으면 배포 값을 false로 되돌린다.
+  코드 기본값은 HIP3_PUBLIC_DISPLAY_ENABLED=false, HIP3_HISTORY_ENABLED=false.
+  서면 답변 도착 전까지 현행 공개 화면과 일봉 이력을 유지하기로 저장소 소유자가
+  결정하여 서버 .env에서만 둘 다 true로 둔다. 이는 승인 근거가 아니라 명시적으로
+  기록된 운영자 위험 수용이다. 2026-08-21 개정: 명시적 거절 회신이 오면 즉시
+  false로 되돌리고 이력 블롭을 지운다. 무응답은 OFF 사유가 아니며 recheck_at은
+  재검토일이다(근거는 바로 위 "2026-08-21 개정" 단락).
 ```
 
 ### 3.2 TradingView 공식 위젯
@@ -829,7 +849,7 @@ Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로
 
 | 수신처 | 막고 있는 것 | 상태 | 초안 |
 |---|---|---|---|
-| trade.xyz **및** Hyperliquid (수신처 2곳) | 자산 카드 전체의 역사 차트. `historical_storage: false`라 현재는 최신값만 보인다 | **Hyperliquid 지원팀 회신 2026-08-18**: 플랫폼은 permissionless이며 공개 API 조회는 누구나 가능, 기술 문의는 Discord, **HIP-3 피드 관련은 xyz 팀에 직접 문의하라고 안내** — 권리 판단을 바꾸는 명시적 허락은 아니다. **xyz 회신 대기 유지**. 2026-08-21 운영자 재확인 — 발송(08-17) 후 4일째 무응답, 같은 메일을 xyz 허가로 오인하지 않도록 여기 명시. 재발송 검토일 2026-08-31(+14일). `DS-2026-001`, `recheck_at: 2026-09-16` | [`INQUIRY_HYPERLIQUID_TRADE_XYZ.md`](INQUIRY_HYPERLIQUID_TRADE_XYZ.md) |
+| trade.xyz **및** Hyperliquid (수신처 2곳) | 자산 카드 전체의 역사 차트. `historical_storage: false`라 현재는 최신값만 보인다 | **Hyperliquid 지원팀 회신 2026-08-18**: 플랫폼은 permissionless이며 공개 API 조회는 누구나 가능, 기술 문의는 Discord, **HIP-3 피드 관련은 xyz 팀에 직접 문의하라고 안내** — 권리 판단을 바꾸는 명시적 허락은 아니다. **xyz 회신 대기 유지**. 2026-08-21 운영자 재확인 — 발송(08-17) 후 4일째 무응답, 같은 메일을 xyz 허가로 오인하지 않도록 여기 명시. 같은 날 DS-2026-001 개정: 무응답은 OFF 사유가 아니고 명시적 거절만 OFF, 이력 차트는 운영자 위험 수용으로 개방(§3.1). 재발송 검토일 2026-08-31(+14일). `recheck_at: 2026-09-16`은 재검토일 | [`INQUIRY_HYPERLIQUID_TRADE_XYZ.md`](INQUIRY_HYPERLIQUID_TRADE_XYZ.md) |
 | Federal Reserve Bank of St. Louis | `financial_stress`(STLFSI4). 뉴욕 연준과 같은 구조 — 연방기관이 아니라 저작권을 주장하지만, 명시적 이용허락을 주는지가 관건이다. 시리즈 태그가 "Copyrighted: Citation Required"(2026-08-17 확인)라 인용이 완결 조건인지 서면으로 묻는다. FRED 경유 복제는 하지 않는다 | **회신 수신 2026-08-18 — 조건부 승인** (조건과 구현은 §3.3에 기록). 이 항목은 종결 | [`INQUIRY_STLOUISFED_STLFSI.md`](INQUIRY_STLOUISFED_STLFSI.md) |
 | 한국거래소 | 실시간 시세와 KRX 통계정보 전체(§3.4). 장 마감값은 §3.9로 이미 해결됨 | 초안 없음. 우선순위 낮아짐 | — |
 | Cboe | VIX·SKEW·VVIX·OVX·Put/Call | 서면 허가가 명시적으로 필요하고 월 예산 안의 근거가 없어 **문의하지 않기로** 결정 | — |
@@ -1229,4 +1249,5 @@ notes: "No confidential contract language here"
 | 2026-08-17 | 금융위원회 공공데이터 lane 추가(`DS-2026-006`). 코스피·코스닥·삼성전자·SK하이닉스 공식 종가를 KRX 승인과 별개 근거로 연결. `samsung` alias에서 `005930` 제거 | Claude assisted |
 | 2026-08-17 | `Mulmit 유동성·스트레스 지수` 도입. CNN Fear & Greed 복제 대신 자체 산식 | Claude assisted |
 | 2026-08-21 | 운영자 실사용 피드백 "안 나오는 데이터" 3종 판정 — ① HIP-3 자산 카드 이력 차트: `historical_storage: false`(xyz 회신 대기)에 따른 의도된 미제공, ② 나스닥 주말 신호: 내부 세션(금 17:00 ET) 시작 전, ③ VIX·하이일드: Cboe·ICE 원 권리자 라이선스. 권리 결정 변경 없음. UI만 고장이 아닌 상태로 정직화 — "표시할 시계열이 없습니다"→"이력 차트 미제공 · 표시 권리 확인 중", "데이터 미연결"→"세션 대기 · 다음 내부 세션 {시각}"(`/api/market/weekend` session에 `next_start_at` 추가). `xyz:VIX` 상장폐지 확인으로 VIX proxy 경로 종결(§5 매핑표) | Claude assisted |
+| 2026-08-21 | **DS-2026-001 개정** — 무응답→OFF 규칙 폐기(명시적 거절만 OFF), HIP-3 자산 카드 **일봉 이력 개방**(`historical_storage: true`, 운영자 위험 수용). 새 lane `app/hip3_history.py`: `candleSnapshot` 1d·1년·6h, report blob 1개, 별도 게이트 `HIP3_HISTORY_ENABLED`(기본 false), 요청 경로는 저장 블롭만 읽음, `/api/market/assets`에 `observations`·`history_status`(`withheld_pending_rights`/`collecting`/`stored_daily_candles`)·`history_lane`·`history_basis` 추가. `/api/status` 권리 요약에 `history` 게이트 표기 | Claude assisted |
 

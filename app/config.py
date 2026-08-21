@@ -120,6 +120,14 @@ SEC_EDGAR_TICKERS = [
 # pending, so the serving gate defaults to closed and a deployment has to opt in
 # explicitly (and record that decision in docs/DATA_SOURCE_REGISTER.md).
 HIP3_PUBLIC_DISPLAY_ENABLED = _bool("HIP3_PUBLIC_DISPLAY_ENABLED", False)
+# Stored daily history for the same cards (candleSnapshot 1d). Its own gate on
+# top of the display gate: keeping a year of another venue's closes is a bigger
+# footprint than relaying one mark, so a deployment opts in explicitly and
+# records the decision (DS-2026-001, revised 2026-08-21). Both default closed.
+HIP3_HISTORY_ENABLED = _bool("HIP3_HISTORY_ENABLED", False)
+HIP3_HISTORY_MAX_AGE = _int("HIP3_HISTORY_MAX_AGE", 60 * 60 * 6)
+HIP3_HISTORY_DAYS = _int("HIP3_HISTORY_DAYS", 366)
+HIP3_HISTORY_TIMEOUT = _float("HIP3_HISTORY_TIMEOUT", 10.0)
 # Financial Services Commission end-of-day data on data.go.kr. The three
 # datasets used here are registered with 이용허락범위 "제한 없음" — the portal's
 # widest licence tier — which is a different and broader grant than the KRX

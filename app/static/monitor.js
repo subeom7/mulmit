@@ -63,7 +63,7 @@ const TEXT = {
     "uspage.copy": "S&P 500 히트맵, 스트레스 지수, 매크로, 유동성, 공식 환율을 한 페이지에서 봅니다.",
     "status.connecting": "연결 중", "status.live": "데이터 연결", "status.partial": "일부 데이터", "status.offline": "연결 오류",
     "status.loading": "불러오는 중", "status.viewport": "화면에 표시되면 불러옵니다", "status.unavailable": "데이터 미연결",
-    "status.noSeries": "표시할 시계열이 없습니다", "status.historyPending": "이력 차트 미제공 · 표시 권리 확인 중 (최신값만 표시)", "status.retry": "새로고침 후 다시 시도해 주세요.", "status.staleData": "지연 데이터", "status.legacyDisabled": "라이선스 데이터 전환 중 · 공개 데이터 비활성",
+    "status.noSeries": "표시할 시계열이 없습니다", "status.historyPending": "이력 차트 미제공 · 표시 권리 확인 중 (최신값만 표시)", "status.historyCollecting": "이력 수집 중 · 첫 수집 뒤 차트가 표시됩니다", "status.retry": "새로고침 후 다시 시도해 주세요.", "status.staleData": "지연 데이터", "status.legacyDisabled": "라이선스 데이터 전환 중 · 공개 데이터 비활성",
     "stress.eyebrow": "MULMIT 자체 산출 · 산식 공개", "stress.title": "유동성·스트레스 지수", "stress.own": "자체 산출",
     "stress.scale": "0에 가까울수록 완화, 100에 가까울수록 긴축", "stress.caption": "지수를 구성하는 입력",
     "stress.colInput": "입력", "stress.colValue": "값", "stress.colPct": "5년 내 백분위", "stress.colScore": "스트레스 점수", "stress.colDir": "방향",
@@ -152,7 +152,7 @@ const TEXT = {
     "uspage.copy": "The S&P 500 heatmap, stress index, macro, liquidity and official FX on one page.",
     "status.connecting": "Connecting", "status.live": "Data live", "status.partial": "Partial data", "status.offline": "Connection error",
     "status.loading": "Loading", "status.viewport": "Loads when scrolled into view", "status.unavailable": "Data not connected",
-    "status.noSeries": "No series available", "status.historyPending": "History chart withheld while display rights are confirmed · latest value only", "status.retry": "Refresh and try again.", "status.staleData": "Stale data", "status.legacyDisabled": "Public data disabled during licensed-provider migration",
+    "status.noSeries": "No series available", "status.historyPending": "History chart withheld while display rights are confirmed · latest value only", "status.historyCollecting": "Collecting history · the chart appears after the first collection", "status.retry": "Refresh and try again.", "status.staleData": "Stale data", "status.legacyDisabled": "Public data disabled during licensed-provider migration",
     "stress.eyebrow": "MULMIT COMPOSITE · PUBLISHED METHOD", "stress.title": "Liquidity & Stress Index", "stress.own": "Own composite",
     "stress.scale": "Lower is looser, higher is tighter", "stress.caption": "Inputs that make up the index",
     "stress.colInput": "Input", "stress.colValue": "Value", "stress.colPct": "5-year percentile", "stress.colScore": "Stress score", "stress.colDir": "Direction",
@@ -834,12 +834,15 @@ function lineChart(series, color = null, normalize = false) {
   svg.append(area, line, dot); return svg;
 }
 
+// Why a chart slot is empty, in the asset lane's own words (see app/hip3_history.py).
+const HISTORY_EMPTY_TEXT = { withheld_pending_rights: "status.historyPending", not_requested_to_bound_public_api_latency: "status.historyPending", collecting: "status.historyCollecting" };
+
 function renderMetricChart(card) {
   const key = card.dataset.metric; const slot = $(".chart-slot", card); const record = state.records.get(key); const definition = METRICS[key];
   const info = cardState(key, record, definition); slot.replaceChildren();
   if (info.badge) { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = info.badge; slot.append(empty); return; }
   const chart = lineChart(observations(record));
-  if (chart) slot.append(chart); else { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = record?.history_status === "not_requested_to_bound_public_api_latency" ? t("status.historyPending") : t("status.noSeries"); slot.append(empty); }
+  if (chart) slot.append(chart); else { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = t(HISTORY_EMPTY_TEXT[record?.history_status] || "status.noSeries"); slot.append(empty); }
 }
 
 function setupLazyCharts() {

@@ -3,8 +3,10 @@
 The monitor intentionally does not read the legacy Yahoo price cache.  A cold
 request performs one ``metaAndAssetCtxs`` call for the ``xyz`` DEX and exposes
 only values actually present in that response.  Hyperliquid contexts do not
-carry historical highs or a per-market exchange timestamp, so drawdowns and
-chart observations remain null/empty instead of being inferred.
+carry historical highs or a per-market exchange timestamp, so drawdowns stay
+null instead of being inferred.  Chart observations come from the separately
+gated daily-candle lane (``app/hip3_history.py``) and are attached here from
+the store only — this request path never asks the venue for candles.
 """
 
 from __future__ import annotations
@@ -15,6 +17,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib.parse import quote
 
+from . import hip3_history
 from .providers.base import DataUnavailable, RateLimited
 from .providers.hyperliquid import (
     API_URL,
@@ -504,7 +507,7 @@ def _payload(spec: AssetSpec, market: dict[str, Any], snapshot: dict[str, Any]) 
             "stale_if_error_seconds": ASSET_STALE_TTL_SECONDS,
             "cached": bool(snapshot.get("cached")),
         },
-        "history_status": "not_requested_to_bound_public_api_latency",
+        "history_status": hip3_history.STATUS_WITHHELD,
         "observation_count": {"available": 0, "returned": 0, "limit": MAX_PUBLIC_OBSERVATIONS},
         "observations": [],
         "rights": {
@@ -583,18 +586,48 @@ def _disclaimer() -> dict[str, str]:
     }
 
 
+def _attach_history(
+    payload: dict[str, Any],
+    spec: AssetSpec,
+    blob: dict[str, Any] | None,
+    days: int | None,
+) -> None:
+    """Fill the chart fields from the stored daily-candle blob, or say why not."""
+    if not hip3_history.enabled():
+        payload["history_status"] = hip3_history.STATUS_WITHHELD
+        return
+    rows, available = hip3_history.observations_for(
+        blob, spec.provider_symbol or "", days=days, limit=MAX_PUBLIC_OBSERVATIONS
+    )
+    if not rows:
+        payload["history_status"] = hip3_history.STATUS_COLLECTING
+        return
+    payload["history_status"] = hip3_history.STATUS_STORED
+    payload["history_basis"] = (blob or {}).get("basis") or hip3_history.BASIS
+    payload["history_as_of"] = hip3_history.series_as_of(blob, spec.provider_symbol or "")
+    payload["observation_count"] = {
+        "available": available,
+        "returned": len(rows),
+        "limit": MAX_PUBLIC_OBSERVATIONS,
+    }
+    payload["observations"] = rows
+
+
 def build_asset_snapshot(
     history: str = "3y",
     provider: DexProvider | None = None,
 ) -> dict[str, Any]:
     """Build cards from one bounded xyz DEX context request.
 
-    ``history`` remains in the public contract for the chart controls, but this
-    low-latency endpoint deliberately returns empty observations.  Historical
-    candles can be added later through a separately cached/background path.
+    ``history`` bounds the chart window.  This low-latency endpoint never asks
+    the venue for candles; observations are read from the blob the
+    ``hip3_history`` batch lane stores, and stay empty while that lane's gate
+    is closed or before its first collection.
     """
     if history not in HISTORY_DAYS:
         raise ValueError(f"unsupported history: {history}")
+    history_blob = hip3_history.load()
+    history_days = HISTORY_DAYS[history]
 
     client = provider or _DEFAULT_PROVIDER
     venues = sorted({_dex_for(spec.provider_symbol) for spec in ASSETS if spec.provider_symbol})
@@ -633,6 +666,7 @@ def build_asset_snapshot(
         if payload is None:
             missing.append(spec.asset_id)
             continue
+        _attach_history(payload, spec, history_blob, history_days)
         assets.append(payload)
 
     as_of = snapshot.get("as_of") or snapshot.get("fetched_at")
@@ -657,6 +691,14 @@ def build_asset_snapshot(
             "as_of": as_of,
             "as_of_basis": "Hyperliquid response fetch time",
             "error": snapshot.get("error"),
+        },
+        "history_lane": {
+            "status": "enabled" if hip3_history.enabled() else "withheld_pending_rights",
+            "gate": "HIP3_HISTORY_ENABLED",
+            "interval": hip3_history.INTERVAL,
+            "window_days": (history_blob or {}).get("window_days"),
+            "generated_at": (history_blob or {}).get("generated_at"),
+            "basis": (history_blob or {}).get("basis") if history_blob else None,
         },
         "groups": _groups(),
         "assets": assets,

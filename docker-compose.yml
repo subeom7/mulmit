@@ -24,6 +24,8 @@ x-app: &app
     FRED_ENABLED: ${FRED_ENABLED:-false}
     KRX_ENABLED: ${KRX_ENABLED:-false}
     HIP3_PUBLIC_DISPLAY_ENABLED: ${HIP3_PUBLIC_DISPLAY_ENABLED:-false}
+    # 같은 카드의 일봉 이력 저장. web(서빙 판정)·ingest(수집) 양쪽에 같은 값.
+    HIP3_HISTORY_ENABLED: ${HIP3_HISTORY_ENABLED:-false}
     NYFED_ENABLED: ${NYFED_ENABLED:-false}
     FEDBOARD_ENABLED: ${FEDBOARD_ENABLED:-false}
     BLS_ENABLED: ${BLS_ENABLED:-false}

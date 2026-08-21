@@ -26,6 +26,7 @@ from . import (
     config,
     data,
     econ_calendar,
+    hip3_history,
     kr_events,
     kr_holdings,
     kr_pension,
@@ -761,6 +762,15 @@ def refresh_us_fundamentals(*, force: bool = False) -> dict:
     return result
 
 
+def refresh_hip3_history(*, force: bool = False) -> dict:
+    """HIP-3 자산 카드의 일봉 이력 — 표시 게이트와 별도 게이트(HIP3_HISTORY_ENABLED)."""
+    try:
+        return hip3_history.refresh(force=force)
+    except Exception as exc:  # noqa: BLE001 - 이력 lane 장애가 틱을 끊지 않는다
+        log.warning("HIP-3 이력 lane 실패: %s", exc)
+        return {"failed": 1, "error": str(exc)}
+
+
 def refresh_us_ptr(*, force: bool = False) -> dict:
     """미 하원 PTR 갱신. 인덱스 zip + 신규 PDF 상세라 배치 전용이다."""
     if not config.US_PTR_ENABLED:
@@ -943,6 +953,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         pension_result = {"skipped": "explicit_price_refresh"}
         ptr_result = {"skipped": "explicit_price_refresh"}
         fund_result = {"skipped": "explicit_price_refresh"}
+        hip3_result = {"skipped": "explicit_price_refresh"}
         if automatic:
             fred_result = refresh_fred()
             nyfed_result = refresh_nyfed()
@@ -958,6 +969,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             ptr_result = refresh_us_ptr()
             fund_result = refresh_us_fundamentals()
             refresh_econ_calendar()
+            hip3_result = refresh_hip3_history()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
             "skipped": "legacy_price_data_disabled",
@@ -978,6 +990,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             "kr_events": kr_events_result,
             "us_ptr": ptr_result,
             "us_fundamentals": fund_result,
+            "hip3_history": hip3_result,
             "elapsed": round(time.time() - started, 2),
         }
         log.info("레거시 가격 수집 비활성화: %s", result)
@@ -1002,6 +1015,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_us_ptr()
             refresh_us_fundamentals()
             refresh_econ_calendar()
+            hip3_result = refresh_hip3_history()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
                 "skipped": "backoff",
@@ -1064,6 +1078,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     pension_result = {"skipped": "explicit_price_refresh"}
     ptr_result = {"skipped": "explicit_price_refresh"}
     fund_result = {"skipped": "explicit_price_refresh"}
+    hip3_result = {"skipped": "explicit_price_refresh"}
     if automatic:
         fred_result = refresh_fred()
         nyfed_result = refresh_nyfed()
@@ -1079,6 +1094,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         ptr_result = refresh_us_ptr()
         fund_result = refresh_us_fundamentals()
         refresh_econ_calendar()
+        hip3_result = refresh_hip3_history()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged
@@ -1091,6 +1107,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     result["kr_pension"] = pension_result
     result["us_ptr"] = ptr_result
     result["us_fundamentals"] = fund_result
+    result["hip3_history"] = hip3_result
     result["elapsed"] = round(time.time() - started, 2)
     log.info("수집 완료: %s", result)
     return result

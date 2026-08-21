@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from app import config, hip3_history, store
 from app.main import app
 from app.market_assets import ASSETS, MAX_PUBLIC_OBSERVATIONS, build_asset_snapshot
 from app.providers.base import DataUnavailable
@@ -293,3 +294,62 @@ def test_a_hyperliquid_listed_perpetual_is_not_labelled_synthetic():
     assert assets["bitcoin"]["source"]["venue"] == "main"
     assert "synthetic" not in assets["bitcoin"]["instrument_kind"]
     assert assets["sp500"]["source"]["venue"] == "xyz"
+
+
+_HISTORY_BLOB = {
+    "generated_at": "2026-08-21T12:00:00Z",
+    "interval": "1d",
+    "window_days": 366,
+    "basis": hip3_history.BASIS,
+    "series": {
+        "xyz:SP500": {
+            "fetched_at": "2026-08-21T12:00:00Z",
+            "as_of": "2026-08-21T23:59:59Z",
+            "interval": "1d",
+            "observations": [
+                {"date": "2026-08-20", "value": 7600.0},
+                {"date": "2026-08-21", "value": 7700.0},
+            ],
+        }
+    },
+}
+
+
+def test_snapshot_attaches_stored_history_when_history_lane_open(db, hip3_public_display, monkeypatch):
+    monkeypatch.setattr(config, "HIP3_HISTORY_ENABLED", True)
+    hip3_history.clear_cache()
+    store.save_report(hip3_history.CACHE_KEY, _HISTORY_BLOB)
+    provider = FixtureProvider(
+        [("xyz:SP500", _context("7700", "7600")), ("xyz:GOLD", _context("4500", "4400"))]
+    )
+    snapshot = build_asset_snapshot("1y", provider=provider)
+    hip3_history.clear_cache()
+
+    by_id = {asset["id"]: asset for asset in snapshot["assets"]}
+    assert by_id["sp500"]["history_status"] == "stored_daily_candles"
+    assert by_id["sp500"]["observations"] == _HISTORY_BLOB["series"]["xyz:SP500"]["observations"]
+    assert by_id["sp500"]["observation_count"] == {
+        "available": 2, "returned": 2, "limit": MAX_PUBLIC_OBSERVATIONS
+    }
+    assert by_id["sp500"]["history_as_of"] == "2026-08-21T23:59:59Z"
+    assert by_id["sp500"]["history_basis"]["ko"].startswith("Hyperliquid candleSnapshot")
+    # Gold has no stored rows yet: honest "collecting", never an invented series.
+    assert by_id["gold"]["history_status"] == "collecting"
+    assert by_id["gold"]["observations"] == []
+    assert snapshot["history_lane"]["status"] == "enabled"
+    assert snapshot["history_lane"]["generated_at"] == "2026-08-21T12:00:00Z"
+    # The live request path still made exactly one context call per venue, no candles.
+    assert sorted(provider.calls) == ["main", "xyz"]
+
+
+def test_snapshot_withholds_history_while_history_gate_closed(db, hip3_public_display, monkeypatch):
+    monkeypatch.setattr(config, "HIP3_HISTORY_ENABLED", False)
+    hip3_history.clear_cache()
+    store.save_report(hip3_history.CACHE_KEY, _HISTORY_BLOB)
+    snapshot = build_asset_snapshot(
+        "1y", provider=FixtureProvider([("xyz:SP500", _context("7700", "7600"))])
+    )
+    asset = snapshot["assets"][0]
+    assert asset["history_status"] == "withheld_pending_rights"
+    assert asset["observations"] == []
+    assert snapshot["history_lane"]["status"] == "withheld_pending_rights"
