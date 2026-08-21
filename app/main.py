@@ -23,7 +23,9 @@ from slowapi.util import get_remote_address
 from . import (
     __version__,
     config,
+    crypto_kimchi,
     crypto_market,
+    crypto_structure,
     data_rights,
     econ_calendar,
     ingest,
@@ -581,6 +583,44 @@ def crypto_volatility(request: Request, response: Response) -> dict:
     response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=3600"
     response.headers["X-Data-Source"] = "Hyperliquid (derived)"
     return crypto_market.build_crypto_volatility()
+
+
+@app.get("/api/crypto/structure")
+@limiter.limit(config.RATE_LIMIT)
+def crypto_structure_route(request: Request, response: Response) -> dict:
+    """CoinMarketCap 글로벌 메트릭(도미넌스·총시총) — ingest가 저장한 블롭만 읽는다."""
+    require_crypto_section()
+    try:
+        payload = crypto_structure.build_crypto_structure()
+    except crypto_structure.CryptoStructureUnavailable as exc:
+        detail = (
+            data_rights.CRYPTO_STRUCTURE_DISABLED
+            if exc.reason == "disabled"
+            else data_rights.CRYPTO_STRUCTURE_COLLECTING
+        )
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=1800"
+    response.headers["X-Data-Source"] = "CoinMarketCap"
+    return payload
+
+
+@app.get("/api/crypto/kimchi")
+@limiter.limit(config.RATE_LIMIT)
+def crypto_kimchi_route(request: Request, response: Response) -> dict:
+    """업비트 원화 시세와 김치프리미엄(USDT 기준·공식환율 기준). 서버 relay, 15초 캐시."""
+    require_crypto_section()
+    if not data_rights.upbit_serving_enabled():
+        raise HTTPException(
+            status_code=503,
+            detail=data_rights.UPBIT_PENDING_RIGHTS,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        )
+    require_hip3_public_display()
+    response.headers["Cache-Control"] = "private, max-age=15, stale-while-revalidate=300"
+    response.headers["X-Data-Source"] = "Upbit + Hyperliquid + BOK ECOS"
+    return crypto_kimchi.build_crypto_kimchi()
 
 
 @app.get("/api/kr/search")

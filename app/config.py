@@ -154,6 +154,28 @@ ALTERNATIVE_ME_ENABLED = _bool("ALTERNATIVE_ME_ENABLED", False)
 ALTERNATIVE_ME_TIMEOUT = _float("ALTERNATIVE_ME_TIMEOUT", 15.0)
 ALTERNATIVE_ME_RETRIES = _int("ALTERNATIVE_ME_RETRIES", 2)
 ALTERNATIVE_ME_MAX_AGE = _int("ALTERNATIVE_ME_MAX_AGE", 60 * 60)
+# CoinMarketCap global metrics (BTC/ETH dominance, total market cap). Keyed.
+# Pricing page (2026-08-21): "Commercial use rights — the free Basic tier
+# included", 15,000 credits/month, 50 req/min; the Commercial Terms require
+# attribution next to the data and forbid standalone redistribution. The
+# operator confirms the exact scope when issuing the key. The key is needed by
+# ingest only; web serves the stored blob when CMC_ENABLED is on.
+# https://coinmarketcap.com/api/pricing/
+CMC_ENABLED = _bool("CMC_ENABLED", False)
+CMC_API_KEY = os.environ.get("CMC_API_KEY", "").strip()
+CMC_TIMEOUT = _float("CMC_TIMEOUT", 15.0)
+CMC_RETRIES = _int("CMC_RETRIES", 2)
+# 15 minutes ≈ 2,900 credits/month, a fifth of the Basic allowance.
+CMC_MAX_AGE = _int("CMC_MAX_AGE", 60 * 15)
+CMC_ATTRIBUTION_TEXT = os.environ.get("CMC_ATTRIBUTION_TEXT", "Data provided by CoinMarketCap").strip()
+# Upbit (Dunamu) KRW quotations for the kimchi premium. No key; public quotation
+# API, per-IP limits. The Open API terms (2023-12-15) §5 assert copyright over the
+# data and neither permit nor forbid public redisplay, so the lane stays
+# `pending_rights` and off until a written answer or a recorded operator risk
+# acceptance (docs/DATA_SOURCE_REGISTER.md §3.19) switches it on.
+UPBIT_ENABLED = _bool("UPBIT_ENABLED", False)
+UPBIT_TIMEOUT = _float("UPBIT_TIMEOUT", 5.0)
+UPBIT_RETRIES = _int("UPBIT_RETRIES", 1)
 
 # Financial Services Commission end-of-day data on data.go.kr. The three
 # datasets used here are registered with 이용허락범위 "제한 없음" — the portal's

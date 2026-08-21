@@ -943,6 +943,80 @@ recheck_at: 2026-11-21
 notes: "발행자 약관 페이지 문구 기반. 약관 변경 시 ALTERNATIVE_ME_ENABLED=false로 즉시 OFF. 명칭·브랜드 복제 금지 조항 준수."
 ```
 
+### 3.19 업비트(두나무) Open API — 원화 시세 relay (김치프리미엄)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `upbit` |
+| 현재 상태 | **`pending_rights`** — 기본 OFF(`UPBIT_ENABLED=false`), 값 비공개. 서면 회신 또는 아래 위험수용 블록 기록 후 개방 |
+| 코드 위치 | `app/providers/upbit.py`, `app/crypto_kimchi.py`, 라우트 `/api/crypto/kimchi` |
+| 게이트 | `CRYPTO_SECTION_ENABLED` + `UPBIT_ENABLED` (+ HIP-3 표시 게이트: 오라클 참고가) |
+| 현재 사용(설계) | `GET /v1/ticker?markets=KRW-BTC,KRW-ETH,KRW-SOL,KRW-XRP,KRW-DOGE,KRW-USDT` — 서버 relay, 15초 단일 비행 캐시·300초 stale, 호출량 ≈ 4/분/프로세스(한도 IP당 600/분의 1%). 브라우저 직결 없음(Origin 요청은 10초 1회 제한). 표시: 원화 최근 체결가·24h, 테더 프리미엄(KRW-USDT ÷ ECOS 일별 고시 − 1, 날짜 표시), 코인 프리미엄 USDT 기준((KRW-코인 ÷ KRW-USDT) ÷ HL 오라클 − 1)·공식환율 기준 |
+| 기술 비용 | 키·구독료 없음 |
+| 공식 근거 | [Open API 이용약관 2023-12-15](https://static.upbit.com/terms/legacy/openapi_agreement_20231215.html), [티커 API 문서](https://docs.upbit.com/kr/reference/ticker), [요청 한도](https://docs.upbit.com/kr/reference/rate-limits) |
+| 표시 경계 | 업비트 최근 체결가(호가·수수료·출금 조건 미반영), 차익거래 가능성 아님, 로고 미사용, 출처 문구 "시세: 업비트(두나무)" |
+
+약관 원문(접근 2026-08-21): §2 정의 "…시세 및 잔고 조회…", **§5(저작권) "Open API 서비스상에서
+제공되는 모든 데이터 및 내용에 대한 저작권은 두나무에 있으므로 사용자는 이를 무단으로 사용하거나
+변경하여서는 안 됩니다."**, §6③ 프로그램의 유상 양도·배포 금지. 공개 웹 재표시를 허가하는 조항도
+금지하는 조항도 없다 — 침묵을 허가로 읽지 않는다. 시세 API는 인증 없이 제공되고(IP당 10회/초) 국내
+다수 사이트가 같은 방식으로 표시하지만 그 사실은 근거가 아니다.
+
+문의 초안: [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §2(발송 대기). 무응답 시 운영자
+선택지: ① 계속 대기 ② HL과 같은 위험수용 — 아래 블록을 채워 기록하고 `UPBIT_ENABLED=true`.
+
+```yaml
+decision_id: DS-2026-0NN          # 운영자 기록 시 부여
+provider_id: upbit
+status: pending_rights            # 회신 승인 시 approved, 위험수용 시 pending_rights 유지 + notes
+reviewed_at: YYYY-MM-DD
+reviewer: repository owner
+evidence_type: official_terms | written_email
+evidence_reference: https://static.upbit.com/terms/legacy/openapi_agreement_20231215.html
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  cache_ttl_seconds: 15
+  stale_seconds: 300
+  historical_storage: false
+  derived_metrics: true     # 프리미엄 = 표시값 산술
+  advertising: true
+attribution: "시세: 업비트(두나무)"
+recheck_at: YYYY-MM-DD
+notes: "명시적 금지 없음 + 공개 시세 API + 출처 표기 + 서버 relay 저호출 + 로고 미사용. 거절 회신 시 즉시 OFF."
+```
+
+### 3.20 CoinMarketCap API — 글로벌 메트릭(BTC·ETH 도미넌스, 총시총)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `coinmarketcap` |
+| 현재 상태 | **`pending_review` → 키 발급·Commercial Terms 확인 후 `approved`** (기본 OFF) |
+| 코드 위치 | `app/providers/coinmarketcap.py`, `app/crypto_structure.py`, `app/ingest.py::refresh_crypto_structure`, 라우트 `/api/crypto/structure` |
+| 게이트 | web: `CRYPTO_SECTION_ENABLED` + `CMC_ENABLED`; ingest 수집: + `CMC_API_KEY`(ingest 전용 env) |
+| 현재 사용(설계) | `GET /v1/global-metrics/quotes/latest?convert=USD` 1크레딧/회, `CMC_MAX_AGE`(기본 900초) 주기 → 월 ≈ 2,900크레딧(Basic 15,000의 1/5). blob 저장, 요청 경로는 blob만. 표시: BTC·ETH 도미넌스(24h 변화 p), 기타 = 100 − BTC − ETH, 총시총·24h, 스테이블코인 시총, 24h 거래대금 |
+| 기술 비용 | Basic 무료(예산 0원) |
+| 공식 근거 | [Pricing](https://coinmarketcap.com/api/pricing/) — "Commercial use rights — the free Basic tier included", 15,000 credits/월, 50 req/분(접근 2026-08-21); [Commercial Terms](https://pro.coinmarketcap.com/user-agreement-commercial/)(키 발급 시 원문 확인: 출처 문구, 1 product/100k users 한도, 독립 재배포 금지) |
+| 표시 경계 | 출처 문구(`CMC_ATTRIBUTION_TEXT`, 기본 "Data provided by CoinMarketCap" + 링크)를 값 바로 옆에, 도미넌스는 "CMC 유니버스 기준" 고지, 로고 미사용 |
+
+주의: 일부 3자 요약은 Basic을 개인용으로 표기한다. 가격표 원문이 상업 이용을 명시하므로 접근일과 문구를
+기록하고, 약관 원문이 다르면 Startup($79/월 — 예산 초과)로 가지 않고 lane을 끈다. 승인 블록(DS-2026-0NN)은
+키 발급 시 운영자가 채운다.
+
+### 3.21 가스·온체인 수수료 스트립 — 조사 결과 **보류** (2026-08-21)
+
+| 후보 | 확인 내용(접근 2026-08-21) | 판정 |
+|---|---|---|
+| Etherscan 무료 API | 출처표기 필수 + 상업 이용 사전 동의 필요(PLAN §3) | `license_required` |
+| PublicNode(Allnodes) 퍼블릭 RPC | ToS가 "copying, distributing or disclosing any part of the Service … scraping"을 금지하고 상업·요율 조항은 없음 | 불명확 → 미사용 |
+| Base 공식 `mainnet.base.org` | 문서: "The public endpoints above are rate-limited and not suitable for production traffic. For production use, connect through a node provider." | 프로덕션 부적합 → 미사용 |
+| Arbitrum 공식 퍼블릭 RPC | 같은 취지(rate-limited, 프로덕션은 provider 권장) | 미사용 |
+| mempool.space API | 무료 사용은 비상업 취지, 상업·고량은 Enterprise/유료(Pro 20 EUR/월) | 예산 내지만 가치 대비 보류 |
+| Alchemy/Infura 등 키 발급형 무료 티어 | 약관상 프로덕션 허용(계정·키 필요) | **운영자가 가입하면** env 주입형 lane으로 재개 |
+
+결론: Phase 2에서 가스 스트립은 **코드 없이 보류**. 재개 조건: 운영자 RPC provider 가입(무료 티어) +
+해당 약관 인용 기록 → 작은 lane(`eth_feeHistory`·L2 `eth_gasPrice`, 서버 30초 캐시).
+
 ## 4. 원 발행기관 후보
 
 아래 표의 `pending_review`는 무료라고 단정하는 표시가 아니다. 다음 세션에서 정확한 endpoint, 이용조건, attribution, 저장·캐시·제3자 표시 범위를 다시 확인한 뒤 series 단위로 승인한다.
@@ -1423,3 +1497,4 @@ notes: "No confidential contract language here"
 | 2026-08-21 | **Mulmit 시장 심리 게이지(실험)** 자체 산출(§5.4.2, `/api/market/sentiment`) — OFR 변동성·신용 + HIP-3 퍼프 모멘텀·실현 변동성·주식 대 금, 자기 이력 백분위·방향 정렬·동일 가중·최소 3입력·180일 이력. CNN 명칭·밴드 불복제, 실험 표기. 예약돼 있던 `sentiment` 카드 슬롯 연결, `/us` 패널·랜딩 미니 추가 | Claude assisted |
 
 | 2026-08-21 | 크립토 섹션 Phase 1(ROADMAP #16) — §3.1 네이티브 퍼프 단락, §3.18 alternative.me 신설(`DS-2026-010`, official_terms, 출처 값 옆 조건), §4.1 Deribit·두나무·Coinalyze 문의 대기 3행. 소스 17종 판정·실측은 `PLAN_CRYPTO_SECTION.md` §3·§8 | Claude assisted |
+| 2026-08-21 | 크립토 Phase 2 — §3.19 업비트 시세(`pending_rights`, 위험수용 템플릿), §3.20 CoinMarketCap 글로벌 메트릭(`pending_review`→키 발급 시 approved), §3.21 가스 스트립 조사 결과 보류(퍼블릭 RPC·mempool 약관). 코드는 게이트 기본 OFF로 배포 | Claude assisted |

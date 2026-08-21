@@ -80,6 +80,11 @@ const TEXT = {
     "crypto.deriv.caption": "코인별 파생 지표", "crypto.colCoin": "코인", "crypto.colPrice": "가격", "crypto.col24h": "24h", "crypto.colFunding": "펀딩 1h", "crypto.colApr": "연율", "crypto.colPredicted": "예상 연율 HL · Binance · Bybit", "crypto.colOi": "OI", "crypto.colVolume": "거래대금", "crypto.colState": "상태",
     "crypto.vol.title": "실현 변동성 · 합성자산 상관", "crypto.vol.copy": "저장된 일봉 종가만으로 계산한 값입니다. 실현 변동성은 이미 일어난 변동의 크기(연율 √365)이며 옵션 내재변동성(DVOL)이 아닙니다. 상관은 같은 날짜 일간 로그수익률의 피어슨 상관이며 인과관계가 아닙니다.",
     "crypto.vol.rv": "실현 변동성 {d}일", "crypto.vol.caption": "BTC 일간 수익률과의 상관", "crypto.vol.colPeer": "대상", "crypto.vol.col30": "30일", "crypto.vol.col90": "90일", "crypto.vol.points": "{n}일",
+    "crypto.kimchi.title": "김치프리미엄 · 원화 시세", "crypto.kimchi.copy": "업비트 원화 최근 체결가를 Hyperliquid 오라클 참고가와 비교합니다. 헤드라인 프리미엄은 업비트 KRW-USDT로 나눠 환율을 소거한 'USDT 기준'이고, 공식환율 기준은 한국은행 일별 고시값(날짜 표시)입니다. 호가·수수료·출금 조건은 반영하지 않습니다.",
+    "crypto.kimchi.lastTrade": "업비트 최근 체결가", "crypto.kimchi.usdtBasis": "USDT 기준 · 환율 소거",
+    "crypto.kimchi.usdtKrw": "USDT/KRW (업비트)", "crypto.kimchi.tether": "테더 프리미엄", "crypto.kimchi.premiumUsdt": "USDT 기준 프리미엄", "crypto.kimchi.premiumOfficial": "공식환율 기준", "crypto.kimchi.upbit24h": "업비트 24h", "crypto.kimchi.oracle": "Hyperliquid 오라클", "crypto.kimchi.volume": "업비트 24h 거래대금", "crypto.kimchi.noReference": "참고가 없음", "crypto.kimchi.official": "고시",
+    "crypto.structure.title": "도미넌스 · 시장 구조", "crypto.structure.copy": "비트코인·이더리움이 전체 크립토 시가총액에서 차지하는 비중과 총시총·스테이블코인 시총입니다. CoinMarketCap 집계 유니버스 기준이며 산출 기관마다 값이 다릅니다.",
+    "crypto.structure.btcDom": "BTC 도미넌스", "crypto.structure.ethDom": "ETH 도미넌스", "crypto.structure.othersDom": "기타 (100 − BTC − ETH)", "crypto.structure.totalCap": "총 시가총액", "crypto.structure.stableCap": "스테이블코인 시총", "crypto.structure.volume": "24h 거래대금", "crypto.structure.pts": "{v}p · 24h", "crypto.structure.sourceLabel": "출처",
     "status.collecting": "수집 중 · 첫 수집 뒤 표시됩니다",
     "status.connecting": "연결 중", "status.live": "데이터 연결", "status.partial": "일부 데이터", "status.offline": "연결 오류",
     "status.loading": "불러오는 중", "status.viewport": "화면에 표시되면 불러옵니다", "status.unavailable": "데이터 미연결",
@@ -194,6 +199,11 @@ const TEXT = {
     "crypto.deriv.caption": "Derivatives metrics by coin", "crypto.colCoin": "Coin", "crypto.colPrice": "Price", "crypto.col24h": "24h", "crypto.colFunding": "Funding 1h", "crypto.colApr": "APR", "crypto.colPredicted": "Predicted APR HL · Binance · Bybit", "crypto.colOi": "OI", "crypto.colVolume": "Volume", "crypto.colState": "State",
     "crypto.vol.title": "Realized volatility · cross-asset correlation", "crypto.vol.copy": "Computed only from stored daily closes. Realized volatility measures moves that already happened (annualised by √365) and is not implied volatility (DVOL). Correlations are Pearson on same-date daily log returns, not causation.",
     "crypto.vol.rv": "Realized vol {d}d", "crypto.vol.caption": "Correlation with BTC daily returns", "crypto.vol.colPeer": "Asset", "crypto.vol.col30": "30d", "crypto.vol.col90": "90d", "crypto.vol.points": "{n}d",
+    "crypto.kimchi.title": "Kimchi premium · KRW quotes", "crypto.kimchi.copy": "Upbit's last KRW trade prices against Hyperliquid's oracle reference. The headline premium is the 'USDT basis' — divided by Upbit KRW-USDT so the exchange rate cancels; the official basis uses the Bank of Korea's daily quotation (date shown). Order books, fees and withdrawal conditions are not reflected.",
+    "crypto.kimchi.lastTrade": "Upbit last trade", "crypto.kimchi.usdtBasis": "USDT basis · FX cancels",
+    "crypto.kimchi.usdtKrw": "USDT/KRW (Upbit)", "crypto.kimchi.tether": "Tether premium", "crypto.kimchi.premiumUsdt": "Premium (USDT basis)", "crypto.kimchi.premiumOfficial": "Official-rate basis", "crypto.kimchi.upbit24h": "Upbit 24h", "crypto.kimchi.oracle": "Hyperliquid oracle", "crypto.kimchi.volume": "Upbit 24h volume", "crypto.kimchi.noReference": "No reference price", "crypto.kimchi.official": "official",
+    "crypto.structure.title": "Dominance · market structure", "crypto.structure.copy": "Bitcoin's and Ethereum's share of total crypto market cap, plus total and stablecoin market cap. As aggregated by CoinMarketCap's universe; other publishers report different numbers.",
+    "crypto.structure.btcDom": "BTC dominance", "crypto.structure.ethDom": "ETH dominance", "crypto.structure.othersDom": "Others (100 − BTC − ETH)", "crypto.structure.totalCap": "Total market cap", "crypto.structure.stableCap": "Stablecoin market cap", "crypto.structure.volume": "24h volume", "crypto.structure.pts": "{v}p · 24h", "crypto.structure.sourceLabel": "Source",
     "status.collecting": "Collecting · shown after the first collection",
     "status.connecting": "Connecting", "status.live": "Data live", "status.partial": "Partial data", "status.offline": "Connection error",
     "status.loading": "Loading", "status.viewport": "Loads when scrolled into view", "status.unavailable": "Data not connected",
@@ -489,7 +499,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
+  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -604,6 +614,9 @@ const DISABLED_CODES = {
   crypto_section_disabled: "status.disabled",
   crypto_sentiment_disabled: "status.disabled",
   crypto_sentiment_collecting: "status.collecting",
+  crypto_structure_disabled: "status.disabled",
+  crypto_structure_collecting: "status.collecting",
+  upbit_quotation_pending_rights: "status.rightsPending",
 };
 
 // Which endpoint would have filled a card. Only consulted when the card is
@@ -859,7 +872,9 @@ function renderJumpNav() {
     { id: "econ-calendar", text: t("cal.title") },
     { id: "fomc-dots", text: t("dots.title") },
     { id: "crypto-tape", text: t("crypto.tape.title") },
+    { id: "crypto-kimchi", text: t("crypto.kimchi.title") },
     { id: "crypto-sentiment", text: t("crypto.fng.title") },
+    { id: "crypto-structure", text: t("crypto.structure.title") },
     { id: "crypto-derivatives", text: t("crypto.deriv.title") },
     { id: "crypto-volatility", text: t("crypto.vol.title") },
     ...numbered,
@@ -991,6 +1006,8 @@ function renderAttribution() {
     localValue(state.assets?.attribution?.notice_localized, state.lang) || state.assets?.attribution?.notice,
     localValue(state.cryptoOverview?.rights?.notice_localized, state.lang) || state.cryptoOverview?.rights?.notice,
     state.cryptoSentiment?.rights?.notice,
+    localValue(state.cryptoKimchi?.rights?.notice_localized, state.lang) || state.cryptoKimchi?.rights?.notice,
+    state.cryptoStructure?.rights?.notice,
     ...[...state.records.values()].map(localizedRightsNotice),
     ...[...state.restricted.values()].map(localizedRightsNotice),
     // Publisher-prescribed citations (e.g. STLFSI4) ship with the series and
@@ -1003,7 +1020,7 @@ function renderAttribution() {
   }
   // Say out loud which lanes are switched off. Otherwise a page full of blank
   // cards looks like a broken site rather than a deliberate rights decision.
-  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation", "stress", "sentiment", "cryptoOverview", "cryptoSentiment", "cryptoVolatility"]
+  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation", "stress", "sentiment", "cryptoOverview", "cryptoSentiment", "cryptoVolatility", "cryptoKimchi", "cryptoStructure"]
     .map(disabledText).filter(Boolean))];
   if (laneReasons.length) {
     const title = document.createElement("p"); title.textContent = t("notice.disabledLanes"); host.append(title);
@@ -1083,13 +1100,15 @@ const PAGE_FETCHES = {
   cryptoOverview: ["landing", "crypto"],
   cryptoSentiment: ["landing", "crypto"],
   cryptoVolatility: ["crypto"],
+  cryptoKimchi: ["crypto"],
+  cryptoStructure: ["crypto"],
 };
 
 async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/market/sentiment", "sentiment"), request("/api/kr/indices", "krIndices"),
@@ -1103,18 +1122,21 @@ async function loadCore() {
     request("/api/crypto/overview", "cryptoOverview"),
     request("/api/crypto/sentiment", "cryptoSentiment"),
     request("/api/crypto/volatility", "cryptoVolatility"),
+    request("/api/crypto/kimchi", "cryptoKimchi"),
+    request("/api/crypto/structure", "cryptoStructure"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
   state.stress = stress; state.sentiment = sentiment; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krHoldings = krHoldings;
   state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
   state.cryptoOverview = cryptoOverview; state.cryptoSentiment = cryptoSentiment; state.cryptoVolatility = cryptoVolatility;
+  state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets"); ingestPayload(sentimentRecordPayload(sentiment), "sentiment");
   renderAll(); $("#refresh-button")?.removeAttribute("aria-busy");
 }
 
 function renderAll() {
   renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
-  renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility();
+  renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -2176,7 +2198,8 @@ function cryptoPredictedText(rows) {
 // a lane that merely has no data yet keeps the section with a state message.
 function cryptoGateHidden(key) {
   const code = disabledCode(key);
-  return code === "crypto_section_disabled" || code === "hip3_public_display_pending_rights" || code === "crypto_sentiment_disabled";
+  return code === "crypto_section_disabled" || code === "hip3_public_display_pending_rights" || code === "crypto_sentiment_disabled"
+    || code === "crypto_structure_disabled" || code === "upbit_quotation_pending_rights";
 }
 
 function renderCryptoOverview() {
@@ -2403,6 +2426,139 @@ function renderCryptoVolatility() {
   const corrWrap = table.closest(".table-scroll"); if (corrWrap) corrWrap.hidden = !correlations.length;
   const footer = $("#cvol-footer"); footer.replaceChildren();
   const basis = document.createElement("span"); basis.textContent = localValue(data.basis, state.lang); footer.append(basis);
+}
+
+function cryptoKrw(value) {
+  if (value === null || value === undefined) return "—";
+  const digits = Math.abs(value) >= 1000 ? 0 : 2;
+  return `₩${value.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+}
+
+function cryptoStripItem(labelText, valueText, percent = null, noteText = null) {
+  const item = document.createElement("span"); item.className = "kro-strip-item";
+  const label = document.createElement("small"); label.textContent = labelText;
+  const value = document.createElement("strong"); value.textContent = valueText;
+  item.append(label, value);
+  if (percent !== null && percent !== undefined) { const em = document.createElement("em"); em.className = changeClass(percent); em.textContent = formatSigned(percent); item.append(em); }
+  if (noteText) { const note = document.createElement("small"); note.textContent = noteText; item.append(note); }
+  return item;
+}
+
+function cryptoStatCard(title, valueText, subText = null, subClass = "") {
+  const card = document.createElement("article"); card.className = "cvol-card";
+  const heading = document.createElement("h3"); heading.textContent = title;
+  const value = document.createElement("strong"); value.textContent = valueText;
+  card.append(heading, value);
+  if (subText) { const sub = document.createElement("small"); sub.className = subClass; sub.textContent = subText; card.append(sub); }
+  return card;
+}
+
+function renderCryptoKimchi() {
+  const section = $("#crypto-kimchi"); if (!section) return;
+  const stateNode = $("#ckim-state"), strip = $("#ckim-strip"), grid = $("#ckim-grid"), footer = $("#ckim-footer");
+  const payload = state.cryptoKimchi;
+  const coins = Array.isArray(payload?.coins) ? payload.coins.filter((coin) => coin && safeNumber(coin.krw) !== null) : [];
+  if (!payload || !coins.length) {
+    if (cryptoGateHidden("cryptoKimchi")) { section.hidden = true; return; }
+    section.hidden = false; strip.hidden = true; grid.hidden = true; footer.hidden = true;
+    stateNode.hidden = false; stateNode.textContent = `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+  section.hidden = false; stateNode.hidden = true; strip.hidden = false; grid.hidden = false; footer.hidden = false;
+
+  strip.replaceChildren();
+  const usdt = payload.usdt;
+  if (usdt && safeNumber(usdt.krw) !== null) {
+    strip.append(cryptoStripItem(t("crypto.kimchi.usdtKrw"), cryptoKrw(usdt.krw), safeNumber(usdt.change_24h_percent)));
+    const tether = safeNumber(usdt.tether_premium_percent);
+    if (tether !== null && safeNumber(usdt.official_rate) !== null) {
+      const note = `${t("kro.fx")} ${usdt.official_rate.toLocaleString("en-US", { maximumFractionDigits: 2 })} · ${kroDate(usdt.official_rate_date)} ${t("crypto.kimchi.official")}`;
+      strip.append(cryptoStripItem(t("crypto.kimchi.tether"), formatSigned(tether), null, note));
+    } else {
+      strip.append(cryptoStripItem(t("crypto.kimchi.tether"), t("kro.noFx")));
+    }
+  }
+  if (payload.as_of) strip.append(cryptoStripItem(t("date.asof"), dateText(payload.as_of)));
+
+  grid.replaceChildren(...coins.map((coin) => {
+    const premium = safeNumber(coin.premium_usdt_basis_percent);
+    const article = document.createElement("article");
+    article.className = `kro-card crypto-card ${changeClass(premium)}`;
+    const header = document.createElement("header");
+    const title = document.createElement("h3"); title.textContent = localValue(coin.label, state.lang);
+    const symbol = document.createElement("span"); symbol.className = "kro-sym"; symbol.textContent = coin.market;
+    header.append(title, symbol);
+    const price = document.createElement("div"); price.className = "kro-price"; price.textContent = cryptoKrw(coin.krw);
+    const vs = document.createElement("div"); vs.className = `kro-vs ${changeClass(premium)}`;
+    vs.textContent = premium === null ? t("crypto.kimchi.noReference") : `${formatSigned(premium)} · ${t("crypto.kimchi.premiumUsdt")}`;
+    const meta = document.createElement("dl"); meta.className = "kro-meta";
+    const row = (labelText, valueText) => { const wrap = document.createElement("div"); const dt = document.createElement("dt"); dt.textContent = labelText; const dd = document.createElement("dd"); dd.textContent = valueText; wrap.append(dt, dd); return wrap; };
+    const change = safeNumber(coin.change_24h_percent);
+    meta.append(row(t("crypto.kimchi.upbit24h"), change === null ? "—" : formatSigned(change)));
+    meta.append(row(t("crypto.kimchi.oracle"), cryptoUsd(safeNumber(coin.oracle_usd))));
+    const official = safeNumber(coin.premium_official_basis_percent);
+    meta.append(row(t("crypto.kimchi.premiumOfficial"), official === null ? t("kro.noFx") : `${formatSigned(official)} · ${kroDate(payload.fx?.date)}`));
+    meta.append(row(t("crypto.kimchi.volume"), cryptoKrw(safeNumber(coin.volume_24h_krw))));
+    article.append(header, price, vs, meta);
+    const badges = document.createElement("div"); badges.className = "kro-badges";
+    if (payload.source?.upbit?.stale) { const span = document.createElement("span"); span.className = "status-badge warn"; span.textContent = t("badge.stale"); badges.append(span); }
+    if (badges.childElementCount) article.append(badges);
+    return article;
+  }));
+
+  footer.replaceChildren();
+  const attribution = document.createElement("p"); attribution.className = "kro-method";
+  attribution.textContent = `${localValue(payload.source?.upbit?.attribution, state.lang)} · ${t("crypto.kimchi.oracle")}: Hyperliquid`;
+  const method = document.createElement("p"); method.className = "kro-method"; method.textContent = localValue(payload.methodology, state.lang);
+  const disclaimer = document.createElement("p"); disclaimer.className = "kro-disclaimer"; disclaimer.textContent = localValue(payload.disclaimer, state.lang);
+  footer.append(attribution, method, disclaimer);
+}
+
+function renderCryptoStructure() {
+  const section = $("#crypto-structure"); if (!section) return;
+  const stateNode = $("#cstr-state"), grid = $("#cstr-grid"), bar = $("#cstr-bar"), footer = $("#cstr-footer");
+  const data = state.cryptoStructure;
+  if (!data || !data.dominance || safeNumber(data.dominance.btc_percent) === null) {
+    if (cryptoGateHidden("cryptoStructure")) { section.hidden = true; return; }
+    const collecting = disabledCode("cryptoStructure") === "crypto_structure_collecting";
+    section.hidden = false; grid.hidden = true; bar.hidden = true; footer.hidden = true; stateNode.hidden = false;
+    stateNode.classList.toggle("disabled", collecting);
+    stateNode.textContent = collecting ? t("status.collecting") : `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+  section.hidden = false; stateNode.hidden = true; grid.hidden = false; footer.hidden = false;
+  const dom = data.dominance, cap = data.market_cap || {}, vol = data.volume_24h || {};
+  const pct = (value, digits = 1) => safeNumber(value) === null ? "—" : `${value.toFixed(digits)}%`;
+  const pts = (value) => safeNumber(value) === null ? null : t("crypto.structure.pts", { v: `${value >= 0 ? "+" : ""}${value.toFixed(2)}` });
+  const signed = (value) => safeNumber(value) === null ? null : `${formatSigned(value)} · 24h`;
+  const cards = [
+    [t("crypto.structure.btcDom"), pct(dom.btc_percent), pts(dom.btc_24h_change_points), changeClass(dom.btc_24h_change_points)],
+    [t("crypto.structure.ethDom"), pct(dom.eth_percent), pts(dom.eth_24h_change_points), changeClass(dom.eth_24h_change_points)],
+    [t("crypto.structure.othersDom"), pct(dom.others_percent), null, ""],
+    [t("crypto.structure.totalCap"), cryptoUsd(safeNumber(cap.total_usd), { compact: true }), signed(cap.total_24h_change_percent), changeClass(cap.total_24h_change_percent)],
+    [t("crypto.structure.stableCap"), cryptoUsd(safeNumber(cap.stablecoin_usd), { compact: true }), signed(cap.stablecoin_24h_change_percent), changeClass(cap.stablecoin_24h_change_percent)],
+    [t("crypto.structure.volume"), cryptoUsd(safeNumber(vol.total_usd), { compact: true }), signed(vol.change_percent), changeClass(vol.change_percent)],
+  ].filter(([, value]) => value !== "—");
+  grid.replaceChildren(...cards.map(([title, value, sub, cls]) => cryptoStatCard(title, value, sub, cls)));
+
+  const btc = safeNumber(dom.btc_percent), eth = safeNumber(dom.eth_percent), others = safeNumber(dom.others_percent);
+  bar.replaceChildren();
+  if (btc !== null && eth !== null && others !== null) {
+    bar.hidden = false;
+    [["btc", btc, "BTC"], ["eth", eth, "ETH"], ["others", others, localValue({ ko: "기타", en: "Others" }, state.lang)]].forEach(([cls, width, label]) => {
+      const seg = document.createElement("span"); seg.className = `seg ${cls}`; seg.style.width = `${Math.max(0, Math.min(100, width))}%`; seg.title = `${label} ${width.toFixed(1)}%`; seg.textContent = width >= 8 ? `${label} ${width.toFixed(1)}%` : ""; bar.append(seg);
+    });
+  } else bar.hidden = true;
+
+  footer.replaceChildren();
+  // Attribution right under the values, as the commercial terms expect.
+  const attribution = document.createElement("p"); attribution.className = "kro-method";
+  attribution.append(document.createTextNode(`${t("crypto.structure.sourceLabel")}: `));
+  const link = document.createElement("a"); link.href = data.attribution?.url || "https://coinmarketcap.com/"; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = data.attribution?.text || "Data provided by CoinMarketCap"; attribution.append(link);
+  if (data.as_of) attribution.append(document.createTextNode(` · ${t("date.asof")} ${dateText(data.as_of)}${data.freshness?.status === "stale" ? ` · ${t("badge.stale")}` : ""}`));
+  const method = document.createElement("p"); method.className = "kro-method"; method.textContent = localValue(data.methodology, state.lang);
+  const disclaimer = document.createElement("p"); disclaimer.className = "kro-disclaimer"; disclaimer.textContent = localValue(data.disclaimer, state.lang);
+  footer.append(attribution, method, disclaimer);
 }
 
 function renderSectors() {
@@ -2715,6 +2871,10 @@ if (onPage(...PAGE_FETCHES.cryptoOverview)) {
     if (disabledCode("cryptoOverview")) return; // a closed gate is not a reason to keep knocking
     const payload = await fetchJson("/api/crypto/overview", "cryptoOverview");
     if (payload) { state.cryptoOverview = payload; renderCryptoOverview(); renderCryptoDerivatives(); renderZonePreviews(); }
+    if (document.getElementById("crypto-kimchi") && !disabledCode("cryptoKimchi")) {
+      const kimchi = await fetchJson("/api/crypto/kimchi", "cryptoKimchi");
+      if (kimchi) { state.cryptoKimchi = kimchi; renderCryptoKimchi(); }
+    }
   }, 5 * 1000);
 }
 

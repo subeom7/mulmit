@@ -30,6 +30,8 @@ FSC = "fsc"
 ECOS = "ecos"
 CRYPTO = "crypto"
 ALTERNATIVE_ME = "alternative_me"
+COINMARKETCAP = "coinmarketcap"
+UPBIT = "upbit"
 OFR = "ofr"
 
 # --- structured client contracts --------------------------------------------
@@ -146,6 +148,30 @@ CRYPTO_SENTIMENT_COLLECTING = {
     ),
 }
 
+CRYPTO_STRUCTURE_DISABLED = {
+    "code": "crypto_structure_disabled",
+    "status": "disabled",
+    "message": "The CoinMarketCap global-metrics relay is disabled for this deployment.",
+}
+
+CRYPTO_STRUCTURE_COLLECTING = {
+    "code": "crypto_structure_collecting",
+    "status": "collecting",
+    "message": (
+        "The CoinMarketCap relay is enabled but has not stored its first observation "
+        "yet (or the ingest key is missing); values appear after the next ingest pass."
+    ),
+}
+
+UPBIT_PENDING_RIGHTS = {
+    "code": "upbit_quotation_pending_rights",
+    "status": "pending_rights",
+    "message": (
+        "Upbit quotation relay is withheld until public-display rights are confirmed in "
+        "writing or the operator records a risk acceptance (register §3.19)."
+    ),
+}
+
 US_PTR_DISABLED = {
     "code": "us_ptr_disabled",
     "status": "disabled",
@@ -235,6 +261,27 @@ def alternative_me_serving_enabled() -> bool:
     return crypto_section_enabled() and bool(config.ALTERNATIVE_ME_ENABLED)
 
 
+def cmc_serving_enabled() -> bool:
+    """Web serves the stored CoinMarketCap blob once the operator switched the lane on."""
+    return crypto_section_enabled() and bool(config.CMC_ENABLED)
+
+
+def cmc_ingest_enabled() -> bool:
+    """Only ingest holds the key; without it the lane is switched on but cannot fetch."""
+    return cmc_serving_enabled() and bool(config.CMC_API_KEY)
+
+
+def cmc_status() -> str:
+    if not cmc_serving_enabled():
+        return "disabled"
+    return "enabled" if config.CMC_API_KEY else "not_configured"
+
+
+def upbit_serving_enabled() -> bool:
+    """Upbit quotes stay withheld (`pending_rights`) until the operator opens the gate."""
+    return crypto_section_enabled() and bool(config.UPBIT_ENABLED)
+
+
 def dart_serving_enabled() -> bool:
     """The issued key is part of the permission: DART meters by key."""
     return bool(config.DART_ENABLED and config.DART_API_KEY)
@@ -292,6 +339,14 @@ def lane_report() -> dict[str, dict[str, str]]:
         ALTERNATIVE_ME: {
             "status": "enabled" if alternative_me_serving_enabled() else "disabled",
             "gate": "CRYPTO_SECTION_ENABLED + ALTERNATIVE_ME_ENABLED",
+        },
+        COINMARKETCAP: {
+            "status": cmc_status(),
+            "gate": "CRYPTO_SECTION_ENABLED + CMC_ENABLED (+ CMC_API_KEY in ingest)",
+        },
+        UPBIT: {
+            "status": "enabled" if upbit_serving_enabled() else "pending_rights",
+            "gate": "CRYPTO_SECTION_ENABLED + UPBIT_ENABLED",
         },
     }
     for provider_id in _MACRO_LANES:

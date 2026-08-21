@@ -30,6 +30,9 @@ x-app: &app
     # 게이트는 web(서빙 판정)·ingest(수집) 양쪽에 같은 값이어야 한다.
     CRYPTO_SECTION_ENABLED: ${CRYPTO_SECTION_ENABLED:-false}
     ALTERNATIVE_ME_ENABLED: ${ALTERNATIVE_ME_ENABLED:-false}
+    # Phase 2: CoinMarketCap 도미넌스(키는 ingest에만) · 업비트 김치프리미엄(pending_rights).
+    CMC_ENABLED: ${CMC_ENABLED:-false}
+    UPBIT_ENABLED: ${UPBIT_ENABLED:-false}
     NYFED_ENABLED: ${NYFED_ENABLED:-false}
     FEDBOARD_ENABLED: ${FEDBOARD_ENABLED:-false}
     # 미 재무부 OFR 금융스트레스지수(연방 저작물). web 판정·ingest 수집 양쪽.
@@ -115,6 +118,8 @@ services:
       FRED_INGEST_DELAY: ${FRED_INGEST_DELAY:-0.1}
       KRX_API_KEY: ${KRX_API_KEY:-}
       ECOS_API_KEY: ${ECOS_API_KEY:-}
+      CMC_API_KEY: ${CMC_API_KEY:-}
+      CMC_MAX_AGE: ${CMC_MAX_AGE:-900}
       ECOS_MAX_AGE: ${ECOS_MAX_AGE:-21600}
       BLS_API_KEY: ${BLS_API_KEY:-}
       BLS_MAX_AGE: ${BLS_MAX_AGE:-43200}

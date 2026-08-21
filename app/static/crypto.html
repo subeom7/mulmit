@@ -78,6 +78,23 @@
       <footer class="kro-footer" id="ctape-footer" hidden></footer>
     </section>
 
+    <section class="dashboard-section" id="crypto-kimchi" aria-labelledby="ckim-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">KOREA · UPBIT KRW × HYPERLIQUID ORACLE</p><h2 id="ckim-title" data-i18n="crypto.kimchi.title">김치프리미엄 · 원화 시세</h2></div>
+        <span class="source-pill">UPBIT × HYPERLIQUID × ECOS</span>
+      </div>
+      <p class="section-copy" data-i18n="crypto.kimchi.copy">업비트 원화 최근 체결가를 Hyperliquid 오라클 참고가와 비교합니다. 헤드라인 프리미엄은 업비트 KRW-USDT로 나눠 환율을 소거한 'USDT 기준'이고, 공식환율 기준은 한국은행 일별 고시값(날짜 표시)입니다. 호가·수수료·출금 조건은 반영하지 않습니다.</p>
+      <div class="risk-strip" role="note">
+        <span class="status-badge warn" data-i18n="crypto.kimchi.lastTrade">업비트 최근 체결가</span>
+        <span class="status-badge warn" data-i18n="crypto.kimchi.usdtBasis">USDT 기준 · 환율 소거</span>
+        <span class="status-badge warn" data-i18n="kro.fxOfficial">공식환율 환산 · 실시간 환율 아님</span>
+      </div>
+      <div id="ckim-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="ckim-strip" class="crypto-strip" hidden></div>
+      <div id="ckim-grid" class="kro-grid crypto-grid" hidden></div>
+      <footer class="kro-footer" id="ckim-footer" hidden></footer>
+    </section>
+
     <section class="dashboard-section" id="crypto-sentiment" aria-labelledby="cfng-title">
       <div class="section-heading">
         <div><p class="eyebrow">SENTIMENT · ALTERNATIVE.ME · DAILY</p><h2 id="cfng-title" data-i18n="crypto.fng.title">크립토 공포·탐욕 지수</h2></div>
@@ -102,6 +119,18 @@
           <p class="stress-disclaimer" id="cfng-disclaimer"></p>
         </div>
       </div>
+    </section>
+
+    <section class="dashboard-section" id="crypto-structure" aria-labelledby="cstr-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">MARKET STRUCTURE · DOMINANCE · COINMARKETCAP</p><h2 id="cstr-title" data-i18n="crypto.structure.title">도미넌스 · 시장 구조</h2></div>
+        <span class="source-pill">COINMARKETCAP</span>
+      </div>
+      <p class="section-copy" data-i18n="crypto.structure.copy">비트코인·이더리움이 전체 크립토 시가총액에서 차지하는 비중과 총시총·스테이블코인 시총입니다. CoinMarketCap 집계 유니버스 기준이며 산출 기관마다 값이 다릅니다.</p>
+      <div id="cstr-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="cstr-grid" class="cvol-grid" hidden></div>
+      <div id="cstr-bar" class="crypto-dominance-bar" hidden aria-hidden="true"></div>
+      <footer class="kro-footer" id="cstr-footer" hidden></footer>
     </section>
 
     <section class="dashboard-section" id="crypto-derivatives" aria-labelledby="cderiv-title">

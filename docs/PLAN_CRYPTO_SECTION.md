@@ -188,6 +188,25 @@ fail-closed, 수치 발명 금지)으로 하나씩 판정한 문서다. 소스�
 - 펀딩 "과열" 배지 기준(편집 기준, 응답 `basis`에 명시): |APR| ≥ 15% 높음, ≥ 30% 과열.
 - 등록부: §3.1 단락·§3.18(`DS-2026-010`)·§4.1 문의 3행. 운영자 액션은 §9 그대로.
 
+### 7.2 Phase 2 구현 메모 (2026-08-21)
+
+- **도미넌스·시장 구조** — `/api/crypto/structure`, `app/crypto_structure.py` + `app/providers/coinmarketcap.py`.
+  CoinMarketCap `/v1/global-metrics/quotes/latest`를 ingest가 15분 주기로 blob 저장(월 ≈ 2,900크레딧),
+  web은 blob만. 게이트 `CMC_ENABLED`(web·ingest) + `CMC_API_KEY`(ingest 전용). 출처 문구
+  `CMC_ATTRIBUTION_TEXT`(기본 "Data provided by CoinMarketCap")를 값 바로 아래 링크로 고정. 등록부 §3.20.
+  **운영자 액션**: CMC 계정·Basic 키 발급 → Commercial Terms 원문 확인(출처 문구·한도) → .env에
+  `CMC_ENABLED=true`(web·ingest), `CMC_API_KEY=…`(ingest) → 등록부 DS 블록 기록.
+- **김치프리미엄·원화 시세** — `/api/crypto/kimchi`, `app/crypto_kimchi.py` + `app/providers/upbit.py`.
+  업비트 KRW-BTC·ETH·SOL·XRP·DOGE·USDT 서버 relay(15초 캐시), 테더 프리미엄(ECOS 일별 고시 대비,
+  날짜 표시), 코인 프리미엄 USDT 기준(환율 소거)·공식환율 기준, HL 오라클 참고가. 게이트 `UPBIT_ENABLED`
+  기본 OFF — `pending_rights`(등록부 §3.19): 두나무 문의 발송 후 회신 또는 운영자 위험수용 블록 기록 뒤 켠다.
+- **가스·온체인 수수료 스트립 — 보류**(등록부 §3.21): 퍼블릭 RPC(publicnode ToS 배포 제한, Base/Arbitrum
+  "프로덕션 부적합" 명시)·Etherscan(상업 동의)·mempool.space(상업 유료) 모두 깨끗하지 않음. 재개 조건은
+  운영자의 키 발급형 RPC(Alchemy/Infura 무료 티어) 가입.
+- **청산 집계(Coinalyze)·DVOL(Deribit)** — 코드 없음, 문의 회신 대기(§9).
+- 프런트: `/crypto`에 김치프리미엄(참고가 바로 아래)·도미넌스(공포·탐욕 아래) 섹션 추가, 게이트 닫힘 =
+  섹션 숨김, 5초 폴링에 김치 합류.
+
 ## 8. 실측 로그 (2026-08-21, 서울 KT 가정망)
 
 REST(curl, `Mozilla/5.0 mulmit-probe`):
@@ -239,5 +258,6 @@ WebSocket(python websockets, `origin=https://mulmit.com`):
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-08-21 | Phase 2 구현(§7.2) — 도미넌스(CMC, 키 대기)·김치프리미엄(업비트, pending_rights) 레인 + 가스 스트립 보류 판정 |
 | 2026-08-21 | Phase 1 구현(§7.1) — `/crypto`·`/api/crypto/{overview,sentiment,volatility}`, 게이트 2종, 등록부 §3.18 |
 | 2026-08-21 | 최초 작성 — 추천안 10항목 검증, 소스 17종 약관·한국망 실측, 인벤토리·Phase·아키텍처 확정. Binance 선물 WS legacy 경로 사망·새 `/market` 경로 실측, Deribit §4.6·OKX §9.4·Coinbase·Bybit 금지 조항 확인, CoinGecko/CoinPaprika/DefiLlama/Etherscan 무료 티어 비상업 확인, alternative.me·CMC Basic 상업 허용 확인 |
