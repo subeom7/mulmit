@@ -55,6 +55,12 @@ from .providers.fsc import (
 )
 from .providers.nyfed import NYFED_PROVIDER_ID, NYFED_PUBLISHER_URL, NYFED_TERMS_URL
 from .providers.nyfed import attribution as nyfed_attribution
+from .providers.ofr import (
+    OFR_ATTRIBUTION,
+    OFR_LEGAL_NOTICES_URL,
+    OFR_PROVIDER_ID,
+    OFR_PUBLISHER_URL,
+)
 
 HISTORY_DAYS = {
     "1y": 366,
@@ -84,6 +90,7 @@ PROVIDER_NAMES = {
     BLS_PROVIDER_ID: "U.S. Bureau of Labor Statistics",
     FSC_PROVIDER_ID: FSC_PUBLISHER,
     ECOS_PROVIDER_ID: "한국은행 (ECOS)",
+    OFR_PROVIDER_ID: "Office of Financial Research (U.S. Treasury)",
     "eia": "U.S. Energy Information Administration",
     "federal_reserve": "Federal Reserve Board",
     "treasury": "U.S. Department of the Treasury",
@@ -99,6 +106,7 @@ PROVIDER_NOTICES: dict[str, Callable[[], str]] = {
     BLS_PROVIDER_ID: lambda: BLS_ATTRIBUTION,
     FSC_PROVIDER_ID: lambda: FSC_ATTRIBUTION,
     ECOS_PROVIDER_ID: lambda: ECOS_ATTRIBUTION,
+    OFR_PROVIDER_ID: lambda: OFR_ATTRIBUTION,
 }
 
 
@@ -160,6 +168,7 @@ PROVIDER_URLS = {
     BLS_PROVIDER_ID: BLS_PUBLISHER_URL,
     FSC_PROVIDER_ID: FSC_PUBLISHER_URL,
     ECOS_PROVIDER_ID: ECOS_PUBLISHER_URL,
+    OFR_PROVIDER_ID: OFR_PUBLISHER_URL,
 }
 
 # What each lane requires be shown when its values are published.
@@ -201,6 +210,12 @@ PROVIDER_ATTRIBUTION: dict[str, Callable[[], dict[str, str]]] = {
         "name": PROVIDER_NAMES[ECOS_PROVIDER_ID],
         "notice": ECOS_ATTRIBUTION,
         "terms_url": ECOS_TERMS_URL,
+    },
+    OFR_PROVIDER_ID: lambda: {
+        "provider": OFR_PROVIDER_ID,
+        "name": PROVIDER_NAMES[OFR_PROVIDER_ID],
+        "notice": OFR_ATTRIBUTION,
+        "terms_url": OFR_LEGAL_NOTICES_URL,
     },
 }
 
@@ -328,6 +343,10 @@ _MONTHS_EN = (
 )
 
 
+# Lanes whose catalog entries carry a publisher-prescribed citation template.
+_CITING_LANES = frozenset({FRED_PROVIDER_ID, OFR_PROVIDER_ID})
+
+
 def _citation_for(
     spec: FredSeriesSpec, provider_id: str, fetched_at: float | None
 ) -> str | None:
@@ -335,9 +354,11 @@ def _citation_for(
 
     St. Louis Fed's written reply (2026-08-18) asks that the suggested citation
     accompany the series with the access date, because economic series are
-    revised and the retrieval date is part of the reference.
+    revised and the retrieval date is part of the reference. The OFR's page
+    gives its own suggested citation with an "(accessed ...)" slot, so its
+    lane carries one the same way.
     """
-    if not spec.citation or provider_id != FRED_PROVIDER_ID:
+    if not spec.citation or provider_id not in _CITING_LANES:
         return None
     moment = (
         dt.datetime.fromtimestamp(fetched_at, dt.UTC) if fetched_at else dt.datetime.now(dt.UTC)

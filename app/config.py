@@ -76,6 +76,18 @@ FEDBOARD_REQUEST_INTERVAL = _float("FEDBOARD_REQUEST_INTERVAL", 0.5)
 FEDBOARD_MAX_AGE = _int("FEDBOARD_MAX_AGE", 60 * 60 * 4)  # H.15 일별 발행을 T+1 새벽에 집도록
 FEDBOARD_HISTORY_DAYS = _int("FEDBOARD_HISTORY_DAYS", 366 * 25)
 
+# Office of Financial Research (U.S. Treasury) Financial Stress Index. A
+# federal work: the OFR's Legal Notices claim no copyright and request credit;
+# no Treasury seal/emblem, no implied endorsement. One daily CSV serves the
+# composite and its five categories. https://www.financialresearch.gov/legal-notices/
+OFR_ENABLED = _bool("OFR_ENABLED", False)
+OFR_TIMEOUT = _float("OFR_TIMEOUT", 30.0)
+OFR_RETRIES = _int("OFR_RETRIES", 2)
+# Published once per business day with a two-business-day lag; 6h keeps the
+# morning release within the same day without re-downloading the file hourly.
+OFR_MAX_AGE = _int("OFR_MAX_AGE", 60 * 60 * 6)
+OFR_HISTORY_DAYS = _int("OFR_HISTORY_DAYS", 366 * 10)
+
 # Federal Reserve Bank of New York markets API (SOFR, EFFR, overnight RRP).
 # Their Terms of Use grant automated access plus the right to download, store,
 # copy, distribute and derive from the content for business purposes, on the

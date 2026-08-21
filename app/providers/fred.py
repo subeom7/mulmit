@@ -84,6 +84,13 @@ _FSC = "금융위원회 (Financial Services Commission)"
 _FSC_URL = "https://www.fsc.go.kr/"
 _NY_FED = "Federal Reserve Bank of New York"
 _NY_FED_URL = "https://www.newyorkfed.org/"
+_OFR = "Office of Financial Research (U.S. Department of the Treasury)"
+_OFR_URL = "https://www.financialresearch.gov/financial-stress-index/"
+# The OFR page's suggested citation; the ofr lane fills the access date.
+_OFR_CITATION = (
+    'Office of Financial Research, "OFR Financial Stress Index," refreshed daily, '
+    "https://www.financialresearch.gov/financial-stress-index/ (accessed {date})."
+)
 
 FRED_SERIES = (
     FredSeriesSpec(
@@ -327,6 +334,59 @@ FRED_SERIES = (
     # `kosdaq` and `samsung` on purpose: an exchange close in won and a synthetic
     # perpetual in USD are not the same measurement, so they never share a key
     # and are never spliced into one series.
+    # Office of Financial Research (U.S. Treasury) Financial Stress Index,
+    # collected by the ofr lane from the OFR's own CSV (not FRED). A federal
+    # work: no copyright claimed, credit requested, no Treasury seal. The
+    # volatility and credit categories stand in for the Cboe and ICE families
+    # this project cannot license (`vix`, `high_yield_spread`).
+    FredSeriesSpec(
+        "OFR_FSI", "ofr_fsi", "market", "OFR 금융스트레스지수", "OFR Financial Stress Index",
+        "미 재무부 금융연구국이 33개 시장 변수로 매일 산출하는 글로벌 금융 스트레스 종합지수. 0이 평균, 양수는 평균 이상 스트레스",
+        "Daily composite of 33 market variables from the U.S. Treasury's Office of Financial Research; zero is average stress, positive is above average",
+        _OFR, _OFR_URL,
+        public_web=True,
+        citation=_OFR_CITATION,
+    ),
+    FredSeriesSpec(
+        "OFR_FSI_VOLATILITY", "ofr_fsi_volatility", "market", "변동성 스트레스 (OFR)", "Volatility stress (OFR)",
+        "OFR 금융스트레스지수의 변동성 범주 — 주식·신용·외환·원자재의 내재·실현 변동성 기여분. Cboe VIX 자체가 아닙니다",
+        "The volatility category of the OFR FSI — implied and realised volatility across equity, credit, FX and commodity markets. Not the Cboe VIX itself",
+        _OFR, _OFR_URL,
+        public_web=True,
+        citation=_OFR_CITATION,
+    ),
+    FredSeriesSpec(
+        "OFR_FSI_CREDIT", "ofr_fsi_credit", "market", "신용 스트레스 (OFR)", "Credit stress (OFR)",
+        "OFR 금융스트레스지수의 신용 범주 — 신용 스프레드 기여분. 개별 하이일드 스프레드 값이 아닙니다",
+        "The credit category of the OFR FSI — credit-spread contributions. Not an individual high-yield spread",
+        _OFR, _OFR_URL,
+        public_web=True,
+        citation=_OFR_CITATION,
+    ),
+    FredSeriesSpec(
+        "OFR_FSI_FUNDING", "ofr_fsi_funding", "market", "자금조달 스트레스 (OFR)", "Funding stress (OFR)",
+        "OFR 금융스트레스지수의 자금조달 범주 — 단기 자금시장 스트레스 기여분",
+        "The funding category of the OFR FSI — short-term funding market contributions",
+        _OFR, _OFR_URL,
+        public_web=True,
+        citation=_OFR_CITATION,
+    ),
+    FredSeriesSpec(
+        "OFR_FSI_SAFE_ASSETS", "ofr_fsi_safe_assets", "market", "안전자산 스트레스 (OFR)", "Safe-asset stress (OFR)",
+        "OFR 금융스트레스지수의 안전자산 범주 — 안전자산 선호 기여분",
+        "The safe-assets category of the OFR FSI — flight-to-safety contributions",
+        _OFR, _OFR_URL,
+        public_web=True,
+        citation=_OFR_CITATION,
+    ),
+    FredSeriesSpec(
+        "OFR_FSI_EQUITY_VALUATION", "ofr_fsi_equity_valuation", "market", "주식 밸류에이션 스트레스 (OFR)", "Equity-valuation stress (OFR)",
+        "OFR 금융스트레스지수의 주식 밸류에이션 범주 기여분",
+        "The equity-valuation category of the OFR FSI",
+        _OFR, _OFR_URL,
+        public_web=True,
+        citation=_OFR_CITATION,
+    ),
     # 한국은행 ECOS lane이 수집하는 한국 거시 시리즈 (FRED 아님). 카탈로그는
     # 라벨·설명·발행처를 주고, 소유권은 저장 행의 provider_id가 결정한다.
     FredSeriesSpec(

@@ -252,6 +252,9 @@ const METRICS = {
   // reserved: no source can fill this yet by design (own index, not built).
   sentiment: { aliases: ["sentiment", "fear_greed", "mulmit_sentiment"], label: LABEL("시장 심리", "Market sentiment"), group: "risk", format: "number", reserved: true, accent: "#fb7185", description: LABEL("공식 입력과 공개된 방법론으로 산출하는 자체 지수 연결 대기", "Awaiting a proprietary index built from licensed inputs and a published methodology") },
   yield_curve: { aliases: ["yield_curve", "t10y2y", "yield_spread"], label: LABEL("장단기 금리차", "10Y–2Y curve"), group: "risk", format: "percentPoints", accent: "#fb7185" },
+  ofr_fsi: { aliases: ["ofr_fsi"], label: LABEL("OFR 금융스트레스 (종합)", "OFR financial stress"), group: "risk", format: "number", accent: "#fb7185" },
+  ofr_fsi_volatility: { aliases: ["ofr_fsi_volatility"], label: LABEL("변동성 스트레스 (OFR)", "Volatility stress (OFR)"), group: "risk", format: "number", accent: "#fb7185" },
+  ofr_fsi_credit: { aliases: ["ofr_fsi_credit"], label: LABEL("신용 스트레스 (OFR)", "Credit stress (OFR)"), group: "risk", format: "number", accent: "#fb7185" },
   high_yield_spread: { aliases: ["high_yield_spread", "bamlh0a0hym2"], label: LABEL("하이일드 스프레드", "High-yield spread"), group: "risk", format: "percentPoints", accent: "#fb7185" },
   financial_stress: { aliases: ["financial_stress", "stlfsi4"], label: LABEL("금융스트레스", "Financial stress"), group: "risk", format: "number", accent: "#fb7185" },
   recession_prob: { aliases: ["recession_prob", "rec_prob_12m"], label: LABEL("미국 침체 확률 (12개월 선행)", "US recession odds (12M ahead)"), group: "risk", format: "number", accent: "#fb7185", description: LABEL("뉴욕 연은이 국채 10년–3개월 스프레드로 추정한 12개월 뒤 침체 확률 — 날짜는 예측 대상 월", "NY Fed treasury-spread model: probability of a U.S. recession twelve months ahead — dates mark the predicted month") },
@@ -296,6 +299,18 @@ const INSIGHTS = {
   high_yield_spread: {
     description: LABEL("저신용 회사채가 국채보다 요구하는 추가 보상으로 신용 스트레스를 살핍니다.", "The extra yield demanded over Treasuries for lower-rated corporate debt."),
     hints: [LABEL("3~4%: 비교적 차분한 신용시장 참고 구간", "3–4%: a comparatively calm credit reference range"), LABEL("4~6%: 신용 경계가 높아지는 구간", "4–6%: credit caution is rising"), LABEL("8% 이상: 심한 신용 스트레스 참고 구간", "8% or more: severe-credit-stress reference range")],
+  },
+  ofr_fsi: {
+    description: LABEL("미 재무부 금융연구국(OFR)이 33개 시장 변수로 매일 산출하는 글로벌 금융 스트레스 종합지수입니다. 2영업일 지연 공표.", "The U.S. Treasury's Office of Financial Research builds this daily composite from 33 market variables; published with a two-business-day lag."),
+    hints: [LABEL("0 = 평균 스트레스, 양수 = 평균 이상, 음수 = 평균 이하", "0 = average stress; positive above average, negative below"), LABEL("다섯 범주(신용·주식 밸류에이션·자금조달·안전자산·변동성)의 합", "The sum of five categories: credit, equity valuation, funding, safe assets, volatility")],
+  },
+  ofr_fsi_volatility: {
+    description: LABEL("OFR 금융스트레스지수의 변동성 범주 — 주식·신용·외환·원자재의 내재·실현 변동성 기여분입니다. Cboe VIX 값 자체가 아닙니다.", "The volatility category of the OFR FSI — implied and realised volatility across equity, credit, FX and commodity markets. Not the Cboe VIX value itself."),
+    hints: [LABEL("양수로 올라서면 변동성 가격이 평균 이상으로 뛴 상태", "Rising above zero: volatility pricing above its average"), LABEL("급등은 위험회피 국면과 함께 나타나는 경향", "Spikes tend to accompany risk-off episodes")],
+  },
+  ofr_fsi_credit: {
+    description: LABEL("OFR 금융스트레스지수의 신용 범주 — 신용 스프레드 기여분입니다. 개별 하이일드 스프레드 값이 아닙니다.", "The credit category of the OFR FSI — credit-spread contributions. Not an individual high-yield spread."),
+    hints: [LABEL("양수 확대는 신용시장 경계 심화", "Widening above zero: credit caution deepening"), LABEL("음수 지속은 차분한 신용 여건 참고 구간", "Sustained negative: a calm-credit reference range")],
   },
   financial_stress: {
     description: LABEL("STLFSI4는 금리 7개·스프레드 6개·기타 5개, 총 18개 주간 시계열을 묶은 금융여건 지표입니다.", "STLFSI4 combines 18 weekly series: seven rates, six spreads and five other indicators."),
@@ -379,7 +394,7 @@ const INSIGHTS = {
 const OVERVIEW = [
   { id: "global", label: LABEL("글로벌 자산", "Global assets"), keys: ["sp500", "nasdaq", "gold", "bitcoin"] },
   { id: "emerging", label: LABEL("글로벌 ETF", "Global ETFs"), keys: ["ewz", "inda", "vnm", "ewj"] },
-  { id: "risk", label: LABEL("시장 위험", "Market risk"), keys: ["sentiment", "vix", "yield_curve", "recession_prob"] },
+  { id: "risk", label: LABEL("시장 위험", "Market risk"), keys: ["sentiment", "ofr_fsi_volatility", "ofr_fsi_credit", "yield_curve", "recession_prob"] },
   { id: "fx", label: LABEL("환율", "Exchange rates"), keys: ["fx_usdkrw", "fx_usdjpy", "fx_eurusd", "fx_usdcny"] },
   { id: "macro", label: LABEL("매크로", "Macro"), keys: ["dollar_index_broad", "usdjpy", "treasury_10y", "wti"] },
   { id: "liquidity", label: LABEL("유동성", "Liquidity"), keys: ["fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account"] },
@@ -393,7 +408,7 @@ const SECTIONS = [
   { id: "kr-macro", zone: "kr", eyebrow: "KOREA · MACRO · BANK OF KOREA ECOS", title: LABEL("한국 매크로", "Korea macro"), copy: LABEL("한국은행 경제통계시스템(ECOS)의 공식 통계입니다. 기준금리와 소비자물가부터 시작합니다.", "Official statistics from the Bank of Korea's ECOS — starting with the base rate and CPI."), keys: ["kr_base_rate", "kr_cpi", "kr_unemployment"] },
   { id: "global-assets", zone: "us", eyebrow: "GLOBAL PRICES", title: LABEL("글로벌 자산", "Global assets"), copy: LABEL("전고점 대비 위치와 최근 가격 흐름을 함께 봅니다.", "View recent prices alongside distance from prior highs."), keys: ["sp500", "nasdaq", "gold", "bitcoin"] },
   { id: "global-etfs", zone: "us", eyebrow: "CROSS-BORDER ETFs", title: LABEL("글로벌 지역 ETF", "Regional ETFs"), copy: LABEL("미국 상장 ETF를 통해 지역별 위험선호를 확인합니다.", "Use US-listed ETFs to compare regional risk appetite."), keys: ["ewz", "inda", "vnm", "ewj"] },
-  { id: "market-risk", zone: "us", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("시장심리·변동성·금리곡선·신용스프레드·금융스트레스를 나란히 봅니다.", "Compare sentiment, volatility, the yield curve, credit spread and financial stress."), keys: ["sentiment", "vix", "yield_curve", "high_yield_spread", "financial_stress", "recession_prob"] },
+  { id: "market-risk", zone: "us", eyebrow: "RISK & CREDIT", title: LABEL("시장 위험과 신용", "Risk and credit"), copy: LABEL("변동성·신용 스트레스(미 재무부 OFR)·금리곡선·금융스트레스·침체 확률을 나란히 봅니다.", "Compare volatility and credit stress (U.S. Treasury OFR), the yield curve, financial stress and recession odds."), keys: ["sentiment", "ofr_fsi_volatility", "ofr_fsi_credit", "ofr_fsi", "yield_curve", "financial_stress", "recession_prob", "vix", "high_yield_spread"] },
   { id: "macro-regime", zone: "us", eyebrow: "MACRO REGIME", title: LABEL("매크로 환경", "Macro regime"), copy: LABEL("달러·금리·원자재·고용의 방향을 확인합니다.", "Track the dollar, rates, commodities and labor conditions."), keys: ["dollar_index_broad", "dxy", "usdjpy", "treasury_10y", "wti", "copper", "unemployment", "initial_claims"] },
   { id: "liquidity", zone: "us", eyebrow: "FED & LIQUIDITY", title: LABEL("유동성 대차대조표", "Liquidity balance sheet"), copy: LABEL("연준·재무부·단기자금시장 유동성의 크기와 흐름입니다.", "Monitor Federal Reserve, Treasury and money-market liquidity."), keys: ["fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account", "m2", "retail_money_market_funds"] },
   { id: "exchange-rates", zone: "us", eyebrow: "OFFICIAL FX · BOK ECOS × FED H.10", title: LABEL("환율", "Exchange rates"), copy: LABEL("원·달러, 엔·달러, 유로·달러, 파운드·달러는 한국은행 ECOS의 일별 고시(당일 반영), 위안·달러와 달러지수는 미 연준 H.10 주간 릴리스입니다. 앞의 세 개는 달러당 외화, 뒤의 두 개는 외화당 달러로 방향이 반대입니다.", "USD/KRW, USD/JPY, EUR/USD and GBP/USD are the Bank of Korea's daily ECOS quotations (same-day); USD/CNY and the dollar indexes come from the Fed's weekly H.10 release. The first three are foreign currency per dollar; the last two are quoted the other way round."), keys: ["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd", "dollar_index_afe", "dollar_index_eme"] },
@@ -532,6 +547,7 @@ const CARD_LANES = new Map([
     "vnm", "ewj", "dxy", "usdjpy", "vix", "wti", "copper"].map((key) => [key, "assets"]),
   ...["fx_usdkrw", "fx_usdjpy", "fx_usdcny", "fx_eurusd", "fx_gbpusd",
     "treasury_2y", "yield_curve", "high_yield_spread", "financial_stress", "treasury_10y", "unemployment",
+    "ofr_fsi", "ofr_fsi_volatility", "ofr_fsi_credit",
     "initial_claims", "fed_assets", "reserve_balances", "reverse_repo", "treasury_general_account",
     "m2", "retail_money_market_funds", "sofr", "effective_fed_funds", "reserve_interest",
     "dollar_index_broad", "dollar_index_afe", "dollar_index_eme",
