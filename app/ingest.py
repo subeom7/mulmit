@@ -91,6 +91,15 @@ from .providers.nyfed import (
     NYFED_TERMS_URL,
     NyFedProvider,
 )
+from .providers.ofr import (
+    OFR_LEGAL_NOTICES_URL,
+    OFR_PROVIDER_ID,
+    OFR_PUBLISHER,
+    OFR_PUBLISHER_URL,
+    OFR_SERIES,
+    OFR_SERIES_BY_KEY,
+    OfrProvider,
+)
 from .providers.sec_edgar import SecEdgarProvider
 
 log = logging.getLogger(__name__)
@@ -345,6 +354,64 @@ def refresh_ecos(*, force: bool = False) -> dict:
             result["failed"] += 1
             store.mark_economic_error(spec.series_key, str(exc))
             log.warning("거시 갱신 실패 %s: %s", spec.stat_code, exc)
+    return result
+
+
+def refresh_ofr(*, force: bool = False) -> dict:
+    """Refresh the OFR Financial Stress Index composite and its five categories.
+
+    A U.S. federal work (no copyright claimed, credit requested), so no key and
+    no contract; one CSV download serves every series and the provider reuses
+    what it already parsed.
+    """
+    if not config.OFR_ENABLED:
+        return {"skipped": "disabled", "attempted": 0, "updated": 0, "failed": 0}
+
+    keys = [spec.series_key for spec in OFR_SERIES]
+    targets = (
+        keys
+        if force
+        else [
+            key
+            for key in store.stale_economic_series(keys, config.OFR_MAX_AGE)
+            if _series_owner(key) in (None, OFR_PROVIDER_ID)
+        ]
+    )
+    if not targets:
+        return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
+
+    provider = OfrProvider(timeout=config.OFR_TIMEOUT, retries=config.OFR_RETRIES)
+    start = dt.date.today() - dt.timedelta(days=config.OFR_HISTORY_DAYS)
+    result = {"attempted": 0, "updated": 0, "failed": 0, "rate_limited": 0, "observations": 0}
+
+    for key in targets:
+        spec = OFR_SERIES_BY_KEY[key]
+        result["attempted"] += 1
+        try:
+            metadata, observations = provider.fetch_series(spec, start=start)
+            count = store.save_economic_series(
+                spec.series_key,
+                provider_id=OFR_PROVIDER_ID,
+                provider_series_id=spec.provider_series_id,
+                metadata_fields=metadata,
+                observations=observations,
+                publisher=OFR_PUBLISHER,
+                publisher_url=OFR_PUBLISHER_URL,
+                series_url=OFR_PUBLISHER_URL + "financial-stress-index/",
+                rights_status="approved",
+                rights_evidence=OFR_LEGAL_NOTICES_URL,
+            )
+            result["updated"] += 1
+            result["observations"] += count
+            log.info("거시 갱신 %s/%s (%d행)", OFR_PROVIDER_ID, spec.provider_series_id, count)
+        except RateLimited:
+            result["rate_limited"] += 1
+            log.warning("OFR 요청 제한 — 남은 계열은 다음 주기에 재시도")
+            break
+        except Exception as exc:  # noqa: BLE001 - 한 계열 실패가 나머지를 막지 않는다
+            result["failed"] += 1
+            store.mark_economic_error(spec.series_key, str(exc))
+            log.warning("거시 갱신 실패 %s: %s", spec.provider_series_id, exc)
     return result
 
 
@@ -948,6 +1015,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         insider_result = {"skipped": "explicit_price_refresh"}
         nyfed_result = {"skipped": "explicit_price_refresh"}
         fedboard_result = {"skipped": "explicit_price_refresh"}
+        ofr_result = {"skipped": "explicit_price_refresh"}
         bls_result = {"skipped": "explicit_price_refresh"}
         fsc_result = {"skipped": "explicit_price_refresh"}
         pension_result = {"skipped": "explicit_price_refresh"}
@@ -959,6 +1027,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             nyfed_result = refresh_nyfed()
             ecos_result = refresh_ecos()
             fedboard_result = refresh_fedboard()
+            ofr_result = refresh_ofr()
             bls_result = refresh_bls()
             fsc_result = refresh_fsc()
             insider_result = refresh_insider_filings()
@@ -983,6 +1052,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             "nyfed": nyfed_result,
             "ecos": ecos_result,
             "fedboard": fedboard_result,
+            "ofr": ofr_result,
             "bls": bls_result,
             "fsc": fsc_result,
             "insider": insider_result,
@@ -1005,6 +1075,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             nyfed_result = refresh_nyfed()
             ecos_result = refresh_ecos()
             fedboard_result = refresh_fedboard()
+            ofr_result = refresh_ofr()
             bls_result = refresh_bls()
             fsc_result = refresh_fsc()
             insider_result = refresh_insider_filings()
@@ -1073,6 +1144,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     insider_result = {"skipped": "explicit_price_refresh"}
     nyfed_result = {"skipped": "explicit_price_refresh"}
     fedboard_result = {"skipped": "explicit_price_refresh"}
+    ofr_result = {"skipped": "explicit_price_refresh"}
     bls_result = {"skipped": "explicit_price_refresh"}
     fsc_result = {"skipped": "explicit_price_refresh"}
     pension_result = {"skipped": "explicit_price_refresh"}
@@ -1084,6 +1156,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         nyfed_result = refresh_nyfed()
         ecos_result = refresh_ecos()
         fedboard_result = refresh_fedboard()
+        ofr_result = refresh_ofr()
         bls_result = refresh_bls()
         fsc_result = refresh_fsc()
         insider_result = refresh_insider_filings()
@@ -1101,6 +1174,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
     result["fred"] = fred_result
     result["nyfed"] = nyfed_result
     result["fedboard"] = fedboard_result
+    result["ofr"] = ofr_result
     result["bls"] = bls_result
     result["fsc"] = fsc_result
     result["insider"] = insider_result

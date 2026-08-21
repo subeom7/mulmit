@@ -826,6 +826,61 @@ notes: >
   4. 첫 수집 후 /kr '한국 매크로' 섹션 검증
 - 약관에 공개 재배포를 막는 문구가 있으면 lane은 켜지 않는다 — fail-closed.
 
+### 3.17 미 재무부 금융연구국(OFR) — 금융스트레스지수 (변동성·신용 범주 포함)
+
+- **상태**: **✅ 승인·활성화 (2026-08-21)** — 연방정부 저작물. 숨긴 VIX·하이일드 카드의
+  역할을 권리 깨끗한 한 lane으로 대신한다(변동성 범주 = 내재·실현 변동성 계열,
+  신용 범주 = 스프레드 계열). `DS-2026-009`.
+- **코드**: `app/providers/ofr.py`, `app/ingest.py::refresh_ofr`, 카탈로그 `OFR_*`
+  (`app/providers/fred.py`, 소유권은 저장 행 provider_id=`ofr`), 게이트 `OFR_ENABLED`
+  (기본 false). 카드 `ofr_fsi`·`ofr_fsi_volatility`·`ofr_fsi_credit`; 자금조달·안전자산·
+  주식 밸류에이션 범주도 수집·API 서빙(카드 미배치).
+- **데이터**: <https://www.financialresearch.gov/financial-stress-index/data/fsi.csv>
+  — 열 `Date, OFR FSI, Credit, Equity valuation, Safe assets, Funding, Volatility,
+  United States, Other advanced economies, Emerging markets`, 2000-01-03부터 일별.
+  라이브 확인 2026-08-21: 최신 행 2026-08-18(페이지 고지 "publishes with data that is
+  current from two business days prior"). 33개 시장 변수 기반, 0 = 평균 스트레스.
+- **권리 근거 (Legal Notices, 접근 2026-08-21, <https://www.financialresearch.gov/legal-notices/>)**:
+  > "Copyright Status — **No copyright may be claimed for any work on this website
+  > that was created by a federal employee in the course of his or her duties.
+  > However, credit is requested** if you reproduce or copy any such work. If
+  > copyrighted material appears on the site, or is reached through a link on this
+  > site, the copyright holder must be consulted before the material may be reproduced."
+  >
+  > "Official Seal, Names and Symbols — **Federal law prohibits use of any symbol,
+  > emblem, seal, insignia, or badge** of any entity of the Department of Treasury …"
+  >
+  > "Disclaimer of Endorsement — The OFR does not endorse any commercial product,
+  > service, process, or enterprise."
+  페이지의 Suggested Citation: *Office of Financial Research, "OFR Financial Stress
+  Index," refreshed daily, https://www.financialresearch.gov/financial-stress-index/
+  (accessed …).* — 접근일을 채워 `rights.citation`으로 모든 값에 동봉한다.
+- **판단**: 지수·범주값은 OFR 직원이 산출한 연방 저작물(공공 영역). 입력 변수 일부는
+  상용 벤더 출처지만 CSV에는 OFR의 산출값만 있다 — STLFSI와 같은 구조이며, 여기선
+  발행기관이 저작권을 주장조차 않는다. 조건: 텍스트 출처표기+인용문(접근일), 재무부
+  인장·로고 미사용, OFR 보증 암시 금지. 광고 동반 표시를 막는 문구 없음.
+
+```yaml
+decision_id: DS-2026-009
+provider_id: ofr
+status: approved
+reviewed_at: 2026-08-21
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://www.financialresearch.gov/legal-notices/
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  cache_ttl_seconds: 21600
+  historical_storage: true
+  derived_metrics: true   # 변화율·차트 등 공시값 산술만
+  advertising: true        # 연방 저작물, 제한 문구 없음; OFR 보증 암시 금지
+attribution: "Office of Financial Research, OFR Financial Stress Index (credit requested; no Treasury seal)"
+citation: 'Office of Financial Research, "OFR Financial Stress Index," refreshed daily, https://www.financialresearch.gov/financial-stress-index/ (accessed {date}).'
+expires_at: null
+recheck_at: 2027-02-21
+```
+
 ## 4. 원 발행기관 후보
 
 아래 표의 `pending_review`는 무료라고 단정하는 표시가 아니다. 다음 세션에서 정확한 endpoint, 이용조건, attribution, 저장·캐시·제3자 표시 범위를 다시 확인한 뒤 series 단위로 승인한다.
@@ -838,6 +893,7 @@ notes: >
 | `federal_reserve` | 2Y/10Y, IORB, H.4.1, H.6 후보 | XML/CSV | `pending_review` | [Federal Reserve Data Download](https://www.federalreserve.gov/data.htm), [DDP transition notice](https://www.federalreserve.gov/data/data-download-fred-information.htm) | 2 |
 | `dol_eta` | 신규 실업수당 | CSV/Excel/API 후보 | `pending_review` | [DOL ETA UI data](https://oui.doleta.gov/unemploy/claims.asp) | 2 |
 | `treasury_fiscal_data` | TGA/재정 데이터 후보 | JSON API | `pending_review` | [Fiscal Data](https://fiscaldata.treasury.gov/) | 2 |
+| `ofr` | 금융스트레스지수(종합·변동성·신용 등) | CSV | **`approved` (§3.17, 2026-08-21)** | [OFR FSI](https://www.financialresearch.gov/financial-stress-index/), [Legal Notices](https://www.financialresearch.gov/legal-notices/) | 완료 |
 | `bok_ecos` | USD/KRW와 한국 거시 후보 | JSON/XML | `pending_review` | [한국은행 ECOS](https://ecos.bok.or.kr/api/) | 3 |
 
 Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로 신규 구현 시 종료 일정과 공식 대체 경로를 다시 확인한다. 특정 FRED series ID를 그대로 복제하는 것이 아니라 원 발행기관의 원 series와 단위를 검증한다.
@@ -916,9 +972,10 @@ alias를 정리해 proxy와 exact가 서로 다른 카드에 붙도록 먼저 �
 | `sofr` | `SOFR` | **New York Fed (연결됨)** | `approved` | 2018-04-02~ 일별. `DS-2026-003` |
 | `effective_fed_funds` | `EFFR` | **New York Fed (연결됨)** | `approved` | 2016~ 일별. percentile/volume과 target rate 혼동 금지 |
 | `reserve_interest` | `IORB` | Federal Reserve Board | `pending_review` | 정책 시행일 기준 step series |
-| `high_yield_spread` | `BAMLH0A0HYM2` | ICE Data Indices | `license_required` | 계약 전 blank |
+| `high_yield_spread` | `BAMLH0A0HYM2` | ICE Data Indices | `license_required` | 2026-08-21부터 공개 페이지에서 **숨김**. 신용 스트레스 역할은 `ofr_fsi_credit`(§3.17)이 맡는다 |
+| `ofr_fsi` / `ofr_fsi_volatility` / `ofr_fsi_credit` (+funding·safe_assets·equity_valuation) | `OFR_FSI*` | **미 재무부 OFR (연방 저작물)** | `approved` | §3.17. 일별, 2영업일 지연. 변동성 범주가 VIX 계열, 신용 범주가 스프레드 계열의 권리 깨끗한 대체 — "VIX 자체 아님" 명시 |
 | `wti_exact`(신규) | `DCOILWTICO` | EIA `PET.RWTC.D` 후보 | `pending_review` | exact endpoint·units 재검증. `wti` proxy 카드와 별도 key |
-| `vix_exact`(신규) | `VIXCLS` | Cboe | `license_required` | FRED를 통해 공개하지 않음. `vix` proxy 카드와 별도 key |
+| `vix_exact`(신규) | `VIXCLS` | Cboe | `license_required` | FRED를 통해 공개하지 않음. `vix` 카드는 2026-08-21부터 숨김; 변동성 역할은 `ofr_fsi_volatility`(§3.17) |
 | `copper_exact`(신규) | `PCOPPUSDM` | IMF | `pending_review` | 직접 이용조건 확인 후 결정. `copper` proxy 카드와 별도 key |
 | `kospi_exact` | 없음 | **금융위원회 공공데이터 (연결됨)** | `approved` | KOSPI 공식 종가. T+1 공개. `kospi`(HIP-3 KR200)와 별도 key. `DS-2026-006` |
 | `kosdaq_exact` | 없음 | **금융위원회 공공데이터 (연결됨)** | `approved` | KOSDAQ 공식 종가. HIP-3 대용값이 없어 유일한 소스 |
@@ -1251,4 +1308,5 @@ notes: "No confidential contract language here"
 | 2026-08-21 | 운영자 실사용 피드백 "안 나오는 데이터" 3종 판정 — ① HIP-3 자산 카드 이력 차트: `historical_storage: false`(xyz 회신 대기)에 따른 의도된 미제공, ② 나스닥 주말 신호: 내부 세션(금 17:00 ET) 시작 전, ③ VIX·하이일드: Cboe·ICE 원 권리자 라이선스. 권리 결정 변경 없음. UI만 고장이 아닌 상태로 정직화 — "표시할 시계열이 없습니다"→"이력 차트 미제공 · 표시 권리 확인 중", "데이터 미연결"→"세션 대기 · 다음 내부 세션 {시각}"(`/api/market/weekend` session에 `next_start_at` 추가). `xyz:VIX` 상장폐지 확인으로 VIX proxy 경로 종결(§5 매핑표) | Claude assisted |
 | 2026-08-21 | **DS-2026-001 개정** — 무응답→OFF 규칙 폐기(명시적 거절만 OFF), HIP-3 자산 카드 **일봉 이력 개방**(`historical_storage: true`, 운영자 위험 수용). 새 lane `app/hip3_history.py`: `candleSnapshot` 1d·1년·6h, report blob 1개, 별도 게이트 `HIP3_HISTORY_ENABLED`(기본 false), 요청 경로는 저장 블롭만 읽음, `/api/market/assets`에 `observations`·`history_status`(`withheld_pending_rights`/`collecting`/`stored_daily_candles`)·`history_lane`·`history_basis` 추가. `/api/status` 권리 요약에 `history` 게이트 표기 | Claude assisted |
 | 2026-08-21 | 운영자 결정 — 영구 `license_required` 플레이스홀더 카드(VIX·하이일드 스프레드)는 공개 페이지에서 **숨김**(빈 카드 대신). API는 여전히 `license_required`로 보고하고 권리 상태 구분(§9)은 유지. 옵션 지표 4종은 정의 수준에서 이미 숨겨져 있었음. VIX 대체 후보로 OFR 금융스트레스지수(미 재무부 OFR, 연방정부 저작물, 일별, 변동성·신용 하위지수) 조사 착수 | Claude assisted |
+| 2026-08-21 | **OFR 금융스트레스지수 lane 추가** (`DS-2026-009`, §3.17) — 미 재무부 OFR 연방 저작물(저작권 미주장·credit 요청·인장 금지 원문 인용), 일별 CSV 1개로 종합+5범주 수집, 게이트 `OFR_ENABLED`(기본 false), 인용문+접근일 `rights.citation` 동봉. 카드 `ofr_fsi`·`ofr_fsi_volatility`·`ofr_fsi_credit`가 숨긴 VIX·하이일드의 역할을 대신(“VIX 자체 아님” 표기). 요약 띠·RISK & CREDIT 섹션 키 재배치 | Claude assisted |
 

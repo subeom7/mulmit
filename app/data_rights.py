@@ -28,6 +28,7 @@ FEDBOARD = "federal_reserve"
 BLS = "bls"
 FSC = "fsc"
 ECOS = "ecos"
+OFR = "ofr"
 
 # --- structured client contracts --------------------------------------------
 # The frontend keys off ``code``: these are disabled states, not retryable
@@ -140,6 +141,7 @@ _MACRO_LANES: dict[str, Callable[[], bool]] = {
     BLS: lambda: config.BLS_ENABLED,
     FSC: lambda: config.FSC_ENABLED,
     ECOS: lambda: config.ECOS_ENABLED,
+    OFR: lambda: config.OFR_ENABLED,
 }
 
 # Named rather than derived from the lane id. A provider id and its environment
@@ -152,6 +154,7 @@ _MACRO_LANE_GATES = {
     BLS: "BLS_ENABLED",
     FSC: "FSC_ENABLED",
     ECOS: "ECOS_ENABLED",
+    OFR: "OFR_ENABLED",
 }
 
 
