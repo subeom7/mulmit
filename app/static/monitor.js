@@ -35,7 +35,7 @@ const onPage = (...pages) => PAGE === "all" || pages.includes(PAGE);
 
 const TEXT = {
   ko: {
-    "brand.tagline": "MARKET SIGNAL CONSOLE", "nav.analytics": "종목 분석", "nav.monitor": "시장 모니터",
+    "brand.tagline": "물밑 · 주식·크립토 시장 신호", "nav.analytics": "종목 분석", "nav.monitor": "시장 모니터",
     "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌", "nav.crypto": "크립토",
     "landing.kicker": "KOREA × US MARKET CONSOLE", "landing.title": "장이 닫혀도, 시장은 움직입니다.",
     "landing.title.krOpen": "장중입니다. 마감 후에도, 여기서 이어집니다.",
@@ -154,7 +154,7 @@ const TEXT = {
     "pendingRights.copy": "공급자의 공개 표시 권리를 서면으로 확인하는 중입니다. 확인 전까지 값과 시계열을 공개하지 않습니다.", "notice.disabledLanes": "현재 비활성인 데이터 공급 경로",
   },
   en: {
-    "brand.tagline": "MARKET SIGNAL CONSOLE", "nav.analytics": "Stock analytics", "nav.monitor": "Market monitor",
+    "brand.tagline": "MARKET SIGNALS · KR · US · CRYPTO", "nav.analytics": "Stock analytics", "nav.monitor": "Market monitor",
     "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & Global", "nav.crypto": "Crypto",
     "landing.kicker": "KOREA × US MARKET CONSOLE", "landing.title": "Markets move after the close.",
     "landing.title.krOpen": "Seoul is trading. It carries on here after the close.",
