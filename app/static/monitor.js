@@ -69,6 +69,11 @@ const TEXT = {
     "stress.colInput": "입력", "stress.colValue": "값", "stress.colPct": "5년 내 백분위", "stress.colScore": "스트레스 점수", "stress.colDir": "방향",
     "stress.inverted": "낮을수록 스트레스", "stress.direct": "높을수록 스트레스",
     "stress.unavailable": "공개 가능한 입력이 부족해 지수를 산출하지 않습니다",
+    "sentiment.eyebrow": "MULMIT 자체 산출 · 실험 · 산식 공개", "sentiment.title": "시장 심리 게이지", "sentiment.own": "자체 산출 · 실험",
+    "sentiment.scale": "0에 가까울수록 위험회피, 100에 가까울수록 위험선호", "sentiment.caption": "게이지를 구성하는 입력",
+    "sentiment.colInput": "입력", "sentiment.colValue": "값", "sentiment.colPct": "자기 이력 백분위", "sentiment.colScore": "위험선호 점수", "sentiment.colDir": "방향",
+    "sentiment.inverted": "높을수록 위험회피", "sentiment.direct": "높을수록 위험선호",
+    "sentiment.unavailable": "공개 가능한 입력이 부족해 게이지를 산출하지 않습니다", "landing.usMini.sentiment": "심리",
     "status.disabled": "표시 비활성", "status.macroDisabled": "승인된 거시 데이터 공급자가 없어 표시하지 않습니다", "status.rightsPending": "표시 권리 확인 중 · 값을 공개하지 않습니다",
     "theme.toggle": "테마 전환", "hero.kicker": "GLOBAL MARKET INTELLIGENCE", "hero.title": "한눈에 읽는 시장의 온도.",
     "hero.copy": "가격, 위험, 유동성, 거시경제를 같은 시간축에서 확인합니다. 연결되지 않은 데이터는 추정하지 않습니다.",
@@ -158,6 +163,11 @@ const TEXT = {
     "stress.colInput": "Input", "stress.colValue": "Value", "stress.colPct": "5-year percentile", "stress.colScore": "Stress score", "stress.colDir": "Direction",
     "stress.inverted": "Lower means more stress", "stress.direct": "Higher means more stress",
     "stress.unavailable": "Too few publishable inputs to compose the index",
+    "sentiment.eyebrow": "MULMIT COMPOSITE · EXPERIMENTAL · PUBLISHED METHOD", "sentiment.title": "Market Sentiment Gauge", "sentiment.own": "Own composite · experimental",
+    "sentiment.scale": "Lower is risk-off, higher is risk-on", "sentiment.caption": "Inputs that make up the gauge",
+    "sentiment.colInput": "Input", "sentiment.colValue": "Value", "sentiment.colPct": "Own-history percentile", "sentiment.colScore": "Risk-appetite score", "sentiment.colDir": "Direction",
+    "sentiment.inverted": "Higher means risk-off", "sentiment.direct": "Higher means risk-on",
+    "sentiment.unavailable": "Too few publishable inputs to compose the gauge", "landing.usMini.sentiment": "Sentiment",
     "status.disabled": "Display disabled", "status.macroDisabled": "No approved macro data provider is enabled", "status.rightsPending": "Display rights unconfirmed · values withheld",
     "theme.toggle": "Toggle theme", "hero.kicker": "GLOBAL MARKET INTELLIGENCE", "hero.title": "Read the market in one view.",
     "hero.copy": "Track prices, risk, liquidity and macro conditions on a shared timeline. Missing data is never estimated.",
@@ -250,7 +260,7 @@ const METRICS = {
   ewj: { aliases: ["ewj", "japan"], label: LABEL("일본 EWJ", "Japan EWJ"), group: "emerging", format: "currency", currency: "USD", accent: "#38bdf8", description: LABEL("일본 주식시장 ETF", "Japan equity ETF") },
   vix: { aliases: ["vix", "vixcls"], label: LABEL("VIX 변동성", "VIX volatility"), group: "risk", format: "number", accent: "#fb7185" },
   // reserved: no source can fill this yet by design (own index, not built).
-  sentiment: { aliases: ["sentiment", "fear_greed", "mulmit_sentiment"], label: LABEL("시장 심리", "Market sentiment"), group: "risk", format: "number", reserved: true, accent: "#fb7185", description: LABEL("공식 입력과 공개된 방법론으로 산출하는 자체 지수 연결 대기", "Awaiting a proprietary index built from licensed inputs and a published methodology") },
+  sentiment: { aliases: ["sentiment", "market_sentiment", "mulmit_sentiment"], label: LABEL("시장 심리 게이지 (실험)", "Market sentiment gauge (experimental)"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185", description: LABEL("Mulmit 자체 산출 0–100 게이지. OFR 변동성·신용 스트레스와 HIP-3 퍼프 모멘텀·실현 변동성·주식 대 금을 자기 이력 백분위로 점수화해 동일 가중 평균합니다. CNN Fear & Greed가 아닙니다.", "Mulmit's own 0–100 gauge: OFR volatility and credit stress plus HIP-3 perp momentum, realized volatility and equity-vs-gold, each scored as an own-history percentile and equally weighted. Not CNN's Fear & Greed.") },
   yield_curve: { aliases: ["yield_curve", "t10y2y", "yield_spread"], label: LABEL("장단기 금리차", "10Y–2Y curve"), group: "risk", format: "percentPoints", accent: "#fb7185" },
   ofr_fsi: { aliases: ["ofr_fsi"], label: LABEL("OFR 금융스트레스 (종합)", "OFR financial stress"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185" },
   ofr_fsi_volatility: { aliases: ["ofr_fsi_volatility"], label: LABEL("변동성 스트레스 (OFR)", "Volatility stress (OFR)"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185" },
@@ -301,6 +311,9 @@ const INSIGHTS = {
   high_yield_spread: {
     description: LABEL("저신용 회사채가 국채보다 요구하는 추가 보상으로 신용 스트레스를 살핍니다.", "The extra yield demanded over Treasuries for lower-rated corporate debt."),
     hints: [LABEL("3~4%: 비교적 차분한 신용시장 참고 구간", "3–4%: a comparatively calm credit reference range"), LABEL("4~6%: 신용 경계가 높아지는 구간", "4–6%: credit caution is rising"), LABEL("8% 이상: 심한 신용 스트레스 참고 구간", "8% or more: severe-credit-stress reference range")],
+  },
+  sentiment: {
+    hints: [LABEL("0~20 위험회피 강함 · 40~60 중립 · 80~100 위험선호 강함", "0–20 strong risk-off · 40–60 neutral · 80–100 strong risk-on"), LABEL("실험 지수 — 예측이 아니며 다른 심리 지수와 값 비교 불가", "Experimental — not a forecast and not comparable with other sentiment indexes")],
   },
   ofr_fsi: {
     description: LABEL("미 재무부 금융연구국(OFR)이 33개 시장 변수로 매일 산출하는 글로벌 금융 스트레스 종합지수입니다. 2영업일 지연 공표.", "The U.S. Treasury's Office of Financial Research builds this daily composite from 33 market variables; published with a two-business-day lag."),
@@ -436,7 +449,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
+  stress: null, sentiment: null, krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -546,6 +559,7 @@ const DISABLED_CODES = {
   macro_data_disabled: "status.macroDisabled",
   hip3_public_display_pending_rights: "status.rightsPending",
   stress_index_unavailable: "stress.unavailable",
+  sentiment_index_unavailable: "sentiment.unavailable",
 };
 
 // Which endpoint would have filled a card. Only consulted when the card is
@@ -939,7 +953,7 @@ function renderAttribution() {
   }
   // Say out loud which lanes are switched off. Otherwise a page full of blank
   // cards looks like a broken site rather than a deliberate rights decision.
-  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation", "stress"]
+  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation", "stress", "sentiment"]
     .map(disabledText).filter(Boolean))];
   if (laneReasons.length) {
     const title = document.createElement("p"); title.textContent = t("notice.disabledLanes"); host.append(title);
@@ -1003,6 +1017,7 @@ const PAGE_FETCHES = {
   sectors: ["us"],
   weekend: ["kr"],
   stress: ["landing", "us"],
+  sentiment: ["landing", "us"],
   krIndices: ["kr"],
   krOvernight: ["landing", "kr"],
   feed: ["landing"],
@@ -1019,10 +1034,10 @@ async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
-    request("/api/market/stress", "stress"), request("/api/kr/indices", "krIndices"),
+    request("/api/market/stress", "stress"), request("/api/market/sentiment", "sentiment"), request("/api/kr/indices", "krIndices"),
     request("/api/kr/overnight", "krOvernight"), request("/api/kr/pension", "krPension"),
     request("/api/kr/holdings", "krHoldings"),
     request("/api/kr/events", "krEvents"),
@@ -1032,14 +1047,14 @@ async function loadCore() {
     request("/api/feed", "feed"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
-  state.stress = stress; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krHoldings = krHoldings;
+  state.stress = stress; state.sentiment = sentiment; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krHoldings = krHoldings;
   state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
-  ingestPayload(macro, "macro"); ingestPayload(assets, "assets");
+  ingestPayload(macro, "macro"); ingestPayload(assets, "assets"); ingestPayload(sentimentRecordPayload(sentiment), "sentiment");
   renderAll(); $("#refresh-button")?.removeAttribute("aria-busy");
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -1420,6 +1435,11 @@ function renderZonePreviews() {
     if (stressScore !== null) {
       parts.push(entry(t("landing.usMini.stress"),
         `${stressScore.toFixed(1)} · ${localValue(state.stress?.band, state.lang)}`, null));
+    }
+    const sentimentScore = safeNumber(state.sentiment?.score);
+    if (sentimentScore !== null) {
+      parts.push(entry(t("landing.usMini.sentiment"),
+        `${sentimentScore.toFixed(1)} · ${localValue(state.sentiment?.band, state.lang)}`, null));
     }
     usMini.hidden = !parts.length;
     if (parts.length) usMini.replaceChildren(...parts);
@@ -2210,6 +2230,78 @@ function renderStressIndex() {
   $("#stress-method").textContent = localValue(
     { ko: data.method?.summary_ko, en: data.method?.summary_en }, state.lang);
   $("#stress-disclaimer").textContent = localValue(data.disclaimer, state.lang);
+}
+
+// The gauge also fills the "sentiment" card in the risk tape/section, so it
+// is adapted into the record shape the card renderer already understands.
+function sentimentRecordPayload(data) {
+  if (!data || typeof data !== "object" || safeNumber(data.score) === null) return null;
+  const history = Array.isArray(data.observations) ? data.observations : [];
+  const previous = history.length > 1 ? history[history.length - 2] : null;
+  const delta = previous && safeNumber(previous.value) !== null ? data.score - previous.value : null;
+  return { records: [{
+    id: "market_sentiment", key: "sentiment", status: "ok", experimental: true,
+    label: data.label, description: data.disclaimer,
+    source: { provider: "mulmit", provider_name: state.lang === "ko" ? "Mulmit 자체 산출 (실험)" : "Mulmit composite (experimental)" },
+    units: { long: "0-100 risk appetite", short: "" },
+    latest: { date: data.as_of, value: data.score },
+    previous: previous ? { date: previous.date, value: previous.value } : null,
+    change: { value: delta, percent: delta !== null && previous.value ? delta / previous.value * 100 : null },
+    observations: history.map((item) => ({ date: item.date, value: item.value })),
+    freshness: { status: "fresh" },
+    rights: { public_display: true, provider: "mulmit" },
+  }] };
+}
+
+function renderSentimentIndex() {
+  const stateNode = $("#sentiment-state"), body = $("#sentiment-body"), data = state.sentiment;
+  if (!stateNode || !body) return;
+  if (!data) {
+    const disabled = disabledText("sentiment");
+    stateNode.hidden = false; stateNode.classList.toggle("disabled", Boolean(disabled)); body.hidden = true;
+    stateNode.textContent = disabled || `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+  stateNode.hidden = true; stateNode.classList.remove("disabled"); body.hidden = false;
+  const locale = state.lang === "ko" ? "ko-KR" : "en-US";
+  const num = (value, digits = 1) => value === null || value === undefined ? "—" : new Intl.NumberFormat(locale, { maximumFractionDigits: digits }).format(value);
+
+  $("#sentiment-score").textContent = num(data.score);
+  $("#sentiment-band").textContent = `${localValue(data.band, state.lang)} · ${t("date.asof")} ${dateText(data.as_of)}`;
+  $("#sentiment-marker").style.left = `calc(${Math.max(0, Math.min(100, data.score))}% - 1.5px)`;
+
+  const chartHost = $("#sentiment-chart");
+  if (chartHost) {
+    chartHost.replaceChildren();
+    const chart = lineChart((data.observations || []).map((item) => ({ date: item.date, value: safeNumber(item.value) })).filter((item) => item.date && item.value !== null));
+    if (chart) chartHost.append(chart); else { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = t("status.noSeries"); chartHost.append(empty); }
+  }
+
+  const table = $("#sentiment-table");
+  const heads = ["sentiment.colInput", "sentiment.colValue", "sentiment.colPct", "sentiment.colScore", "sentiment.colDir"];
+  $("thead", table).innerHTML = `<tr>${heads.map((key) => `<th scope="col">${t(key)}</th>`).join("")}</tr>`;
+  const tbody = $("tbody", table); tbody.replaceChildren();
+  for (const item of data.components || []) {
+    const row = document.createElement("tr");
+    const cells = [
+      localValue(item.label, state.lang),
+      `${num(item.value, 2)}${item.unit ? ` ${item.unit}` : ""}`,
+      num(item.percentile),
+      num(item.score),
+      t(item.inverted ? "sentiment.inverted" : "sentiment.direct"),
+    ];
+    cells.forEach((text, index) => {
+      const cell = document.createElement("td");
+      if (index >= 1 && index <= 3) cell.className = "num";
+      cell.textContent = text;
+      if (index === 0) cell.title = `${localValue(item.rationale, state.lang)} — ${localValue(item.derivation, state.lang)}`;
+      row.append(cell);
+    });
+    tbody.append(row);
+  }
+  $("#sentiment-method").textContent = localValue(
+    { ko: data.method?.summary_ko, en: data.method?.summary_en }, state.lang);
+  $("#sentiment-disclaimer").textContent = localValue(data.disclaimer, state.lang);
 }
 
 function renderTradingView() {
