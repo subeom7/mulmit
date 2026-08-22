@@ -46,7 +46,10 @@ def test_rsi_sma_and_realized_vol_match_hand_computed_values():
 
 
 def test_funding_anchors_and_bands_are_exactly_as_published():
-    assert [cs._interpolate(cs.FUNDING_ANCHORS, apr) for apr in (0, 15, 30, 60, 500)] == [0.0, 50.0, 80.0, 100.0, 100.0]
+    assert [cs._interpolate(cs.FUNDING_ANCHORS, excess) for excess in (0, 15, 30, 60, 500)] == [0.0, 50.0, 80.0, 100.0, 100.0]
+    # Hyperliquid's fixed interest component means a market with no premium still prints ~+10.95% APR.
+    neutral = cs.build_signal(_series([100.0 + i for i in range(80)]), _card(cs.FUNDING_BASELINE_APR))
+    assert {c["id"]: c["heat_score"] for c in neutral["components"]}["funding"] == 0.0
     assert cs._interpolate(cs.FUNDING_ANCHORS, 7.5) == 25.0
     assert [cs._band(cs.HEAT_BANDS, v)[0] for v in (0, 24.9, 25, 64.9, 79.9, 80, 100)] == [
         "cool", "cool", "steady", "warm", "elevated", "overheated", "overheated"]
@@ -61,7 +64,7 @@ def test_calm_uptrend_reads_as_moderate_heat_with_an_upward_trend():
     assert signal["direction"]["band"] == "up" and signal["direction"]["score"] > 50
     assert signal["direction"]["detail"]["price_over_fast"] is True and signal["direction"]["detail"]["fast_over_slow"] is True
     by_id = {c["id"]: c for c in signal["components"]}
-    assert by_id["funding"]["heat_score"] == pytest.approx(cs._interpolate(cs.FUNDING_ANCHORS, 2.0), abs=0.1)
+    assert by_id["funding"]["heat_score"] == pytest.approx(cs._interpolate(cs.FUNDING_ANCHORS, abs(2.0 - cs.FUNDING_BASELINE_APR)), abs=0.1)
     assert by_id["range"]["heat_score"] > 90.0   # a straight climb sits near the range high (the last wick is above the close)
     assert by_id["momentum"]["heat_score"] == pytest.approx(100.0, abs=0.1)  # RSI pinned at 100
     assert by_id["volatility"]["heat_score"] is not None
@@ -75,9 +78,10 @@ def test_crowded_longs_and_a_stretched_range_push_heat_into_the_top_band():
     hot = cs.build_signal(_series([100 * 1.004**i for i in range(200)]), _card(90.0))
     assert hot["heat"]["band"] == "overheated" and hot["heat"]["score"] >= 80
     assert "펀딩 압력" in hot["reading"]["ko"]
-    # Same prices, but funding is flat: the same market reads cooler.
-    calm = cs.build_signal(_series([100 * 1.004**i for i in range(200)]), _card(0.0))
+    # Same prices, but funding sits exactly at the venue baseline: the same market reads cooler.
+    calm = cs.build_signal(_series([100 * 1.004**i for i in range(200)]), _card(cs.FUNDING_BASELINE_APR))
     assert calm["heat"]["score"] < hot["heat"]["score"]
+    assert {c["id"]: c["heat_score"] for c in calm["components"]}["funding"] == 0.0
 
 
 def test_downtrend_reads_down_and_crowded_shorts_still_count_as_heat():
@@ -87,14 +91,14 @@ def test_downtrend_reads_down_and_crowded_shorts_still_count_as_heat():
     by_id = {c["id"]: c for c in signal["components"]}
     assert by_id["range"]["heat_score"] < 5.0      # pinned near the range low (the last wick is below the close)
     assert by_id["momentum"]["heat_score"] == 0.0                           # RSI below 50 adds no heat
-    assert by_id["funding"]["heat_score"] == pytest.approx(cs._interpolate(cs.FUNDING_ANCHORS, 40.0), abs=0.1)
+    assert by_id["funding"]["heat_score"] == pytest.approx(cs._interpolate(cs.FUNDING_ANCHORS, 40.0 + cs.FUNDING_BASELINE_APR), abs=0.1)
     assert "숏 쏠림" in by_id["funding"]["note"]["ko"]
     assert by_id["range"]["detail"]["drawdown_from_high_percent"] < 0
 
 
 def test_missing_funding_reweights_instead_of_scoring_zero():
     closes = [100 + math.sin(i / 6) * 3 for i in range(200)]
-    with_funding = cs.build_signal(_series(closes), _card(0.0))
+    with_funding = cs.build_signal(_series(closes), _card(cs.FUNDING_BASELINE_APR))
     without = cs.build_signal(_series(closes), _card(None))
     by_id = {c["id"]: c for c in without["components"]}
     assert by_id["funding"]["heat_score"] is None and by_id["funding"]["value"] is None

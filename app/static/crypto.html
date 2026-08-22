@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-9">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-10">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -60,6 +60,32 @@
         <strong id="updated-at">—</strong>
         <button class="refresh-button" id="refresh-button" type="button"><span aria-hidden="true">↻</span> <span data-i18n="action.refresh">새로고침</span></button>
       </aside>
+    </section>
+
+    <section class="dashboard-section" id="crypto-regime" aria-labelledby="creg-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">MARKET REGIME · HEAT × TREND</p><h2 id="creg-title" data-i18n="crypto.regime.title">시장 국면</h2></div>
+        <span class="source-pill">HYPERLIQUID · ALTERNATIVE.ME</span>
+      </div>
+      <p class="section-copy" data-i18n="crypto.regime.copy">지금 시장이 얼마나 쏠려 있고 어느 쪽으로 기울어 있는지를 요약한 상태 지표입니다. 매수·매도 신호가 아니며, 과열이 곧 하락을 뜻하지도 않습니다.</p>
+      <div id="creg-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="creg-top" class="sig-top" hidden>
+        <div class="sig-gauge">
+          <small data-i18n="crypto.regime.heat">과열도</small>
+          <strong id="creg-heat">—</strong>
+          <div class="sig-bar"><i id="creg-heat-bar"></i></div>
+          <span id="creg-heat-band">—</span>
+        </div>
+        <div class="sig-gauge">
+          <small data-i18n="crypto.regime.trend">추세</small>
+          <strong id="creg-dir">—</strong>
+          <div class="sig-bar center"><i id="creg-dir-bar"></i></div>
+          <span id="creg-dir-band">—</span>
+        </div>
+        <p class="sig-reading" id="creg-reading"></p>
+      </div>
+      <div id="creg-components" class="crypto-strip" hidden></div>
+      <footer class="kro-footer" id="creg-footer" hidden></footer>
     </section>
 
     <section class="dashboard-section" id="crypto-tape" aria-labelledby="ctape-title">
@@ -231,6 +257,6 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "crypto";</script>
-  <script src="/static/monitor.js?v=20260822-9" defer></script>
+  <script src="/static/monitor.js?v=20260822-10" defer></script>
 </body>
 </html>

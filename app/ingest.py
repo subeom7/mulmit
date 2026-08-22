@@ -26,6 +26,7 @@ from . import (
     bio,
     config,
     crypto_market,
+    crypto_regime,
     crypto_structure,
     data,
     econ_calendar,
@@ -935,6 +936,21 @@ def refresh_bio_fda(*, force: bool = False) -> dict:
         return {"skipped": "error", "error": str(exc)}
 
 
+def refresh_crypto_coin_heat(*, force: bool = False) -> dict:
+    """코인별 국면 신호의 캔들 기반 절반(일봉 파생)을 저장한다. 펀딩은 요청 시점에 계산한다."""
+    try:
+        result = crypto_regime.refresh_coin_price_parts(force=force)
+        if not result.get("skipped"):
+            log.info("크립토 코인 국면(일봉 파생) 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("Hyperliquid 요청 제한(코인 국면) — 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("크립토 코인 국면 갱신 실패: %s", exc)
+        return {"skipped": "error", "error": str(exc)}
+
+
 def refresh_crypto_stablecoins(*, force: bool = False) -> dict:
     """CoinMarketCap USDT·USDC 유통 공급(시간당 1크레딧) + 자체 일별 누적. 도미넌스와 같은 키·같은 게이트."""
     try:
@@ -1170,6 +1186,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             crypto_sentiment_result = refresh_crypto_sentiment()
             refresh_crypto_structure()
             refresh_crypto_stablecoins()
+            refresh_crypto_coin_heat()
             refresh_bio_trials()
             refresh_bio_fda()
             refresh_bio_pubmed()
@@ -1227,6 +1244,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_crypto_sentiment()
             refresh_crypto_structure()
             refresh_crypto_stablecoins()
+            refresh_crypto_coin_heat()
             refresh_bio_trials()
             refresh_bio_fda()
             refresh_bio_pubmed()
@@ -1317,6 +1335,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         crypto_sentiment_result = refresh_crypto_sentiment()
         refresh_crypto_structure()
         refresh_crypto_stablecoins()
+        refresh_crypto_coin_heat()
         refresh_bio_trials()
         refresh_bio_fda()
         refresh_bio_pubmed()
