@@ -22,6 +22,7 @@ from slowapi.util import get_remote_address
 
 from . import (
     __version__,
+    bio,
     config,
     crypto_board,
     crypto_gas,
@@ -176,6 +177,12 @@ def us_page() -> FileResponse:
 def crypto_page() -> FileResponse:
     """크립토 섹션(Phase 1). 페이지 자체는 항상 서빙하고, 값은 lane 게이트가 결정한다."""
     return FileResponse(config.STATIC_DIR / "crypto.html")
+
+
+@app.get("/bio", include_in_schema=False)
+def bio_page() -> FileResponse:
+    """바이오 섹션(ROADMAP #8). 페이지는 항상 서빙하고, 값은 lane 게이트가 결정한다."""
+    return FileResponse(config.STATIC_DIR / "bio.html")
 
 
 @app.get("/monitor", include_in_schema=False)
@@ -366,7 +373,7 @@ def presence_heartbeat(request: Request, response: Response, payload: dict) -> d
     }
 
 
-_PAGEVIEW_PATHS = {"/", "/kr", "/us", "/crypto", "/analytics", "/monitor", "/stock"}
+_PAGEVIEW_PATHS = {"/", "/kr", "/us", "/crypto", "/bio", "/analytics", "/monitor", "/stock"}
 
 
 @app.post("/api/pageview")
@@ -585,6 +592,50 @@ def crypto_volatility(request: Request, response: Response) -> dict:
     response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=3600"
     response.headers["X-Data-Source"] = "Hyperliquid (derived)"
     return crypto_market.build_crypto_volatility()
+
+
+def require_bio_section() -> None:
+    """The bio page and its lanes sit behind one switch, like the crypto section."""
+    if not data_rights.bio_section_enabled():
+        raise HTTPException(
+            status_code=503,
+            detail=data_rights.BIO_SECTION_DISABLED,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        )
+
+
+@app.get("/api/bio/trials")
+@limiter.limit(config.RATE_LIMIT)
+def bio_trials_route(request: Request, response: Response) -> dict:
+    """ClinicalTrials.gov 워치리스트 파이프라인 — ingest가 저장한 블롭만 읽는다(약관 4조건 동봉)."""
+    require_bio_section()
+    try:
+        payload = bio.build_bio_trials()
+    except bio.BioUnavailable as exc:
+        detail = data_rights.BIO_TRIALS_DISABLED if exc.reason == "disabled" else data_rights.BIO_TRIALS_COLLECTING
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=600, stale-while-revalidate=3600"
+    response.headers["X-Data-Source"] = "ClinicalTrials.gov"
+    return payload
+
+
+@app.get("/api/bio/fda")
+@limiter.limit(config.RATE_LIMIT)
+def bio_fda_route(request: Request, response: Response) -> dict:
+    """openFDA 최근 원 신청 승인(NDA·BLA) — ingest가 저장한 블롭만 읽는다."""
+    require_bio_section()
+    try:
+        payload = bio.build_bio_fda()
+    except bio.BioUnavailable as exc:
+        detail = data_rights.BIO_FDA_DISABLED if exc.reason == "disabled" else data_rights.BIO_FDA_COLLECTING
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=600, stale-while-revalidate=3600"
+    response.headers["X-Data-Source"] = "openFDA"
+    return payload
 
 
 @app.get("/api/crypto/structure")

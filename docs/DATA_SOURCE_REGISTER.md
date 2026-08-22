@@ -1082,6 +1082,73 @@ recheck_at: 2026-11-22
 notes: "퍼블릭 RPC 미사용. 제공자 약관은 운영자 계정에 귀속. Base·Arbitrum은 앱 네트워크 활성화 후 자동 표시."
 ```
 
+### 3.22 ClinicalTrials.gov API v2 — 워치리스트 임상 파이프라인 (바이오 섹션)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `clinicaltrials` |
+| 현재 상태 | **`approved` (2026-08-22, `DS-2026-014`)** — 미 연방(NIH/NLM) 공공 데이터베이스, 약관의 4가지 표시 의무를 응답·화면에 구현. 서버 게이트는 기본 OFF(운영자가 켬) |
+| 코드 위치 | `app/providers/clinicaltrials.py`, `app/bio.py`(`refresh_bio_trials`·`build_bio_trials`·`WATCHLIST`), `app/ingest.py::refresh_bio_trials`, 라우트 `/api/bio/trials`, 페이지 `/bio` |
+| 게이트 | web·ingest: `BIO_SECTION_ENABLED` + `CLINICALTRIALS_ENABLED`(키 없음) |
+| 현재 사용 | `GET /api/v2/studies?query.lead=<스폰서>&sort=LastUpdatePostDate:desc&pageSize=25&fields=<구조화 필드만>&countTotal=true` 워치리스트 34곳 × 6시간 주기(요청 간격 0.6초) + `GET /api/v2/version`(`dataTimestamp` = 처리일). blob 저장, 요청 경로는 blob만. 표시: 최근 14일 갱신 중재 2·3상(상태·단계·일자·적응증·중재·등록 인원), 스폰서별 등록 임상 수. **서술 텍스트(요약문 등)는 요청하지 않음** |
+| 기술 비용 | 0원(공개 API, 키 없음). 공식 속도 제한 수치 미게시 — 호출 ≈ 34회/6시간으로 보수 운용 |
+| 공식 근거 | [Terms and Conditions](https://clinicaltrials.gov/about-site/terms-conditions) (Last updated 2023-01-31): "ClinicalTrials.gov data are available to all requesters, both within and outside the United States, at no charge." / "In any publication or distribution of these data, you should: Attribute the source of the data as ClinicalTrials.gov; Update the data such that they are current at all times; Clearly display the date the data were processed by ClinicalTrials.gov; State any modifications made to the content of the data, along with a complete description of the modifications" / "You shall not assert any proprietary rights to any portion of the database" / "The ClinicalTrials.gov data carry an international copyright outside the United States … Some ClinicalTrials.gov data may be subject to the copyright of third parties" |
+| 표시 경계 | ① 출처 "Source: ClinicalTrials.gov" 값 옆·푸터 ② 6시간 갱신·`freshness` ③ `processed_date`(dataTimestamp) 표시 ④ `modifications`(워치리스트 한정·25건 샘플·2/3상 필터·필드 부분집합·한국어 표시명·상장 라벨은 Mulmit 참고 라벨) 명시. 로고 미사용, 제3자 저작 가능 서술문 비표시, 결과 해석·주가 연결 문구 금지 |
+
+```yaml
+decision_id: DS-2026-014
+provider_id: clinicaltrials
+status: approved
+reviewed_at: 2026-08-22
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://clinicaltrials.gov/about-site/terms-conditions (2023-01-31 — 무료·국내외 이용 가능, 배포 시 출처·최신성·처리일·수정 명시 의무)
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  narrative_text: false
+conditions:
+  - attribution "ClinicalTrials.gov" adjacent to values and in footer
+  - data refreshed on a fixed 6h cadence with freshness shown
+  - date processed by ClinicalTrials.gov shown with the values
+  - modifications (watchlist filter, phase filter, field subset, Mulmit labels) stated in the payload and on the page
+  - no proprietary claim; no narrative text; no outcome or price interpretation
+gate: BIO_SECTION_ENABLED + CLINICALTRIALS_ENABLED
+recheck_on: 2026-11-22
+```
+
+### 3.23 openFDA — `drug/drugsfda` 원 신청 승인 (바이오 섹션)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `openfda` |
+| 현재 상태 | **`approved` (2026-08-22, `DS-2026-015`)** — 공개 도메인(CC0 1.0). 서버 게이트 기본 OFF |
+| 코드 위치 | `app/providers/openfda.py`, `app/bio.py`(`refresh_bio_fda`·`build_bio_fda`), `app/ingest.py::refresh_bio_fda`, 라우트 `/api/bio/fda` |
+| 게이트 | web·ingest: `BIO_SECTION_ENABLED` + `OPENFDA_ENABLED`; 선택 `OPENFDA_API_KEY`(ingest 전용, 무료) |
+| 현재 사용 | `GET https://api.fda.gov/drug/drugsfda.json?search=submissions.submission_status:AP+AND+submissions.submission_type:ORIG+AND+submissions.submission_status_date:[start TO end]&limit=100` 최근 60일 창, 하루 1회(최대 5페이지). 표시: NDA·BLA 원 신청 승인 목록(승인일·신청번호·브랜드/성분·스폰서·제출 분류·심사 우선순위·Drugs@FDA 링크), ANDA는 건수 |
+| 기술 비용 | 0원. 한도: 키 없음 240 req/분·1,000/일(IP), 키 240/분·120,000/일 |
+| 공식 근거 | [License](https://open.fda.gov/license/) (2014-05-27): "the content, data, documentation, code, and related materials on openFDA is public domain and made available with a Creative Commons CC0 1.0 Universal dedication." [Terms](https://open.fda.gov/terms/): "You can copy, modify, distribute, and perform the work, even for commercial purposes, all without asking permission." / "While not required … we ask that proper credit be given." 응답 meta.disclaimer: "Do not rely on openFDA to make decisions regarding medical care. … you should assume all results are unvalidated." 단 GMDN(의료기기 용어)은 별도 라이선스 — 의약품 데이터만 사용 |
+| 표시 경계 | 출처 "Source: openFDA (U.S. FDA) — public domain, CC0 1.0" + 라이선스 링크 + 게시자 면책 문구 동봉, 로고 미사용, 매출·주가 해석 금지 |
+
+```yaml
+decision_id: DS-2026-015
+provider_id: openfda
+status: approved
+reviewed_at: 2026-08-22
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://open.fda.gov/license/ (CC0 1.0 Universal) + https://open.fda.gov/terms/ (commercial use allowed without permission; credit requested)
+approved_scope:
+  public_display: true
+  server_json_relay: true
+conditions:
+  - credit "openFDA (U.S. FDA)" with the license link adjacent to values
+  - relay the publisher disclaimer with the values
+  - drug data only (no GMDN device terminology)
+gate: BIO_SECTION_ENABLED + OPENFDA_ENABLED
+recheck_on: 2026-11-22
+```
+
 ## 4. 원 발행기관 후보
 
 아래 표의 `pending_review`는 무료라고 단정하는 표시가 아니다. 다음 세션에서 정확한 endpoint, 이용조건, attribution, 저장·캐시·제3자 표시 범위를 다시 확인한 뒤 series 단위로 승인한다.
@@ -1608,3 +1675,4 @@ notes: "No confidential contract language here"
 | 2026-08-22 | 가스 스트립 lane 활성화(`DS-2026-013`, §3.21 — 운영자 Alchemy 계정, 이더리움 라이브·Base/Arbitrum은 앱 네트워크 활성화 대기), 업비트 lane 라이브 확인(§3.19) | Claude assisted |
 | 2026-08-22 | CoinMarketCap lane 사용 범위 확장(§3.20) — `v2/cryptocurrency/quotes/latest` USDT·USDC 유통 공급(1크레딧/시간, 월 ≈ 720 추가, 같은 키·같은 Commercial Terms), 7d/30d 변화는 자체 일별 누적 | Claude assisted |
 | 2026-08-22 | ROADMAP #9·#11 조사 종결 — 넥스트레이드 시장정보 `license_required`(§6.3: 정보포털 계약형, 웹사이트용 CASE 3 고정비, 무상 2027-02까지·유상 1년 약정, 금액 비공개 → 운영자 문의 선택), roic.ai 현시점 기각(§6.4: ToS 재배포 금지, 상업 API는 Enterprise 견적만) | Claude assisted |
+| 2026-08-22 | 바이오 섹션(ROADMAP #8) Phase 1 — ClinicalTrials.gov(§3.22, `DS-2026-014`, 약관 4조건 동봉)·openFDA(§3.23, `DS-2026-015`, CC0) lane 추가, 게이트 OFF(`BIO_SECTION_ENABLED`·`CLINICALTRIALS_ENABLED`·`OPENFDA_ENABLED`), 계획 `PLAN_BIO_SECTION.md` | Claude assisted |

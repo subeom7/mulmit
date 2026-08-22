@@ -23,6 +23,7 @@ import threading
 import time
 
 from . import (
+    bio,
     config,
     crypto_market,
     crypto_structure,
@@ -859,6 +860,36 @@ def refresh_crypto_sentiment(*, force: bool = False) -> dict:
         return {"failed": str(exc)}
 
 
+def refresh_bio_trials(*, force: bool = False) -> dict:
+    """ClinicalTrials.gov 워치리스트(주 스폰서별 1회, 0.6초 간격) — 6시간 주기. 실패가 나머지 수집을 막지 않는다."""
+    try:
+        result = bio.refresh_bio_trials(force=force)
+        if not result.get("skipped"):
+            log.info("바이오 임상 워치리스트 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("ClinicalTrials.gov 요청 제한 — 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("바이오 임상 워치리스트 갱신 실패: %s", exc)
+        return {"skipped": "error", "error": str(exc)}
+
+
+def refresh_bio_fda(*, force: bool = False) -> dict:
+    """openFDA 원 신청 승인(최근 60일) — 하루 주기, 1~5회 호출."""
+    try:
+        result = bio.refresh_bio_fda(force=force)
+        if not result.get("skipped"):
+            log.info("바이오 FDA 승인 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("openFDA 요청 제한 — 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("바이오 FDA 승인 갱신 실패: %s", exc)
+        return {"skipped": "error", "error": str(exc)}
+
+
 def refresh_crypto_stablecoins(*, force: bool = False) -> dict:
     """CoinMarketCap USDT·USDC 유통 공급(시간당 1크레딧) + 자체 일별 누적. 도미넌스와 같은 키·같은 게이트."""
     try:
@@ -1094,6 +1125,8 @@ def run_once(tickers: list[str] | None = None) -> dict:
             crypto_sentiment_result = refresh_crypto_sentiment()
             refresh_crypto_structure()
             refresh_crypto_stablecoins()
+            refresh_bio_trials()
+            refresh_bio_fda()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
             "skipped": "legacy_price_data_disabled",
@@ -1146,6 +1179,8 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_crypto_sentiment()
             refresh_crypto_structure()
             refresh_crypto_stablecoins()
+            refresh_bio_trials()
+            refresh_bio_fda()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
                 "skipped": "backoff",
@@ -1231,6 +1266,8 @@ def run_once(tickers: list[str] | None = None) -> dict:
         crypto_sentiment_result = refresh_crypto_sentiment()
         refresh_crypto_structure()
         refresh_crypto_stablecoins()
+        refresh_bio_trials()
+        refresh_bio_fda()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged

@@ -22,7 +22,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Mulmit","alternateName":["물밑","물밑 Mulmit","Mulmit 물밑","물밑 대시보드","물밑 마켓"],"url":"https://mulmit.com/"}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Mulmit","url":"https://mulmit.com/","logo":"https://mulmit.com/static/brand/favicon-512.png"}</script>
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-3">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-4">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -36,6 +36,7 @@
       <a class="view-tab" href="/kr" data-i18n="nav.kr">한국</a>
       <a class="view-tab" href="/us" data-i18n="nav.us">미국·글로벌</a>
       <a class="view-tab" href="/crypto" data-i18n="nav.crypto">크립토</a>
+      <a class="view-tab" href="/bio" data-i18n="nav.bio">바이오</a>
       <a class="view-tab" href="/analytics" data-i18n="nav.analytics">종목 분석</a>
     </nav>
     <nav class="mast-nav" aria-label="Secondary">
@@ -94,7 +95,7 @@
       </div>
     </section>
 
-    <section class="zone-links three" aria-label="Market pages">
+    <section class="zone-links four" aria-label="Market pages">
       <a class="zone-link-card" href="/kr">
         <strong data-i18n="landing.krLink">한국 시장 페이지</strong>
         <span data-i18n="landing.krDesc">24시간 참고가 · 공식 종가 · 코스피 지수군 · ETF 보드 · 국민연금 5% 공시</span>
@@ -109,6 +110,10 @@
         <strong data-i18n="landing.cryptoLink">크립토 페이지</strong>
         <span data-i18n="landing.cryptoDesc">BTC·ETH 퍼프 참고가 · 공포·탐욕 · 펀딩비·OI · 실현 변동성 · 합성자산 상관</span>
         <span class="zone-mini" id="zone-crypto-mini" hidden></span>
+      </a>
+      <a class="zone-link-card" href="/bio">
+        <strong data-i18n="landing.bioLink">바이오 페이지</strong>
+        <span data-i18n="landing.bioDesc">임상 파이프라인 동향 · FDA 최근 승인 · 공공 기록 그대로</span>
       </a>
     </section>
 
@@ -158,6 +163,6 @@
     else if (crypto.indexOf(id) >= 0) location.replace("/crypto" + location.hash);
   })();
   </script>
-  <script src="/static/monitor.js?v=20260822-3" defer></script>
+  <script src="/static/monitor.js?v=20260822-4" defer></script>
 </body>
 </html>

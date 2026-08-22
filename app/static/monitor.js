@@ -36,7 +36,7 @@ const onPage = (...pages) => PAGE === "all" || pages.includes(PAGE);
 const TEXT = {
   ko: {
     "brand.tagline": "물밑 · 주식·크립토 시장 신호", "nav.analytics": "종목 분석", "nav.monitor": "시장 모니터",
-    "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌", "nav.crypto": "크립토",
+    "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌", "nav.crypto": "크립토", "nav.bio": "바이오", "landing.bioLink": "바이오 페이지", "landing.bioDesc": "임상 파이프라인 동향 · FDA 최근 승인 · 공공 기록 그대로", "biopage.kicker": "BIOPHARMA", "biopage.title": "바이오, 임상과 승인을 기록으로 봅니다.", "biopage.copy": "국내·글로벌 제약바이오 워치리스트의 임상 파이프라인 갱신(ClinicalTrials.gov)과 FDA의 최근 신약·바이오의약품 승인(openFDA)을 공공 기록 그대로 봅니다. 결과의 성패나 주가 해석, 투자 권유가 아닙니다.", "bio.trials.title": "임상 파이프라인 동향", "bio.filter.all": "전체", "bio.filter.kr": "한국", "bio.filter.global": "글로벌", "bio.trials.copy": "워치리스트 34개 스폰서(주 스폰서 기준)의 임상 중 최근 14일 내 갱신된 중재 2·3상입니다(스폰서당 최대 8건). 상태·단계·일자는 ClinicalTrials.gov 등록값 그대로이며, 한국어 이름과 상장 라벨은 Mulmit이 붙인 참고 라벨입니다.", "bio.trials.caption": "최근 갱신 임상 (중재 2·3상, 14일)", "bio.badge.registry": "등록 정보 · 결과 아님", "bio.badge.sponsorEntered": "스폰서 직접 등록", "bio.badge.notAdvice": "투자 권유 아님", "bio.trials.sponsors": "워치리스트 스폰서", "bio.trials.recent": "최근 갱신(14일)", "bio.trials.registered": "등록 임상", "bio.trials.processed": "ClinicalTrials.gov 처리일", "bio.trials.none": "최근 14일 내 갱신된 중재 2·3상이 없습니다.", "bio.col.sponsor": "스폰서", "bio.col.study": "임상", "bio.col.phase": "단계", "bio.col.status": "상태", "bio.col.updated": "갱신일", "bio.col.primary": "1차 완료(예정)", "bio.col.conditions": "적응증", "bio.col.intervention": "중재", "bio.status.RECRUITING": "모집 중", "bio.status.NOT_YET_RECRUITING": "모집 예정", "bio.status.ENROLLING_BY_INVITATION": "초청 등록", "bio.status.ACTIVE_NOT_RECRUITING": "진행 중(모집 종료)", "bio.status.COMPLETED": "완료", "bio.status.TERMINATED": "조기 종료", "bio.status.WITHDRAWN": "철회", "bio.status.SUSPENDED": "보류", "bio.status.UNKNOWN": "미확인", "bio.status.AVAILABLE": "이용 가능", "bio.status.NO_LONGER_AVAILABLE": "이용 종료", "bio.flag.results": "결과 게시", "bio.flag.stopped": "중단", "bio.flag.completed": "완료", "bio.flag.new": "신규", "bio.flag.why": "사유", "bio.phaseSuffix": "상", "bio.enrollment": "등록 {n}명", "bio.fda.title": "FDA 최근 승인", "bio.fda.copy": "최근 60일 안에 원 신청(ORIG)이 승인된 NDA(신약)·BLA(바이오의약품) 목록입니다. 제네릭(ANDA)은 건수만 표시합니다. openFDA 공개 도메인 데이터이며 규제 기록일 뿐 매출·주가 해석이 아닙니다.", "bio.fda.caption": "최근 원 신청 승인 (NDA·BLA)", "bio.fda.window": "창 {s} ~ {e}", "bio.fda.nda": "NDA 신약", "bio.fda.bla": "BLA 바이오", "bio.fda.anda": "ANDA 제네릭(건수)", "bio.fda.priority": "우선심사", "bio.fda.nme": "신규 분자(NME)", "bio.fda.none": "창 안에 승인된 NDA·BLA가 없습니다.", "bio.fda.publisherUpdated": "openFDA 데이터 갱신", "bio.col.approved": "승인일", "bio.col.application": "신청", "bio.col.product": "제품(성분)", "bio.col.class": "분류", "bio.col.review": "심사", "bio.review.PRIORITY": "우선", "bio.review.STANDARD": "표준", "bio.listingNote": "상장 라벨은 Mulmit 참고 표기", "bio.modifications": "수정 내용", "bio.processedLabel": "ClinicalTrials.gov 처리일",
     "landing.kicker": "KOREA × US MARKET CONSOLE", "landing.title": "장이 닫혀도, 시장은 움직입니다.",
     "landing.title.krOpen": "장중입니다. 마감 후에도, 여기서 이어집니다.",
     "landing.title.usOpen": "서울은 밤, 뉴욕은 장중입니다.",
@@ -161,7 +161,7 @@ const TEXT = {
   },
   en: {
     "brand.tagline": "MARKET SIGNALS · KR · US · CRYPTO", "nav.analytics": "Stock analytics", "nav.monitor": "Market monitor",
-    "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & Global", "nav.crypto": "Crypto",
+    "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & Global", "nav.crypto": "Crypto", "nav.bio": "Bio", "landing.bioLink": "Bio page", "landing.bioDesc": "Clinical pipeline activity · recent FDA approvals · public records as published", "biopage.kicker": "BIOPHARMA", "biopage.title": "Biopharma — trials and approvals, as recorded.", "biopage.copy": "Clinical pipeline updates for a Korean and global biopharma watchlist (ClinicalTrials.gov) and the FDA's recent new-drug and biologic approvals (openFDA), shown as the public records state them. Not trial outcomes, not price commentary, not a recommendation.", "bio.trials.title": "Clinical pipeline activity", "bio.filter.all": "All", "bio.filter.kr": "Korea", "bio.filter.global": "Global", "bio.trials.copy": "Interventional Phase 2/3 studies of 34 watchlist sponsors (lead sponsor) updated in the last 14 days (at most 8 per sponsor). Status, phase and dates are the ClinicalTrials.gov registered values; Korean names and listing labels are Mulmit's reference labels.", "bio.trials.caption": "Recently updated studies (interventional Phase 2/3, 14 days)", "bio.badge.registry": "Registry record · not results", "bio.badge.sponsorEntered": "Sponsor-entered", "bio.badge.notAdvice": "Not a recommendation", "bio.trials.sponsors": "Watchlist sponsors", "bio.trials.recent": "Updated (14d)", "bio.trials.registered": "Registered studies", "bio.trials.processed": "ClinicalTrials.gov processed", "bio.trials.none": "No interventional Phase 2/3 study was updated in the last 14 days.", "bio.col.sponsor": "Sponsor", "bio.col.study": "Study", "bio.col.phase": "Phase", "bio.col.status": "Status", "bio.col.updated": "Updated", "bio.col.primary": "Primary completion (est.)", "bio.col.conditions": "Conditions", "bio.col.intervention": "Intervention", "bio.status.RECRUITING": "Recruiting", "bio.status.NOT_YET_RECRUITING": "Not yet recruiting", "bio.status.ENROLLING_BY_INVITATION": "Enrolling by invitation", "bio.status.ACTIVE_NOT_RECRUITING": "Active, not recruiting", "bio.status.COMPLETED": "Completed", "bio.status.TERMINATED": "Terminated", "bio.status.WITHDRAWN": "Withdrawn", "bio.status.SUSPENDED": "Suspended", "bio.status.UNKNOWN": "Unknown", "bio.status.AVAILABLE": "Available", "bio.status.NO_LONGER_AVAILABLE": "No longer available", "bio.flag.results": "results posted", "bio.flag.stopped": "stopped", "bio.flag.completed": "completed", "bio.flag.new": "new", "bio.flag.why": "reason", "bio.phaseSuffix": "", "bio.enrollment": "enrollment {n}", "bio.fda.title": "Recent FDA approvals", "bio.fda.copy": "NDA (new drug) and BLA (biologic) applications whose original submission was approved in the last 60 days; generics (ANDA) are shown as a count. openFDA public-domain data — a regulatory record, not sales or price commentary.", "bio.fda.caption": "Recent original approvals (NDA · BLA)", "bio.fda.window": "window {s} – {e}", "bio.fda.nda": "NDA new drugs", "bio.fda.bla": "BLA biologics", "bio.fda.anda": "ANDA generics (count)", "bio.fda.priority": "priority review", "bio.fda.nme": "new molecular entities", "bio.fda.none": "No NDA/BLA approval inside the window.", "bio.fda.publisherUpdated": "openFDA data updated", "bio.col.approved": "Approved", "bio.col.application": "Application", "bio.col.product": "Product (ingredient)", "bio.col.class": "Class", "bio.col.review": "Review", "bio.review.PRIORITY": "Priority", "bio.review.STANDARD": "Standard", "bio.listingNote": "Listing labels are Mulmit reference labels", "bio.modifications": "Modifications", "bio.processedLabel": "ClinicalTrials.gov processed",
     "landing.kicker": "KOREA × US MARKET CONSOLE", "landing.title": "Markets move after the close.",
     "landing.title.krOpen": "Seoul is trading. It carries on here after the close.",
     "landing.title.usOpen": "Night in Seoul, open in New York.",
@@ -511,7 +511,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
+  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, bioTrials: null, bioFda: null, bioFilter: "all", krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -630,6 +630,11 @@ const DISABLED_CODES = {
   crypto_structure_collecting: "status.collecting",
   upbit_quotation_pending_rights: "status.rightsPending",
   chain_gas_disabled: "status.disabled",
+  bio_section_disabled: "status.disabled",
+  bio_trials_disabled: "status.disabled",
+  bio_trials_collecting: "status.collecting",
+  bio_fda_disabled: "status.disabled",
+  bio_fda_collecting: "status.collecting",
   chain_gas_not_configured: "status.disabled",
 };
 
@@ -891,6 +896,8 @@ function renderJumpNav() {
     { id: "crypto-structure", text: t("crypto.structure.title") },
     { id: "crypto-derivatives", text: t("crypto.deriv.title") },
     { id: "crypto-board", text: t("crypto.board.title") },
+    { id: "bio-trials", text: t("bio.trials.title") },
+    { id: "bio-fda", text: t("bio.fda.title") },
     { id: "crypto-gas", text: t("crypto.gas.title") },
     { id: "crypto-volatility", text: t("crypto.vol.title") },
     ...numbered,
@@ -1037,7 +1044,7 @@ function renderAttribution() {
   }
   // Say out loud which lanes are switched off. Otherwise a page full of blank
   // cards looks like a broken site rather than a deliberate rights decision.
-  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation", "stress", "sentiment", "cryptoOverview", "cryptoSentiment", "cryptoVolatility", "cryptoKimchi", "cryptoStructure", "cryptoGas", "cryptoBoard"]
+  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation", "stress", "sentiment", "cryptoOverview", "cryptoSentiment", "cryptoVolatility", "cryptoKimchi", "cryptoStructure", "cryptoGas", "cryptoBoard", "bioTrials", "bioFda"]
     .map(disabledText).filter(Boolean))];
   if (laneReasons.length) {
     const title = document.createElement("p"); title.textContent = t("notice.disabledLanes"); host.append(title);
@@ -1121,13 +1128,15 @@ const PAGE_FETCHES = {
   cryptoStructure: ["crypto"],
   cryptoGas: ["crypto"],
   cryptoBoard: ["crypto"],
+  bioTrials: ["bio"],
+  bioFda: ["bio"],
 };
 
 async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, bioTrials, bioFda] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/market/sentiment", "sentiment"), request("/api/kr/indices", "krIndices"),
@@ -1145,19 +1154,21 @@ async function loadCore() {
     request("/api/crypto/structure", "cryptoStructure"),
     request("/api/crypto/gas", "cryptoGas"),
     request("/api/crypto/board", "cryptoBoard"),
+    request("/api/bio/trials", "bioTrials"),
+    request("/api/bio/fda", "bioFda"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
   state.stress = stress; state.sentiment = sentiment; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krHoldings = krHoldings;
   state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
   state.cryptoOverview = cryptoOverview; state.cryptoSentiment = cryptoSentiment; state.cryptoVolatility = cryptoVolatility;
-  state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure; state.cryptoGas = cryptoGas; state.cryptoBoard = cryptoBoard;
+  state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure; state.cryptoGas = cryptoGas; state.cryptoBoard = cryptoBoard; state.bioTrials = bioTrials; state.bioFda = bioFda;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets"); ingestPayload(sentimentRecordPayload(sentiment), "sentiment");
   renderAll(); $("#refresh-button")?.removeAttribute("aria-busy");
 }
 
 function renderAll() {
   renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
-  renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas(); renderCryptoBoard();
+  renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas(); renderCryptoBoard(); renderBioTrials(); renderBioFda();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -1170,7 +1181,7 @@ function renderAll() {
   if (legacyOff) state.correlationLoaded = true; // the lazy loader must not fetch it
   pruneEmpty(); renderJumpNav();
   $$(".lazy-comparison[data-visible='1']").forEach((card) => renderComparison(Number(card.dataset.comparison)));
-  const times = [state.macro?.generated_at, state.assets?.generated_at, state.sectors?.generated_at, state.sectors?.as_of, state.weekend?.generated_at, state.cryptoOverview?.generated_at].filter(Boolean);
+  const times = [state.macro?.generated_at, state.assets?.generated_at, state.sectors?.generated_at, state.sectors?.as_of, state.weekend?.generated_at, state.cryptoOverview?.generated_at, state.bioTrials?.generated_at, state.bioFda?.generated_at].filter(Boolean);
   $("#updated-at").textContent = times.length ? dateText(times.sort().at(-1)) : "—";
   // A deliberately disabled lane is absence by decision, not degraded service.
   // It leaves the health calculation entirely: with the legacy price lane off,
@@ -2228,6 +2239,170 @@ function cryptoPredictedText(rows) {
 
 // A lane that is switched off by a rights/rollout decision hides its section;
 // a lane that merely has no data yet keeps the section with a state message.
+function bioGateHidden(key) {
+  const code = disabledCode(key);
+  return code === "bio_section_disabled" || code === "bio_trials_disabled" || code === "bio_fda_disabled";
+}
+
+function bioStatusText(status) {
+  if (!status) return "—";
+  const key = `bio.status.${status}`; const text = t(key);
+  return text === key ? status.replaceAll("_", " ").toLowerCase() : text;
+}
+
+function bioPhaseText(phases) {
+  if (!Array.isArray(phases) || !phases.length) return "—";
+  const nums = phases.map((p) => String(p).replace("EARLY_PHASE1", "1a").replace("PHASE", ""));
+  return state.lang === "ko" ? `${nums.join("·")}${t("bio.phaseSuffix")}` : `Phase ${nums.join("/")}`;
+}
+
+function bioSponsorLabel(sponsor) {
+  const name = localValue(sponsor?.name, state.lang) || "—";
+  const listing = sponsor?.listing;
+  return listing ? `${name} · ${listing.exchange} ${listing.ticker}` : name;
+}
+
+function bioCell(content, className = null) {
+  const td = document.createElement("td");
+  if (content instanceof Node) td.append(content); else td.textContent = content ?? "—";
+  if (className) td.className = className;
+  return td;
+}
+
+function bioHead(table, labels) {
+  const thead = table.querySelector("thead"), tbody = table.querySelector("tbody");
+  thead.replaceChildren(); tbody.replaceChildren();
+  const row = document.createElement("tr");
+  labels.forEach((label) => { const th = document.createElement("th"); th.scope = "col"; th.textContent = label; row.append(th); });
+  thead.append(row);
+  return tbody;
+}
+
+function bioEmptyRow(tbody, span, text) {
+  const tr = document.createElement("tr"); const td = document.createElement("td"); td.colSpan = span; td.textContent = text; tr.append(td); tbody.append(tr);
+}
+
+function renderBioTrials() {
+  const section = $("#bio-trials"); if (!section) return;
+  const stateNode = $("#biot-state"), strip = $("#biot-strip"), sponsors = $("#biot-sponsors"), panel = $("#biot-panel"), table = $("#biot-table"), footer = $("#biot-footer"), filterBar = $("#biot-filter");
+  const data = state.bioTrials;
+  if (!data || !Array.isArray(data.watchlist)) {
+    if (bioGateHidden("bioTrials")) { section.hidden = true; return; }
+    const collecting = disabledCode("bioTrials") === "bio_trials_collecting";
+    section.hidden = false; strip.hidden = true; sponsors.hidden = true; panel.hidden = true; stateNode.hidden = false; if (filterBar) filterBar.hidden = true;
+    stateNode.classList.toggle("disabled", collecting);
+    stateNode.textContent = collecting ? t("status.collecting") : `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+  section.hidden = false; stateNode.hidden = true; strip.hidden = false; sponsors.hidden = false; panel.hidden = false; footer.hidden = false; if (filterBar) filterBar.hidden = false;
+  const filter = state.bioFilter || "all";
+  const keep = (country) => filter === "all" || (filter === "KR" ? country === "KR" : country !== "KR");
+  const totals = data.totals || {};
+  strip.replaceChildren(
+    cryptoStripItem(t("bio.trials.sponsors"), String(totals.sponsors ?? "—")),
+    cryptoStripItem(t("bio.trials.recent"), String(totals.recent ?? "—")),
+    cryptoStripItem(t("bio.trials.processed"), data.processed_date || "—"),
+  );
+  sponsors.replaceChildren(...data.watchlist.filter((s) => keep(s.country)).map((s) => {
+    const chip = document.createElement("span"); chip.className = `bio-chip${s.error ? " muted" : ""}`;
+    const name = document.createElement("strong"); name.textContent = bioSponsorLabel(s);
+    const small = document.createElement("small");
+    small.textContent = s.error ? t("status.unavailable") : `${t("bio.trials.registered")} ${s.counts?.registered_total ?? "—"} · ${t("bio.trials.recent")} ${s.counts?.recent_watched ?? 0}`;
+    if (s.note) small.textContent += ` · ${localValue(s.note, state.lang)}`;
+    chip.append(name, small); return chip;
+  }));
+  const tbody = bioHead(table, [t("bio.col.updated"), t("bio.col.sponsor"), t("bio.col.study"), t("bio.col.phase"), t("bio.col.status"), t("bio.col.primary"), t("bio.col.conditions"), t("bio.col.intervention")]);
+  const rows = (Array.isArray(data.recent) ? data.recent : []).filter((row) => keep(row.sponsor?.country));
+  if (!rows.length) bioEmptyRow(tbody, 8, t("bio.trials.none"));
+  rows.forEach((row) => {
+    const tr = document.createElement("tr");
+    const study = document.createElement("span"); study.className = "bio-title";
+    const link = document.createElement("a"); link.href = row.url; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = row.title || row.nct_id;
+    const id = document.createElement("small"); id.textContent = ` ${row.nct_id}${safeNumber(row.enrollment) !== null ? ` · ${t("bio.enrollment", { n: row.enrollment })}` : ""}`;
+    study.append(link, id);
+    const status = document.createElement("span"); status.textContent = bioStatusText(row.status);
+    const flags = document.createElement("span"); flags.className = "bio-flags";
+    const f = row.flags || {};
+    [["results_posted", "bio.flag.results", ""], ["stopped", "bio.flag.stopped", "warn"], ["completed", "bio.flag.completed", ""], ["new_start", "bio.flag.new", ""]].forEach(([key, label, cls]) => {
+      if (!f[key]) return; const b = document.createElement("span"); b.className = `status-badge ${cls}`.trim(); b.textContent = t(label); flags.append(b);
+    });
+    const statusCell = document.createElement("span"); statusCell.append(status); if (flags.childNodes.length) statusCell.append(flags);
+    if (row.why_stopped) { const why = document.createElement("small"); why.className = "bio-why"; why.textContent = `${t("bio.flag.why")}: ${row.why_stopped}`; statusCell.append(why); }
+    tr.append(
+      bioCell(row.last_update_post || "—"),
+      bioCell(bioSponsorLabel(row.sponsor)),
+      bioCell(study),
+      bioCell(bioPhaseText(row.phases)),
+      bioCell(statusCell),
+      bioCell(row.primary_completion || "—"),
+      bioCell((row.conditions || []).slice(0, 3).join(", ") || "—"),
+      bioCell((row.interventions || []).slice(0, 3).join(", ") || "—"),
+    );
+    tbody.append(tr);
+  });
+  footer.replaceChildren();
+  const attribution = document.createElement("p"); attribution.className = "kro-method";
+  const link = document.createElement("a"); link.href = data.attribution?.url || "https://clinicaltrials.gov/"; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = data.attribution?.text || "Source: ClinicalTrials.gov";
+  attribution.append(link, document.createTextNode(` · ${t("bio.processedLabel")} ${data.processed_date || "—"}`));
+  if (data.as_of) attribution.append(document.createTextNode(` · ${t("date.asof")} ${dateText(data.as_of)}${data.freshness?.status === "stale" ? ` · ${t("badge.stale")}` : ""}`));
+  const mods = document.createElement("p"); mods.className = "kro-method"; mods.textContent = `${t("bio.modifications")}: ${localValue(data.modifications, state.lang)}`;
+  const method = document.createElement("p"); method.className = "kro-method"; method.textContent = localValue(data.methodology, state.lang);
+  const disclaimer = document.createElement("p"); disclaimer.className = "kro-disclaimer"; disclaimer.textContent = localValue(data.disclaimer, state.lang);
+  footer.append(attribution, mods, method, disclaimer);
+}
+
+function renderBioFda() {
+  const section = $("#bio-fda"); if (!section) return;
+  const stateNode = $("#biof-state"), strip = $("#biof-strip"), panel = $("#biof-panel"), table = $("#biof-table"), footer = $("#biof-footer");
+  const data = state.bioFda;
+  if (!data || !Array.isArray(data.approvals)) {
+    if (bioGateHidden("bioFda")) { section.hidden = true; return; }
+    const collecting = disabledCode("bioFda") === "bio_fda_collecting";
+    section.hidden = false; strip.hidden = true; panel.hidden = true; stateNode.hidden = false;
+    stateNode.classList.toggle("disabled", collecting);
+    stateNode.textContent = collecting ? t("status.collecting") : `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+  section.hidden = false; stateNode.hidden = true; strip.hidden = false; panel.hidden = false; footer.hidden = false;
+  const counts = data.counts || {};
+  strip.replaceChildren(
+    cryptoStripItem(t("bio.fda.nda"), String(counts.nda ?? "—")),
+    cryptoStripItem(t("bio.fda.bla"), String(counts.bla ?? "—")),
+    cryptoStripItem(t("bio.fda.anda"), String(counts.anda ?? "—")),
+    cryptoStripItem(t("bio.fda.priority"), String(counts.priority_review ?? "—")),
+    cryptoStripItem(t("bio.fda.nme"), String(counts.new_molecular_entity ?? "—")),
+  );
+  const tbody = bioHead(table, [t("bio.col.approved"), t("bio.col.application"), t("bio.col.product"), t("bio.col.sponsor"), t("bio.col.class"), t("bio.col.review")]);
+  if (!data.approvals.length) bioEmptyRow(tbody, 6, t("bio.fda.none"));
+  data.approvals.forEach((row) => {
+    const tr = document.createElement("tr");
+    const app = document.createElement("a"); app.href = row.url; app.target = "_blank"; app.rel = "noopener noreferrer"; app.textContent = row.application_number || "—";
+    const product = document.createElement("span"); product.className = "bio-title";
+    product.textContent = `${row.brand_name || row.generic_name || "—"}${row.brand_name && row.generic_name && row.generic_name.toLowerCase() !== String(row.brand_name).toLowerCase() ? ` (${row.generic_name})` : ""}`;
+    if (Array.isArray(row.dosage_forms) && row.dosage_forms.length) { const small = document.createElement("small"); small.className = "bio-why"; small.textContent = row.dosage_forms.join(", "); product.append(small); }
+    const review = row.review_priority ? (() => { const key = `bio.review.${String(row.review_priority).toUpperCase()}`; const text = t(key); return text === key ? row.review_priority : text; })() : "—";
+    tr.append(
+      bioCell(row.approved_on || "—"),
+      bioCell(app),
+      bioCell(product),
+      bioCell(row.sponsor_name || "—"),
+      bioCell(row.class_description || "—"),
+      bioCell(review),
+    );
+    tbody.append(tr);
+  });
+  footer.replaceChildren();
+  const attribution = document.createElement("p"); attribution.className = "kro-method";
+  const link = document.createElement("a"); link.href = data.attribution?.url || "https://open.fda.gov/"; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = data.attribution?.text || "Source: openFDA";
+  attribution.append(link);
+  if (data.window) attribution.append(document.createTextNode(` · ${t("bio.fda.window", { s: data.window.start, e: data.window.end })}`));
+  if (data.publisher_last_updated) attribution.append(document.createTextNode(` · ${t("bio.fda.publisherUpdated")} ${data.publisher_last_updated}`));
+  if (data.freshness?.status === "stale") attribution.append(document.createTextNode(` · ${t("badge.stale")}`));
+  const method = document.createElement("p"); method.className = "kro-method"; method.textContent = localValue(data.methodology, state.lang);
+  const disclaimer = document.createElement("p"); disclaimer.className = "kro-disclaimer"; disclaimer.textContent = localValue(data.disclaimer, state.lang);
+  footer.append(attribution, method, disclaimer);
+}
+
 function cryptoGateHidden(key) {
   const code = disabledCode(key);
   return code === "crypto_section_disabled" || code === "hip3_public_display_pending_rights" || code === "crypto_sentiment_disabled"
@@ -3106,3 +3281,11 @@ try {
     keepalive: true,
   }).catch(() => {});
 } catch (error) { /* 통계는 최선노력 */ }
+
+document.querySelectorAll("[data-bio-filter]").forEach((button) => {
+  button.addEventListener("click", () => {
+    state.bioFilter = button.dataset.bioFilter || "all";
+    document.querySelectorAll("[data-bio-filter]").forEach((other) => other.classList.toggle("active", other === button));
+    renderBioTrials();
+  });
+});

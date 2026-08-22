@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="물밑(Mulmit) 바이오 — 국내·글로벌 제약바이오 워치리스트의 임상 파이프라인 동향(ClinicalTrials.gov)과 FDA 최근 신약·바이오의약품 승인(openFDA).">
+  <meta name="keywords" content="물밑, Mulmit, 바이오, 임상시험, 임상 3상, FDA 승인, 신약, 제약바이오, ClinicalTrials.gov, openFDA">
+  <title>바이오 — 임상 파이프라인 동향·FDA 승인 | 물밑 Mulmit</title>
+  <link rel="canonical" href="https://mulmit.com/bio">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mulmit">
+  <meta property="og:title" content="바이오 — 임상 파이프라인 동향·FDA 승인 | 물밑 Mulmit">
+  <meta property="og:description" content="물밑(Mulmit) 바이오 — 제약바이오 워치리스트 임상 동향(ClinicalTrials.gov), FDA 최근 승인(openFDA).">
+  <meta property="og:url" content="https://mulmit.com/bio">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="icon" type="image/png" sizes="96x96" href="/static/brand/favicon-96.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-4">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to market data</a>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Mulmit home">
+      <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="36" height="36">
+      <span><strong>Mulmit</strong><small data-i18n="brand.tagline">MARKET SIGNAL CONSOLE</small></span>
+    </a>
+    <nav class="view-switch" aria-label="View">
+      <a class="view-tab" href="/" data-i18n="nav.home">홈</a>
+      <a class="view-tab" href="/kr" data-i18n="nav.kr">한국</a>
+      <a class="view-tab" href="/us" data-i18n="nav.us">미국·글로벌</a>
+      <a class="view-tab" href="/crypto" data-i18n="nav.crypto">크립토</a>
+      <a class="view-tab active" href="/bio" aria-current="page" data-i18n="nav.bio">바이오</a>
+      <a class="view-tab" href="/analytics" data-i18n="nav.analytics">종목 분석</a>
+    </nav>
+    <nav class="mast-nav" aria-label="Secondary">
+      <a class="nav-chip" href="/docs">API</a>
+    </nav>
+    <div class="mast-actions">
+      <span class="session-badge" id="session-badge" hidden title=""><i></i><span></span></span>
+      <span class="mast-ticker" id="mast-ticker" hidden title=""></span>
+      <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
+      <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
+    </div>
+  </header>
+
+  <main id="main" class="shell">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <p class="kicker" data-i18n="biopage.kicker">BIOPHARMA</p>
+        <h1 id="hero-title" data-i18n="biopage.title">바이오, 임상과 승인을 기록으로 봅니다.</h1>
+        <p class="hero-copy" data-i18n="biopage.copy">국내·글로벌 제약바이오 워치리스트의 임상 파이프라인 갱신(ClinicalTrials.gov)과 FDA의 최근 신약·바이오의약품 승인(openFDA)을 공공 기록 그대로 봅니다. 결과의 성패나 주가 해석, 투자 권유가 아닙니다.</p>
+      </div>
+      <aside class="hero-meta" aria-live="polite">
+        <span data-i18n="hero.updated">마지막 갱신</span>
+        <strong id="updated-at">—</strong>
+        <button class="refresh-button" id="refresh-button" type="button"><span aria-hidden="true">↻</span> <span data-i18n="action.refresh">새로고침</span></button>
+      </aside>
+    </section>
+
+    <section class="dashboard-section" id="bio-trials" aria-labelledby="biot-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">CLINICAL PIPELINE · WATCHLIST · CLINICALTRIALS.GOV</p><h2 id="biot-title" data-i18n="bio.trials.title">임상 파이프라인 동향</h2></div>
+        <span class="source-pill">CLINICALTRIALS.GOV</span>
+      </div>
+      <p class="section-copy" data-i18n="bio.trials.copy">워치리스트 34개 스폰서(주 스폰서 기준)의 임상 중 최근 14일 내 갱신된 중재 2·3상입니다(스폰서당 최대 8건). 상태·단계·일자는 ClinicalTrials.gov 등록값 그대로이며, 한국어 이름과 상장 라벨은 Mulmit이 붙인 참고 라벨입니다.</p>
+      <div class="risk-strip" role="note">
+        <span class="status-badge warn" data-i18n="bio.badge.registry">등록 정보 · 결과 아님</span>
+        <span class="status-badge warn" data-i18n="bio.badge.sponsorEntered">스폰서 직접 등록</span>
+        <span class="status-badge warn" data-i18n="bio.badge.notAdvice">투자 권유 아님</span>
+      </div>
+      <div id="biot-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div class="bio-filter" id="biot-filter" role="group" aria-label="Sponsor filter" hidden>
+        <button type="button" class="active" data-bio-filter="all" data-i18n="bio.filter.all">전체</button>
+        <button type="button" data-bio-filter="KR" data-i18n="bio.filter.kr">한국</button>
+        <button type="button" data-bio-filter="global" data-i18n="bio.filter.global">글로벌</button>
+      </div>
+      <div id="biot-strip" class="crypto-strip" hidden></div>
+      <div id="biot-sponsors" class="bio-sponsors" hidden></div>
+      <div class="panel" id="biot-panel" hidden>
+        <div class="table-scroll">
+          <table id="biot-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.trials.caption">최근 갱신 임상 (중재 2·3상, 14일)</caption><thead></thead><tbody></tbody></table>
+        </div>
+        <footer class="panel-footer" id="biot-footer" hidden></footer>
+      </div>
+    </section>
+
+    <section class="dashboard-section" id="bio-fda" aria-labelledby="biof-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">FDA · ORIGINAL APPROVALS · OPENFDA</p><h2 id="biof-title" data-i18n="bio.fda.title">FDA 최근 승인</h2></div>
+        <span class="source-pill">OPENFDA</span>
+      </div>
+      <p class="section-copy" data-i18n="bio.fda.copy">최근 60일 안에 원 신청(ORIG)이 승인된 NDA(신약)·BLA(바이오의약품) 목록입니다. 제네릭(ANDA)은 건수만 표시합니다. openFDA 공개 도메인 데이터이며 규제 기록일 뿐 매출·주가 해석이 아닙니다.</p>
+      <div id="biof-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="biof-strip" class="crypto-strip" hidden></div>
+      <div class="panel" id="biof-panel" hidden>
+        <div class="table-scroll">
+          <table id="biof-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.fda.caption">최근 원 신청 승인 (NDA·BLA)</caption><thead></thead><tbody></tbody></table>
+        </div>
+        <footer class="panel-footer" id="biof-footer" hidden></footer>
+      </div>
+    </section>
+
+    <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
+
+    <section class="methodology" aria-labelledby="method-title">
+      <p class="eyebrow">DATA POLICY</p>
+      <h2 id="method-title" data-i18n="method.title">숫자를 다루는 원칙</h2>
+      <div class="method-grid">
+        <article><strong data-i18n="method.one.title">출처를 함께 표시</strong><p data-i18n="method.one.copy">각 수치는 공급자, 기준일, 신선도를 함께 보여줍니다.</p></article>
+        <article><strong data-i18n="method.two.title">단위를 추측하지 않음</strong><p data-i18n="method.two.copy">API가 제공한 단위와 배율만 사용합니다.</p></article>
+        <article><strong data-i18n="method.three.title">미연결은 미연결로</strong><p data-i18n="method.three.copy">라이선스나 API가 없는 지표는 숫자 대신 상태를 표시합니다.</p></article>
+      </div>
+      <div id="attribution" class="attribution"></div>
+    </section>
+
+    <footer class="site-footer">
+      <nav aria-label="Legal">
+        <a href="/privacy" data-i18n="legal.privacy">개인정보처리방침</a>
+        <a href="/terms" data-i18n="legal.terms">이용약관</a>
+        <a href="/disclaimer" data-i18n="legal.disclaimer">면책 고지</a>
+      </nav>
+      <p data-i18n="legal.notAdvice">Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.</p>
+    </footer>
+  </main>
+
+  <template id="metric-card-template">
+    <article class="metric-card">
+      <header><div><p class="metric-kicker"></p><h3></h3></div><div class="badge-row"></div></header>
+      <div class="metric-primary"><strong>—</strong><span class="metric-unit"></span></div>
+      <div class="metric-change"></div>
+      <div class="chart-slot" aria-hidden="true"></div>
+      <p class="metric-description"></p>
+      <div class="metric-hints" aria-label="Interpretation"></div>
+      <footer></footer>
+    </article>
+  </template>
+  <script>window.MULMIT_PAGE = "bio";</script>
+  <script src="/static/monitor.js?v=20260822-4" defer></script>
+</body>
+</html>

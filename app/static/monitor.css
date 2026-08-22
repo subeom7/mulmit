@@ -526,6 +526,32 @@ a.feed-text:hover { color: var(--ink); }
 .cstr-stable { margin: 4px 0 12px; }
 .cstr-stable .cstr-sub { margin: 0 0 8px; font: 600 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .cstr-stable .kro-method { margin-top: 8px; }
+.zone-links.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .zone-links.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .zone-links.four { grid-template-columns: 1fr; } }
+.bio-sponsors { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.bio-chip { display: inline-flex; flex-direction: column; gap: 2px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font-size: 11px; }
+.bio-chip strong { font-size: 12px; }
+.bio-chip small { color: var(--muted); }
+.bio-chip.muted { opacity: .55; }
+.bio-table { table-layout: fixed; width: 100%; min-width: 980px; }
+.bio-table th, .bio-table td { white-space: normal; word-break: keep-all; vertical-align: top; text-align: left; }
+#biot-table th:nth-child(1), #biot-table td:nth-child(1) { width: 8%; }
+#biot-table th:nth-child(2), #biot-table td:nth-child(2) { width: 13%; }
+#biot-table th:nth-child(3), #biot-table td:nth-child(3) { width: 32%; }
+#biot-table th:nth-child(4), #biot-table td:nth-child(4) { width: 6%; }
+#biot-table th:nth-child(5), #biot-table td:nth-child(5) { width: 13%; }
+#biot-table th:nth-child(6), #biot-table td:nth-child(6) { width: 8%; }
+#biof-table th:nth-child(1), #biof-table td:nth-child(1) { width: 10%; }
+#biof-table th:nth-child(2), #biof-table td:nth-child(2) { width: 12%; }
+#biof-table th:nth-child(3), #biof-table td:nth-child(3) { width: 30%; }
+#biof-table th:nth-child(6), #biof-table td:nth-child(6) { width: 8%; }
+.bio-table .bio-title { display: block; white-space: normal; }
+.bio-table .bio-why { display: block; color: var(--muted); font-size: 10.5px; }
+.bio-table .bio-flags { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 4px; }
+.bio-filter { display: flex; gap: 6px; margin: 0 0 10px; }
+.bio-filter button { font: inherit; font-size: 11px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); cursor: pointer; }
+.bio-filter button.active { color: inherit; border-color: var(--accent); }
 .cvol-card small.up { color: var(--green); }
 .cvol-card small.down { color: var(--red); }
 .cboard-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
