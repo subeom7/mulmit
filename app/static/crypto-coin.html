@@ -607,7 +607,7 @@ function drawChart() {
       const node = pathFor(paneSeries.values, "cc-pane-line", (value) => paneY(value, 0, 100));
       if (node) { node.setAttribute("stroke", "#42a5ff"); svg.append(node); }
     } else {
-      const all = [...(paneSeries.macd || []), ...(paneSeries.signal || []), ...(paneSeries.histogram || [])].filter((v) => typeof v === "number");
+      const all = [...(paneSeries.line || []), ...(paneSeries.signal || []), ...(paneSeries.histogram || [])].filter((v) => typeof v === "number");
       let min = Math.min(...all, 0), max = Math.max(...all, 0);
       if (!(max > min)) { max = min + 1; }
       const scale = (value) => paneY(value, min, max);
@@ -618,13 +618,13 @@ function drawChart() {
         const top = Math.min(zero, scale(value));
         svg.append(el("rect", { x: (x(i) - bw / 2).toFixed(1), y: top.toFixed(1), width: bw.toFixed(1), height: Math.max(0.6, Math.abs(scale(value) - zero)).toFixed(1), fill: value >= 0 ? upColor : downColor, opacity: 0.45 }));
       });
-      [[paneSeries.macd, "#2dd4a3"], [paneSeries.signal, "#f5b942"]].forEach(([values, colour]) => {
+      [[paneSeries.line, "#2dd4a3"], [paneSeries.signal, "#f5b942"]].forEach(([values, colour]) => {
         const node = pathFor(values, "cc-pane-line", scale);
         if (node) { node.setAttribute("stroke", colour); svg.append(node); }
       });
     }
     const name = el("text", { x: padL + 2, y: paneTop + 12, class: "cc-axis" });
-    name.textContent = studyPane === "rsi" ? `RSI(${ind.rsi?.period ?? 14})` : `MACD(${ind.macd?.fast}·${ind.macd?.slow}·${ind.macd?.signal})`;
+    name.textContent = studyPane === "rsi" ? `RSI(${ind.rsi?.period ?? 14})` : `MACD(${ind.macd?.fast}·${ind.macd?.slow}·${ind.macd?.signal_period})`;
     svg.append(name);
   }
 
@@ -683,7 +683,7 @@ function drawChart() {
       if (value != null) study(`RSI(${ind.rsi.period})`, nf(value, 1));
     }
     if (ind && studyPane === "macd") {
-      const line = at(ind.macd?.macd), signal = at(ind.macd?.signal);
+      const line = at(ind.macd?.line), signal = at(ind.macd?.signal);
       if (line != null && signal != null) study("MACD", `${nf(line, 4)} · 시그널 ${nf(signal, 4)}`);
     }
     const left = (cx / width) * rect.width;
