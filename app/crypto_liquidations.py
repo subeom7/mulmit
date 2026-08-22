@@ -8,9 +8,14 @@ the venues that actually answered, and both the venues included and any that
 went silent travel with the value for the card to print.
 
 Ingest fetches; the request path reads the stored blob. One symbol costs one
-API call against a 40-a-minute budget, so a refresh spends roughly nineteen
-calls (the market list, then liquidations and open interest for two coins) and
-runs every five minutes — under four calls a minute.
+API call against a 40-a-minute budget, and a refresh spends roughly nineteen
+(the market list, then liquidations and open interest for two coins).
+
+How often that happens is the ingest tick, not the constant below:
+`INGEST_INTERVAL` defaults to 15 minutes, so the values are up to that old and
+the lane averages well under two calls a minute. `REFRESH_INTERVAL` is only a
+floor — it stops an extra tick or a manual run from re-fetching what was just
+collected.
 """
 
 from __future__ import annotations
@@ -40,6 +45,7 @@ log = logging.getLogger(__name__)
 
 CACHE_KEY = "crypto_liquidations_v1"
 CACHE_TTL = 900  # the refresh runs every 5 minutes; serve a little past that
+# A floor, not a schedule: the collection cadence is config.INGEST_INTERVAL.
 REFRESH_INTERVAL = 300
 WINDOW_HOURS = 24
 # Two coins keeps the call budget comfortable and the card readable. Every
