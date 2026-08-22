@@ -18,6 +18,7 @@
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
   };
+  const PAGE = window.MULMIT_PAGE || "all";
   const lang = () => (document.documentElement.lang === "en" ? "en" : "ko");
   const pick = (pair) => (pair && typeof pair === "object" ? pair[lang()] || pair.ko || pair.en || "" : pair || "");
 
@@ -30,7 +31,8 @@
       detailMark: "마크가격", detailFx: "환산 환율", detailFunding: "펀딩 APR",
       detailOi: "미결제약정", detail24h: "24시간 변화", detailClose: "공식 종가",
       detailSession: "15:30 퍼프 대비", detailVolume: "24시간 거래대금",
-      detailTrend: "배경 추이선", trendBasis: "최근 {n}일 종가", sparkPeriod: "{n}일",
+      detailTrend: "배경 추이선", trendBasis: "최근 {n} 종가", sparkPeriod: "{n}일", sparkMonths: "{n}개월",
+      detailSource: "출처", detailAsOf: "기준일",
       boardTitle: "지금 시장", boardNote: "장이 닫힌 시간의 값은 24시간 거래되는 참고가입니다.",
       won: "원", noValue: "값 없음",
     },
@@ -42,7 +44,8 @@
       detailMark: "Mark price", detailFx: "FX applied", detailFunding: "Funding APR",
       detailOi: "Open interest", detail24h: "24h change", detailClose: "Official close",
       detailSession: "vs 15:30 perp", detailVolume: "24h volume",
-      detailTrend: "Background line", trendBasis: "closes over the last {n} days", sparkPeriod: "{n}D",
+      detailTrend: "Background line", trendBasis: "closes over the last {n}", sparkPeriod: "{n}D", sparkMonths: "{n}M",
+      detailSource: "Source", detailAsOf: "As of",
       boardTitle: "Markets now", boardNote: "Out-of-hours values are 24-hour reference prices.",
       won: "KRW", noValue: "no value",
     },
@@ -184,10 +187,19 @@
   // 기간이 다르다는 사실을 전문가 모드에서 밝힌다.
   const detailRows = (spec, spark) => [
     ...(spec.detail || []),
-    spark ? [t("detailTrend"), t("trendBasis", { n: spark.days ?? SPARK_DAYS })] : null,
+    spark ? [t("detailTrend"), t("trendBasis", { n: spanLabel(spark.days) })] : null,
   ].filter((row) => row && row[1]);
 
-  const changeText = (value) => `${arrow(value)} ${percent(value)}`.trim();
+  /* "104일"보다 "3개월"이 읽힌다. 공급 간격이 성겨서 창이 길어졌을 때만 나오는
+   * 경로이고, 값은 여전히 실제 span에서 온다. */
+  const spanLabel = (days) => {
+    const span = days || SPARK_DAYS;
+    return span >= 60 ? t("sparkMonths", { n: Math.round(span / 30) }) : t("sparkPeriod", { n: span });
+  };
+
+  const changeText = (spec) => spec.changeText
+    ? `${arrow(spec.change)} ${spec.changeText}`.trim()
+    : `${arrow(spec.change)} ${percent(spec.change)}`.trim();
 
   // 5초마다 타일을 새로 만들면 hover가 끊기고 스파크라인이 매번 다시 그려진다.
   // 구성이 같으면 글자만 갈아 끼운다.
@@ -200,7 +212,7 @@
     const change = node.querySelector(".tile-change");
     if (change) {
       change.className = `tile-change ${direction(spec.change)}`;
-      change.textContent = changeText(spec.change);
+      change.textContent = changeText(spec);
     }
     const basis = node.querySelector(".tile-basis");
     if (basis) basis.textContent = spec.basis || "";
@@ -231,7 +243,7 @@
     delta.className = "tile-delta";
     const change = document.createElement("span");
     change.className = `tile-change ${direction(spec.change)}`;
-    change.textContent = changeText(spec.change);
+    change.textContent = changeText(spec);
     delta.append(change);
     const basis = document.createElement("span");
     basis.className = "tile-basis";
@@ -269,7 +281,7 @@
       // 된다 — 선은 30일 이야기를 하고 등락률은 오늘 이야기를 하기 때문이다.
       const period = document.createElement("span");
       period.className = "spark-period";
-      period.textContent = t("sparkPeriod", { n: spark.days ?? SPARK_DAYS });
+      period.textContent = spanLabel(spark.days);
       wrap.append(period, spark.node);
       foot.prepend(wrap);
     }
@@ -337,6 +349,29 @@
     };
   }
 
+  /* 매크로·위험 지표 타일.
+   *
+   * 값과 변화 표기(10년물은 %인가 %p인가, 무엇이 라이선스로 비어야 하는가)는
+   * monitor.js의 METRICS 정의가 정한다. 여기서 다시 판정하면 같은 계열이
+   * 화면마다 다른 숫자로 나온다. 이 함수는 그 판정 결과를 배치만 한다. */
+  function metricSpec(key, href) {
+    const snapshot = window.mulmitMetric?.(key);
+    if (!snapshot) return null;
+    return {
+      key: `metric:${key}`,
+      name: snapshot.label,
+      tag: "",
+      value: snapshot.text,
+      unit: "",
+      change: snapshot.changeDirection,
+      changeText: snapshot.changeText,
+      basis: snapshot.basis,
+      href: href || null,
+      observations: snapshot.observations,
+      detail: [[t("detailSource"), snapshot.source], [t("detailAsOf"), shortDate(snapshot.date)]],
+    };
+  }
+
   function assetSpec(state, id, href) {
     const asset = (state.assets?.assets || []).find((row) => row.id === id);
     if (!asset) return null;
@@ -357,8 +392,22 @@
     };
   }
 
-  /* 세션에 따라 앞에 오는 것이 달라진다 — 미국장 시간에는 미국이 먼저다. */
+  /* 보드 구성은 페이지가 정한다.
+   *
+   * 홈은 세션에 따라 앞이 바뀐다 — 미국장 시간에는 미국이 먼저다. 미국 페이지는
+   * 그 페이지가 답해야 하는 질문("지금 미국 시장이 어떤가")에 맞춘 여섯 개로
+   * 고정한다. 값이 없는 타일은 조용히 빠진다. */
   function boardSpecs(state, session) {
+    if (PAGE === "us") {
+      return [
+        () => assetSpec(state, "sp500", "#global-assets"),
+        () => assetSpec(state, "nasdaq", "#global-assets"),
+        () => assetSpec(state, "gold", "#global-assets"),
+        () => metricSpec("treasury_10y", "#macro-regime"),
+        () => metricSpec("fx_usdkrw", "#exchange-rates"),
+        () => metricSpec("sp500_realized_vol", "#market-risk"),
+      ].map((build) => build()).filter(Boolean);
+    }
     const kr = [
       () => krSpec(state, "samsung_electronics", "samsung"),
       () => krSpec(state, "sk_hynix", "sk_hynix"),
@@ -536,6 +585,20 @@
       node.open = mode === "pro";
     });
   }
+  /* 서랍이 열리면 그 안의 지연 로딩 대상을 다시 관찰하게 한다. 닫힌 상태에서
+   * 관찰을 시작한 요소가 열린 뒤에도 잡히는지는 구현에 달렸고, 다시 부르는
+   * 비용은 0이다(처리된 대상은 monitor.js 쪽에서 걸러 낸다). */
+  function setupDisclosures() {
+    document.querySelectorAll("details.disclose").forEach((node) => {
+      node.addEventListener("toggle", () => {
+        if (!node.open) return;
+        // toggle은 레이아웃 전에 온다. 그 시점에 다시 관찰하면 여전히 렌더
+        // 트리 밖이라 같은 문제가 반복된다 — 두 프레임 뒤에 건다.
+        requestAnimationFrame(() => requestAnimationFrame(() => window.mulmitRefreshLazy?.()));
+      });
+    });
+  }
+
   function setupMode() {
     const stored = localStorage.getItem(MODE_KEY);
     applyMode(stored === "pro" ? "pro" : "easy");
@@ -641,6 +704,7 @@
   });
 
   setupMode();
+  setupDisclosures();
   setupTerms();
   setupTapePointer();
 })();

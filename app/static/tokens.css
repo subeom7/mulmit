@@ -105,6 +105,29 @@ body {
 
 .section-copy, .hero-copy { font-size: var(--fs-md); color: var(--ink-2); }
 
+/* --- 표와 지표 카드 ---------------------------------------------------
+ * /us의 지표 섹션은 9~11.5px로 짜여 있었다(표 헤더 9px, 카드 키커 9px, 각주
+ * 9px). 여기가 페이지 글자 수의 대부분이라 바닥을 올리지 않으면 "글자가
+ * 작다"가 그대로 남는다. 다열 표는 이미 .table-scroll 안에서 가로로 흐르므로
+ * 폭이 늘어도 레이아웃이 깨지지 않는다. */
+.accessible-table { font-size: var(--fs-xs); }
+.accessible-table th { font-size: var(--fs-xs); }
+.metric-kicker { font-size: var(--fs-xs); }
+.metric-unit { font-size: var(--fs-xs); }
+.metric-change { font-size: var(--fs-xs); }
+.chart-slot .chart-empty { font-size: var(--fs-xs); }
+.metric-description { font-size: var(--fs-sm); color: var(--ink-2); }
+.hint-chip { font-size: var(--fs-xs); line-height: 1.45; }
+.metric-card > footer { font-size: var(--fs-xs); line-height: 1.5; }
+.panel-footer { font-size: var(--fs-xs); line-height: 1.5; }
+.krp-market { font-size: var(--fs-xs); }
+.feed-soon, .jump-nav a { font-size: var(--fs-xs); }
+.accessible-table td.range { font-size: var(--fs-xs); }
+.comparison-legend, .notice-line, .select-label, .select-label select { font-size: var(--fs-xs); }
+.comparison-card p { font-size: var(--fs-xs); color: var(--ink-2); }
+.interpretation-note, .stress-scale-note, .stress-method, .stress-disclaimer,
+.stress-note, .sentiment-note { font-size: var(--fs-xs); line-height: 1.6; color: var(--ink-2); }
+
 h1 { letter-spacing: -0.03em; }
 h2 { font-size: var(--fs-xl); letter-spacing: -0.02em; }
 h3 { font-size: var(--fs-lg); letter-spacing: -0.01em; }

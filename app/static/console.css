@@ -299,6 +299,25 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 .disclose .disclose-body p { margin: 0 0 6px; }
 .disclose .disclose-body p:last-child { margin-bottom: 0; }
 
+/* 글자 표는 왼쪽에서 읽는다.
+ * `.accessible-table`의 기본은 전 열 우측 정렬이라 의원 이름과 종목명이
+ * 오른쪽 끝에 매달려 있었다. 숫자 열(.num)만 우측에 두고 나머지는 되돌린다.
+ * 값이 대부분 숫자인 표(상관행렬·섹터)는 건드리지 않으려고 섹션으로 좁혔다. */
+#us-ptr .accessible-table th:not(.num), #us-ptr .accessible-table td:not(.num),
+#us-events .accessible-table th:not(.num), #us-events .accessible-table td:not(.num),
+#econ-calendar .accessible-table th:not(.num), #econ-calendar .accessible-table td:not(.num) {
+  text-align: left;
+}
+
+/* 지표 자세히 보기 — 기존 대시보드 섹션들을 통째로 담는 큰 서랍.
+ * 쉬움에서는 닫혀 있고 전문가에서는 열린다(data-mode-open). 닫혀 있어도 본문은
+ * DOM에 있어 검색엔진은 그대로 읽는다. */
+.disclose-deep > summary { padding: 13px var(--sp-4); font-size: var(--fs-sm); }
+.disclose-deep .deep-body { padding: 0 var(--sp-4) var(--sp-4); }
+.disclose-deep .dashboard-section { margin: var(--sp-6) 0 0; }
+.disclose-deep .dashboard-section:first-of-type { margin-top: var(--sp-4); }
+.disclose-deep .jump-nav { position: static; margin: var(--sp-3) 0 0; }
+
 /* 위험 표시는 접지 않는다 — 다만 주황 알약 세 개가 나란히 서면 그것대로
  * 소음이라, 테두리만 남긴 조용한 칩으로 바꾼다. */
 .risk-strip { gap: 6px; margin: var(--sp-3) 0 0; }

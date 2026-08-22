@@ -65,6 +65,12 @@ const TEXT = {
     "krpage.kicker": "KOREA MARKETS", "krpage.title": "한국 주식, 장 밖에서도 한눈에.",
     "krpage.copy": "24시간 참고가, 공식 종가, 코스피 지수군, 국민연금 대량보유 공시를 한 페이지에서 봅니다.",
     "uspage.kicker": "US & GLOBAL MARKETS", "uspage.title": "미국·글로벌 시장.",
+    "uspage.h1": "미국·글로벌", "uspage.scope": "지수 · 금리 · 유동성",
+    "uspage.sub": "서울이 잠든 사이 미국 시장이 움직입니다. 지수·금리·환율은 여기서, 종목별 등락은 아래 히트맵에서 봅니다.",
+    "uspage.disclose": "이 값들은 어디서 오나요?",
+    "uspage.deep": "지표 자세히 보기 — 시장 위험 · 매크로 · 유동성 · 환율 · 자금시장",
+    "uspage.heatmapNote": "종목 단위로 오늘 무엇이 움직였는지 봅니다",
+    "uspage.stressNote": "미 재무부 OFR 공표값과 자체 합성 지수",
     "uspage.copy": "S&P 500 히트맵, 스트레스 지수, 매크로, 유동성, 공식 환율을 한 페이지에서 봅니다.",
     "cryptopage.kicker": "CRYPTO MARKETS", "cryptopage.title": "크립토, 가격·심리·파생을 한눈에.",
     "cryptopage.copy": "Hyperliquid 무기한선물 참고가, 공포·탐욕 지수, 펀딩비·미결제약정, 실현 변동성과 합성자산 상관을 한 페이지에서 봅니다. 현물 거래소 호가나 투자 권유가 아닙니다.",
@@ -195,6 +201,12 @@ const TEXT = {
     "krpage.kicker": "KOREA MARKETS", "krpage.title": "Korean stocks, beyond market hours.",
     "krpage.copy": "Around-the-clock references, official closes, the KOSPI index family and NPS large-holding filings on one page.",
     "uspage.kicker": "US & GLOBAL MARKETS", "uspage.title": "US & global markets.",
+    "uspage.h1": "US & global", "uspage.scope": "indices · rates · liquidity",
+    "uspage.sub": "US markets move while Seoul sleeps. Indices, yields and FX live here; what individual names did is in the heatmap below.",
+    "uspage.disclose": "Where do these numbers come from?",
+    "uspage.deep": "Detailed indicators — risk · macro · liquidity · FX · funding",
+    "uspage.heatmapNote": "What moved today, name by name",
+    "uspage.stressNote": "U.S. Treasury OFR readings and our own composite",
     "uspage.copy": "The S&P 500 heatmap, stress index, macro, liquidity and official FX on one page.",
     "cryptopage.kicker": "CRYPTO MARKETS", "cryptopage.title": "Crypto: price, sentiment, derivatives — one view.",
     "cryptopage.copy": "Hyperliquid perpetual references, the Fear & Greed index, funding and open interest, realized volatility and correlations with the synthetic assets — on one page. Not spot-exchange quotes, not a recommendation.",
@@ -344,7 +356,7 @@ const METRICS = {
   recession_prob: { aliases: ["recession_prob", "rec_prob_12m"], label: LABEL("미국 침체 확률 (12개월 선행)", "US recession odds (12M ahead)"), group: "risk", format: "number", accent: "#fb7185", description: LABEL("뉴욕 연은이 국채 10년–3개월 스프레드로 추정한 12개월 뒤 침체 확률 — 날짜는 예측 대상 월", "NY Fed treasury-spread model: probability of a U.S. recession twelve months ahead — dates mark the predicted month") },
   dxy: { aliases: ["dxy", "dollar_index"], label: LABEL("달러인덱스", "Dollar index"), group: "macro", format: "number", accent: "#a78bfa" },
   usdjpy: { aliases: ["usdjpy", "jpy=x", "usd/jpy"], label: LABEL("달러·엔", "USD/JPY"), group: "macro", format: "currency", currency: "JPY", accent: "#a78bfa" },
-  treasury_10y: { aliases: ["treasury_10y", "dgs10", "us10y"], label: LABEL("미국 10년물", "US 10-year yield"), group: "macro", format: "percentPoints", accent: "#a78bfa" },
+  treasury_10y: { aliases: ["treasury_10y", "dgs10", "us10y"], label: LABEL("미국 10년물", "US 10-year yield"), group: "macro", format: "percentPoints", changeMode: "points", accent: "#a78bfa" },
   wti: { aliases: ["wti", "dcoilwtico", "cl=f"], label: LABEL("WTI 원유", "WTI crude"), group: "macro", format: "currency", currency: "USD", accent: "#a78bfa" },
   copper: { aliases: ["copper", "pcoppusdm", "hg=f"], label: LABEL("구리", "Copper"), group: "macro", format: "number", accent: "#a78bfa" },
   unemployment: { aliases: ["unemployment", "unrate"], label: LABEL("미국 실업률", "US unemployment"), group: "macro", format: "percentPoints", accent: "#a78bfa" },
@@ -360,9 +372,9 @@ const METRICS = {
   fx_usdcny: { aliases: ["fx_usdcny", "rxi_n.b.ch"], label: LABEL("위안·달러", "USD/CNY"), group: "fx", format: "rate", accent: "#f5b942", description: LABEL("달러 한 단위당 위안화", "Chinese yuan per US dollar") },
   fx_eurusd: { aliases: ["fx_eurusd", "rxi$us_n.b.eu"], label: LABEL("유로·달러", "EUR/USD"), group: "fx", format: "rate", accent: "#38bdf8", description: LABEL("유로 한 단위당 달러. 위 세 개와 방향이 반대입니다.", "US dollars per euro — quoted the opposite way round to the three above.") },
   fx_gbpusd: { aliases: ["fx_gbpusd", "rxi$us_n.b.uk"], label: LABEL("파운드·달러", "GBP/USD"), group: "fx", format: "rate", accent: "#fb7185", description: LABEL("파운드 한 단위당 달러. 위 세 개와 방향이 반대입니다.", "US dollars per British pound — quoted the opposite way round to the three above.") },
-  sofr: { aliases: ["sofr"], label: LABEL("SOFR", "SOFR"), group: "funding", format: "percentPoints", accent: "#2dd4a3" },
+  sofr: { aliases: ["sofr"], label: LABEL("SOFR", "SOFR"), group: "funding", format: "percentPoints", changeMode: "points", accent: "#2dd4a3" },
   effective_fed_funds: { aliases: ["effective_fed_funds", "effr"], label: LABEL("실효 연방기금금리", "Effective fed funds"), group: "funding", format: "percentPoints", accent: "#2dd4a3" },
-  reserve_interest: { aliases: ["reserve_interest", "iorb"], label: LABEL("지급준비금 이자율", "IORB"), group: "funding", format: "percentPoints", accent: "#2dd4a3" },
+  reserve_interest: { aliases: ["reserve_interest", "iorb"], label: LABEL("지급준비금 이자율", "IORB"), group: "funding", format: "percentPoints", changeMode: "points", accent: "#2dd4a3" },
   skew: { aliases: ["skew", "^skew"], label: LABEL("CBOE SKEW", "CBOE SKEW"), group: "options", format: "number", licensed: true, accent: "#a78bfa" },
   vvix: { aliases: ["vvix", "^vvix"], label: LABEL("VVIX", "VVIX"), group: "options", format: "number", licensed: true, accent: "#a78bfa" },
   ovx: { aliases: ["ovx", "^ovx"], label: LABEL("OVX", "OVX"), group: "options", format: "number", licensed: true, accent: "#a78bfa" },
@@ -980,7 +992,7 @@ function renderMetricCards() {
     const footer = $("footer", card); footer.replaceChildren(); const source = sourceInfo(record);
     const provider = source.url ? document.createElement("a") : document.createElement("span"); provider.textContent = source.name; if (source.url) { provider.href = source.url; provider.target = "_blank"; provider.rel = "noopener noreferrer"; }
     footer.append(provider, document.createTextNode(` · ${record?.instrument_kind || record?._kind || "API"} · ${t("date.asof")} ${dateText(recent.date)}`));
-    if (card.dataset.visible === "1") renderMetricChart(card);
+    if (card.dataset.visible === "1") queueChart(() => renderMetricChart(card));
   });
 }
 
@@ -1013,13 +1025,53 @@ function renderMetricChart(card) {
   if (chart) slot.append(chart); else { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = t(HISTORY_EMPTY_TEXT[record?.history_status] || "status.noSeries"); slot.append(empty); }
 }
 
+/* 차트는 한 프레임에 몇 개씩만 그린다.
+ *
+ * 스크롤로 하나씩 들어올 때는 콜백당 한두 장이라 문제가 없었다. 그런데 /us의
+ * 지표 섹션이 접힌 서랍 안으로 들어가면서, 서랍을 열면 46장이 한 번에
+ * 교차(intersect)로 잡힌다 — 콜백 하나에서 SVG 46개를 만들면 그 프레임이
+ * 통째로 길어진다. 큐에 넣고 프레임마다 조금씩 흘려보낸다. 15분 갱신 때 이미
+ * 보이는 카드를 다시 그리는 경로도 같은 큐를 쓴다. */
+const chartQueue = [];
+let chartDraining = false;
+function queueChart(task) {
+  chartQueue.push(task);
+  if (chartDraining) return;
+  chartDraining = true;
+  const drain = () => {
+    for (let budget = 4; budget > 0 && chartQueue.length; budget -= 1) chartQueue.shift()();
+    if (chartQueue.length) requestAnimationFrame(drain); else chartDraining = false;
+  };
+  requestAnimationFrame(drain);
+}
+
 function setupLazyCharts() {
   const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
     if (!entry.isIntersecting) return; const card = entry.target; card.dataset.visible = "1";
-    if (card.classList.contains("metric-card")) renderMetricChart(card); else renderComparison(Number(card.dataset.comparison)); observer.unobserve(card);
+    observer.unobserve(card);
+    queueChart(() => {
+      if (card.classList.contains("metric-card")) renderMetricChart(card);
+      else renderComparison(Number(card.dataset.comparison));
+    });
   }), { rootMargin: "220px 0px" });
-  $$(".metric-card, .lazy-comparison").forEach((card) => observer.observe(card));
+  // 이미 그린 카드는 다시 관찰하지 않는다 — 서랍이 열릴 때 이 함수를 다시
+  // 부르기 때문에, 걸러 두지 않으면 볼 때마다 같은 차트를 새로 그린다.
+  $$(".metric-card:not([data-visible='1']), .lazy-comparison:not([data-visible='1'])")
+    .forEach((card) => observer.observe(card));
 }
+
+/* 서랍이 열릴 때 아직 처리되지 않은 지연 대상만 다시 관찰한다.
+ *
+ * 닫힌 <details>의 내용은 렌더 트리 밖이라, 그 안에서 observe()한 대상이
+ * 열린 뒤 제대로 교차로 잡히는지는 브라우저 구현에 달렸다. 확인하려던 창이
+ * 백그라운드(visibilityState: hidden)라 IntersectionObserver 자체가 돌지
+ * 않아 실측하지 못했다 — 그래서 어느 쪽이든 맞는 쪽으로 둔다. 이미 그린
+ * 대상은 위 필터와 data-lazy-done이 걸러 내므로 다시 불러도 공짜다. */
+function refreshLazyTargets() {
+  setupLazyCharts();
+  setupLazySections();
+}
+window.mulmitRefreshLazy = refreshLazyTargets;
 
 function renderComparison(index) {
   const card = $$(`.lazy-comparison`)[index]; if (!card) return; const definition = COMPARISONS[index]; const chartHost = $(".comparison-chart", card); const legend = $(".comparison-legend", card);
@@ -1213,7 +1265,7 @@ function renderAll() {
   if (corrSection) corrSection.hidden = legacyOff;
   if (legacyOff) state.correlationLoaded = true; // the lazy loader must not fetch it
   pruneEmpty(); renderJumpNav();
-  $$(".lazy-comparison[data-visible='1']").forEach((card) => renderComparison(Number(card.dataset.comparison)));
+  $$(".lazy-comparison[data-visible='1']").forEach((card) => queueChart(() => renderComparison(Number(card.dataset.comparison))));
   const times = [state.macro?.generated_at, state.assets?.generated_at, state.sectors?.generated_at, state.sectors?.as_of, state.weekend?.generated_at, state.cryptoOverview?.generated_at, state.bioTrials?.generated_at, state.bioFda?.generated_at].filter(Boolean);
   $("#updated-at").textContent = times.length ? dateText(times.sort().at(-1)) : "—";
   // A deliberately disabled lane is absence by decision, not degraded service.
@@ -1244,6 +1296,34 @@ function renderAll() {
 function notifyConsole() {
   document.dispatchEvent(new CustomEvent("mulmit:render", { detail: state }));
 }
+
+/* 콘솔 셸이 지표를 읽는 유일한 창구.
+ *
+ * console.js가 자체 판정표를 들고 있으면 같은 계열이 화면마다 다른 숫자로
+ * 나온다 — 10년물 변화를 %로 쓸지 %p로 쓸지, 어떤 값이 라이선스 때문에
+ * 비어야 하는지 같은 판단은 METRICS 정의 한 곳에만 있어야 한다. 여기서는
+ * 카드가 그릴 것과 똑같은 결과만 스냅샷으로 넘긴다. 값이 없거나 표시 권리가
+ * 없으면 null이고, 그러면 타일이 만들어지지 않는다. */
+function metricSnapshot(key) {
+  const definition = METRICS[key];
+  if (!definition) return null;
+  const record = state.records.get(key);
+  if (cardState(key, record, definition).badge) return null;
+  const recent = latest(record);
+  if (recent.value === null) return null;
+  const move = changeParts(change(record), definition);
+  return {
+    label: recordLabel(record, definition),
+    text: formatNumber(recent.value, definition, record),
+    date: recent.date,
+    changeText: move ? move.text : null,
+    changeDirection: move ? move.direction : null,
+    basis: changeLabel(record),
+    source: record ? sourceInfo(record).name : null,
+    observations: observations(record),
+  };
+}
+window.mulmitMetric = metricSnapshot;
 
 function formatKrw(value) {
   if (value == null || !isFinite(value)) return "—";
@@ -3540,8 +3620,11 @@ async function loadCorrelation() {
 
 function setupLazySections() {
   const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
-    if (!entry.isIntersecting) return; const kind = entry.target.dataset.lazy; if (kind === "tradingview") renderTradingView(); if (kind === "correlation") loadCorrelation(); observer.unobserve(entry.target);
-  }), { rootMargin: "300px 0px" }); $$("[data-lazy]").forEach((node) => observer.observe(node));
+    if (!entry.isIntersecting) return; const kind = entry.target.dataset.lazy; entry.target.dataset.lazyDone = "1";
+    if (kind === "tradingview") renderTradingView(); if (kind === "correlation") loadCorrelation(); observer.unobserve(entry.target);
+    // 한 번 불러온 것은 표시해 둔다. 다시 관찰하면 TradingView iframe이
+    // 통째로 재로딩된다.
+  }), { rootMargin: "300px 0px" }); $$("[data-lazy]:not([data-lazy-done])").forEach((node) => observer.observe(node));
 }
 
 function applyLocale() {

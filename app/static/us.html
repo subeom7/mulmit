@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko" data-theme="dark">
+<html lang="ko" data-theme="dark" data-mode="easy">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -7,6 +7,8 @@
   <meta name="description" content="물밑(Mulmit) 미국·글로벌 시장 — S&amp;P 500 종목 히트맵, 하원 의원 주식 거래, OFR 금융스트레스·시장 심리 게이지, 연준 유동성과 매크로, 경제 캘린더, 공식 환율.">
   <meta name="keywords" content="물밑, Mulmit, 미국 주식, S&amp;P 500, 나스닥, 금융스트레스, 시장 심리, 의원 주식 거래, 연준 유동성, 환율">
   <title>미국·글로벌 시장 — S&amp;P 500·스트레스·심리 게이지 | 물밑 Mulmit</title>
+  <meta name="doc-title-ko" content="미국·글로벌 시장 — S&amp;P 500·스트레스·심리 게이지 | 물밑 Mulmit">
+  <meta name="doc-title-en" content="US &amp; global markets — S&amp;P 500, stress and sentiment | Mulmit">
   <link rel="canonical" href="https://mulmit.com/us">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Mulmit">
@@ -20,14 +22,17 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
   <link rel="stylesheet" href="/static/monitor.css?v=20260822-19">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260822-19">
+  <link rel="stylesheet" href="/static/console.css?v=20260822-19">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
   <header class="masthead">
     <a class="brand" href="/" aria-label="Mulmit home">
-      <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="36" height="36">
-      <span><strong>Mulmit</strong><small data-i18n="brand.tagline">MARKET SIGNAL CONSOLE</small></span>
+      <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="30" height="30">
+      <span><strong>Mulmit</strong></span>
     </a>
     <nav class="view-switch" aria-label="View">
       <a class="view-tab" href="/" data-i18n="nav.home">홈</a>
@@ -37,48 +42,78 @@
       <a class="view-tab" href="/bio" data-i18n="nav.bio">바이오</a>
       <a class="view-tab" href="/analytics" data-i18n="nav.analytics">종목 분석</a>
     </nav>
-    <nav class="mast-nav" aria-label="Secondary">
-      <a class="nav-chip" href="/docs">API</a>
-    </nav>
     <div class="mast-actions">
-      <span class="session-badge" id="session-badge" hidden title=""><i></i><span></span></span>
-      <span class="mast-ticker" id="mast-ticker" hidden title=""></span>
-      <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
+      <div class="mode-switch" id="mode-switch" role="group" data-i18n-aria="mode.label" aria-label="표시 수준">
+        <button type="button" data-mode="easy" aria-pressed="true" data-i18n="mode.easy">쉬움</button>
+        <button type="button" data-mode="pro" aria-pressed="false" data-i18n="mode.pro">전문가</button>
+      </div>
       <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
     </div>
   </header>
 
+  <div class="tape" id="tape" role="region" data-i18n-aria="tape.label" aria-label="시세 요약" hidden>
+    <span class="session-badge" id="session-badge" hidden title=""><i></i><span></span></span>
+    <span class="presence-badge" id="presence-badge" title=""></span>
+  </div>
+
   <main id="main" class="shell">
-    <section class="hero" aria-labelledby="hero-title">
+    <div class="console-head">
       <div>
-        <p class="kicker" data-i18n="uspage.kicker">US &amp; GLOBAL MARKETS</p>
-        <h1 id="hero-title" data-i18n="uspage.title">미국·글로벌 시장.</h1>
-        <p class="hero-copy" data-i18n="uspage.copy">S&amp;P 500 히트맵, 스트레스 지수, 매크로, 유동성, 공식 환율을 한 페이지에서 봅니다.</p>
+        <h1><span data-i18n="uspage.h1">미국·글로벌</span> <span class="console-h1-sub" data-i18n="uspage.scope">지수 · 금리 · 유동성</span></h1>
+        <p class="console-sub" data-i18n="uspage.sub">서울이 잠든 사이 미국 시장이 움직입니다. 지수·금리·환율은 여기서, 종목별 등락은 아래 히트맵에서 봅니다.</p>
       </div>
-      <aside class="hero-meta" aria-live="polite">
-        <span data-i18n="hero.updated">마지막 갱신</span>
-        <strong id="updated-at">—</strong>
+      <div class="console-meta">
+        <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
+        <span><span data-i18n="hero.updated">마지막 갱신</span> <strong id="updated-at">—</strong></span>
         <button class="refresh-button" id="refresh-button" type="button"><span aria-hidden="true">↻</span> <span data-i18n="action.refresh">새로고침</span></button>
-      </aside>
-    </section>
-
-    <section class="overview" aria-labelledby="overview-title">
-      <div class="section-heading compact">
-        <span class="section-index">00</span>
-        <div><p class="eyebrow" data-i18n="overview.eyebrow">MARKET TAPE</p><h2 id="overview-title" data-i18n="overview.title">시장 요약</h2></div>
-        <span class="source-pill" id="overview-source">API</span>
       </div>
-      <div id="overview-groups" class="overview-groups" aria-live="polite"></div>
-    </section>
+    </div>
 
-    <section class="dashboard-section" id="constituent-heatmap" aria-labelledby="tv-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">TRADINGVIEW · THIRD-PARTY EMBED</p><h2 id="tv-title" data-i18n="tv.title">S&amp;P 500 종목 히트맵</h2></div>
+    <div class="board" id="board" aria-label="대표 지표" hidden></div>
+
+    <details class="disclose" data-mode-open>
+      <summary data-i18n="uspage.disclose">이 값들은 어디서 오나요?</summary>
+      <div class="disclose-body">
+        <div class="lang-ko">
+          <p>지수(S&amp;P 500·XYZ100)와 금은 그 지수를 따라가는
+            <button class="term" type="button" data-term="perp" aria-expanded="false">무기한선물</button>
+            가격입니다 — 지수 자체가 아니고, 미국 정규장이 닫힌 시간에도 움직입니다.
+            10년물 금리·원달러·유동성 지표는 연준(FRED)·미 재무부(OFR)·한국은행(ECOS)이 공표한
+            공식 통계를 그대로 옮긴 값이라 갱신 주기가 하루에서 일주일까지 다릅니다.</p>
+          <p><strong>변화율의 기준일은 값마다 다릅니다.</strong> 각 타일과 카드에 어느 날짜 대 어느 날짜인지
+            함께 적어 두었습니다. 실현 변동성은 이미 일어난 변동의 크기이며
+            <button class="term" type="button" data-term="realized-vol" aria-expanded="false">VIX가 아닙니다</button>.</p>
+          <p>위 <strong>전문가</strong>를 누르면 지표별 출처·기준일이 타일에 펼쳐지고, 아래 ‘지표 자세히 보기’도 함께 열립니다.</p>
+        </div>
+        <div class="lang-en">
+          <p>The index and gold tiles are
+            <button class="term" type="button" data-term="perp" aria-expanded="false">perpetual futures</button>
+            tracking those references — not the indices themselves, and they keep moving after the US cash session
+            closes. Yields, FX and liquidity come from official statistics (FRED, U.S. Treasury OFR, Bank of Korea
+            ECOS) exactly as published, so their update cadence ranges from daily to weekly.</p>
+          <p><strong>Each value is measured against its own prior observation date</strong>, printed next to it.
+            Realized volatility measures moves that already happened — it
+            <button class="term" type="button" data-term="realized-vol" aria-expanded="false">is not the VIX</button>.</p>
+          <p>Switch to <strong>Pro</strong> above to see each source and observation date, and to open the detailed
+            indicator sections below.</p>
+        </div>
+      </div>
+    </details>
+
+    <div class="risk-strip" role="note">
+      <span class="status-badge warn" data-i18n="weekend.notSpot">실제 체결가 아님</span>
+      <span class="status-badge warn pro-only" data-i18n="console.hip3">HIP-3 합성 무기한선물 · trade.xyz</span>
+    </div>
+
+    <section class="console-section" id="constituent-heatmap" aria-labelledby="tv-title">
+      <header>
+        <h2 id="tv-title" data-i18n="tv.title">S&amp;P 500 종목 히트맵</h2>
+        <span class="sec-note" data-i18n="uspage.heatmapNote">종목 단위로 오늘 무엇이 움직였는지 봅니다</span>
         <div class="segmented" id="tv-period" role="group" aria-label="Heatmap performance period">
           <button type="button" data-period="1d">1D</button><button type="button" data-period="1w">1W</button>
           <button type="button" data-period="1m">1M</button><button type="button" data-period="1y">1Y</button>
         </div>
-      </div>
+      </header>
       <div class="panel tv-panel">
         <div class="notice-line"><span class="status-badge info" data-i18n="tv.embed">외부 위젯</span><span data-i18n="tv.notice">이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.</span></div>
         <div id="tradingview-host" class="tradingview-host lazy-host" data-lazy="tradingview"><div class="state-block" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div></div>
@@ -86,12 +121,44 @@
       </div>
     </section>
 
-    <section class="dashboard-section" id="stress-index" aria-labelledby="stress-title">
-      <div class="section-heading">
-        <span class="section-index">S</span>
-        <div><p class="eyebrow" data-i18n="stress.eyebrow">MULMIT COMPOSITE · PUBLISHED METHOD</p><h2 id="stress-title" data-i18n="stress.title">유동성·스트레스 지수</h2></div>
-        <span class="source-pill" data-i18n="stress.own">자체 산출</span>
+    <section class="console-section" id="us-ptr" hidden aria-labelledby="ptr-title">
+      <header>
+        <h2 id="ptr-title" data-i18n="ptr.title">미 하원 의원 주식 거래</h2>
+      </header>
+      <p class="section-copy" data-i18n="ptr.copy" style="margin:0 0 12px">STOCK Act에 따른 주기거래보고(PTR)를 그대로 옮깁니다. 금액은 구간으로만 공시되며, 수기 제출분은 원문 링크로 안내합니다. 상원은 수집 경로가 막혀 있어 포함되지 않습니다.</p>
+      <div class="panel">
+        <div id="ptr-body"></div>
+        <footer class="panel-footer" id="ptr-footer"></footer>
       </div>
+    </section>
+
+    <section class="console-section" id="us-events" hidden aria-labelledby="events-title">
+      <header>
+        <h2 id="events-title" data-i18n="ev.title">미국 기업 공시 속보 (8-K)</h2>
+      </header>
+      <p class="section-copy" data-i18n="ev.copy" style="margin:0 0 12px">커버 중인 티커의 8-K(주요 이벤트 보고)입니다. 수집 주기(약 1시간)로 갱신되며 실시간 속보가 아닙니다. 제목은 공식 Item 번호의 표준 제목이고, 내용은 원문에서 확인하세요.</p>
+      <div class="panel">
+        <div id="ev-body"></div>
+        <footer class="panel-footer" id="ev-footer"></footer>
+      </div>
+    </section>
+
+    <section class="console-section" id="econ-calendar" hidden aria-labelledby="cal-title">
+      <header>
+        <h2 id="cal-title" data-i18n="cal.title">경제 캘린더</h2>
+      </header>
+      <p class="section-copy" data-i18n="cal.copy" style="margin:0 0 12px">다가오는 미국 데이터 발표와 FOMC·금통위 일정입니다. 기관이 공표한 예정일이며 변경될 수 있습니다.</p>
+      <div class="panel">
+        <div id="cal-body"></div>
+        <footer class="panel-footer" id="cal-footer"></footer>
+      </div>
+    </section>
+
+    <section class="console-section" id="stress-index" aria-labelledby="stress-title">
+      <header>
+        <h2 id="stress-title" data-i18n="stress.title">유동성·스트레스 지수</h2>
+        <span class="sec-note" data-i18n="uspage.stressNote">미 재무부 OFR 공표값과 자체 합성 지수</span>
+      </header>
       <div class="panel stress-panel">
         <div id="stress-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
         <div id="stress-body" hidden>
@@ -109,12 +176,10 @@
       </div>
     </section>
 
-    <section class="dashboard-section" id="sentiment-index" aria-labelledby="sentiment-title">
-      <div class="section-heading">
-        <span class="section-index">M</span>
-        <div><p class="eyebrow" data-i18n="sentiment.eyebrow">MULMIT COMPOSITE · EXPERIMENTAL · PUBLISHED METHOD</p><h2 id="sentiment-title" data-i18n="sentiment.title">시장 심리 게이지</h2></div>
-        <span class="source-pill" data-i18n="sentiment.own">자체 산출 · 실험</span>
-      </div>
+    <section class="console-section" id="sentiment-index" aria-labelledby="sentiment-title">
+      <header>
+        <h2 id="sentiment-title" data-i18n="sentiment.title">시장 심리 게이지</h2>
+      </header>
       <div class="panel stress-panel">
         <div id="sentiment-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
         <div id="sentiment-body" hidden>
@@ -133,95 +198,60 @@
       </div>
     </section>
 
-    <section class="dashboard-section" id="us-ptr" hidden aria-labelledby="ptr-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">US · HOUSE PTR · STOCK ACT</p><h2 id="ptr-title" data-i18n="ptr.title">미 하원 의원 주식 거래</h2></div>
-        <span class="source-pill">HOUSE CLERK</span>
-      </div>
+    <section class="console-section" id="fomc-dots" hidden aria-labelledby="dots-title">
+      <header>
+        <h2 id="dots-title" data-i18n="dots.title">연준 점도표</h2>
+      </header>
+      <p class="section-copy" data-i18n="dots.copy" style="margin:0 0 12px">FOMC 위원들이 분기 SEP에서 스스로 전망한 연말 기준금리입니다. 시장 내재 확률이 아니라 위원 전망의 중앙값과 중앙경향입니다.</p>
       <div class="panel">
-        <p class="section-copy" data-i18n="ptr.copy" style="margin:0 0 12px">STOCK Act에 따른 주기거래보고(PTR)를 그대로 옮깁니다. 금액은 구간으로만 공시되며, 수기 제출분은 원문 링크로 안내합니다. 상원은 수집 경로가 막혀 있어 포함되지 않습니다.</p>
-        <div id="ptr-body"></div>
-        <footer class="panel-footer" id="ptr-footer"></footer>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="us-events" hidden aria-labelledby="events-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">US · 8-K CURRENT REPORTS</p><h2 id="events-title" data-i18n="ev.title">미국 기업 공시 속보 (8-K)</h2></div>
-        <span class="source-pill">SEC EDGAR</span>
-      </div>
-      <div class="panel">
-        <p class="section-copy" data-i18n="ev.copy" style="margin:0 0 12px">커버 중인 티커의 8-K(주요 이벤트 보고)입니다. 수집 주기(약 1시간)로 갱신되며 실시간 속보가 아닙니다. 제목은 공식 Item 번호의 표준 제목이고, 내용은 원문에서 확인하세요.</p>
-        <div id="ev-body"></div>
-        <footer class="panel-footer" id="ev-footer"></footer>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="econ-calendar" hidden aria-labelledby="cal-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">SCHEDULE · FRED × FOMC × BOK</p><h2 id="cal-title" data-i18n="cal.title">경제 캘린더</h2></div>
-      </div>
-      <div class="panel">
-        <p class="section-copy" data-i18n="cal.copy" style="margin:0 0 12px">다가오는 미국 데이터 발표와 FOMC·금통위 일정입니다. 기관이 공표한 예정일이며 변경될 수 있습니다.</p>
-        <div id="cal-body"></div>
-        <footer class="panel-footer" id="cal-footer"></footer>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="fomc-dots" hidden aria-labelledby="dots-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">FOMC · SUMMARY OF ECONOMIC PROJECTIONS</p><h2 id="dots-title" data-i18n="dots.title">연준 점도표</h2></div>
-        <span class="source-pill">FED BOARD × FRED</span>
-      </div>
-      <div class="panel">
-        <p class="section-copy" data-i18n="dots.copy" style="margin:0 0 12px">FOMC 위원들이 분기 SEP에서 스스로 전망한 연말 기준금리입니다. 시장 내재 확률이 아니라 위원 전망의 중앙값과 중앙경향입니다.</p>
         <div id="dots-body"></div>
         <footer class="panel-footer" id="dots-footer"></footer>
       </div>
     </section>
 
-    <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
 
-    <div id="deep-sections"></div>
-
-    <section class="dashboard-section" id="sector-flow" aria-labelledby="sector-flow-title">
-      <div class="section-heading">
-        <span class="section-index">30</span>
-        <div><p class="eyebrow">S&amp;P 500 · SECTOR ETFs</p><h2 id="sector-flow-title" data-i18n="sector.title">섹터 자금 흐름</h2></div>
-        <div class="segmented" id="sector-period" role="group" aria-label="Sector return period">
+    <details class="disclose disclose-deep" data-mode-open>
+      <summary data-i18n="uspage.deep">지표 자세히 보기 — 시장 위험 · 매크로 · 유동성 · 환율 · 자금시장</summary>
+      <div class="disclose-body deep-body">
+        <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
+        <div id="deep-sections"></div>
+        <section class="console-section" id="sector-flow" aria-labelledby="sector-flow-title">
+          <header>
+            <h2 id="sector-flow-title" data-i18n="sector.title">섹터 자금 흐름</h2>
+            <div class="segmented" id="sector-period" role="group" aria-label="Sector return period">
           <button type="button" data-period="1d">1D</button><button type="button" data-period="1w">1W</button>
           <button type="button" data-period="1m">1M</button><button type="button" data-period="1y">1Y</button>
         </div>
+          </header>
+          <div class="panel sector-panel">
+            <div id="sector-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
+            <div id="sector-bars" class="sector-bars" hidden aria-hidden="true"></div>
+            <div class="table-scroll"><table id="sector-table" class="accessible-table"><caption data-i18n="sector.caption">S&amp;P 500 섹터 ETF 기간 수익률</caption><thead></thead><tbody></tbody></table></div>
+            <footer class="panel-footer" id="sector-footer"></footer>
+            <p class="interpretation-note" data-i18n="sector.interpretation">플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.</p>
+          </div>
+        </section>
+        <section class="console-section" id="correlation" aria-labelledby="corr-title">
+          <header>
+            <h2 id="corr-title" data-i18n="corr.title">자산군 상관관계</h2>
+            <label class="select-label"><span data-i18n="period.label">기간</span><select id="corr-period"><option value="3mo">3M</option><option value="6mo">6M</option><option value="1y" selected>1Y</option><option value="2y">2Y</option></select></label>
+          </header>
+          <div class="panel correlation-panel lazy-host" data-lazy="correlation">
+            <div id="corr-state" class="state-block" role="status" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div>
+            <div id="corr-table-wrap" class="table-scroll" hidden></div>
+            <footer class="panel-footer"><span data-i18n="corr.note">서로 다른 시장 시간대는 동시 일간 수익률 상관을 왜곡할 수 있습니다.</span><span data-i18n="corr.scale">+1은 같은 방향, 0은 약한 선형 관계, −1은 반대 방향입니다. 상관은 인과관계가 아닙니다.</span></footer>
+          </div>
+        </section>
       </div>
-      <div class="panel sector-panel">
-        <div id="sector-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
-        <div id="sector-bars" class="sector-bars" hidden aria-hidden="true"></div>
-        <div class="table-scroll"><table id="sector-table" class="accessible-table"><caption data-i18n="sector.caption">S&amp;P 500 섹터 ETF 기간 수익률</caption><thead></thead><tbody></tbody></table></div>
-        <footer class="panel-footer" id="sector-footer"></footer>
-        <p class="interpretation-note" data-i18n="sector.interpretation">플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.</p>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="correlation" aria-labelledby="corr-title">
-      <div class="section-heading">
-        <span class="section-index">32</span>
-        <div><p class="eyebrow">DAILY RETURNS · PEARSON</p><h2 id="corr-title" data-i18n="corr.title">자산군 상관관계</h2></div>
-        <label class="select-label"><span data-i18n="period.label">기간</span><select id="corr-period"><option value="3mo">3M</option><option value="6mo">6M</option><option value="1y" selected>1Y</option><option value="2y">2Y</option></select></label>
-      </div>
-      <div class="panel correlation-panel lazy-host" data-lazy="correlation">
-        <div id="corr-state" class="state-block" role="status" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div>
-        <div id="corr-table-wrap" class="table-scroll" hidden></div>
-        <footer class="panel-footer"><span data-i18n="corr.note">서로 다른 시장 시간대는 동시 일간 수익률 상관을 왜곡할 수 있습니다.</span><span data-i18n="corr.scale">+1은 같은 방향, 0은 약한 선형 관계, −1은 반대 방향입니다. 상관은 인과관계가 아닙니다.</span></footer>
-      </div>
-    </section>
+    </details>
 
     <section class="methodology" aria-labelledby="method-title">
       <p class="eyebrow">DATA POLICY</p>
       <h2 id="method-title" data-i18n="method.title">숫자를 다루는 원칙</h2>
       <div class="method-grid">
-        <article><strong data-i18n="method.one.title">출처를 함께 표시</strong><p data-i18n="method.one.copy">각 수치는 공급자, 기준일, 신선도를 함께 보여줍니다.</p></article>
-        <article><strong data-i18n="method.two.title">단위를 추측하지 않음</strong><p data-i18n="method.two.copy">API가 제공한 단위와 배율만 사용합니다.</p></article>
-        <article><strong data-i18n="method.three.title">미연결은 미연결로</strong><p data-i18n="method.three.copy">라이선스나 API가 없는 지표는 숫자 대신 상태를 표시합니다.</p></article>
+        <article><strong data-i18n="method.one.title">숫자마다 출처가 붙습니다</strong><p data-i18n="method.one.copy">어디서 받은 값인지, 언제 기준인지, 얼마나 오래된 값인지 함께 보여줍니다.</p></article>
+        <article><strong data-i18n="method.two.title">단위를 바꾸지 않습니다</strong><p data-i18n="method.two.copy">받은 그대로의 단위로 보여줍니다. 보기 좋으라고 배율을 손대지 않습니다.</p></article>
+        <article><strong data-i18n="method.three.title">없는 값은 만들지 않습니다</strong><p data-i18n="method.three.copy">가져올 수 없는 지표는 비슷한 다른 값으로 대신하지 않습니다. 값이 없으면 왜 없는지 적습니다.</p></article>
       </div>
       <div id="attribution" class="attribution"></div>
     </section>
@@ -231,6 +261,7 @@
         <a href="/privacy" data-i18n="legal.privacy">개인정보처리방침</a>
         <a href="/terms" data-i18n="legal.terms">이용약관</a>
         <a href="/disclaimer" data-i18n="legal.disclaimer">면책 고지</a>
+        <a href="/docs">API</a>
       </nav>
       <p data-i18n="legal.notAdvice">Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.</p>
     </footer>
@@ -247,7 +278,9 @@
       <footer></footer>
     </article>
   </template>
+
   <script>window.MULMIT_PAGE = "us";</script>
+  <script src="/static/console.js?v=20260822-19" defer></script>
   <script src="/static/monitor.js?v=20260822-19" defer></script>
   <script src="/static/search.js?v=20260822-19" defer></script>
 </body>
