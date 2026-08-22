@@ -102,6 +102,38 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 .icon-button { min-width: 38px; height: 34px; padding: 0 9px; cursor: pointer; font: 700 11px/1 var(--mono); }
 .icon-button:hover, .refresh-button:hover { color: var(--ink); border-color: var(--line-strong); background: var(--panel-2); }
 
+/* 통합 검색 — 마스트헤드 한 칸에서 코인·국내·미국을 함께 찾는다. */
+.site-search { position: relative; display: flex; align-items: center; }
+.site-search-input {
+  width: 186px; height: 34px; padding: 0 11px;
+  color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 7px;
+  font: 500 12px/1 var(--sans); transition: border-color .15s, width .15s, background .15s;
+}
+.site-search-input::placeholder { color: var(--faint); }
+.site-search-input:focus { outline: none; width: 258px; border-color: var(--accent); background: var(--panel-2); }
+.site-search-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.site-search-panel {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 60;
+  width: min(342px, calc(100vw - 24px)); max-height: 62vh; overflow-y: auto;
+  padding: 6px; background: var(--panel); border: 1px solid var(--line-strong); border-radius: 10px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .45);
+}
+.site-search-group {
+  margin: 7px 0 3px; padding: 0 8px;
+  color: var(--faint); font: 700 9.5px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+}
+.site-search-hit {
+  display: grid; grid-template-columns: minmax(50px, auto) minmax(0, 1fr) auto; align-items: baseline; gap: 9px;
+  padding: 7px 8px; border-radius: 6px; color: var(--ink); text-decoration: none;
+}
+.site-search-hit:hover, .site-search-hit.is-active { background: var(--accent-soft); }
+.site-search-hit .hit-symbol { font: 700 12px/1.3 var(--mono); }
+.site-search-hit .hit-name { overflow: hidden; font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.site-search-hit .hit-meta { color: var(--muted); font: 650 10px/1.3 var(--mono); white-space: nowrap; }
+.site-search-hit .hit-meta.up { color: var(--green); }
+.site-search-hit .hit-meta.down { color: var(--red); }
+.site-search-note { margin: 0; padding: 12px 9px; color: var(--muted); font-size: 12px; }
+
 .shell { width: min(1440px, 100%); margin: 0 auto; padding: 48px 24px 90px; }
 .hero {
   display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(220px, .5fr); align-items: end; gap: 40px;
@@ -276,6 +308,8 @@ button:focus-visible, a:focus-visible, select:focus-visible {
   .mast-nav { display: flex; margin-left: auto; }
   .mast-nav .nav-chip:not(.mobile-essential) { display: none; }
   .mast-actions { margin-left: 0; }
+  .site-search-input { width: 132px; }
+  .site-search-input:focus { width: 208px; }
   .hero h1 { font-size: clamp(42px, 8vw, 72px); }
   .weekend-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -312,6 +346,9 @@ button:focus-visible, a:focus-visible, select:focus-visible {
   .masthead { gap: 10px; }
   .mast-nav { display: none; }
   .mast-actions { flex-shrink: 0; }
+  /* 390px에서 검색창은 접어 두고, 탭하면 화면 폭만큼 펼친다. */
+  .site-search-input { width: 34px; padding: 0 8px; }
+  .site-search-input:focus { width: min(62vw, 230px); }
   .view-switch { flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
   .view-switch::-webkit-scrollbar { display: none; }
   .view-tab { padding: 6px 9px; font-size: 11.5px; }
