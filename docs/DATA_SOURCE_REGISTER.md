@@ -1154,7 +1154,7 @@ recheck_on: 2026-11-22
 | 항목 | 기록 |
 |---|---|
 | 내부 ID | `federal_register` |
-| 현재 상태 | **`approved` (2026-08-22, `DS-2026-016`)** — 미 정부 간행물(연방관보, OFR/NARA·GPO)로 저작권 없음(17 U.S.C. §105). 서버 게이트 기본 OFF |
+| 현재 상태 | **`approved` (2026-08-22, `DS-2026-016`)** — 미 정부 간행물(연방관보, OFR/NARA·GPO)로 저작권 없음(17 U.S.C. §105). **서버 게이트 ON(2026-08-22 14:27 KST 첫 블롭: 공고 11건·예정 2, 라이브 확인)** |
 | 코드 위치 | `app/providers/federal_register.py`, `app/bio.py`(`refresh_bio_adcomm`·`build_bio_adcomm`), `app/ingest.py::refresh_bio_adcomm`, 라우트 `/api/bio/adcomm` |
 | 게이트 | web·ingest: `BIO_SECTION_ENABLED` + `FEDERAL_REGISTER_ENABLED`(키 없음) |
 | 현재 사용 | `GET /api/v1/documents.json?conditions[agencies][]=food-and-drug-administration&conditions[type][]=NOTICE&conditions[term]="advisory committee"&conditions[publication_date][gte]=<240일 전>&per_page=100&fields[]=…` 6시간 주기 1~3페이지. 제목에 위원회명+회의 공고 문구가 있는 건만, 회의일은 DATES 단락에서 추출. 표시: 예정 회의·최근 30일 종료·날짜 미기재 공고(제목·위원회·공고일·링크) |
@@ -1187,7 +1187,7 @@ recheck_on: 2026-11-22
 | 항목 | 기록 |
 |---|---|
 | 내부 ID | `pubmed` |
-| 현재 상태 | **`approved` (2026-08-22, `DS-2026-017`, 메타데이터 한정)** — 서지 정보(제목·저널·일자·출판 유형·PMID/DOI)만, 초록 미요청. 서버 게이트 기본 OFF |
+| 현재 상태 | **`approved` (2026-08-22, `DS-2026-017`, 메타데이터 한정)** — 서지 정보(제목·저널·일자·출판 유형·PMID/DOI)만, 초록 미요청. **서버 게이트 ON(2026-08-22 14:27 KST 첫 패스: 150건 검색·적중 34·실패 0, ET 주말 창, 라이브 확인)** |
 | 코드 위치 | `app/providers/pubmed.py`, `app/bio.py`(`refresh_bio_pubmed`·`pubmed_window_open`·임상 표 병합), `app/ingest.py::refresh_bio_pubmed`, 응답 `/api/bio/trials`의 `recent[].publications`·`pubmed` |
 | 게이트 | web·ingest: `BIO_SECTION_ENABLED` + `CLINICALTRIALS_ENABLED` + `PUBMED_ENABLED`; 선택 `NCBI_EMAIL`(정책상 연락처)·`NCBI_API_KEY`(10 req/s) — ingest 전용 |
 | 현재 사용 | 임상 표의 행(≤150건)마다 `esearch.fcgi?db=pubmed&term=NCT…[si]&retmax=3&sort=pub_date&tool=mulmit[&email]` + `esummary.fcgi`(PMID 50개 묶음) — 하루 1회, **ET 21~05시·주말 창에서만**(`PUBMED_OFFPEAK_ONLY`), 요청 간격 0.4초. 60일 내 이전 결과는 이월 |
@@ -1755,3 +1755,4 @@ notes: "No confidential contract language here"
 | 2026-08-22 | 바이오 섹션(ROADMAP #8) Phase 1 — ClinicalTrials.gov(§3.22, `DS-2026-014`, 약관 4조건 동봉)·openFDA(§3.23, `DS-2026-015`, CC0) lane 추가, 게이트 OFF(`BIO_SECTION_ENABLED`·`CLINICALTRIALS_ENABLED`·`OPENFDA_ENABLED`), 계획 `PLAN_BIO_SECTION.md` | Claude assisted |
 | 2026-08-22 | 바이오 lane 2종 활성화(§3.22·§3.23) — 운영자가 게이트 3종 ON, 첫 ingest 패스 저장·`/bio` 라이브 확인 | Claude assisted |
 | 2026-08-22 | 바이오 Phase 2 — Federal Register 자문위 공고(§3.24, `DS-2026-016`)·PubMed 서지(§3.25, `DS-2026-017`, 초록 비표시) lane 추가(게이트 OFF), 식약처 품목허가는 운영자 활용신청 대기로 기록(§3.26); fda.gov 달력은 봇 감지로 보류 | Claude assisted |
+| 2026-08-22 | 바이오 Phase 2 lane 2종 활성화(§3.24·§3.25) — 운영자가 게이트 ON, 첫 ingest 패스 저장·`/bio` 라이브 확인 | Claude assisted |
