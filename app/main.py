@@ -778,6 +778,37 @@ def crypto_gas_route(request: Request, response: Response) -> dict:
     return crypto_gas.build_crypto_gas()
 
 
+@app.get("/api/crypto/news")
+@limiter.limit(config.RATE_LIMIT)
+def crypto_news_route(
+    request: Request,
+    response: Response,
+    symbol: str | None = Query(None, max_length=24),
+    limit: int = Query(20, ge=1, le=50),
+) -> dict:
+    """코인 태그가 붙은 헤드라인 — 저장된 GDELT 블롭만 읽는다(제목·출처·링크까지)."""
+    require_crypto_section()
+    try:
+        payload = news_feed.crypto_articles(symbol, limit=limit)
+    except news_feed.NewsFeedDisabled as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "crypto_news_disabled", "status": "disabled",
+                    "message": "The news lane is disabled for this deployment."},
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    except DataUnavailable as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "crypto_news_collecting", "status": "collecting",
+                    "message": "Headlines appear after the next collection pass."},
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "GDELT"
+    return payload
+
+
 @app.get("/api/crypto/regime")
 @limiter.limit(config.RATE_LIMIT)
 def crypto_regime_route(request: Request, response: Response) -> dict:

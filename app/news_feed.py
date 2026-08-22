@@ -44,6 +44,9 @@ TITLE_KEYWORDS = (
     "sanction", "embargo", "tariff", "trade deal", "trade war", "opec",
     "crude oil", "oil price", "rate cut", "rate hike", "recession",
     "central bank", "ecb", "fomc", "gdp", "geopolitic", "iran",
+    # 크립토 축 — 이 키워드가 없으면 크립토 헤드라인은 필터를 통과하지 못한다
+    # (2026-08-22 실측: 저장된 뉴스 8건 중 크립토 0건).
+    "bitcoin", "ethereum", "crypto", "stablecoin", "altcoin", "digital asset",
 )
 
 # 닫힌 이름 사전 — 제목의 단어 경계 매칭으로만 태깅한다. 여기 없는 회사는
@@ -74,6 +77,28 @@ TICKER_NAMES: tuple[tuple[str, str, bool], ...] = (
     ("Disney", "DIS", False),
 )
 
+# 코인 이름 사전 — 같은 규칙(닫힌 사전 + 단어 경계)이지만 허브가 코인 페이지다.
+# 영어 단어와 겹치는 티커는 넣지 않는다: SOL(스페인어 "해"), LINK, SUI, HYPE,
+# ETH(취리히 공대), 그리고 DOGE(미 정부효율부)는 2025년 이후 뉴스에서 코인보다
+# 그쪽을 더 자주 뜻한다. 오태깅보다 무태깅이 낫다.
+COIN_NAMES: tuple[tuple[str, str, str], ...] = (
+    ("Bitcoin", "BTC", "비트코인"),
+    ("BTC", "BTC", "비트코인"),
+    ("Ethereum", "ETH", "이더리움"),
+    ("Solana", "SOL", "솔라나"),
+    ("XRP", "XRP", "리플 (XRP)"),
+    ("Dogecoin", "DOGE", "도지코인"),
+    ("Hyperliquid", "HYPE", "하이퍼리퀴드 (HYPE)"),
+    ("Chainlink", "LINK", "체인링크"),
+    ("AVAX", "AVAX", "아발란체"),
+    ("BNB", "BNB", "BNB"),
+)
+
+_COIN_PATTERNS = tuple(
+    (re.compile(rf"\b{re.escape(name)}\b", re.IGNORECASE), symbol, label)
+    for name, symbol, label in COIN_NAMES
+)
+
 _PATTERNS = tuple(
     (re.compile(rf"\b{re.escape(name)}\b", re.IGNORECASE), symbol, korean)
     for name, symbol, korean in TICKER_NAMES
@@ -91,6 +116,18 @@ def _require_lane() -> None:
         raise NewsFeedDisabled("disabled")
 
 
+def _coin_tags_for(title: str) -> list[dict[str, Any]]:
+    """Coin tags carry the coin hub; no price rides along (the page has the live one)."""
+    tags: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for pattern, symbol, label in _COIN_PATTERNS:
+        if symbol in seen or not pattern.search(title):
+            continue
+        seen.add(symbol)
+        tags.append({"symbol": symbol, "kind": "crypto", "name": label, "hub": f"/crypto/{symbol}"})
+    return tags
+
+
 def _tags_for(title: str) -> list[dict[str, Any]]:
     tags: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -98,7 +135,7 @@ def _tags_for(title: str) -> list[dict[str, Any]]:
         if symbol in seen or not pattern.search(title):
             continue
         seen.add(symbol)
-        tag: dict[str, Any] = {"symbol": symbol, "hub": f"/stock/{symbol}"}
+        tag: dict[str, Any] = {"symbol": symbol, "kind": "equity", "hub": f"/stock/{symbol}"}
         if korean:
             listing = store.get_kr_listing(symbol)
             if listing is not None:
@@ -108,7 +145,7 @@ def _tags_for(title: str) -> list[dict[str, Any]]:
                     tag["change_basis"] = "t1_close"  # 전일 확정 종가 기준
                 tag["name"] = listing.get("itms_nm")
         tags.append(tag)
-    return tags
+    return [*tags, *_coin_tags_for(title)]
 
 
 def refresh(provider: GdeltProvider | None = None) -> dict:
@@ -176,6 +213,32 @@ def refresh(provider: GdeltProvider | None = None) -> dict:
     }
     store.save_report(CACHE_KEY, payload)
     return {"fetched": fetched, "kept": len(merged)}
+
+
+def crypto_articles(symbol: str | None = None, *, limit: int = 20) -> dict[str, Any]:
+    """Stored headlines that carry a coin tag, optionally for one coin."""
+    payload = get_news()
+    wanted = symbol.strip().upper() if symbol else None
+    articles = []
+    for article in payload.get("articles") or []:
+        coins = [tag for tag in article.get("tags") or [] if tag.get("kind") == "crypto"]
+        if not coins or (wanted and all(tag["symbol"] != wanted for tag in coins)):
+            continue
+        articles.append({**article, "coins": coins})
+        if len(articles) >= max(1, min(50, limit)):
+            break
+    return {
+        "generated_at": payload.get("generated_at"),
+        "symbol": wanted,
+        "count": len(articles),
+        "articles": articles,
+        "attribution": payload.get("attribution"),
+        "source": payload.get("source"),
+        "rights": payload.get("rights"),
+        "basis_ko": payload.get("basis_ko"),
+        "basis_en": payload.get("basis_en"),
+        "coins_tagged": [{"symbol": s, "name": label} for _p, s, label in _COIN_PATTERNS],
+    }
 
 
 def get_news() -> dict:
