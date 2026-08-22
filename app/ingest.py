@@ -968,7 +968,7 @@ def refresh_crypto_stablecoins(*, force: bool = False) -> dict:
 
 
 def refresh_crypto_liquidations(*, force: bool = False) -> dict:
-    """Coinalyze 거래소 집계 청산·미결제약정. 심볼 1개 = 호출 1회라 주기는 5분, 회당 약 19회."""
+    """Coinalyze 거래소 집계 청산·미결제약정. 심볼 1개 = 호출 1회이고 회당 약 19회 — 실제 주기는 수집 틱(`INGEST_INTERVAL`, 기본 15분)."""
     try:
         result = crypto_liquidations.refresh_crypto_liquidations(force=force)
         if result.get("status") == "ok":
