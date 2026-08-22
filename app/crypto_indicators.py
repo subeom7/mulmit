@@ -159,7 +159,17 @@ def build(candles: list[dict[str, Any]], *, interval: str | None = None) -> dict
         },
         "bollinger": {"period": BOLLINGER_WINDOW, "multiple": BOLLINGER_MULTIPLE, **bands},
         "rsi": {"period": RSI_PERIOD, "values": rsi_series(closes)},
-        "macd": {"fast": MACD_FAST, "slow": MACD_SLOW, "signal": MACD_SIGNAL, **convergence},
+        # Spread out by hand rather than `**convergence`: the signal line's key
+        # would otherwise overwrite the signal *period* beside it, and the page
+        # would print the whole array where it meant to print "9".
+        "macd": {
+            "fast": MACD_FAST,
+            "slow": MACD_SLOW,
+            "signal_period": MACD_SIGNAL,
+            "line": convergence["macd"],
+            "signal": convergence["signal"],
+            "histogram": convergence["histogram"],
+        },
         "basis_ko": (
             f"모두 이 차트의 종가에서 계산합니다. 이동평균 {MA_FAST}·{MA_SLOW}{unit}, "
             f"볼린저 {BOLLINGER_WINDOW}{unit}±{BOLLINGER_MULTIPLE:g}σ(모집단 표준편차), "

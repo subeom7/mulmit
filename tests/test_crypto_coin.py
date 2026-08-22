@@ -118,6 +118,7 @@ def test_build_coin_reuses_the_card_builder_and_summarises_the_window(crypto_on)
     assert len(studies["ma"]["fast"]["values"]) == len(chart["candles"]) == len(studies["rsi"]["values"])
     assert studies["ma"]["fast"]["values"] == [None, None, None]   # three bars is not a 20-bar average
     assert "1h 봉" in studies["basis_ko"]
+    assert studies["macd"]["signal_period"] == 9   # a scalar, not the signal series beside it
     # The chart window plus the daily window the regime signal always uses.
     assert fake.candle_calls == [("BTC", "1h", 14 * 24 * 3600), ("BTC", "1d", 400 * 24 * 3600)]
     # This fixture only has three candles, so the regime read refuses rather than guessing.

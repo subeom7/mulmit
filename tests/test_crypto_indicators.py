@@ -87,12 +87,18 @@ def test_build_returns_every_series_aligned_to_the_candles_with_its_definitions(
     for series in (
         block["ma"]["fast"]["values"], block["ma"]["slow"]["values"],
         block["bollinger"]["upper"], block["bollinger"]["lower"], block["bollinger"]["middle"],
-        block["rsi"]["values"], block["macd"]["macd"], block["macd"]["signal"], block["macd"]["histogram"],
+        block["rsi"]["values"], block["macd"]["line"], block["macd"]["signal"], block["macd"]["histogram"],
     ):
         assert len(series) == len(candles)
     assert block["ma"]["fast"]["period"] == 20 and block["ma"]["slow"]["period"] == 50
     assert "4h 봉" in block["basis_ko"] and "간격을 바꾸면 값도 바뀝니다" in block["basis_ko"]
     assert "Wilder RSI 14" in block["basis_en"]
+
+    # The signal *period* has to survive next to the signal *line*: spreading the
+    # series over the parameters printed the whole array as the pane's label.
+    assert block["macd"]["signal_period"] == ind.MACD_SIGNAL
+    assert isinstance(block["macd"]["signal"], list) and len(block["macd"]["signal"]) == len(candles)
+    assert all(not isinstance(value, list) for key, value in block["macd"].items() if key.endswith(("fast", "slow", "period")))
 
     assert ind.build([]) is None
     assert ind.build([{"t": 1, "o": 1.0, "h": 1.0, "l": 1.0}]) is None   # no close, no studies
@@ -103,4 +109,4 @@ def test_short_history_yields_empty_series_rather_than_an_error():
     assert block is not None
     assert block["ma"]["slow"]["values"] == [None] * 5
     assert block["rsi"]["values"] == [None] * 5
-    assert block["macd"]["histogram"] == [None] * 5
+    assert block["macd"]["histogram"] == [None] * 5 and block["macd"]["line"] == [None] * 5
