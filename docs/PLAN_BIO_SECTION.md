@@ -109,3 +109,4 @@ Phase 2: `PUBMED_ENABLED=true`(+ 권장 `NCBI_EMAIL=<연락 이메일>`, 선택 
 | 2026-08-22 | 최초 작성 — 권리 원문 4종 확인, 인벤토리·Phase 확정, API 실측, Phase 1 구현(`/bio`, `/api/bio/{trials,fda}`, 게이트 OFF) |
 | 2026-08-22 | Phase 1 라이브 — 운영자 게이트 ON(13:5x KST), 첫 패스 임상 34/34·FDA 140건, `/bio` 확인 |
 | 2026-08-22 | Phase 2 — PubMed 서지·FDA 자문위 공고(Federal Register) 구현(§5.1·§7), 식약처는 활용신청 대기, fda.gov 달력은 봇 감지로 보류 |
+| 2026-08-22 | Phase 2 라이브 — 운영자 게이트 ON(14:2x KST), 첫 패스 PubMed 150/150·적중 34(ET 주말 창), 자문위 공고 11건 |
