@@ -1056,8 +1056,8 @@ Core(일 3M 크레딧, 500/초). 우리 호출량 ≈ 체인당 2,880/일(30초 
 
 **2026-08-22 활성화 — 운영자 Alchemy 무료 티어 계정(`DS-2026-013`).** 서버 `.env`에 `CHAIN_GAS_ENABLED=true`,
 `CHAIN_RPC_PROVIDER_NAME=Alchemy`, `CHAIN_RPC_{ETHEREUM,BASE,ARBITRUM}_URL` 추가(web 전용). 라이브 확인 00:5x KST:
-이더리움 유효 0.21 gwei(기본 0.11·p50 0.09, 전송 ≈ $0.01). **Base·Arbitrum은 Alchemy 앱의 네트워크가 아직 비활성**
-(RPC 403 "BASE_MAINNET is not enabled for this app … /apps/<id>/networks") — 대시보드에서 두 네트워크를 켜면 같은
+이더리움 유효 0.21 gwei(기본 0.11·p50 0.09, 전송 ≈ $0.01). **Base·Arbitrum은 Alchemy 앱의 네트워크가 당시 비활성**
+(RPC 403 "BASE_MAINNET is not enabled for this app … /apps/<id>/networks") — **2026-08-22 15:1x KST 운영자 계정 대시보드에서 Base Mainnet·Arbitrum Mainnet 활성화 → 같은 URL로 즉시 복구(라이브: Base 0.012 gwei·전송 ≈ $0.0006, Arbitrum 0.020 gwei·≈ $0.001, 이더리움 0.65 gwei·≈ $0.03).** 원문 메모: 대시보드에서 두 네트워크를 켜면 같은
 URL로 자동 복구(서버 30초 쿨다운 후 재시도). 응답에 키 미노출(호스트명만) 재확인.
 
 ```yaml
@@ -1779,3 +1779,4 @@ notes: "No confidential contract language here"
 | 2026-08-22 | 바이오 Phase 2 — Federal Register 자문위 공고(§3.24, `DS-2026-016`)·PubMed 서지(§3.25, `DS-2026-017`, 초록 비표시) lane 추가(게이트 OFF), 식약처 품목허가는 운영자 활용신청 대기로 기록(§3.26); fda.gov 달력은 봇 감지로 보류 | Claude assisted |
 | 2026-08-22 | 바이오 Phase 2 lane 2종 활성화(§3.24·§3.25) — 운영자가 게이트 ON, 첫 ingest 패스 저장·`/bio` 라이브 확인 | Claude assisted |
 | 2026-08-22 | 식약처 의약품 품목허가 lane 구현(§3.26, `DS-2026-018`) — 운영자 활용신청 승인 후 서버에서 실측(상세 엔드포인트 `item_permit_date` 필터), 게이트 OFF(`MFDS_ENABLED`), 키는 FSC 키 재사용 | Claude assisted |
+| 2026-08-22 | 가스 스트립 Base·Arbitrum 복구(§3.21) — 운영자 Alchemy 앱에서 두 Mainnet 네트워크 활성화, 3개 체인 라이브 확인 | Claude assisted |
