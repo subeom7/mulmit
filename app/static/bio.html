@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-4">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-5">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -89,6 +89,22 @@
       </div>
     </section>
 
+    <section class="dashboard-section" id="bio-adcomm" aria-labelledby="bioa-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">FDA · ADVISORY COMMITTEES · FEDERAL REGISTER</p><h2 id="bioa-title" data-i18n="bio.adcomm.title">FDA 자문위원회 회의 공고</h2></div>
+        <span class="source-pill">FEDERAL REGISTER</span>
+      </div>
+      <p class="section-copy" data-i18n="bio.adcomm.copy">Federal Register에 게재된 FDA 자문위원회 회의 공고입니다(예정 회의와 최근 30일 종료 회의). 회의일은 공고의 DATES 단락에서 추출한 값이며 최종 일정은 링크된 공고를 따릅니다. 자문위 결론이나 승인 여부가 아닙니다.</p>
+      <div id="bioa-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="bioa-strip" class="crypto-strip" hidden></div>
+      <div class="panel" id="bioa-panel" hidden>
+        <div class="table-scroll">
+          <table id="bioa-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.adcomm.caption">자문위원회 회의 공고 (예정 · 최근 종료)</caption><thead></thead><tbody></tbody></table>
+        </div>
+        <footer class="panel-footer" id="bioa-footer" hidden></footer>
+      </div>
+    </section>
+
     <section class="dashboard-section" id="bio-fda" aria-labelledby="biof-title">
       <div class="section-heading">
         <div><p class="eyebrow">FDA · ORIGINAL APPROVALS · OPENFDA</p><h2 id="biof-title" data-i18n="bio.fda.title">FDA 최근 승인</h2></div>
@@ -140,6 +156,6 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "bio";</script>
-  <script src="/static/monitor.js?v=20260822-4" defer></script>
+  <script src="/static/monitor.js?v=20260822-5" defer></script>
 </body>
 </html>

@@ -552,6 +552,11 @@ a.feed-text:hover { color: var(--ink); }
 .bio-filter { display: flex; gap: 6px; margin: 0 0 10px; }
 .bio-filter button { font: inherit; font-size: 11px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); cursor: pointer; }
 .bio-filter button.active { color: inherit; border-color: var(--accent); }
+.bio-table .bio-pub { display: block; color: var(--muted); font-size: 10.5px; margin-top: 2px; }
+#bioa-table th:nth-child(1), #bioa-table td:nth-child(1) { width: 12%; }
+#bioa-table th:nth-child(2), #bioa-table td:nth-child(2) { width: 24%; }
+#bioa-table th:nth-child(3), #bioa-table td:nth-child(3) { width: 40%; }
+#bioa-table th:nth-child(4), #bioa-table td:nth-child(4) { width: 12%; }
 .cvol-card small.up { color: var(--green); }
 .cvol-card small.down { color: var(--red); }
 .cboard-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }

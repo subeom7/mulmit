@@ -1149,6 +1149,83 @@ gate: BIO_SECTION_ENABLED + OPENFDA_ENABLED
 recheck_on: 2026-11-22
 ```
 
+### 3.24 Federal Register API — FDA 자문위원회 회의 공고 (바이오 섹션 Phase 2)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `federal_register` |
+| 현재 상태 | **`approved` (2026-08-22, `DS-2026-016`)** — 미 정부 간행물(연방관보, OFR/NARA·GPO)로 저작권 없음(17 U.S.C. §105). 서버 게이트 기본 OFF |
+| 코드 위치 | `app/providers/federal_register.py`, `app/bio.py`(`refresh_bio_adcomm`·`build_bio_adcomm`), `app/ingest.py::refresh_bio_adcomm`, 라우트 `/api/bio/adcomm` |
+| 게이트 | web·ingest: `BIO_SECTION_ENABLED` + `FEDERAL_REGISTER_ENABLED`(키 없음) |
+| 현재 사용 | `GET /api/v1/documents.json?conditions[agencies][]=food-and-drug-administration&conditions[type][]=NOTICE&conditions[term]="advisory committee"&conditions[publication_date][gte]=<240일 전>&per_page=100&fields[]=…` 6시간 주기 1~3페이지. 제목에 위원회명+회의 공고 문구가 있는 건만, 회의일은 DATES 단락에서 추출. 표시: 예정 회의·최근 30일 종료·날짜 미기재 공고(제목·위원회·공고일·링크) |
+| 기술 비용 | 0원 |
+| 공식 근거 | [Developer Resources](https://www.federalregister.gov/reader-aids/developer-resources/rest-api) (접근 2026-08-22): "No API keys are needed; all you need is an HTTP client or browser." / "Usage Restrictions: Republishers of Federal Register material are not permitted to use official NARA or OFR logos or seals." 연방관보 문서는 미 정부 저작물 |
+| 표시 경계 | 출처 "Federal Register (Office of the Federal Register, NARA)" + 공고 링크, 로고·인장 미사용, 자문위 결론·승인·주가 해석 금지 |
+| 왜 FDA 사이트가 아닌가 | fda.gov 자문위 달력 페이지는 봇 감지(abuse-detection/excessive-requests apology 리다이렉트, robots.txt도 동일) → "봇차단 우회 금지" 원칙상 서버 수집 보류. RSS 없음. 연방관보가 같은 공고의 1차 출처 |
+
+```yaml
+decision_id: DS-2026-016
+provider_id: federal_register
+status: approved
+reviewed_at: 2026-08-22
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://www.federalregister.gov/reader-aids/developer-resources/rest-api (키 불요, 로고·인장 금지만; 미 정부 간행물)
+approved_scope:
+  public_display: true
+  server_json_relay: true
+conditions:
+  - attribution to the Federal Register with a link to each notice
+  - no NARA or OFR logos or seals
+  - schedule only; no committee-outcome or price interpretation
+gate: BIO_SECTION_ENABLED + FEDERAL_REGISTER_ENABLED
+recheck_on: 2026-11-22
+```
+
+### 3.25 NCBI E-utilities (PubMed) — 임상별 논문 서지 (바이오 섹션 Phase 2)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `pubmed` |
+| 현재 상태 | **`approved` (2026-08-22, `DS-2026-017`, 메타데이터 한정)** — 서지 정보(제목·저널·일자·출판 유형·PMID/DOI)만, 초록 미요청. 서버 게이트 기본 OFF |
+| 코드 위치 | `app/providers/pubmed.py`, `app/bio.py`(`refresh_bio_pubmed`·`pubmed_window_open`·임상 표 병합), `app/ingest.py::refresh_bio_pubmed`, 응답 `/api/bio/trials`의 `recent[].publications`·`pubmed` |
+| 게이트 | web·ingest: `BIO_SECTION_ENABLED` + `CLINICALTRIALS_ENABLED` + `PUBMED_ENABLED`; 선택 `NCBI_EMAIL`(정책상 연락처)·`NCBI_API_KEY`(10 req/s) — ingest 전용 |
+| 현재 사용 | 임상 표의 행(≤150건)마다 `esearch.fcgi?db=pubmed&term=NCT…[si]&retmax=3&sort=pub_date&tool=mulmit[&email]` + `esummary.fcgi`(PMID 50개 묶음) — 하루 1회, **ET 21~05시·주말 창에서만**(`PUBMED_OFFPEAK_ONLY`), 요청 간격 0.4초. 60일 내 이전 결과는 이월 |
+| 기술 비용 | 0원 |
+| 공식 근거 | [E-utilities Usage Guidelines](https://www.ncbi.nlm.nih.gov/books/NBK25497/): "post no more than three URL requests per second"(키 있으면 10) / "limit large jobs to either weekends or between 9:00 PM and 5:00 AM Eastern time during weekdays" / tool·email 등록 / "abstracts in PubMed may incorporate material that may be protected by U.S. and foreign copyright laws. All persons reproducing, redistributing, or making commercial use of this information are expected to adhere to the terms and conditions asserted by the copyright holder." |
+| 표시 경계 | 출처 "PubMed (NCBI / NLM)" 값 옆·푸터, **초록 비표시**, 논문 건수·상위 1건 제목/저널/일자 + PubMed 검색 링크(`?term=NCT…[si]`), 해석 문구 금지 |
+
+```yaml
+decision_id: DS-2026-017
+provider_id: pubmed
+status: approved
+reviewed_at: 2026-08-22
+reviewer: repository owner
+evidence_type: official_policy
+evidence_reference: https://www.ncbi.nlm.nih.gov/books/NBK25497/ (3 req/s, 야간 창, tool/email; 초록 저작권 주의)
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  abstracts: false
+conditions:
+  - citation metadata only (title, journal, dates, publication types, identifiers); no abstracts
+  - requests identified with tool (and email when configured), paced at or below 3 per second, run in NCBI's off-peak window
+  - attribution "PubMed (NCBI / NLM)" next to the values
+gate: BIO_SECTION_ENABLED + CLINICALTRIALS_ENABLED + PUBMED_ENABLED
+recheck_on: 2026-11-22
+```
+
+### 3.26 식품의약품안전처 의약품 제품 허가정보 (공공데이터포털) — **운영자 활용신청 대기** (2026-08-22)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `mfds_drug_permit` (예정) |
+| 현재 상태 | **`pending_operator_action`** — 데이터셋 확인 완료, 키 미발급(활용신청 필요) → 실측 후 구현 |
+| 데이터셋 | [식품의약품안전처_의약품 제품 허가정보](https://www.data.go.kr/data/15095677/openapi.do) (수정일 2025-10-31, 활용신청 5,350건). Base URL `apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07`, 엔드포인트 `GET /getDrugPrdtPrmsnInq07`(의약품 제품 허가 목록)·`/getDrugPrdtPrmsnDtlInq06`(상세)·`/getDrugPrdtMcpnDtlInq07`(주성분), JSON/XML |
+| 이용 조건(포털 표기, 접근 2026-08-22) | 비용 **무료**, 이용허락범위 **"이용허락범위 제한 없음"**(§3.9 FSC와 동일 등급), 심의 "개발단계: 자동승인 / 운영단계: 심의승인", 트래픽 개발계정 10,000/일 |
+| 필요 운영자 액션 | data.go.kr 로그인(FSC 키와 같은 계정) → 위 데이터셋 **활용신청**(개발계정 자동승인) → 기존 `FSC_API_KEY`와 같은 서비스키로 호출 가능 여부 확인 → 알려주면 응답 필드 실측 후 lane 구현(§3.26 갱신·DS 블록) |
+| 계획된 표시 | 최근 품목허가(허가일자·품목명·업체명·전문/일반·신약 구분·주성분) — FDA 승인 섹션의 한국 대응(KR/US 동형화) |
+
 ## 4. 원 발행기관 후보
 
 아래 표의 `pending_review`는 무료라고 단정하는 표시가 아니다. 다음 세션에서 정확한 endpoint, 이용조건, attribution, 저장·캐시·제3자 표시 범위를 다시 확인한 뒤 series 단위로 승인한다.
@@ -1677,3 +1754,4 @@ notes: "No confidential contract language here"
 | 2026-08-22 | ROADMAP #9·#11 조사 종결 — 넥스트레이드 시장정보 `license_required`(§6.3: 정보포털 계약형, 웹사이트용 CASE 3 고정비, 무상 2027-02까지·유상 1년 약정, 금액 비공개 → 운영자 문의 선택), roic.ai 현시점 기각(§6.4: ToS 재배포 금지, 상업 API는 Enterprise 견적만) | Claude assisted |
 | 2026-08-22 | 바이오 섹션(ROADMAP #8) Phase 1 — ClinicalTrials.gov(§3.22, `DS-2026-014`, 약관 4조건 동봉)·openFDA(§3.23, `DS-2026-015`, CC0) lane 추가, 게이트 OFF(`BIO_SECTION_ENABLED`·`CLINICALTRIALS_ENABLED`·`OPENFDA_ENABLED`), 계획 `PLAN_BIO_SECTION.md` | Claude assisted |
 | 2026-08-22 | 바이오 lane 2종 활성화(§3.22·§3.23) — 운영자가 게이트 3종 ON, 첫 ingest 패스 저장·`/bio` 라이브 확인 | Claude assisted |
+| 2026-08-22 | 바이오 Phase 2 — Federal Register 자문위 공고(§3.24, `DS-2026-016`)·PubMed 서지(§3.25, `DS-2026-017`, 초록 비표시) lane 추가(게이트 OFF), 식약처 품목허가는 운영자 활용신청 대기로 기록(§3.26); fda.gov 달력은 봇 감지로 보류 | Claude assisted |
