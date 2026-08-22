@@ -16,14 +16,18 @@ def _article(title: str, url: str, *, domain: str = "example.com", seendate: str
             "also_on": 0, "tags": news_feed._tags_for(title)}
 
 
-ARTICLES = [
-    _article("Bitcoin nears $80K as spot ETFs add $1.6B", "https://a.example/1"),
-    _article("Chainlink and AVAX lead altcoin rally; XRP up 21%", "https://a.example/2"),
-    _article("DOGE cuts 2,000 federal jobs", "https://a.example/3"),
-    _article("ETH Zurich researchers publish a battery study", "https://a.example/4"),
-    _article("Wall Street week ahead: inflation on tap", "https://a.example/5"),
-    _article("Samsung Electronics and Bitcoin miners sign a chip deal", "https://a.example/6"),
-]
+# Built lazily: tagging reads the KR listing table, which only exists once the
+# ``db`` fixture has created the schema. Building this at import time would run
+# before any fixture and break collection on a fresh database.
+def _articles() -> list[dict[str, Any]]:
+    return [
+        _article("Bitcoin nears $80K as spot ETFs add $1.6B", "https://a.example/1"),
+        _article("Chainlink and AVAX lead altcoin rally; XRP up 21%", "https://a.example/2"),
+        _article("DOGE cuts 2,000 federal jobs", "https://a.example/3"),
+        _article("ETH Zurich researchers publish a battery study", "https://a.example/4"),
+        _article("Wall Street week ahead: inflation on tap", "https://a.example/5"),
+        _article("Samsung Electronics and Bitcoin miners sign a chip deal", "https://a.example/6"),
+    ]
 
 
 @pytest.fixture
@@ -32,7 +36,7 @@ def news_on(db, monkeypatch):
     monkeypatch.setattr(config, "CRYPTO_SECTION_ENABLED", True)
     store.save_report(news_feed.CACHE_KEY, {
         "generated_at": "2026-08-22T06:00:00Z",
-        "articles": ARTICLES,
+        "articles": _articles(),
         "attribution": {"required": True, "text": "GDELT Project", "text_ko": "GDELT 프로젝트", "url": "https://www.gdeltproject.org/"},
         "source": {"provider": "gdelt"},
         "rights": {"status": "approved"},
@@ -41,7 +45,7 @@ def news_on(db, monkeypatch):
     })
 
 
-def test_coin_tags_match_names_but_never_ambiguous_tickers():
+def test_coin_tags_match_names_but_never_ambiguous_tickers(db):
     tag_ids = lambda title: [(tag["symbol"], tag["kind"]) for tag in news_feed._tags_for(title)]  # noqa: E731
     assert tag_ids("Bitcoin nears $80K as spot ETFs add $1.6B") == [("BTC", "crypto")]
     assert tag_ids("Ethereum staking yields fall as Solana volume climbs") == [("ETH", "crypto"), ("SOL", "crypto")]
@@ -84,7 +88,7 @@ def test_news_route_gates_and_serves(db, monkeypatch):
     assert client.get("/api/crypto/news").json()["detail"]["code"] == "crypto_news_disabled"
     monkeypatch.setattr(config, "GDELT_ENABLED", True)
     assert client.get("/api/crypto/news").json()["detail"]["code"] == "crypto_news_collecting"
-    store.save_report(news_feed.CACHE_KEY, {"generated_at": "2026-08-22T06:00:00Z", "articles": ARTICLES})
+    store.save_report(news_feed.CACHE_KEY, {"generated_at": "2026-08-22T06:00:00Z", "articles": _articles()})
     response = client.get("/api/crypto/news?symbol=BTC&limit=5")
     assert response.status_code == 200 and response.headers["x-data-source"] == "GDELT"
     body = response.json()
