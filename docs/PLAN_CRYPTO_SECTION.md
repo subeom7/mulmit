@@ -226,6 +226,21 @@ fail-closed, 수치 발명 금지)으로 하나씩 판정한 문서다. 소스�
   급등·급락·펀딩 극단값은 24h 거래대금 $1M 이상 시장만(응답 `filters`에 명시), 상위 표는 전체. 같은 HIP-3 게이트·고지.
   새 권리 없음(등록부 변경 없음). `/crypto`에 "HL 전체 시장 보드" 섹션(파생 표 아래), 30초 폴링.
 
+### 7.5 Phase 3b — 스테이블코인 공급·유동성 (2026-08-22)
+
+- 같은 CoinMarketCap 키로 `GET /v2/cryptocurrency/quotes/latest?id=825,3408&convert=USD`(USDT·USDC, 1크레딧/회, 심볼 대신 id —
+  티커는 중복 가능)를 `CMC_STABLECOIN_MAX_AGE`(기본 3600초) 주기로 ingest가 저장(블롭 `crypto_stablecoins_v1`, 월 ≈ 720크레딧 추가).
+  실측(서버 ingest 컨테이너, 2026-08-22 11:2x KST): `data`는 id 키 객체, USDT 유통 183.23B·시총 $183.24B·도미넌스 6.93%, USDC 73.62B·
+  2.78%, `credit_count` 1.
+- `/api/crypto/structure`에 `stablecoins` 블록: 집계(CMC 스테이블코인 시총, **비중 = 스테이블 시총 ÷ 총시총(산술)**, 24h 변화, 24h
+  거래대금), 코인별(유통 공급·시총·가격·페그 편차 bp·스테이블 내 비중), **7d·30d 공급 변화는 Mulmit 자체 일별 누적**(블롭 안 `history`,
+  UTC 하루 1점, 같은 날은 최신값으로 교체, 최대 400점; 누적 전에는 `collecting` + 시작일 표시 — 과거치 발명 없음). 스테이블 블롭이
+  없어도 도미넌스는 그대로 서빙하고 `stablecoins.status=collecting`.
+- UI: 구조 섹션 안 "스테이블코인 공급 · 유동성" 카드(USDT·USDC 유통 공급 + 7d/페그, 스테이블 비중 + 24h, 스테이블 24h 거래대금)와
+  누적 시작일 각주. 출처 문구는 같은 섹션 푸터(값 바로 아래). 새 권리 없음 — 같은 키·같은 Commercial Terms·같은 1-product 표시
+  (등록부 §3.20 사용 범위만 갱신).
+- 한계: ingest가 48시간 이상 멈추면 `purge_reports`가 블롭(히스토리 포함)을 지워 누적이 다시 시작된다 — 시작일이 그대로 드러난다.
+
 ## 8. 실측 로그 (2026-08-21, 서울 KT 가정망)
 
 REST(curl, `Mozilla/5.0 mulmit-probe`):
@@ -277,6 +292,7 @@ WebSocket(python websockets, `origin=https://mulmit.com`):
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-08-22 | Phase 3b(§7.5) — 스테이블코인 공급·유동성(CMC quotes/latest USDT·USDC, 같은 키, 자체 일별 누적 7d/30d), 등록부 §3.20 사용 범위 갱신 |
 | 2026-08-22 | Phase 3a(§7.4) — HL 전체 시장 보드(급등·급락·OI·거래대금·펀딩 극단값·합계), 새 권리 없음 |
 | 2026-08-21 | Phase 2b(§7.3) — 가스 스트립 lane(운영자 RPC 계정 주입형), T 단위 포맷, Deribit·Coinalyze 문의 초안 생성 |
 | 2026-08-21 | Phase 2 구현(§7.2) — 도미넌스(CMC, 키 대기)·김치프리미엄(업비트, pending_rights) 레인 + 가스 스트립 보류 판정 |

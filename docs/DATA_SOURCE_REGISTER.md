@@ -990,15 +990,15 @@ recheck_at: 2026-09-16
 notes: "운영자 위험수용(2026-08-22). 명시적 금지 없음 + 공개 시세 API + 출처 표기 + 서버 relay 저호출 + 로고 미사용. 거절 회신 시 즉시 OFF. 문의 발송일과 회신은 §4.1에 기록."
 ```
 
-### 3.20 CoinMarketCap API — 글로벌 메트릭(BTC·ETH 도미넌스, 총시총)
+### 3.20 CoinMarketCap API — 글로벌 메트릭(BTC·ETH 도미넌스, 총시총)·스테이블코인 공급
 
 | 항목 | 기록 |
 |---|---|
 | 내부 ID | `coinmarketcap` |
 | 현재 상태 | **`approved` (2026-08-21, `DS-2026-011`)** — 운영자가 Basic 키 발급 시 Commercial User Terms 수락, 서버 게이트 ON(2026-08-21 23:29 KST 첫 blob 저장·라이브 확인: BTC 59.83%·ETH 11.13%·총시총 $2.59T) |
-| 코드 위치 | `app/providers/coinmarketcap.py`, `app/crypto_structure.py`, `app/ingest.py::refresh_crypto_structure`, 라우트 `/api/crypto/structure` |
+| 코드 위치 | `app/providers/coinmarketcap.py`, `app/crypto_structure.py`, `app/ingest.py::refresh_crypto_structure`·`refresh_crypto_stablecoins`, 라우트 `/api/crypto/structure` |
 | 게이트 | web: `CRYPTO_SECTION_ENABLED` + `CMC_ENABLED`; ingest 수집: + `CMC_API_KEY`(ingest 전용 env) |
-| 현재 사용(설계) | `GET /v1/global-metrics/quotes/latest?convert=USD` 1크레딧/회, `CMC_MAX_AGE`(기본 900초) 주기 → 월 ≈ 2,900크레딧(Basic 15,000의 1/5). blob 저장, 요청 경로는 blob만. 표시: BTC·ETH 도미넌스(24h 변화 p), 기타 = 100 − BTC − ETH, 총시총·24h, 스테이블코인 시총, 24h 거래대금 |
+| 현재 사용(설계) | `GET /v1/global-metrics/quotes/latest?convert=USD` 1크레딧/회, `CMC_MAX_AGE`(기본 900초) 주기 → 월 ≈ 2,900크레딧(Basic 15,000의 1/5). blob 저장, 요청 경로는 blob만. 표시: BTC·ETH 도미넌스(24h 변화 p), 기타 = 100 − BTC − ETH, 총시총·24h, 스테이블코인 시총, 24h 거래대금. **2026-08-22 추가**: `GET /v2/cryptocurrency/quotes/latest?id=825,3408&convert=USD`(USDT·USDC 유통 공급, 1크레딧/회, `CMC_STABLECOIN_MAX_AGE` 기본 3600초 → 월 ≈ 720 추가, 합계 ≈ 3,600/15,000) — 표시: 유통 공급·페그 편차·스테이블 비중(= 스테이블 시총 ÷ 총시총, 산술)·7d/30d 공급 변화(Mulmit 자체 일별 누적, 시작일 표시). 같은 키·같은 Commercial Terms·같은 1-product 표시 |
 | 기술 비용 | Basic 무료(예산 0원) |
 | 공식 근거 | [Pricing](https://coinmarketcap.com/api/pricing/) — "Commercial use rights — the free Basic tier included", 15,000 credits/월, 50 req/분(접근 2026-08-21); [Commercial Terms](https://pro.coinmarketcap.com/user-agreement-commercial/)(키 발급 시 원문 확인: 출처 문구, 1 product/100k users 한도, 독립 재배포 금지) |
 | 표시 경계 | 출처 문구(`CMC_ATTRIBUTION_TEXT`, 기본 "Data provided by CoinMarketCap" + 링크)를 값 바로 옆에, 도미넌스는 "CMC 유니버스 기준" 고지, 로고 미사용 |
@@ -1567,3 +1567,4 @@ notes: "No confidential contract language here"
 | 2026-08-21 | 가스 스트립 lane 추가(§3.21 후속, `/api/crypto/gas`, 운영자 RPC 계정 URL 주입형·게이트 OFF), 총시총 T 단위 포맷, Deribit·Coinalyze 문의 초안을 운영자 Gmail에 생성(발송 대기) | Claude assisted |
 | 2026-08-22 | 업비트 시세 lane 운영자 위험수용 개방(`DS-2026-012`, §3.19) — `UPBIT_ENABLED=true`; Deribit·Coinalyze 문의 발송(§4.1), 두나무 1:1 문의는 기록용 발송 예정 | Claude assisted |
 | 2026-08-22 | 가스 스트립 lane 활성화(`DS-2026-013`, §3.21 — 운영자 Alchemy 계정, 이더리움 라이브·Base/Arbitrum은 앱 네트워크 활성화 대기), 업비트 lane 라이브 확인(§3.19) | Claude assisted |
+| 2026-08-22 | CoinMarketCap lane 사용 범위 확장(§3.20) — `v2/cryptocurrency/quotes/latest` USDT·USDC 유통 공급(1크레딧/시간, 월 ≈ 720 추가, 같은 키·같은 Commercial Terms), 7d/30d 변화는 자체 일별 누적 | Claude assisted |

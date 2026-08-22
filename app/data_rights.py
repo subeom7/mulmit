@@ -384,6 +384,7 @@ def lane_report() -> dict[str, dict[str, str]]:
             "gate": "CRYPTO_SECTION_ENABLED + CMC_ENABLED",
             "fetch_key": "present" if config.CMC_API_KEY else "absent_in_this_process",
             "fetch_gate": "CMC_API_KEY (ingest only)",
+            "endpoints": ["global-metrics/quotes/latest", "cryptocurrency/quotes/latest (USDT, USDC supply)"],
         },
         UPBIT: {
             "status": "enabled" if upbit_serving_enabled() else "pending_rights",

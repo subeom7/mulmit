@@ -167,6 +167,8 @@ CMC_TIMEOUT = _float("CMC_TIMEOUT", 15.0)
 CMC_RETRIES = _int("CMC_RETRIES", 2)
 # 15 minutes ≈ 2,900 credits/month, a fifth of the Basic allowance.
 CMC_MAX_AGE = _int("CMC_MAX_AGE", 60 * 15)
+# USDT/USDC circulating supply (quotes/latest, one credit per call); hourly by default.
+CMC_STABLECOIN_MAX_AGE = _int("CMC_STABLECOIN_MAX_AGE", 60 * 60)
 CMC_ATTRIBUTION_TEXT = os.environ.get("CMC_ATTRIBUTION_TEXT", "Data provided by CoinMarketCap").strip()
 # Upbit (Dunamu) KRW quotations for the kimchi premium. No key; public quotation
 # API, per-IP limits. The Open API terms (2023-12-15) §5 assert copyright over the
