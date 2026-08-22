@@ -8,6 +8,12 @@ from app.macro_dashboard import MAX_PUBLIC_OBSERVATIONS, _downsample_observation
 from app.main import app
 from app.providers.fred import FRED_REQUIRED_NOTICE, FRED_SERIES_BY_ID
 
+# Freshness is judged against the wall clock (7-day grace for daily series), so
+# fixtures are dated relative to today rather than pinned to a calendar day.
+TODAY = dt.date.today()
+YESTERDAY = TODAY - dt.timedelta(days=1)
+WEEK_AGO = TODAY - dt.timedelta(days=7)
+
 
 def _seed(db, *, notes: str = ""):
     spec = FRED_SERIES_BY_ID["DGS10"]
@@ -23,13 +29,13 @@ def _seed(db, *, notes: str = ""):
             "seasonal_adjustment": "Not Seasonally Adjusted",
             "seasonal_adjustment_short": "NSA",
             "observation_start": "1990-01-02",
-            "observation_end": "2026-08-14",
+            "observation_end": TODAY.isoformat(),
             "last_updated": "2026-08-15 08:38:01-05",
             "notes": notes,
         },
         [
-            (dt.date(2026, 8, 13), 14.0),
-            (dt.date(2026, 8, 14), 14.25),
+            (YESTERDAY, 14.0),
+            (TODAY, 14.25),
         ],
         publisher=spec.publisher,
         publisher_url=spec.publisher_url,
@@ -52,14 +58,14 @@ def test_macro_overview_has_cards_series_freshness_and_attribution(db, fred_serv
     treasury = next(item for item in body["series"] if item["id"] == "DGS10")
     assert treasury["source"]["publisher"] == "Board of Governors of the Federal Reserve System"
     assert treasury["units"]["long"] == "Percent"
-    assert treasury["latest"] == {"date": "2026-08-14", "value": 14.25}
+    assert treasury["latest"] == {"date": TODAY.isoformat(), "value": 14.25}
     assert treasury["change"]["value"] == 0.25
     assert treasury["freshness"]["status"] == "fresh"
     assert treasury["rights"]["copyrighted"] is False
     assert treasury["rights"]["public_display"] is True
     assert treasury["observations"] == [
-        {"date": "2026-08-13", "value": 14.0},
-        {"date": "2026-08-14", "value": 14.25},
+        {"date": YESTERDAY.isoformat(), "value": 14.0},
+        {"date": TODAY.isoformat(), "value": 14.25},
     ]
     assert set(body["restricted"]) == {"VIXCLS", "BAMLH0A0HYM2", "PCOPPUSDM"}
     for series_id in body["restricted"]:
@@ -135,7 +141,7 @@ def test_stlfsi_ships_with_the_prescribed_citation(db, fred_serving):
         provider_id="fred",
         provider_series_id="STLFSI4",
         metadata_fields={"title": "St. Louis Fed Financial Stress Index"},
-        observations=[(dt.date(2026, 8, 7), -0.5), (dt.date(2026, 8, 14), -0.4)],
+        observations=[(WEEK_AGO, -0.5), (TODAY, -0.4)],
         publisher=spec.publisher,
         publisher_url=spec.publisher_url,
         series_url=spec.series_url,
