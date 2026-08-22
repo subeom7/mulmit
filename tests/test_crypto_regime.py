@@ -85,7 +85,8 @@ def regime_on(db, hip3_public_display, monkeypatch):
 def test_refresh_stores_one_price_part_per_curated_coin(regime_on):
     fake = FakeProvider()
     result = crypto_regime.refresh_coin_price_parts(provider=fake, now=NOW)
-    assert result == {"updated": len(crypto_market.COIN_SPECS), "failed": 0}
+    # Four of the curated coins are in this fixture snapshot, plus one venue-level sample.
+    assert result == {"updated": len(crypto_market.COIN_SPECS), "failed": 0, "sampled": 5}
     assert fake.candle_calls == [spec.symbol for spec in crypto_market.COIN_SPECS]
     parts = crypto_regime.coin_price_parts()
     assert set(parts) == {spec.symbol for spec in crypto_market.COIN_SPECS}
@@ -173,3 +174,66 @@ def test_regime_route_follows_the_gates(db, monkeypatch):
     assert response.status_code == 200 and response.headers["x-data-source"] == "Hyperliquid"
     assert response.json()["sample"]["liquid"] == 4
     assert 'id="crypto-regime"' in client.get("/crypto").text
+
+
+def test_position_flow_names_the_standard_derivatives_reads():
+    assert crypto_regime.position_flow(5.0, 8.0) == "new_longs"
+    assert crypto_regime.position_flow(5.0, -8.0) == "short_covering"
+    assert crypto_regime.position_flow(-5.0, 8.0) == "new_shorts"
+    assert crypto_regime.position_flow(-5.0, -8.0) == "long_unwind"
+    assert crypto_regime.position_flow(0.1, 9.0) == "flat"      # a price move this small is noise
+    assert crypto_regime.position_flow(9.0, 0.1) == "flat"
+    assert crypto_regime.position_flow(None, 5.0) is None
+
+
+def test_samples_accumulate_and_yield_24h_changes(regime_on, monkeypatch):
+    first = dt.datetime(2026, 8, 21, 6, 0, tzinfo=dt.UTC)
+    crypto_regime.refresh_coin_price_parts(provider=FakeProvider(), now=first)
+
+    # A day later the same coins are dearer with more open interest: new longs.
+    hotter = _snapshot([
+        _market("BTC", apr=BASELINE + 1.0, change=3.0, price=88000.0),
+        _market("ETH", apr=BASELINE, change=2.0, price=2500.0),
+        _market("DOGE", apr=BASELINE + 200.0, change=40.0, price=0.09),
+        _market("SOL", apr=BASELINE - 30.0, change=-2.0, price=95.0),
+    ])
+    for market in hotter["markets"]:
+        market["context"]["openInterest"] = "1200"  # 1000 → 1200
+    second = first + dt.timedelta(days=1)
+    monkeypatch.setattr(config, "CRYPTO_HEAT_MAX_AGE", 0)
+    crypto_regime.refresh_coin_price_parts(provider=FakeProvider(snapshot=hotter), now=second, force=True)
+
+    history = crypto_regime.history_for("BTC", now=second)
+    assert len(history["recent"]) == 2 and len(history["daily"]) == 2
+    assert [row["date"] for row in history["daily"]] == ["2026-08-21", "2026-08-22"]
+    changes = history["changes"]
+    assert changes["price_24h_percent"] == pytest.approx((88000 / 77000 - 1) * 100, abs=1e-3)
+    assert changes["oi_usd_24h_percent"] == pytest.approx((88000 * 1200) / (77000 * 1000) * 100 - 100, abs=1e-3)
+    assert changes["flow"] == "new_longs" and changes["flow_label"]["ko"] == "신규 롱 유입"
+    assert "heat_24h_points" in changes
+
+    market_history = crypto_regime.history_for(crypto_regime.MARKET_KEY, now=second)
+    assert market_history["recent"][-1]["liquid"] == 4 and "crowded_share" in market_history["recent"][-1]
+    assert crypto_regime.history_for("NOTACOIN") is None
+
+
+def test_history_is_capped_and_one_point_per_day(regime_on, monkeypatch):
+    monkeypatch.setattr(config, "CRYPTO_HEAT_MAX_AGE", 0)
+    monkeypatch.setattr(crypto_regime, "RECENT_SAMPLES", 3)
+    base = dt.datetime(2026, 8, 22, 0, 0, tzinfo=dt.UTC)
+    for index in range(5):  # five samples inside the same UTC day
+        crypto_regime.refresh_coin_price_parts(provider=FakeProvider(), now=base + dt.timedelta(hours=index), force=True)
+    history = crypto_regime.history_for("BTC", now=base + dt.timedelta(hours=4))
+    assert len(history["recent"]) == 3          # capped
+    assert len(history["daily"]) == 1           # one point per UTC day, replaced in place
+    assert history["daily"][0]["date"] == "2026-08-22"
+
+
+def test_payloads_carry_the_series(regime_on, monkeypatch):
+    monkeypatch.setattr(crypto_regime, "_sentiment_value", lambda: (60.0, {"status": "ok"}))
+    crypto_regime.refresh_coin_price_parts(provider=FakeProvider(), now=NOW)
+    regime = crypto_regime.build_crypto_regime(provider=FakeProvider(), now=NOW)
+    assert regime["history"]["recent"][-1]["liquid"] == 4
+    overview = crypto_regime.attach_coin_signals(crypto_market.build_crypto_overview(provider=FakeProvider()))
+    btc = next(card for card in overview["coins"] if card["symbol"] == "BTC")
+    assert "heat_24h_points" in btc["signal"]

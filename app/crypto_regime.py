@@ -105,7 +105,62 @@ def refresh_coin_price_parts(*, force: bool = False, provider: Any | None = None
         raise DataUnavailable("coin heat refresh produced no usable series")
     store.save_report(PRICE_PARTS_CACHE_KEY, {"generated_at": _iso_utc(), "fetched_at": _iso_utc(), "parts": parts})
     clear_cache()
-    return {"updated": len(parts), "failed": failed}
+    sampled = _record_samples(client, parts, moment)
+    return {"updated": len(parts), "failed": failed, "sampled": sampled}
+
+
+def _record_samples(client: Any, parts: dict[str, Any], moment: dt.datetime) -> int:
+    """One sample per coin and one for the venue, from a single extra snapshot read."""
+    try:
+        snapshot = client.fetch_dex(MAIN_DEX)
+    except (RateLimited, DataUnavailable) as exc:
+        log.warning("regime sampling skipped — venue unavailable: %s", exc)
+        return 0
+    rows = {}
+    for market in snapshot.get("markets") or []:
+        if isinstance(market, dict):
+            row = crypto_board._row(market)
+            if row:
+                rows[row["symbol"]] = row
+    stamp = moment.astimezone(dt.UTC).isoformat().replace("+00:00", "Z")
+    blob = store.load_report(HISTORY_CACHE_KEY, HISTORY_READ_TTL_SECONDS) or {}
+    series = blob.get("series") if isinstance(blob.get("series"), dict) else {}
+    written = 0
+    for symbol, part in parts.items():
+        row = rows.get(symbol)
+        if not row:
+            continue
+        signal = crypto_signal.compose(part, crypto_signal.funding_component(row.get("funding_apr_percent")), as_of=stamp)
+        if signal.get("status") != "ok":
+            continue
+        series[symbol] = _append_sample(series.get(symbol) or {}, {
+            "t": stamp,
+            "heat": signal["heat"]["score"],
+            "direction": signal["direction"]["score"],
+            "price": row.get("price"),
+            "oi_usd": row.get("open_interest_usd"),
+            "funding_apr": row.get("funding_apr_percent"),
+            "volume_24h_usd": row.get("volume_24h_usd"),
+        }, moment)
+        written += 1
+
+    liquid = [row for row in rows.values() if (row.get("volume_24h_usd") or 0) >= crypto_board.MIN_VOLUME_USD]
+    with_funding = [row for row in liquid if row.get("funding_apr_percent") is not None]
+    crowded = [row for row in with_funding
+               if abs(row["funding_apr_percent"] - crypto_signal.FUNDING_BASELINE_APR) >= CROWDED_EXCESS_APR]
+    with_change = [row for row in liquid if row.get("change_24h_percent") is not None]
+    advancing = [row for row in with_change if row["change_24h_percent"] > 0]
+    if with_funding and with_change:
+        series[MARKET_KEY] = _append_sample(series.get(MARKET_KEY) or {}, {
+            "t": stamp,
+            "crowded_share": round(len(crowded) / len(with_funding) * 100.0, 2),
+            "advance_share": round(len(advancing) / len(with_change) * 100.0, 2),
+            "oi_usd": round(sum(row["open_interest_usd"] for row in rows.values() if row.get("open_interest_usd")), 2),
+            "liquid": len(liquid),
+        }, moment)
+        written += 1
+    store.save_report(HISTORY_CACHE_KEY, {"generated_at": _iso_utc(), "series": series})
+    return written
 
 
 def coin_price_parts() -> dict[str, Any]:
@@ -133,8 +188,10 @@ def attach_coin_signals(overview: dict[str, Any]) -> dict[str, Any]:
         signal = crypto_signal.compose(part, crypto_signal.funding_component(apr), as_of=part.get("as_of"))
         if signal["status"] != "ok":
             continue
+        history = history_for(card.get("symbol"))
         card["signal"] = {
             "heat": signal["heat"]["score"],
+            "heat_24h_points": ((history or {}).get("changes") or {}).get("heat_24h_points"),
             "band": signal["heat"]["band"],
             "label": signal["heat"]["label"],
             "direction": signal["direction"]["score"],
@@ -143,6 +200,104 @@ def attach_coin_signals(overview: dict[str, Any]) -> dict[str, Any]:
             "url": f"/crypto/{card.get('symbol')}",
         }
     return overview
+
+
+# --- samples over time --------------------------------------------------------
+# The regime numbers are only half the story: whether they are rising matters as
+# much as where they sit.  Each ingest pass appends one sample per curated coin
+# (and one for the venue) at two resolutions — a rolling day at the lane's own
+# cadence, and one point per UTC day for the longer trend.  Nothing new is
+# fetched: the sample is taken from the snapshot the pass already has.
+
+HISTORY_CACHE_KEY = "crypto_regime_history_v1"
+HISTORY_SERVE_TTL_SECONDS = 60 * 60 * 24 * 30
+HISTORY_READ_TTL_SECONDS = 10 * 365 * 24 * 3600
+RECENT_SAMPLES = 48
+DAILY_POINTS = 90
+MARKET_KEY = "_market"
+
+FLOW_LABELS = {
+    "new_longs": {"ko": "신규 롱 유입", "en": "new longs"},
+    "short_covering": {"ko": "숏 커버링", "en": "short covering"},
+    "new_shorts": {"ko": "신규 숏 유입", "en": "new shorts"},
+    "long_unwind": {"ko": "롱 정리", "en": "long unwind"},
+    "flat": {"ko": "뚜렷한 변화 없음", "en": "little change"},
+}
+# Below this, a move is noise rather than a position change worth naming.
+FLOW_EPSILON_PERCENT = 0.5
+
+
+def position_flow(price_change_percent: float | None, oi_change_percent: float | None) -> str | None:
+    """The standard derivatives read: price direction against open-interest direction."""
+    if price_change_percent is None or oi_change_percent is None:
+        return None
+    if abs(price_change_percent) < FLOW_EPSILON_PERCENT or abs(oi_change_percent) < FLOW_EPSILON_PERCENT:
+        return "flat"
+    if price_change_percent > 0:
+        return "new_longs" if oi_change_percent > 0 else "short_covering"
+    return "new_shorts" if oi_change_percent > 0 else "long_unwind"
+
+
+def _append_sample(series: dict[str, Any], sample: dict[str, Any], moment: dt.datetime) -> dict[str, Any]:
+    recent = [row for row in (series.get("recent") or []) if isinstance(row, dict)]
+    recent.append(sample)
+    recent = recent[-RECENT_SAMPLES:]
+    day = moment.astimezone(dt.UTC).date().isoformat()
+    daily = [row for row in (series.get("daily") or []) if isinstance(row, dict) and row.get("date") != day]
+    daily.append({**sample, "date": day})
+    daily.sort(key=lambda row: row["date"])
+    return {"recent": recent, "daily": daily[-DAILY_POINTS:]}
+
+
+def _percent_change(current: float | None, previous: float | None) -> float | None:
+    if not isinstance(current, (int, float)) or not isinstance(previous, (int, float)) or not previous:
+        return None
+    return round((current / previous - 1.0) * 100.0, 4)
+
+
+def _oldest_within(rows: list[dict[str, Any]], moment: dt.datetime, hours: float) -> dict[str, Any] | None:
+    """The oldest sample no older than ``hours`` — the closest thing to a 24h reference."""
+    cutoff = (moment - dt.timedelta(hours=hours)).isoformat().replace("+00:00", "Z")
+    within = [row for row in rows if isinstance(row.get("t"), str) and row["t"] >= cutoff]
+    return within[0] if within else (rows[0] if rows else None)
+
+
+def _history_blob() -> dict[str, Any]:
+    blob = store.load_report(HISTORY_CACHE_KEY, HISTORY_SERVE_TTL_SECONDS)
+    return (blob or {}).get("series") or {}
+
+
+def history_for(key: str, *, now: dt.datetime | None = None) -> dict[str, Any] | None:
+    """Samples plus the 24-hour changes the page actually shows."""
+    series = _history_blob().get(key)
+    if not isinstance(series, dict):
+        return None
+    recent = [row for row in (series.get("recent") or []) if isinstance(row, dict)]
+    daily = [row for row in (series.get("daily") or []) if isinstance(row, dict)]
+    if not recent:
+        return None
+    moment = now or dt.datetime.now(dt.UTC)
+    latest = recent[-1]
+    reference = _oldest_within(recent, moment, 24.0)
+    changes: dict[str, Any] = {"reference_at": (reference or {}).get("t"), "samples": len(recent)}
+    for field in ("heat", "direction", "funding_apr", "crowded_share", "advance_share"):
+        if isinstance(latest.get(field), (int, float)) and isinstance((reference or {}).get(field), (int, float)):
+            changes[f"{field}_24h_points"] = round(latest[field] - reference[field], 2)
+    for field in ("price", "oi_usd", "volume_24h_usd"):
+        change = _percent_change(latest.get(field), (reference or {}).get(field))
+        if change is not None:
+            changes[f"{field}_24h_percent"] = change
+    flow = position_flow(changes.get("price_24h_percent"), changes.get("oi_usd_24h_percent"))
+    if flow:
+        changes["flow"] = flow
+        changes["flow_label"] = FLOW_LABELS[flow]
+    return {
+        "recent": recent,
+        "daily": daily,
+        "changes": changes,
+        "cadence_seconds": config.CRYPTO_HEAT_MAX_AGE,
+        "basis": "samples taken on the ingest pass that already reads this snapshot; one point per UTC day is kept for 90 days",
+    }
 
 
 # --- the whole venue ----------------------------------------------------------
@@ -317,6 +472,7 @@ def build_crypto_regime(provider: Any | None = None, now: dt.datetime | None = N
             "crowded": len(crowded),
             "advancing": len(advancing),
         },
+        "history": history_for(MARKET_KEY, now=now),
         "reading": _reading(heat, heat_label, direction_label, components),
         "anchor": None if anchor_signal is None else {
             "symbol": ANCHOR_SYMBOL,
