@@ -202,9 +202,12 @@ def _stablecoin_block(metrics: dict[str, Any], blob: dict[str, Any] | None, mome
         "aggregate": {
             "market_cap_usd": _round(agg_cap, 2),
             "share_of_total_percent": _round(share, 4),
-            "change_24h_percent": _round(metrics.get("stablecoin_24h_change_percent"), 4),
             "volume_24h_usd": _round(metrics.get("stablecoin_volume_24h_usd"), 2),
-            "basis": "CoinMarketCap stablecoin aggregate; share = stablecoin market cap ÷ total market cap (arithmetic)",
+            "volume_24h_change_percent": _round(_stable_volume_change(metrics), 4),
+            "basis": (
+                "CoinMarketCap stablecoin aggregate; share = stablecoin market cap ÷ total market cap (arithmetic); "
+                "the 24h change is the change in stablecoin volume — CoinMarketCap publishes no 24h market-cap change for stablecoins"
+            ),
         },
         "coins": [],
         "history": {
@@ -284,6 +287,12 @@ def _parse_iso(value: Any) -> dt.datetime | None:
         return None
 
 
+def _stable_volume_change(metrics: dict[str, Any]) -> Any:
+    """24h change in stablecoin *volume* (CMC `stablecoin_24h_percentage_change`); older blobs stored it under the old key."""
+    value = metrics.get("stablecoin_volume_24h_change_percent")
+    return value if value is not None else metrics.get("stablecoin_24h_change_percent")
+
+
 def _round(value: Any, digits: int) -> float | None:
     try:
         return None if value is None else round(float(value), digits)
@@ -349,12 +358,13 @@ def build_crypto_structure(now: dt.datetime | None = None) -> dict[str, Any]:
             "total_24h_change_percent": _round(metrics.get("total_market_cap_24h_change_percent"), 4),
             "altcoin_usd": _round(metrics.get("altcoin_market_cap_usd"), 2),
             "stablecoin_usd": _round(metrics.get("stablecoin_market_cap_usd"), 2),
-            "stablecoin_24h_change_percent": _round(metrics.get("stablecoin_24h_change_percent"), 4),
             "defi_usd": _round(metrics.get("defi_market_cap_usd"), 2),
         },
         "volume_24h": {
             "total_usd": _round(metrics.get("total_volume_24h_usd"), 2),
             "change_percent": _round(metrics.get("total_volume_24h_change_percent"), 4),
+            "stablecoin_usd": _round(metrics.get("stablecoin_volume_24h_usd"), 2),
+            "stablecoin_change_percent": _round(_stable_volume_change(metrics), 4),
         },
         "universe": {
             "active_cryptocurrencies": metrics.get("active_cryptocurrencies"),

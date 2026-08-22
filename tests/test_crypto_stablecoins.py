@@ -114,7 +114,11 @@ def test_stablecoin_refresh_keeps_one_point_per_utc_day_and_serves_block(cmc_on)
     agg = stable["aggregate"]
     assert agg["share_of_total_percent"] == pytest.approx(290e9 / 2689999231765.0 * 100, abs=1e-4)
     assert agg["volume_24h_usd"] == pytest.approx(164790931661.78, abs=0.01)
-    assert agg["change_24h_percent"] == pytest.approx(0.3)
+    assert agg["volume_24h_change_percent"] == pytest.approx(0.3)  # CMC's stablecoin_24h_percentage_change is a *volume* change
+    assert "stablecoin_24h_change_percent" not in payload["market_cap"]
+    assert payload["volume_24h"]["stablecoin_usd"] == pytest.approx(164790931661.78, abs=0.01)
+    assert payload["volume_24h"]["stablecoin_change_percent"] == pytest.approx(0.3)
+    assert "change_24h_percent" not in agg
     assert payload["source"]["quotes_api_url"] == CMC_QUOTES_URL
     assert "스테이블코인 비중" in payload["methodology"]["ko"]
 
