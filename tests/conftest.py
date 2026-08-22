@@ -6,12 +6,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from app import config, store
+from app import config, crypto_gas, store
 from app.providers.base import DataUnavailable, RateLimited
 
 
 @pytest.fixture
 def db(tmp_path, monkeypatch):
+    # The gas strip is served from a module-level snapshot; a test must not
+    # inherit one built by another test.
+    crypto_gas.reset_snapshot()
     """테스트마다 빈 SQLite. 네트워크는 전혀 쓰지 않는다.
 
     권리 게이트는 전부 배포 기본값(닫힘)으로 둔다. 값을 실제로 서빙하는
