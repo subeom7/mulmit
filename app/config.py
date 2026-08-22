@@ -204,6 +204,20 @@ OPENFDA_TIMEOUT = _float("OPENFDA_TIMEOUT", 20.0)
 OPENFDA_RETRIES = _int("OPENFDA_RETRIES", 2)
 OPENFDA_MAX_AGE = _int("OPENFDA_MAX_AGE", 60 * 60 * 24)
 OPENFDA_WINDOW_DAYS = _int("OPENFDA_WINDOW_DAYS", 60)
+# Phase 2: PubMed citations for watched trials (NCBI E-utilities) and FDA advisory-committee notices (Federal Register).
+PUBMED_ENABLED = _bool("PUBMED_ENABLED", False)
+NCBI_TOOL = os.environ.get("NCBI_TOOL", "mulmit").strip() or "mulmit"
+NCBI_EMAIL = os.environ.get("NCBI_EMAIL", "").strip()  # contact for NCBI's usage policy; ingest only
+NCBI_API_KEY = os.environ.get("NCBI_API_KEY", "").strip()  # optional (10 req/s instead of 3); ingest only
+PUBMED_TIMEOUT = _float("PUBMED_TIMEOUT", 20.0)
+PUBMED_RETRIES = _int("PUBMED_RETRIES", 2)
+PUBMED_MAX_AGE = _int("PUBMED_MAX_AGE", 60 * 60 * 24)
+PUBMED_PACE_SECONDS = _float("PUBMED_PACE_SECONDS", 0.4)
+PUBMED_OFFPEAK_ONLY = _bool("PUBMED_OFFPEAK_ONLY", True)
+FEDERAL_REGISTER_ENABLED = _bool("FEDERAL_REGISTER_ENABLED", False)
+FEDERAL_REGISTER_TIMEOUT = _float("FEDERAL_REGISTER_TIMEOUT", 20.0)
+FEDERAL_REGISTER_RETRIES = _int("FEDERAL_REGISTER_RETRIES", 2)
+ADCOMM_MAX_AGE = _int("ADCOMM_MAX_AGE", 60 * 60 * 6)
 
 # Financial Services Commission end-of-day data on data.go.kr. The three
 # datasets used here are registered with 이용허락범위 "제한 없음" — the portal's

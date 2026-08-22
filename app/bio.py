@@ -15,10 +15,13 @@ import logging
 import threading
 import time
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from . import config, data_rights, store
 from .providers import clinicaltrials as ct
+from .providers import federal_register as fr
 from .providers import openfda as fda
+from .providers import pubmed as pm
 from .providers.base import DataUnavailable, RateLimited
 
 log = logging.getLogger(__name__)
@@ -29,6 +32,8 @@ SERVE_TTL_SECONDS = 60 * 60 * 48
 TRIALS_STALE_AFTER_SECONDS = 60 * 60 * 12
 FDA_STALE_AFTER_SECONDS = 60 * 60 * 36
 LOAD_CACHE_SECONDS = 60.0
+# Refreshes read their own previous blob back regardless of age (carry-over of unchanged entries).
+HISTORY_READ_TTL_SECONDS = 10 * 365 * 24 * 3600
 RECENT_DAYS = 14
 RESULTS_RECENT_DAYS = 30
 NEW_START_DAYS = 30
@@ -304,6 +309,9 @@ def build_bio_trials(now: dt.datetime | None = None) -> dict[str, Any]:
             recent.append({**study, "sponsor": _sponsor_meta(spec), "flags": flags})
             watchlist[-1]["counts"]["recent_watched"] += 1
     recent.sort(key=lambda row: (row.get("last_update_post") or "", row.get("nct_id") or ""), reverse=True)
+    pubmed_blob = _load_cached(PUBMED_CACHE_KEY) if data_rights.pubmed_serving_enabled() else None
+    for row in recent:
+        row["publications"] = _publications_for(pubmed_blob, row.get("nct_id"))
 
     return {
         "generated_at": _iso_utc(),
@@ -316,6 +324,7 @@ def build_bio_trials(now: dt.datetime | None = None) -> dict[str, Any]:
         "watchlist": watchlist,
         "recent": recent[:RECENT_LIMIT],
         "totals": {"sponsors": len(watchlist), "recent": len(recent), "sponsors_with_errors": errors},
+        "pubmed": _pubmed_block(pubmed_blob),
         "freshness": {
             "status": "stale" if age is None or age > TRIALS_STALE_AFTER_SECONDS else "fresh",
             "fetched_at": blob.get("fetched_at"),
@@ -489,4 +498,297 @@ def build_bio_fda(now: dt.datetime | None = None) -> dict[str, Any]:
         },
         "methodology": _FDA_METHOD,
         "disclaimer": _FDA_DISCLAIMER,
+    }
+
+
+# --- PubMed lane (publications linked to watched trials) -------------------------
+
+PUBMED_CACHE_KEY = "bio_pubmed_v1"
+PUBMED_KEEP_DAYS = 60
+PUBMED_TOP = 3
+ADCOMM_CACHE_KEY = "bio_adcomm_v1"
+ADCOMM_LOOKBACK_DAYS = 240
+ADCOMM_PAST_DAYS = 30
+ADCOMM_MAX_PAGES = 3
+ADCOMM_STALE_AFTER_SECONDS = 60 * 60 * 24
+NEW_YORK = ZoneInfo("America/New_York")
+
+
+def pubmed_window_open(now: dt.datetime | None = None) -> bool:
+    """NCBI asks that large jobs run on weekends or between 9 PM and 5 AM Eastern; the daily pass honours that."""
+    moment = (now or dt.datetime.now(dt.UTC)).astimezone(NEW_YORK)
+    return moment.weekday() >= 5 or moment.hour >= 21 or moment.hour < 5
+
+
+def _watched_recent_ncts(trials_blob: dict[str, Any], today: dt.date) -> list[str]:
+    """The same rows the trials table shows (interventional Phase 2/3, last 14 days, per-sponsor cap), newest first."""
+    rows: list[tuple[str, str]] = []
+    for entry in trials_blob.get("sponsors") or []:
+        if not isinstance(entry, dict) or entry.get("id") not in WATCHLIST_BY_ID:
+            continue
+        kept = 0
+        for study in entry.get("studies") or []:
+            if kept >= PER_SPONSOR_CAP:
+                break
+            if not isinstance(study, dict) or study.get("study_type") != "INTERVENTIONAL":
+                continue
+            if not set(study.get("phases") or []) & WATCH_PHASES:
+                continue
+            if not _within(study.get("last_update_post"), today, RECENT_DAYS):
+                continue
+            nct = study.get("nct_id")
+            if isinstance(nct, str) and nct:
+                rows.append((study.get("last_update_post") or "", nct))
+                kept += 1
+    rows.sort(reverse=True)
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for _, nct in rows:
+        if nct not in seen:
+            seen.add(nct)
+            ordered.append(nct)
+    return ordered[:RECENT_LIMIT]
+
+
+def refresh_bio_pubmed(*, force: bool = False, provider: Any | None = None, now: dt.datetime | None = None) -> dict[str, Any]:
+    """Ingest lane: one paced esearch per watched trial plus batched esummary calls — daily, in NCBI's off-peak window."""
+    if not data_rights.pubmed_ingest_enabled():
+        return {"skipped": "disabled"}
+    moment = now or dt.datetime.now(dt.UTC)
+    if not force and store.load_report(PUBMED_CACHE_KEY, config.PUBMED_MAX_AGE) is not None:
+        return {"skipped": "fresh"}
+    if not force and config.PUBMED_OFFPEAK_ONLY and not pubmed_window_open(moment):
+        return {"skipped": "offpeak_window"}
+    trials = store.load_report(TRIALS_CACHE_KEY, SERVE_TTL_SECONDS)
+    if not isinstance(trials, dict) or not trials.get("sponsors"):
+        return {"skipped": "no_trials_blob"}
+    today = moment.astimezone(dt.UTC).date()
+    ncts = _watched_recent_ncts(trials, today)
+    client = provider or pm.PubMedProvider(
+        tool=config.NCBI_TOOL,
+        email=config.NCBI_EMAIL or None,
+        api_key=config.NCBI_API_KEY or None,
+        timeout=config.PUBMED_TIMEOUT,
+        retries=config.PUBMED_RETRIES,
+    )
+    previous = store.load_report(PUBMED_CACHE_KEY, HISTORY_READ_TTL_SECONDS) or {}
+    previous_studies = previous.get("studies") if isinstance(previous.get("studies"), dict) else {}
+    studies: dict[str, dict[str, Any]] = {}
+    queried = failed = 0
+    needed: set[str] = set()
+    for index, nct in enumerate(ncts):
+        if index and config.PUBMED_PACE_SECONDS > 0:
+            _sleep(config.PUBMED_PACE_SECONDS)
+        try:
+            result = client.search_nct(nct, retmax=PUBMED_TOP)
+        except RateLimited:
+            failed += 1
+            log.warning("PubMed rate limit — stopping this pass after %d searches", index)
+            break
+        except DataUnavailable as exc:
+            failed += 1
+            log.warning("PubMed search for %s failed: %s", nct, exc)
+            continue
+        queried += 1
+        studies[nct] = {"count": result.get("count", 0), "pmids": list(result.get("pmids") or []), "articles": [], "as_of": result.get("fetched_at")}
+        needed.update(studies[nct]["pmids"])
+    articles: dict[str, dict[str, Any]] = {}
+    batch = sorted(needed)
+    for start in range(0, len(batch), pm.MAX_SUMMARY_IDS):
+        if config.PUBMED_PACE_SECONDS > 0:
+            _sleep(config.PUBMED_PACE_SECONDS)
+        try:
+            for article in client.summaries(batch[start:start + pm.MAX_SUMMARY_IDS]):
+                articles[article["pmid"]] = article
+        except (RateLimited, DataUnavailable) as exc:
+            log.warning("PubMed summaries failed: %s", exc)
+            break
+    for entry in studies.values():
+        entry["articles"] = [articles[p] for p in entry["pmids"] if p in articles]
+    cutoff = (moment - dt.timedelta(days=PUBMED_KEEP_DAYS)).astimezone(dt.UTC).isoformat().replace("+00:00", "Z")
+    carried = 0
+    for nct, entry in previous_studies.items():
+        if nct not in studies and isinstance(entry, dict) and str(entry.get("as_of") or "") >= cutoff:
+            studies[nct] = entry
+            carried += 1
+    if ncts and queried == 0:
+        raise DataUnavailable("PubMed refresh produced no results")
+    hits = sum(1 for entry in studies.values() if entry.get("count"))
+    store.save_report(
+        PUBMED_CACHE_KEY,
+        {
+            "generated_at": _iso_utc(),
+            "fetched_at": moment.astimezone(dt.UTC).isoformat().replace("+00:00", "Z"),
+            "queried": queried,
+            "failed": failed,
+            "hits": hits,
+            "studies": studies,
+        },
+    )
+    clear_cache()
+    return {"updated": queried, "failed": failed, "hits": hits, "carried": carried}
+
+
+_PUBMED_NOTICE = {
+    "ko": "PubMed 서지 정보(제목·저널·일자·PMID)만 보여주고 초록은 저작권 문제로 표시하지 않습니다. 등록번호(NCT) 기준 검색이라 누락이 있을 수 있습니다.",
+    "en": "PubMed citation metadata only (title, journal, date, PMID); abstracts are not shown for copyright reasons. Matching is by registration number (NCT), so some publications may be missed.",
+}
+
+
+def _pubmed_block(blob: dict[str, Any] | None) -> dict[str, Any]:
+    enabled = data_rights.pubmed_serving_enabled()
+    block: dict[str, Any] = {
+        "status": "disabled" if not enabled else ("ok" if isinstance(blob, dict) and isinstance(blob.get("studies"), dict) else "collecting"),
+        "as_of": blob.get("fetched_at") if isinstance(blob, dict) else None,
+        "queried": blob.get("queried") if isinstance(blob, dict) else None,
+        "hits": blob.get("hits") if isinstance(blob, dict) else None,
+        "attribution": {"text": pm.ATTRIBUTION, "url": pm.SITE_URL, "policy_url": pm.POLICY_URL, "placement": "adjacent_to_value"},
+        "notice": _PUBMED_NOTICE,
+        "rights": {"status": "public_metadata_with_usage_policy", "evidence": pm.POLICY_QUOTE, "policy_url": pm.POLICY_URL,
+                    "notice": "Citation metadata only; abstracts never requested; requests identified with tool/email and paced per NCBI guidelines."},
+    }
+    return block
+
+
+def _publications_for(blob: dict[str, Any] | None, nct_id: Any) -> dict[str, Any] | None:
+    studies = blob.get("studies") if isinstance(blob, dict) else None
+    entry = studies.get(nct_id) if isinstance(studies, dict) and isinstance(nct_id, str) else None
+    if not isinstance(entry, dict):
+        return None
+    return {
+        "count": entry.get("count"),
+        "articles": [a for a in (entry.get("articles") or []) if isinstance(a, dict)][:PUBMED_TOP],
+        "search_url": pm.search_page_url(nct_id),
+        "as_of": entry.get("as_of"),
+    }
+
+
+# --- FDA advisory committee notices (Federal Register) ----------------------------
+
+def refresh_bio_adcomm(*, force: bool = False, provider: Any | None = None, now: dt.datetime | None = None) -> dict[str, Any]:
+    """Ingest lane: FDA advisory-committee meeting notices from the Federal Register API (public domain, unkeyed)."""
+    if not data_rights.federal_register_ingest_enabled():
+        return {"skipped": "disabled"}
+    if not force and store.load_report(ADCOMM_CACHE_KEY, config.ADCOMM_MAX_AGE) is not None:
+        return {"skipped": "fresh"}
+    client = provider or fr.FederalRegisterProvider(timeout=config.FEDERAL_REGISTER_TIMEOUT, retries=config.FEDERAL_REGISTER_RETRIES)
+    moment = now or dt.datetime.now(dt.UTC)
+    since = moment.astimezone(dt.UTC).date() - dt.timedelta(days=ADCOMM_LOOKBACK_DAYS)
+    first = client.fetch_fda_meeting_notices(since=since)
+    notices = list(first.get("notices") or [])
+    total_pages = first.get("total_pages") if isinstance(first.get("total_pages"), int) else 1
+    page = 2
+    while page <= min(total_pages, ADCOMM_MAX_PAGES):
+        notices.extend(client.fetch_fda_meeting_notices(since=since, page=page).get("notices") or [])
+        page += 1
+    seen: set[str] = set()
+    unique: list[dict[str, Any]] = []
+    for row in notices:
+        key = str(row.get("document_number") or row.get("url") or row.get("title"))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(row)
+    store.save_report(
+        ADCOMM_CACHE_KEY,
+        {
+            "generated_at": _iso_utc(),
+            "fetched_at": first.get("fetched_at") or moment.astimezone(dt.UTC).isoformat().replace("+00:00", "Z"),
+            "since": since.isoformat(),
+            "publisher_count": first.get("count"),
+            "notices": unique,
+        },
+    )
+    clear_cache()
+    return {"updated": len(unique), "pages": page - 1, "publisher_count": first.get("count")}
+
+
+_ADCOMM_METHOD = {
+    "ko": (
+        "Federal Register API에서 FDA(기관)·Notice(문서 유형)·\"advisory committee\" 검색으로 최근 240일 공고를 받아 제목에 위원회명과 회의 공고(Notice of "
+        "Meeting/Amendment of Notice 등)가 있는 건만 남깁니다. 회의일은 공고의 DATES 단락에서 '월 일, 연도' 패턴을 추출한 값이며, 날짜가 없는 공고(정정·서류 "
+        "안내)는 별도로 둡니다. 위원회명은 제목의 첫 구절입니다."
+    ),
+    "en": (
+        "From the Federal Register API (agency FDA, type Notice, term \"advisory committee\", last 240 days) Mulmit keeps notices whose title names a "
+        "committee and announces or amends a meeting. Meeting dates are extracted from the notice's DATES paragraph ('Month D, YYYY'); notices without "
+        "a date (amendments, docket notes) are listed separately. The committee name is the first clause of the title."
+    ),
+}
+
+_ADCOMM_DISCLAIMER = {
+    "ko": "회의 공고는 일정이며 자문위 결론·승인 여부·주가와의 관계를 말하지 않습니다. 최종 일정·의제는 링크된 공고와 FDA 안내를 따릅니다. 투자 권유가 아닙니다.",
+    "en": "A meeting notice is a schedule; it says nothing about the committee's conclusion, approval or share prices. The linked notice and FDA's own page govern the final agenda. Not a recommendation.",
+}
+
+
+def build_bio_adcomm(now: dt.datetime | None = None) -> dict[str, Any]:
+    if not data_rights.federal_register_serving_enabled():
+        raise BioUnavailable("disabled")
+    blob = _load_cached(ADCOMM_CACHE_KEY)
+    notices = blob.get("notices") if isinstance(blob, dict) else None
+    if not isinstance(notices, list):
+        raise BioUnavailable("collecting")
+    moment = now or dt.datetime.now(dt.UTC)
+    today = moment.astimezone(dt.UTC).date()
+    fetched_at = _parse_iso(blob.get("fetched_at"))
+    age = (moment - fetched_at).total_seconds() if fetched_at else None
+    upcoming: list[dict[str, Any]] = []
+    past: list[dict[str, Any]] = []
+    undated: list[dict[str, Any]] = []
+    for row in notices:
+        if not isinstance(row, dict):
+            continue
+        start = _parse_date(row.get("meeting_start"))
+        end = _parse_date(row.get("meeting_end")) or start
+        if start is None:
+            undated.append({**row, "status": "undated"})
+        elif end is not None and end < today:
+            if (today - end).days <= ADCOMM_PAST_DAYS:
+                past.append({**row, "status": "past"})
+        else:
+            upcoming.append({**row, "status": "upcoming", "days_until": (start - today).days})
+    upcoming.sort(key=lambda r: (r.get("meeting_start") or "", r.get("publication_date") or ""))
+    past.sort(key=lambda r: (r.get("meeting_start") or "", r.get("publication_date") or ""), reverse=True)
+    undated.sort(key=lambda r: r.get("publication_date") or "", reverse=True)
+    return {
+        "generated_at": _iso_utc(),
+        "as_of": blob.get("fetched_at"),
+        "since": blob.get("since"),
+        "upcoming": upcoming,
+        "recent_past": past,
+        "undated": undated[:10],
+        "next_meeting": upcoming[0] if upcoming else None,
+        "totals": {"upcoming": len(upcoming), "recent_past": len(past), "undated": len(undated), "publisher_count": blob.get("publisher_count")},
+        "freshness": {
+            "status": "stale" if age is None or age > ADCOMM_STALE_AFTER_SECONDS else "fresh",
+            "fetched_at": blob.get("fetched_at"),
+            "age_seconds": round(age, 1) if age is not None else None,
+            "cadence": f"ingest refresh every {config.ADCOMM_MAX_AGE}s; the Federal Register publishes each business day",
+            "stale_after_seconds": ADCOMM_STALE_AFTER_SECONDS,
+        },
+        "attribution": {
+            "text": fr.ATTRIBUTION,
+            "url": fr.SITE_URL,
+            "developer_url": fr.DEVELOPER_URL,
+            "placement": "adjacent_to_value",
+            "required": False,
+            "restriction": "no official NARA or OFR logos or seals",
+        },
+        "source": {
+            "provider": fr.PROVIDER_ID,
+            "provider_name": "Federal Register",
+            "publisher": fr.PUBLISHER,
+            "url": fr.SITE_URL,
+            "api_url": fr.API_URL,
+            "read_path": "stored_blob",
+        },
+        "rights": {
+            "status": "us_government_work_public_domain",
+            "evidence": fr.USAGE_QUOTE,
+            "terms_url": fr.DEVELOPER_URL,
+            "notice": "U.S. Government publication (17 U.S.C. §105); titles, dates and links relayed with attribution; no logos or seals.",
+        },
+        "methodology": _ADCOMM_METHOD,
+        "disclaimer": _ADCOMM_DISCLAIMER,
     }

@@ -75,9 +75,31 @@
 | 로컬 E2E(실제 API, 2026-08-22 13:3x KST) | 34 스폰서 29초(0.6초 간격)·오류 0, 14일 창 갱신 277건(캡 전) — GSK 3상 3건 NOT_YET_RECRUITING, 암젠 Tarlatamab 3상 등. openFDA 60일 창: 게시자 total 697(절별 매칭) → ORIG 승인 140건 파싱(NDA 16·BLA 7·ANDA 117, 우선심사 8·NME 11) → 전 페이지(7회) 순회 필요 확인 |
 | openFDA `drug/drugsfda.json?search=submissions.submission_status_date:[20260801 TO 20260822]+AND+submissions.submission_status:AP&limit=2` | 200 — meta.last_updated 2026-08-21, 결과에 ANDA 라벨링 보충(SUPPL) 다수 → **ORIG로 한정**해야 신규 승인만 남음. curl은 `-g`(대괄호) 필요 |
 
+### 5.1 Phase 2 실측 (2026-08-22)
+
+| 호출 | 결과 |
+|---|---|
+| NCBI `esearch.fcgi?db=pubmed&term=NCT04368728[si]&retmode=json` | 200, `X-Ratelimit-Limit: 3`, count 15 — `[si]`(secondary source id)로 등록번호 검색 가능. `esummary` JSON: title·fulljournalname·pubdate·epubdate·pubtype·articleids(doi) — 초록 없음 |
+| PubMed 적중률(로컬 블롭 최근 중재 2·3상 20건) | 완료/중단/결과 게시 12건 중 4건 적중(1~17편), 진행 중 8건 중 2건 → 등록번호 검색은 누락이 있어 "참고" 표기 |
+| Federal Register `documents.json?conditions[agencies][]=food-and-drug-administration&conditions[type][]=NOTICE&conditions[term]="advisory committee" "notice of meeting"&conditions[publication_date][gte]=2026-02-22` | 200, 11건 — 제목 "… Advisory Committee; Notice of Meeting; Establishment of a Public Docket …", DATES "The meeting will be held on September 23, 2026, from 9 a.m. to 6 p.m. Eastern Time."(정정 공고는 DATES 공란) → 제목 필터 + DATES 정규식 |
+| fda.gov 자문위 달력·robots.txt (curl, 임의 UA) | **봇 감지 리다이렉트**(`/apology_objects/abuse-detection-apology.html`, `excessive-requests-apology`) → 서버 수집 보류, RSS 없음. 브라우저로 본 달력은 194건 DataTable(Export Excel) |
+| 공공데이터포털 15095677 (식약처 의약품 제품 허가정보) | 무료·"이용허락범위 제한 없음"·개발계정 자동승인 10,000/일, Base URL `apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07`, `/getDrugPrdtPrmsnInq07`. 미리보기·명세는 로그인/팝업 → **활용신청 후 실측** |
+
+### 7. Phase 2 구현 메모 (2026-08-22)
+
+- **PubMed 서지**(`app/providers/pubmed.py`, `bio.refresh_bio_pubmed`): 임상 표와 같은 행(중재 2·3상·14일·스폰서당 8건·최대 150) 각각 `NCT[si]` esearch(retmax 3, pub_date 정렬) → PMID를 50개 묶음 esummary → 블롭 `bio_pubmed_v1`
+  (60일 내 이전 결과 이월). **NCBI 정책 구현**: `tool=mulmit`(+`NCBI_EMAIL`), 0.4초 간격, **ET 21~05시·주말 창에서만**(`pubmed_window_open`, `PUBMED_OFFPEAK_ONLY`), 초록 미요청. 표시: 임상 표 제목 아래
+  "PubMed · 논문 n건 — 첫 논문 제목(저널, 일자)" + PubMed 검색 링크, 푸터 출처·고지.
+- **FDA 자문위 공고**(`app/providers/federal_register.py`, `bio.refresh_bio_adcomm`/`build_bio_adcomm`, `/api/bio/adcomm`): FR API 240일 창, 제목 필터(위원회명 + Notice of Meeting/Amendment), DATES 정규식으로 회의일,
+  예정/최근 30일 종료/날짜 미기재 분류, 6시간 주기. 새 섹션 "FDA 자문위원회 회의 공고"(임상 표와 FDA 승인 사이). 로고·인장 미사용.
+- **식약처 품목허가**: 검증 없는 파서를 넣지 않는다 — 운영자 활용신청(자동승인) → 실측 → 구현(등록부 §3.26).
+
 ## 6. 운영자 액션
 
-서버 `.env`에 `BIO_SECTION_ENABLED=true`, `CLINICALTRIALS_ENABLED=true`, `OPENFDA_ENABLED=true` → `compose up -d web ingest`. 첫 블롭은 다음 ingest 주기에 저장된다.
+서버 `.env`에 `BIO_SECTION_ENABLED=true`, `CLINICALTRIALS_ENABLED=true`, `OPENFDA_ENABLED=true` → `compose up -d web ingest`. 첫 블롭은 다음 ingest 주기에 저장된다. (완료 2026-08-22)
+
+Phase 2: `PUBMED_ENABLED=true`(+ 권장 `NCBI_EMAIL=<연락 이메일>`, 선택 `NCBI_API_KEY`), `FEDERAL_REGISTER_ENABLED=true` → `compose up -d web ingest`. PubMed 첫 패스는 **ET 야간 창(KST 10~18시)**에 돈다.
+식약처: data.go.kr에서 데이터셋 15095677 활용신청(개발계정 자동승인) 후 알려주면 실측·구현.
 선택: openFDA 키(무료) 발급 후 `OPENFDA_API_KEY`(ingest 전용) — 일 1,000회 IP 한도는 현재 호출량(≈3/일)에 충분해 필수 아님.
 
 ## 변경 이력
@@ -86,3 +108,4 @@
 |---|---|
 | 2026-08-22 | 최초 작성 — 권리 원문 4종 확인, 인벤토리·Phase 확정, API 실측, Phase 1 구현(`/bio`, `/api/bio/{trials,fda}`, 게이트 OFF) |
 | 2026-08-22 | Phase 1 라이브 — 운영자 게이트 ON(13:5x KST), 첫 패스 임상 34/34·FDA 140건, `/bio` 확인 |
+| 2026-08-22 | Phase 2 — PubMed 서지·FDA 자문위 공고(Federal Register) 구현(§5.1·§7), 식약처는 활용신청 대기, fda.gov 달력은 봇 감지로 보류 |

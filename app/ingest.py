@@ -875,6 +875,36 @@ def refresh_bio_trials(*, force: bool = False) -> dict:
         return {"skipped": "error", "error": str(exc)}
 
 
+def refresh_bio_pubmed(*, force: bool = False) -> dict:
+    """PubMed 서지(등록번호 기준) — 하루 1회, NCBI 야간 창(ET 21~05시·주말)에서만. 실패가 나머지 수집을 막지 않는다."""
+    try:
+        result = bio.refresh_bio_pubmed(force=force)
+        if not result.get("skipped"):
+            log.info("바이오 PubMed 서지 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("NCBI E-utilities 요청 제한 — 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("바이오 PubMed 서지 갱신 실패: %s", exc)
+        return {"skipped": "error", "error": str(exc)}
+
+
+def refresh_bio_adcomm(*, force: bool = False) -> dict:
+    """FDA 자문위 회의 공고(Federal Register API) — 6시간 주기, 1~3회 호출."""
+    try:
+        result = bio.refresh_bio_adcomm(force=force)
+        if not result.get("skipped"):
+            log.info("바이오 FDA 자문위 공고 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("Federal Register 요청 제한 — 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("바이오 FDA 자문위 공고 갱신 실패: %s", exc)
+        return {"skipped": "error", "error": str(exc)}
+
+
 def refresh_bio_fda(*, force: bool = False) -> dict:
     """openFDA 원 신청 승인(최근 60일) — 하루 주기, 1~5회 호출."""
     try:
@@ -1127,6 +1157,8 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_crypto_stablecoins()
             refresh_bio_trials()
             refresh_bio_fda()
+            refresh_bio_pubmed()
+            refresh_bio_adcomm()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
             "skipped": "legacy_price_data_disabled",
@@ -1181,6 +1213,8 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_crypto_stablecoins()
             refresh_bio_trials()
             refresh_bio_fda()
+            refresh_bio_pubmed()
+            refresh_bio_adcomm()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
                 "skipped": "backoff",
@@ -1268,6 +1302,8 @@ def run_once(tickers: list[str] | None = None) -> dict:
         refresh_crypto_stablecoins()
         refresh_bio_trials()
         refresh_bio_fda()
+        refresh_bio_pubmed()
+        refresh_bio_adcomm()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged

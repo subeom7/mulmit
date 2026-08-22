@@ -36,6 +36,8 @@ CHAIN_GAS = "chain_gas"
 BIO = "bio"
 CLINICALTRIALS = "clinicaltrials"
 OPENFDA = "openfda"
+PUBMED = "pubmed"
+FEDERAL_REGISTER = "federal_register"
 OFR = "ofr"
 
 # --- structured client contracts --------------------------------------------
@@ -203,6 +205,21 @@ BIO_FDA_COLLECTING = {
     ),
 }
 
+BIO_ADCOMM_DISABLED = {
+    "code": "bio_adcomm_disabled",
+    "status": "disabled",
+    "message": "The Federal Register advisory-committee relay is disabled for this deployment.",
+}
+
+BIO_ADCOMM_COLLECTING = {
+    "code": "bio_adcomm_collecting",
+    "status": "collecting",
+    "message": (
+        "The Federal Register relay is enabled but has not stored its first pass yet; "
+        "values appear after the next ingest run."
+    ),
+}
+
 CHAIN_GAS_DISABLED = {
     "code": "chain_gas_disabled",
     "status": "disabled",
@@ -360,6 +377,23 @@ def openfda_ingest_enabled() -> bool:
     return openfda_serving_enabled()
 
 
+def pubmed_serving_enabled() -> bool:
+    """PubMed citations ride the trials lane: both switches must be on."""
+    return clinicaltrials_serving_enabled() and bool(config.PUBMED_ENABLED)
+
+
+def pubmed_ingest_enabled() -> bool:
+    return pubmed_serving_enabled()
+
+
+def federal_register_serving_enabled() -> bool:
+    return bio_section_enabled() and bool(config.FEDERAL_REGISTER_ENABLED)
+
+
+def federal_register_ingest_enabled() -> bool:
+    return federal_register_serving_enabled()
+
+
 def chain_gas_configured_chains() -> list[str]:
     return [
         name
@@ -466,6 +500,17 @@ def lane_report() -> dict[str, dict[str, str]]:
             "gate": "BIO_SECTION_ENABLED + OPENFDA_ENABLED",
             "fetch_key": "present" if config.OPENFDA_API_KEY else "absent_optional",
             "license": "public domain, CC0 1.0",
+        },
+        PUBMED: {
+            "status": "enabled" if pubmed_serving_enabled() else "disabled",
+            "gate": "BIO_SECTION_ENABLED + CLINICALTRIALS_ENABLED + PUBMED_ENABLED",
+            "policy": "metadata only; tool/email identified; 3 req/s; off-peak window",
+            "fetch_key": "present" if config.NCBI_API_KEY else "absent_optional",
+        },
+        FEDERAL_REGISTER: {
+            "status": "enabled" if federal_register_serving_enabled() else "disabled",
+            "gate": "BIO_SECTION_ENABLED + FEDERAL_REGISTER_ENABLED",
+            "restriction": "no NARA/OFR logos or seals",
         },
         CHAIN_GAS: {
             "status": chain_gas_status(),

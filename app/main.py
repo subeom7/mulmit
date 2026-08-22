@@ -638,6 +638,23 @@ def bio_fda_route(request: Request, response: Response) -> dict:
     return payload
 
 
+@app.get("/api/bio/adcomm")
+@limiter.limit(config.RATE_LIMIT)
+def bio_adcomm_route(request: Request, response: Response) -> dict:
+    """FDA 자문위원회 회의 공고(Federal Register) — ingest가 저장한 블롭만 읽는다."""
+    require_bio_section()
+    try:
+        payload = bio.build_bio_adcomm()
+    except bio.BioUnavailable as exc:
+        detail = data_rights.BIO_ADCOMM_DISABLED if exc.reason == "disabled" else data_rights.BIO_ADCOMM_COLLECTING
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=600, stale-while-revalidate=3600"
+    response.headers["X-Data-Source"] = "Federal Register"
+    return payload
+
+
 @app.get("/api/crypto/structure")
 @limiter.limit(config.RATE_LIMIT)
 def crypto_structure_route(request: Request, response: Response) -> dict:

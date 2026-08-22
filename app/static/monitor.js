@@ -36,7 +36,7 @@ const onPage = (...pages) => PAGE === "all" || pages.includes(PAGE);
 const TEXT = {
   ko: {
     "brand.tagline": "물밑 · 주식·크립토 시장 신호", "nav.analytics": "종목 분석", "nav.monitor": "시장 모니터",
-    "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌", "nav.crypto": "크립토", "nav.bio": "바이오", "landing.bioLink": "바이오 페이지", "landing.bioDesc": "임상 파이프라인 동향 · FDA 최근 승인 · 공공 기록 그대로", "biopage.kicker": "BIOPHARMA", "biopage.title": "바이오, 임상과 승인을 기록으로 봅니다.", "biopage.copy": "국내·글로벌 제약바이오 워치리스트의 임상 파이프라인 갱신(ClinicalTrials.gov)과 FDA의 최근 신약·바이오의약품 승인(openFDA)을 공공 기록 그대로 봅니다. 결과의 성패나 주가 해석, 투자 권유가 아닙니다.", "bio.trials.title": "임상 파이프라인 동향", "bio.filter.all": "전체", "bio.filter.kr": "한국", "bio.filter.global": "글로벌", "bio.trials.copy": "워치리스트 34개 스폰서(주 스폰서 기준)의 임상 중 최근 14일 내 갱신된 중재 2·3상입니다(스폰서당 최대 8건). 상태·단계·일자는 ClinicalTrials.gov 등록값 그대로이며, 한국어 이름과 상장 라벨은 Mulmit이 붙인 참고 라벨입니다.", "bio.trials.caption": "최근 갱신 임상 (중재 2·3상, 14일)", "bio.badge.registry": "등록 정보 · 결과 아님", "bio.badge.sponsorEntered": "스폰서 직접 등록", "bio.badge.notAdvice": "투자 권유 아님", "bio.trials.sponsors": "워치리스트 스폰서", "bio.trials.recent": "최근 갱신(14일)", "bio.trials.registered": "등록 임상", "bio.trials.processed": "ClinicalTrials.gov 처리일", "bio.trials.none": "최근 14일 내 갱신된 중재 2·3상이 없습니다.", "bio.col.sponsor": "스폰서", "bio.col.study": "임상", "bio.col.phase": "단계", "bio.col.status": "상태", "bio.col.updated": "갱신일", "bio.col.primary": "1차 완료(예정)", "bio.col.conditions": "적응증", "bio.col.intervention": "중재", "bio.status.RECRUITING": "모집 중", "bio.status.NOT_YET_RECRUITING": "모집 예정", "bio.status.ENROLLING_BY_INVITATION": "초청 등록", "bio.status.ACTIVE_NOT_RECRUITING": "진행 중(모집 종료)", "bio.status.COMPLETED": "완료", "bio.status.TERMINATED": "조기 종료", "bio.status.WITHDRAWN": "철회", "bio.status.SUSPENDED": "보류", "bio.status.UNKNOWN": "미확인", "bio.status.AVAILABLE": "이용 가능", "bio.status.NO_LONGER_AVAILABLE": "이용 종료", "bio.flag.results": "결과 게시", "bio.flag.stopped": "중단", "bio.flag.completed": "완료", "bio.flag.new": "신규", "bio.flag.why": "사유", "bio.phaseSuffix": "상", "bio.enrollment": "등록 {n}명", "bio.fda.title": "FDA 최근 승인", "bio.fda.copy": "최근 60일 안에 원 신청(ORIG)이 승인된 NDA(신약)·BLA(바이오의약품) 목록입니다. 제네릭(ANDA)은 건수만 표시합니다. openFDA 공개 도메인 데이터이며 규제 기록일 뿐 매출·주가 해석이 아닙니다.", "bio.fda.caption": "최근 원 신청 승인 (NDA·BLA)", "bio.fda.window": "창 {s} ~ {e}", "bio.fda.nda": "NDA 신약", "bio.fda.bla": "BLA 바이오", "bio.fda.anda": "ANDA 제네릭(건수)", "bio.fda.priority": "우선심사", "bio.fda.nme": "신규 분자(NME)", "bio.fda.none": "창 안에 승인된 NDA·BLA가 없습니다.", "bio.fda.publisherUpdated": "openFDA 데이터 갱신", "bio.col.approved": "승인일", "bio.col.application": "신청", "bio.col.product": "제품(성분)", "bio.col.class": "분류", "bio.col.review": "심사", "bio.review.PRIORITY": "우선", "bio.review.STANDARD": "표준", "bio.listingNote": "상장 라벨은 Mulmit 참고 표기", "bio.modifications": "수정 내용", "bio.processedLabel": "ClinicalTrials.gov 처리일",
+    "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌", "nav.crypto": "크립토", "nav.bio": "바이오", "landing.bioLink": "바이오 페이지", "landing.bioDesc": "임상 파이프라인 동향 · FDA 최근 승인 · 공공 기록 그대로", "biopage.kicker": "BIOPHARMA", "biopage.title": "바이오, 임상과 승인을 기록으로 봅니다.", "biopage.copy": "국내·글로벌 제약바이오 워치리스트의 임상 파이프라인 갱신(ClinicalTrials.gov)과 FDA의 최근 신약·바이오의약품 승인(openFDA)을 공공 기록 그대로 봅니다. 결과의 성패나 주가 해석, 투자 권유가 아닙니다.", "bio.trials.title": "임상 파이프라인 동향", "bio.filter.all": "전체", "bio.filter.kr": "한국", "bio.filter.global": "글로벌", "bio.pub.link": "논문 {n}건", "bio.pub.source": "PubMed", "bio.pub.notice": "PubMed 서지(제목·저널·일자·PMID)만, 초록 비표시 · 등록번호(NCT) 기준 검색", "bio.adcomm.title": "FDA 자문위원회 회의 공고", "bio.adcomm.copy": "Federal Register에 게재된 FDA 자문위원회 회의 공고입니다(예정 회의와 최근 30일 종료 회의). 회의일은 공고의 DATES 단락에서 추출한 값이며 최종 일정은 링크된 공고를 따릅니다. 자문위 결론이나 승인 여부가 아닙니다.", "bio.adcomm.caption": "자문위원회 회의 공고 (예정 · 최근 종료)", "bio.adcomm.upcoming": "예정 회의", "bio.adcomm.next": "다음 회의", "bio.adcomm.recentPast": "최근 30일 종료", "bio.adcomm.undated": "날짜 미기재 공고", "bio.adcomm.none": "예정된 회의 공고가 없습니다.", "bio.col.meeting": "회의일", "bio.col.committee": "위원회", "bio.col.notice": "공고", "bio.col.published": "공고일", "bio.col.state": "상태", "bio.adcomm.state.upcoming": "예정", "bio.adcomm.state.past": "종료", "bio.adcomm.state.undated": "날짜 미기재", "bio.adcomm.amendment": "정정 공고", "bio.adcomm.daysUntil": "D-{n}", "bio.adcomm.today": "오늘", "bio.trials.copy": "워치리스트 34개 스폰서(주 스폰서 기준)의 임상 중 최근 14일 내 갱신된 중재 2·3상입니다(스폰서당 최대 8건). 상태·단계·일자는 ClinicalTrials.gov 등록값 그대로이며, 한국어 이름과 상장 라벨은 Mulmit이 붙인 참고 라벨입니다.", "bio.trials.caption": "최근 갱신 임상 (중재 2·3상, 14일)", "bio.badge.registry": "등록 정보 · 결과 아님", "bio.badge.sponsorEntered": "스폰서 직접 등록", "bio.badge.notAdvice": "투자 권유 아님", "bio.trials.sponsors": "워치리스트 스폰서", "bio.trials.recent": "최근 갱신(14일)", "bio.trials.registered": "등록 임상", "bio.trials.processed": "ClinicalTrials.gov 처리일", "bio.trials.none": "최근 14일 내 갱신된 중재 2·3상이 없습니다.", "bio.col.sponsor": "스폰서", "bio.col.study": "임상", "bio.col.phase": "단계", "bio.col.status": "상태", "bio.col.updated": "갱신일", "bio.col.primary": "1차 완료(예정)", "bio.col.conditions": "적응증", "bio.col.intervention": "중재", "bio.status.RECRUITING": "모집 중", "bio.status.NOT_YET_RECRUITING": "모집 예정", "bio.status.ENROLLING_BY_INVITATION": "초청 등록", "bio.status.ACTIVE_NOT_RECRUITING": "진행 중(모집 종료)", "bio.status.COMPLETED": "완료", "bio.status.TERMINATED": "조기 종료", "bio.status.WITHDRAWN": "철회", "bio.status.SUSPENDED": "보류", "bio.status.UNKNOWN": "미확인", "bio.status.AVAILABLE": "이용 가능", "bio.status.NO_LONGER_AVAILABLE": "이용 종료", "bio.flag.results": "결과 게시", "bio.flag.stopped": "중단", "bio.flag.completed": "완료", "bio.flag.new": "신규", "bio.flag.why": "사유", "bio.phaseSuffix": "상", "bio.enrollment": "등록 {n}명", "bio.fda.title": "FDA 최근 승인", "bio.fda.copy": "최근 60일 안에 원 신청(ORIG)이 승인된 NDA(신약)·BLA(바이오의약품) 목록입니다. 제네릭(ANDA)은 건수만 표시합니다. openFDA 공개 도메인 데이터이며 규제 기록일 뿐 매출·주가 해석이 아닙니다.", "bio.fda.caption": "최근 원 신청 승인 (NDA·BLA)", "bio.fda.window": "창 {s} ~ {e}", "bio.fda.nda": "NDA 신약", "bio.fda.bla": "BLA 바이오", "bio.fda.anda": "ANDA 제네릭(건수)", "bio.fda.priority": "우선심사", "bio.fda.nme": "신규 분자(NME)", "bio.fda.none": "창 안에 승인된 NDA·BLA가 없습니다.", "bio.fda.publisherUpdated": "openFDA 데이터 갱신", "bio.col.approved": "승인일", "bio.col.application": "신청", "bio.col.product": "제품(성분)", "bio.col.class": "분류", "bio.col.review": "심사", "bio.review.PRIORITY": "우선", "bio.review.STANDARD": "표준", "bio.listingNote": "상장 라벨은 Mulmit 참고 표기", "bio.modifications": "수정 내용", "bio.processedLabel": "ClinicalTrials.gov 처리일",
     "landing.kicker": "KOREA × US MARKET CONSOLE", "landing.title": "장이 닫혀도, 시장은 움직입니다.",
     "landing.title.krOpen": "장중입니다. 마감 후에도, 여기서 이어집니다.",
     "landing.title.usOpen": "서울은 밤, 뉴욕은 장중입니다.",
@@ -161,7 +161,7 @@ const TEXT = {
   },
   en: {
     "brand.tagline": "MARKET SIGNALS · KR · US · CRYPTO", "nav.analytics": "Stock analytics", "nav.monitor": "Market monitor",
-    "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & Global", "nav.crypto": "Crypto", "nav.bio": "Bio", "landing.bioLink": "Bio page", "landing.bioDesc": "Clinical pipeline activity · recent FDA approvals · public records as published", "biopage.kicker": "BIOPHARMA", "biopage.title": "Biopharma — trials and approvals, as recorded.", "biopage.copy": "Clinical pipeline updates for a Korean and global biopharma watchlist (ClinicalTrials.gov) and the FDA's recent new-drug and biologic approvals (openFDA), shown as the public records state them. Not trial outcomes, not price commentary, not a recommendation.", "bio.trials.title": "Clinical pipeline activity", "bio.filter.all": "All", "bio.filter.kr": "Korea", "bio.filter.global": "Global", "bio.trials.copy": "Interventional Phase 2/3 studies of 34 watchlist sponsors (lead sponsor) updated in the last 14 days (at most 8 per sponsor). Status, phase and dates are the ClinicalTrials.gov registered values; Korean names and listing labels are Mulmit's reference labels.", "bio.trials.caption": "Recently updated studies (interventional Phase 2/3, 14 days)", "bio.badge.registry": "Registry record · not results", "bio.badge.sponsorEntered": "Sponsor-entered", "bio.badge.notAdvice": "Not a recommendation", "bio.trials.sponsors": "Watchlist sponsors", "bio.trials.recent": "Updated (14d)", "bio.trials.registered": "Registered studies", "bio.trials.processed": "ClinicalTrials.gov processed", "bio.trials.none": "No interventional Phase 2/3 study was updated in the last 14 days.", "bio.col.sponsor": "Sponsor", "bio.col.study": "Study", "bio.col.phase": "Phase", "bio.col.status": "Status", "bio.col.updated": "Updated", "bio.col.primary": "Primary completion (est.)", "bio.col.conditions": "Conditions", "bio.col.intervention": "Intervention", "bio.status.RECRUITING": "Recruiting", "bio.status.NOT_YET_RECRUITING": "Not yet recruiting", "bio.status.ENROLLING_BY_INVITATION": "Enrolling by invitation", "bio.status.ACTIVE_NOT_RECRUITING": "Active, not recruiting", "bio.status.COMPLETED": "Completed", "bio.status.TERMINATED": "Terminated", "bio.status.WITHDRAWN": "Withdrawn", "bio.status.SUSPENDED": "Suspended", "bio.status.UNKNOWN": "Unknown", "bio.status.AVAILABLE": "Available", "bio.status.NO_LONGER_AVAILABLE": "No longer available", "bio.flag.results": "results posted", "bio.flag.stopped": "stopped", "bio.flag.completed": "completed", "bio.flag.new": "new", "bio.flag.why": "reason", "bio.phaseSuffix": "", "bio.enrollment": "enrollment {n}", "bio.fda.title": "Recent FDA approvals", "bio.fda.copy": "NDA (new drug) and BLA (biologic) applications whose original submission was approved in the last 60 days; generics (ANDA) are shown as a count. openFDA public-domain data — a regulatory record, not sales or price commentary.", "bio.fda.caption": "Recent original approvals (NDA · BLA)", "bio.fda.window": "window {s} – {e}", "bio.fda.nda": "NDA new drugs", "bio.fda.bla": "BLA biologics", "bio.fda.anda": "ANDA generics (count)", "bio.fda.priority": "priority review", "bio.fda.nme": "new molecular entities", "bio.fda.none": "No NDA/BLA approval inside the window.", "bio.fda.publisherUpdated": "openFDA data updated", "bio.col.approved": "Approved", "bio.col.application": "Application", "bio.col.product": "Product (ingredient)", "bio.col.class": "Class", "bio.col.review": "Review", "bio.review.PRIORITY": "Priority", "bio.review.STANDARD": "Standard", "bio.listingNote": "Listing labels are Mulmit reference labels", "bio.modifications": "Modifications", "bio.processedLabel": "ClinicalTrials.gov processed",
+    "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & Global", "nav.crypto": "Crypto", "nav.bio": "Bio", "landing.bioLink": "Bio page", "landing.bioDesc": "Clinical pipeline activity · recent FDA approvals · public records as published", "biopage.kicker": "BIOPHARMA", "biopage.title": "Biopharma — trials and approvals, as recorded.", "biopage.copy": "Clinical pipeline updates for a Korean and global biopharma watchlist (ClinicalTrials.gov) and the FDA's recent new-drug and biologic approvals (openFDA), shown as the public records state them. Not trial outcomes, not price commentary, not a recommendation.", "bio.trials.title": "Clinical pipeline activity", "bio.filter.all": "All", "bio.filter.kr": "Korea", "bio.filter.global": "Global", "bio.pub.link": "{n} publications", "bio.pub.source": "PubMed", "bio.pub.notice": "PubMed citation metadata only (title, journal, date, PMID), no abstracts · matched by registration number (NCT)", "bio.adcomm.title": "FDA advisory committee meeting notices", "bio.adcomm.copy": "FDA advisory committee meeting notices as published in the Federal Register (upcoming meetings and meetings that ended in the last 30 days). Meeting dates are extracted from each notice's DATES paragraph; the linked notice governs the final schedule. Not a committee conclusion or an approval.", "bio.adcomm.caption": "Advisory committee meeting notices (upcoming · recently ended)", "bio.adcomm.upcoming": "Upcoming", "bio.adcomm.next": "Next meeting", "bio.adcomm.recentPast": "Ended (30d)", "bio.adcomm.undated": "Undated notices", "bio.adcomm.none": "No upcoming meeting notice.", "bio.col.meeting": "Meeting", "bio.col.committee": "Committee", "bio.col.notice": "Notice", "bio.col.published": "Published", "bio.col.state": "State", "bio.adcomm.state.upcoming": "upcoming", "bio.adcomm.state.past": "ended", "bio.adcomm.state.undated": "undated", "bio.adcomm.amendment": "amendment", "bio.adcomm.daysUntil": "in {n}d", "bio.adcomm.today": "today", "bio.trials.copy": "Interventional Phase 2/3 studies of 34 watchlist sponsors (lead sponsor) updated in the last 14 days (at most 8 per sponsor). Status, phase and dates are the ClinicalTrials.gov registered values; Korean names and listing labels are Mulmit's reference labels.", "bio.trials.caption": "Recently updated studies (interventional Phase 2/3, 14 days)", "bio.badge.registry": "Registry record · not results", "bio.badge.sponsorEntered": "Sponsor-entered", "bio.badge.notAdvice": "Not a recommendation", "bio.trials.sponsors": "Watchlist sponsors", "bio.trials.recent": "Updated (14d)", "bio.trials.registered": "Registered studies", "bio.trials.processed": "ClinicalTrials.gov processed", "bio.trials.none": "No interventional Phase 2/3 study was updated in the last 14 days.", "bio.col.sponsor": "Sponsor", "bio.col.study": "Study", "bio.col.phase": "Phase", "bio.col.status": "Status", "bio.col.updated": "Updated", "bio.col.primary": "Primary completion (est.)", "bio.col.conditions": "Conditions", "bio.col.intervention": "Intervention", "bio.status.RECRUITING": "Recruiting", "bio.status.NOT_YET_RECRUITING": "Not yet recruiting", "bio.status.ENROLLING_BY_INVITATION": "Enrolling by invitation", "bio.status.ACTIVE_NOT_RECRUITING": "Active, not recruiting", "bio.status.COMPLETED": "Completed", "bio.status.TERMINATED": "Terminated", "bio.status.WITHDRAWN": "Withdrawn", "bio.status.SUSPENDED": "Suspended", "bio.status.UNKNOWN": "Unknown", "bio.status.AVAILABLE": "Available", "bio.status.NO_LONGER_AVAILABLE": "No longer available", "bio.flag.results": "results posted", "bio.flag.stopped": "stopped", "bio.flag.completed": "completed", "bio.flag.new": "new", "bio.flag.why": "reason", "bio.phaseSuffix": "", "bio.enrollment": "enrollment {n}", "bio.fda.title": "Recent FDA approvals", "bio.fda.copy": "NDA (new drug) and BLA (biologic) applications whose original submission was approved in the last 60 days; generics (ANDA) are shown as a count. openFDA public-domain data — a regulatory record, not sales or price commentary.", "bio.fda.caption": "Recent original approvals (NDA · BLA)", "bio.fda.window": "window {s} – {e}", "bio.fda.nda": "NDA new drugs", "bio.fda.bla": "BLA biologics", "bio.fda.anda": "ANDA generics (count)", "bio.fda.priority": "priority review", "bio.fda.nme": "new molecular entities", "bio.fda.none": "No NDA/BLA approval inside the window.", "bio.fda.publisherUpdated": "openFDA data updated", "bio.col.approved": "Approved", "bio.col.application": "Application", "bio.col.product": "Product (ingredient)", "bio.col.class": "Class", "bio.col.review": "Review", "bio.review.PRIORITY": "Priority", "bio.review.STANDARD": "Standard", "bio.listingNote": "Listing labels are Mulmit reference labels", "bio.modifications": "Modifications", "bio.processedLabel": "ClinicalTrials.gov processed",
     "landing.kicker": "KOREA × US MARKET CONSOLE", "landing.title": "Markets move after the close.",
     "landing.title.krOpen": "Seoul is trading. It carries on here after the close.",
     "landing.title.usOpen": "Night in Seoul, open in New York.",
@@ -511,7 +511,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, bioTrials: null, bioFda: null, bioFilter: "all", krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
+  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, bioTrials: null, bioFda: null, bioAdcomm: null, bioFilter: "all", krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -635,6 +635,8 @@ const DISABLED_CODES = {
   bio_trials_collecting: "status.collecting",
   bio_fda_disabled: "status.disabled",
   bio_fda_collecting: "status.collecting",
+  bio_adcomm_disabled: "status.disabled",
+  bio_adcomm_collecting: "status.collecting",
   chain_gas_not_configured: "status.disabled",
 };
 
@@ -897,6 +899,7 @@ function renderJumpNav() {
     { id: "crypto-derivatives", text: t("crypto.deriv.title") },
     { id: "crypto-board", text: t("crypto.board.title") },
     { id: "bio-trials", text: t("bio.trials.title") },
+    { id: "bio-adcomm", text: t("bio.adcomm.title") },
     { id: "bio-fda", text: t("bio.fda.title") },
     { id: "crypto-gas", text: t("crypto.gas.title") },
     { id: "crypto-volatility", text: t("crypto.vol.title") },
@@ -1044,7 +1047,7 @@ function renderAttribution() {
   }
   // Say out loud which lanes are switched off. Otherwise a page full of blank
   // cards looks like a broken site rather than a deliberate rights decision.
-  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation", "stress", "sentiment", "cryptoOverview", "cryptoSentiment", "cryptoVolatility", "cryptoKimchi", "cryptoStructure", "cryptoGas", "cryptoBoard", "bioTrials", "bioFda"]
+  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation", "stress", "sentiment", "cryptoOverview", "cryptoSentiment", "cryptoVolatility", "cryptoKimchi", "cryptoStructure", "cryptoGas", "cryptoBoard", "bioTrials", "bioFda", "bioAdcomm"]
     .map(disabledText).filter(Boolean))];
   if (laneReasons.length) {
     const title = document.createElement("p"); title.textContent = t("notice.disabledLanes"); host.append(title);
@@ -1130,13 +1133,14 @@ const PAGE_FETCHES = {
   cryptoBoard: ["crypto"],
   bioTrials: ["bio"],
   bioFda: ["bio"],
+  bioAdcomm: ["bio"],
 };
 
 async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, bioTrials, bioFda] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, bioTrials, bioFda, bioAdcomm] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/market/sentiment", "sentiment"), request("/api/kr/indices", "krIndices"),
@@ -1156,19 +1160,20 @@ async function loadCore() {
     request("/api/crypto/board", "cryptoBoard"),
     request("/api/bio/trials", "bioTrials"),
     request("/api/bio/fda", "bioFda"),
+    request("/api/bio/adcomm", "bioAdcomm"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
   state.stress = stress; state.sentiment = sentiment; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krHoldings = krHoldings;
   state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
   state.cryptoOverview = cryptoOverview; state.cryptoSentiment = cryptoSentiment; state.cryptoVolatility = cryptoVolatility;
-  state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure; state.cryptoGas = cryptoGas; state.cryptoBoard = cryptoBoard; state.bioTrials = bioTrials; state.bioFda = bioFda;
+  state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure; state.cryptoGas = cryptoGas; state.cryptoBoard = cryptoBoard; state.bioTrials = bioTrials; state.bioFda = bioFda; state.bioAdcomm = bioAdcomm;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets"); ingestPayload(sentimentRecordPayload(sentiment), "sentiment");
   renderAll(); $("#refresh-button")?.removeAttribute("aria-busy");
 }
 
 function renderAll() {
   renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
-  renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas(); renderCryptoBoard(); renderBioTrials(); renderBioFda();
+  renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas(); renderCryptoBoard(); renderBioTrials(); renderBioFda(); renderBioAdcomm();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -2241,7 +2246,7 @@ function cryptoPredictedText(rows) {
 // a lane that merely has no data yet keeps the section with a state message.
 function bioGateHidden(key) {
   const code = disabledCode(key);
-  return code === "bio_section_disabled" || code === "bio_trials_disabled" || code === "bio_fda_disabled";
+  return code === "bio_section_disabled" || code === "bio_trials_disabled" || code === "bio_fda_disabled" || code === "bio_adcomm_disabled";
 }
 
 function bioStatusText(status) {
@@ -2320,6 +2325,14 @@ function renderBioTrials() {
     const link = document.createElement("a"); link.href = row.url; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = row.title || row.nct_id;
     const id = document.createElement("small"); id.textContent = ` ${row.nct_id}${safeNumber(row.enrollment) !== null ? ` · ${t("bio.enrollment", { n: row.enrollment })}` : ""}`;
     study.append(link, id);
+    if (row.publications && safeNumber(row.publications.count) !== null && row.publications.count > 0) {
+      const pub = document.createElement("small"); pub.className = "bio-pub";
+      const plink = document.createElement("a"); plink.href = row.publications.search_url; plink.target = "_blank"; plink.rel = "noopener noreferrer"; plink.textContent = `${t("bio.pub.source")} · ${t("bio.pub.link", { n: row.publications.count })}`;
+      pub.append(plink);
+      const first = Array.isArray(row.publications.articles) ? row.publications.articles[0] : null;
+      if (first && first.title) pub.append(document.createTextNode(` — ${first.title}${first.journal ? ` (${first.journal}${first.pubdate ? `, ${first.pubdate}` : ""})` : ""}`));
+      study.append(pub);
+    }
     const status = document.createElement("span"); status.textContent = bioStatusText(row.status);
     const flags = document.createElement("span"); flags.className = "bio-flags";
     const f = row.flags || {};
@@ -2346,9 +2359,61 @@ function renderBioTrials() {
   attribution.append(link, document.createTextNode(` · ${t("bio.processedLabel")} ${data.processed_date || "—"}`));
   if (data.as_of) attribution.append(document.createTextNode(` · ${t("date.asof")} ${dateText(data.as_of)}${data.freshness?.status === "stale" ? ` · ${t("badge.stale")}` : ""}`));
   const mods = document.createElement("p"); mods.className = "kro-method"; mods.textContent = `${t("bio.modifications")}: ${localValue(data.modifications, state.lang)}`;
+  if (data.pubmed?.status === "ok") {
+    const pubLine = document.createElement("p"); pubLine.className = "kro-method";
+    const plink = document.createElement("a"); plink.href = data.pubmed.attribution?.url || "https://pubmed.ncbi.nlm.nih.gov/"; plink.target = "_blank"; plink.rel = "noopener noreferrer"; plink.textContent = data.pubmed.attribution?.text || "Source: PubMed";
+    pubLine.append(plink, document.createTextNode(` · ${t("bio.pub.notice")}${data.pubmed.as_of ? ` · ${t("date.asof")} ${dateText(data.pubmed.as_of)}` : ""}`));
+    footer.append(pubLine);
+  }
   const method = document.createElement("p"); method.className = "kro-method"; method.textContent = localValue(data.methodology, state.lang);
   const disclaimer = document.createElement("p"); disclaimer.className = "kro-disclaimer"; disclaimer.textContent = localValue(data.disclaimer, state.lang);
   footer.append(attribution, mods, method, disclaimer);
+}
+
+function renderBioAdcomm() {
+  const section = $("#bio-adcomm"); if (!section) return;
+  const stateNode = $("#bioa-state"), strip = $("#bioa-strip"), panel = $("#bioa-panel"), table = $("#bioa-table"), footer = $("#bioa-footer");
+  const data = state.bioAdcomm;
+  if (!data || !Array.isArray(data.upcoming)) {
+    if (bioGateHidden("bioAdcomm")) { section.hidden = true; return; }
+    const collecting = disabledCode("bioAdcomm") === "bio_adcomm_collecting";
+    section.hidden = false; strip.hidden = true; panel.hidden = true; stateNode.hidden = false;
+    stateNode.classList.toggle("disabled", collecting);
+    stateNode.textContent = collecting ? t("status.collecting") : `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+  section.hidden = false; stateNode.hidden = true; strip.hidden = false; panel.hidden = false; footer.hidden = false;
+  const totals = data.totals || {};
+  const next = data.next_meeting;
+  strip.replaceChildren(
+    cryptoStripItem(t("bio.adcomm.upcoming"), String(totals.upcoming ?? "—")),
+    cryptoStripItem(t("bio.adcomm.next"), next ? `${next.meeting_start}${next.committee ? ` · ${next.committee}` : ""}` : "—"),
+    cryptoStripItem(t("bio.adcomm.recentPast"), String(totals.recent_past ?? "—")),
+  );
+  const tbody = bioHead(table, [t("bio.col.meeting"), t("bio.col.committee"), t("bio.col.notice"), t("bio.col.published"), t("bio.col.state")]);
+  const rows = [...data.upcoming, ...(Array.isArray(data.recent_past) ? data.recent_past : []), ...(Array.isArray(data.undated) ? data.undated : [])];
+  if (!rows.length) bioEmptyRow(tbody, 5, t("bio.adcomm.none"));
+  rows.forEach((row) => {
+    const tr = document.createElement("tr");
+    const link = document.createElement("a"); link.href = row.url; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = row.title || "—"; link.className = "bio-title";
+    let when = row.meeting_start || "—";
+    if (row.meeting_end && row.meeting_end !== row.meeting_start) when += ` → ${row.meeting_end}`;
+    const stateText = row.status === "upcoming"
+      ? `${t("bio.adcomm.state.upcoming")}${typeof row.days_until === "number" ? ` · ${row.days_until === 0 ? t("bio.adcomm.today") : t("bio.adcomm.daysUntil", { n: row.days_until })}` : ""}`
+      : row.status === "past" ? t("bio.adcomm.state.past") : t("bio.adcomm.state.undated");
+    const stateCell = document.createElement("span"); stateCell.textContent = stateText;
+    if (row.amendment) { const b = document.createElement("span"); b.className = "status-badge warn"; b.style.marginLeft = "4px"; b.textContent = t("bio.adcomm.amendment"); stateCell.append(b); }
+    tr.append(bioCell(when), bioCell(row.committee || "—"), bioCell(link), bioCell(row.publication_date || "—"), bioCell(stateCell));
+    tbody.append(tr);
+  });
+  footer.replaceChildren();
+  const attribution = document.createElement("p"); attribution.className = "kro-method";
+  const link = document.createElement("a"); link.href = data.attribution?.url || "https://www.federalregister.gov/"; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = data.attribution?.text || "Source: Federal Register";
+  attribution.append(link);
+  if (data.as_of) attribution.append(document.createTextNode(` · ${t("date.asof")} ${dateText(data.as_of)}${data.freshness?.status === "stale" ? ` · ${t("badge.stale")}` : ""}`));
+  const method = document.createElement("p"); method.className = "kro-method"; method.textContent = localValue(data.methodology, state.lang);
+  const disclaimer = document.createElement("p"); disclaimer.className = "kro-disclaimer"; disclaimer.textContent = localValue(data.disclaimer, state.lang);
+  footer.append(attribution, method, disclaimer);
 }
 
 function renderBioFda() {
