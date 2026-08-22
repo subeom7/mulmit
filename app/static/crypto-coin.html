@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="{{DESCRIPTION}}">
+  <title>{{TITLE}}</title>
+  <link rel="canonical" href="https://mulmit.com/crypto/{{SYMBOL}}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mulmit">
+  <meta property="og:title" content="{{TITLE}}">
+  <meta property="og:description" content="{{DESCRIPTION}}">
+  <meta property="og:url" content="https://mulmit.com/crypto/{{SYMBOL}}">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="icon" type="image/png" sizes="96x96" href="/static/brand/favicon-96.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-8">
+  <style>
+    .coin-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 26px 0 14px; border-bottom: 1px solid var(--line); }
+    .coin-head h1 { margin: 0; font-size: clamp(24px, 3.6vw, 36px); letter-spacing: -.04em; }
+    .coin-head code { color: var(--faint); font: 700 13px/1 var(--mono); }
+    .coin-head .market-tag { padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 650 10px/1 var(--mono); }
+    .coin-price { display: flex; align-items: baseline; gap: 10px; margin: 16px 0 4px; flex-wrap: wrap; }
+    .coin-price strong { font: 750 clamp(28px, 4.4vw, 44px)/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+    .coin-price em { font: 700 15px/1 var(--mono); font-style: normal; }
+    .coin-price small { color: var(--faint); font: 650 10.5px/1 var(--mono); }
+    .coin-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 8px; margin: 16px 0 4px; }
+    .coin-kpi { padding: 12px 13px; border: 1px solid var(--line); border-radius: 9px; background: linear-gradient(145deg, var(--panel), var(--panel-2)); min-width: 0; }
+    .coin-kpi small { display: block; color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+    .coin-kpi strong { display: block; margin-top: 5px; font: 750 16px/1.15 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.03em; word-break: break-all; }
+    .coin-kpi span { display: block; margin-top: 3px; color: var(--muted); font: 650 10px/1.3 var(--mono); }
+    .coin-section { margin: 30px 0; }
+    .coin-section h2 { margin: 0 0 4px; font-size: 16px; letter-spacing: -.02em; }
+    .coin-section .sub { margin: 0 0 12px; color: var(--muted); font-size: 11.5px; }
+    .coin-note { margin: 6px 0 0; color: var(--faint); font-size: 10.5px; line-height: 1.55; }
+    .chart-toolbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+    .chart-toolbar button { font: inherit; font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); cursor: pointer; }
+    .chart-toolbar button.active { color: var(--ink); border-color: var(--accent); }
+    .chart-toolbar .spacer { flex: 1 1 auto; }
+    .chart-wrap { position: relative; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); padding: 8px 4px 4px; }
+    .chart-wrap svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+    .chart-wrap .cc-grid { stroke: var(--line); stroke-width: 1; }
+    .chart-wrap .cc-axis { fill: var(--faint); font: 650 9.5px/1 var(--mono); }
+    .chart-wrap .cc-cross { stroke: var(--line-strong, var(--muted)); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
+    .chart-tip { position: absolute; z-index: 3; pointer-events: none; padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel-2, var(--panel)); color: var(--ink); font: 650 10.5px/1.55 var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+    .chart-tip b { color: var(--muted); font-weight: 650; }
+    .chart-state { padding: 26px 14px; text-align: center; color: var(--faint); font-size: 11.5px; }
+    .coin-table { width: 100%; border-collapse: collapse; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+    .coin-table th, .coin-table td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+    .coin-table th { color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+    .coin-table td.num, .coin-table th.num { text-align: right; }
+    .coin-links { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 8px; }
+    .coin-links a { padding: 6px 11px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font-size: 11px; font-weight: 700; text-decoration: none; }
+    .coin-links a:hover { color: var(--ink); border-color: var(--accent); }
+    .state-line { padding: 14px; border: 1px dashed var(--line); border-radius: 9px; color: var(--faint); font-size: 11.5px; }
+    .up { color: var(--green); } .down { color: var(--red); }
+    @media (max-width: 560px) { .coin-table { min-width: 560px; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Mulmit home">
+      <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="36" height="36">
+      <span><strong>Mulmit</strong><small>MARKET SIGNAL CONSOLE</small></span>
+    </a>
+    <nav class="view-switch" aria-label="View">
+      <a class="view-tab" href="/">홈</a>
+      <a class="view-tab" href="/kr">한국</a>
+      <a class="view-tab" href="/us">미국·글로벌</a>
+      <a class="view-tab active" href="/crypto">크립토</a>
+      <a class="view-tab" href="/bio">바이오</a>
+      <a class="view-tab" href="/analytics">종목 분석</a>
+    </nav>
+    <div class="mast-actions"></div>
+  </header>
+
+  <main id="main" class="shell">
+    <div class="coin-head">
+      <h1 id="coin-name">{{NAME}}</h1>
+      <code id="coin-symbol">{{SYMBOL}}-PERP</code>
+      <span class="market-tag">HYPERLIQUID · 무기한선물</span>
+    </div>
+
+    <div class="coin-price">
+      <strong id="coin-last">—</strong>
+      <em id="coin-change">—</em>
+      <small id="coin-asof">불러오는 중</small>
+    </div>
+    <div class="risk-strip" role="note" style="margin-top:10px">
+      <span class="status-badge warn">현물가격 아님</span>
+      <span class="status-badge warn">무기한선물</span>
+      <span class="status-badge warn">USD 기준 · 원화 아님</span>
+      <span class="status-badge warn">투자 권유 아님</span>
+    </div>
+
+    <div id="coin-state" class="state-line" style="margin-top:14px">시세를 불러오는 중입니다…</div>
+    <div class="coin-kpis" id="coin-kpis" hidden></div>
+
+    <section class="coin-section" id="sec-chart">
+      <h2>가격 차트</h2>
+      <p class="sub" id="chart-sub">Hyperliquid 자체 DEX 무기한선물 캔들입니다. 현물 거래소 차트가 아닙니다.</p>
+      <div class="chart-toolbar" id="chart-toolbar" role="group" aria-label="캔들 간격"></div>
+      <div class="chart-wrap" id="chart-wrap">
+        <div class="chart-state" id="chart-state">차트를 불러오는 중입니다…</div>
+        <svg id="chart-svg" hidden role="img" aria-label="가격 캔들 차트"></svg>
+        <div class="chart-tip" id="chart-tip" hidden></div>
+      </div>
+      <p class="coin-note" id="chart-stats"></p>
+    </section>
+
+    <section class="coin-section" id="sec-deriv" hidden>
+      <h2>파생 지표</h2>
+      <p class="sub">펀딩비는 시간당 지급률이며 연율(APR)은 × 24 × 365 환산입니다. 양수는 롱이 숏에 지불 — 롱 쏠림입니다.</p>
+      <div class="table-scroll"><table class="coin-table" id="deriv-table"><thead></thead><tbody></tbody></table></div>
+      <p class="coin-note" id="deriv-note"></p>
+    </section>
+
+    <section class="coin-section">
+      <div class="coin-links">
+        <a href="/crypto">← 크립토 대시보드</a>
+        <a href="/crypto#crypto-board">HL 전체 시장 보드</a>
+        <a id="link-venue" href="https://app.hyperliquid.xyz/trade/{{SYMBOL}}" target="_blank" rel="noopener noreferrer">Hyperliquid 마켓 페이지 ↗</a>
+      </div>
+      <p class="coin-note" id="method-note"></p>
+      <p class="coin-note" id="disclaimer-note"></p>
+    </section>
+
+    <footer class="site-footer">
+      <nav aria-label="Legal">
+        <a href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a><a href="/disclaimer">면책 고지</a>
+      </nav>
+      <p>Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다. 데이터는 공개 원천의 전달값입니다.</p>
+    </footer>
+  </main>
+
+  <script>
+"use strict";
+// 코인 상세: 서버가 심볼·이름·메타를 렌더하고, 본문은 /api/crypto/coin 응답의 재조립이다.
+// 차트는 외부 위젯 없이 같은 응답의 캔들을 직접 그린다 — 표시 거래소가 섞이지 않는다.
+const SYMBOL = "{{SYMBOL}}";
+const $id = (x) => document.getElementById(x);
+const REFRESH_MS = 15000, CANDLE_MS = 60000;
+let interval = localStorageGet("mulmit.coinInterval") || "1h";
+let candles = [], lastPayload = null, candleFetchedAt = 0, hoverIndex = null;
+
+function localStorageGet(key) { try { return window.localStorage.getItem(key); } catch { return null; } }
+function localStorageSet(key, value) { try { window.localStorage.setItem(key, value); } catch { /* private mode */ } }
+
+const nf = (v, d) => v == null ? "—" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+function price(v) {
+  if (v == null) return "—";
+  const abs = Math.abs(v);
+  return "$" + nf(v, abs >= 1000 ? 2 : abs >= 1 ? 3 : abs >= 0.01 ? 5 : 8);
+}
+function usd(v) {
+  if (v == null) return "—";
+  const abs = Math.abs(v);
+  if (abs >= 1e12) return "$" + (v / 1e12).toFixed(2) + "T";
+  if (abs >= 1e9) return "$" + (v / 1e9).toFixed(2) + "B";
+  if (abs >= 1e6) return "$" + (v / 1e6).toFixed(1) + "M";
+  if (abs >= 1e3) return "$" + (v / 1e3).toFixed(0) + "K";
+  return "$" + nf(v, 0);
+}
+const signed = (v, d = 2) => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + nf(Math.abs(v), d) + "%";
+const cls = (v) => v == null ? "" : v > 0 ? "up" : v < 0 ? "down" : "";
+const timeText = (iso) => { if (!iso) return "—"; const d = new Date(iso); return isNaN(d) ? "—" : d.toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" }); };
+
+async function fetchJson(url) {
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) { const err = new Error(String(res.status)); err.status = res.status; try { err.body = await res.json(); } catch { /* no body */ } throw err; }
+  return res.json();
+}
+
+function renderHead(data) {
+  const market = data.market || {};
+  const last = market.price?.value ?? null;
+  const change = market.change_24h?.percent ?? null;
+  $id("coin-last").textContent = price(last);
+  const changeNode = $id("coin-change");
+  changeNode.textContent = change == null ? "—" : `${signed(change)} · 24h`;
+  changeNode.className = cls(change);
+  $id("coin-asof").textContent = `기준 ${timeText(market.freshness?.as_of)}${market.freshness?.status === "stale" ? " · 지연" : ""}`;
+  $id("coin-state").hidden = true;
+
+  const funding = market.funding || {}, oi = market.open_interest || {};
+  const cards = [
+    ["펀딩 (1시간)", funding.hourly_percent == null ? "—" : `${funding.hourly_percent > 0 ? "+" : ""}${nf(funding.hourly_percent, 4)}%`,
+      funding.apr_percent == null ? null : `연율 ${signed(funding.apr_percent)}${funding.heat && funding.heat !== "normal" ? ` · ${funding.heat === "high" ? "과열" : "다소 높음"}` : ""}`,
+      cls(funding.apr_percent)],
+    ["펀딩 방향", funding.side === "longs_pay" ? "롱이 지불" : funding.side === "shorts_pay" ? "숏이 지불" : "—", "양수 = 롱 쏠림", ""],
+    ["미결제약정", usd(oi.usd), oi.base_units == null ? null : `${nf(oi.base_units, 0)} ${data.symbol}`, ""],
+    ["24h 거래대금", usd(market.volume_24h_usd), market.liquidity_status === "thin" ? "얇은 시장" : null, ""],
+    ["마크 / 오라클", price(market.price?.mark), market.price?.oracle == null ? null : `오라클 ${price(market.price.oracle)}`, ""],
+    ["프리미엄", market.premium_percent == null ? "—" : signed(market.premium_percent, 4), "마크 대 오라클", cls(market.premium_percent)],
+  ];
+  const grid = $id("coin-kpis");
+  grid.replaceChildren(...cards.filter(([, value]) => value !== "—" || true).map(([title, value, note, klass]) => {
+    const box = document.createElement("div"); box.className = "coin-kpi";
+    const small = document.createElement("small"); small.textContent = title;
+    const strong = document.createElement("strong"); strong.textContent = value; if (klass) strong.className = klass;
+    box.append(small, strong);
+    if (note) { const span = document.createElement("span"); span.textContent = note; box.append(span); }
+    return box;
+  }));
+  grid.hidden = false;
+
+  const rows = Array.isArray(market.predicted_funding) ? market.predicted_funding : [];
+  const section = $id("sec-deriv"), table = $id("deriv-table");
+  const thead = table.querySelector("thead"), tbody = table.querySelector("tbody");
+  thead.replaceChildren(); tbody.replaceChildren();
+  const head = document.createElement("tr");
+  ["거래소", "예상 펀딩 (연율)", "지급 주기", "시간당"].forEach((label, idx) => {
+    const th = document.createElement("th"); th.scope = "col"; th.textContent = label; if (idx) th.className = "num"; head.append(th);
+  });
+  thead.append(head);
+  rows.forEach((row) => {
+    const tr = document.createElement("tr");
+    const venue = document.createElement("td"); venue.textContent = row.venue_label || row.venue || "—";
+    const apr = document.createElement("td"); apr.className = `num ${cls(row.apr_percent)}`.trim(); apr.textContent = signed(row.apr_percent);
+    const iv = document.createElement("td"); iv.className = "num"; iv.textContent = row.interval_hours == null ? "—" : `${nf(row.interval_hours, 0)}시간`;
+    const hourly = document.createElement("td"); hourly.className = "num"; hourly.textContent = row.rate == null ? "—" : `${nf(row.rate * 100, 4)}%`;
+    tr.append(venue, apr, iv, hourly); tbody.append(tr);
+  });
+  section.hidden = rows.length === 0;
+  $id("deriv-note").textContent = rows.length ? "Binance·Bybit 값은 Hyperliquid가 공표하는 예상값이며 Mulmit이 해당 거래소를 조회하지 않습니다." : "";
+  $id("method-note").textContent = data.methodology?.ko || "";
+  $id("disclaimer-note").textContent = data.disclaimer?.ko || "";
+  if (data.links?.venue) $id("link-venue").href = data.links.venue;
+}
+
+function renderToolbar(options) {
+  const bar = $id("chart-toolbar");
+  if (bar.dataset.ready === "1") { [...bar.querySelectorAll("button")].forEach((b) => b.classList.toggle("active", b.dataset.interval === interval)); return; }
+  bar.replaceChildren(...options.map((option) => {
+    const button = document.createElement("button"); button.type = "button"; button.dataset.interval = option.id;
+    button.textContent = option.label?.ko || option.id;
+    button.classList.toggle("active", option.id === interval);
+    button.addEventListener("click", () => {
+      if (interval === option.id) return;
+      interval = option.id; localStorageSet("mulmit.coinInterval", interval);
+      [...bar.querySelectorAll("button")].forEach((b) => b.classList.toggle("active", b.dataset.interval === interval));
+      candles = []; drawChart(); load(true);
+    });
+    return button;
+  }));
+  bar.dataset.ready = "1";
+}
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}) => { const node = document.createElementNS(SVG_NS, tag); for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v); return node; };
+
+function niceTicks(min, max, count) {
+  if (!(max > min)) return [min];
+  const raw = (max - min) / count;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw) || mag * 10;
+  const out = [];
+  for (let v = Math.ceil(min / step) * step; v <= max + step * 0.001; v += step) out.push(v);
+  return out;
+}
+
+function drawChart() {
+  const svg = $id("chart-svg"), stateNode = $id("chart-state"), wrap = $id("chart-wrap");
+  if (!candles.length) {
+    svg.setAttribute("hidden", "");
+    stateNode.hidden = false;
+    stateNode.textContent = lastPayload?.chart?.error ? "차트 데이터를 불러오지 못했습니다 · 잠시 후 다시 시도해 주세요." : "차트를 불러오는 중입니다…";
+    return;
+  }
+  stateNode.hidden = true; svg.removeAttribute("hidden");
+  const width = Math.max(320, Math.round(wrap.clientWidth - 12));
+  const height = Math.max(260, Math.min(460, Math.round(width * 0.42)));
+  const padR = 62, padL = 6, padT = 10, padB = 22, volH = Math.round(height * 0.18);
+  const plotW = width - padL - padR, plotH = height - padT - padB - volH - 8;
+  let lo = Infinity, hi = -Infinity, vMax = 0;
+  candles.forEach((c) => { lo = Math.min(lo, c.l); hi = Math.max(hi, c.h); vMax = Math.max(vMax, c.v || 0); });
+  if (!(hi > lo)) { hi = lo * 1.001 + 1e-9; }
+  const pad = (hi - lo) * 0.06;
+  lo -= pad; hi += pad;
+  const x = (i) => padL + (plotW * (i + 0.5)) / candles.length;
+  const y = (v) => padT + plotH - ((v - lo) / (hi - lo)) * plotH;
+  const yVol = (v) => height - padB - (vMax ? (v / vMax) * volH : 0);
+  const bw = Math.max(1, Math.min(14, (plotW / candles.length) * 0.68));
+
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.setAttribute("width", width); svg.setAttribute("height", height);
+  svg.replaceChildren();
+
+  niceTicks(lo, hi, 4).forEach((value) => {
+    svg.append(el("line", { x1: padL, x2: padL + plotW, y1: y(value).toFixed(1), y2: y(value).toFixed(1), class: "cc-grid" }));
+    const label = el("text", { x: padL + plotW + 6, y: (y(value) + 3.2).toFixed(1), class: "cc-axis" });
+    label.textContent = price(value).replace("$", "");
+    svg.append(label);
+  });
+
+  const upColor = getComputedStyle(document.body).getPropertyValue("--green").trim() || "#25c26e";
+  const downColor = getComputedStyle(document.body).getPropertyValue("--red").trim() || "#e5484d";
+  const frag = document.createDocumentFragment();
+  candles.forEach((c, i) => {
+    const up = c.c >= c.o, color = up ? upColor : downColor, cx = x(i);
+    frag.append(el("line", { x1: cx.toFixed(1), x2: cx.toFixed(1), y1: y(c.h).toFixed(1), y2: y(c.l).toFixed(1), stroke: color, "stroke-width": Math.min(1.4, bw * 0.3) }));
+    const top = y(Math.max(c.o, c.c)), bottom = y(Math.min(c.o, c.c));
+    frag.append(el("rect", { x: (cx - bw / 2).toFixed(1), y: top.toFixed(1), width: bw.toFixed(1), height: Math.max(1, bottom - top).toFixed(1), fill: color, opacity: up ? 0.92 : 0.86 }));
+    if (vMax && c.v != null) frag.append(el("rect", { x: (cx - bw / 2).toFixed(1), y: yVol(c.v).toFixed(1), width: bw.toFixed(1), height: Math.max(0.5, height - padB - yVol(c.v)).toFixed(1), fill: color, opacity: 0.28 }));
+  });
+  svg.append(frag);
+
+  const first = candles[0], last = candles[candles.length - 1];
+  [[0, first], [candles.length - 1, last]].forEach(([i, c], idx) => {
+    const label = el("text", { x: idx ? (padL + plotW).toFixed(1) : padL.toFixed(1), y: height - 6, class: "cc-axis" });
+    if (idx) label.setAttribute("text-anchor", "end");
+    label.textContent = new Date(c.t).toLocaleString("ko-KR", interval === "1d" ? { dateStyle: "medium" } : { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    svg.append(label);
+  });
+
+  const crossX = el("line", { class: "cc-cross", y1: padT, y2: height - padB, x1: -10, x2: -10 });
+  const crossY = el("line", { class: "cc-cross", x1: padL, x2: padL + plotW, y1: -10, y2: -10 });
+  svg.append(crossX, crossY);
+
+  const tip = $id("chart-tip");
+  const move = (event) => {
+    const rect = svg.getBoundingClientRect();
+    const point = ((event.touches ? event.touches[0].clientX : event.clientX) - rect.left) * (width / rect.width);
+    const index = Math.max(0, Math.min(candles.length - 1, Math.round(((point - padL) / plotW) * candles.length - 0.5)));
+    hoverIndex = index;
+    const c = candles[index], cx = x(index);
+    crossX.setAttribute("x1", cx.toFixed(1)); crossX.setAttribute("x2", cx.toFixed(1));
+    crossY.setAttribute("y1", y(c.c).toFixed(1)); crossY.setAttribute("y2", y(c.c).toFixed(1));
+    tip.hidden = false;
+    tip.innerHTML = "";
+    const when = document.createElement("div");
+    when.textContent = new Date(c.t).toLocaleString("ko-KR", interval === "1d" ? { dateStyle: "medium" } : { dateStyle: "short", timeStyle: "short" });
+    tip.append(when);
+    [["시", c.o], ["고", c.h], ["저", c.l], ["종", c.c]].forEach(([label, value]) => {
+      const line = document.createElement("div");
+      const b = document.createElement("b"); b.textContent = `${label} `;
+      line.append(b, document.createTextNode(price(value)));
+      tip.append(line);
+    });
+    if (c.v != null) { const line = document.createElement("div"); const b = document.createElement("b"); b.textContent = "거래량 "; line.append(b, document.createTextNode(`${nf(c.v, 2)} ${SYMBOL}`)); tip.append(line); }
+    const left = (cx / width) * rect.width;
+    tip.style.left = `${Math.min(rect.width - tip.offsetWidth - 8, Math.max(4, left + 12))}px`;
+    tip.style.top = `${Math.max(4, (y(c.h) / height) * rect.height - 8)}px`;
+  };
+  const leave = () => { tip.hidden = true; hoverIndex = null; crossX.setAttribute("x1", -10); crossX.setAttribute("x2", -10); crossY.setAttribute("y1", -10); crossY.setAttribute("y2", -10); };
+  svg.onmousemove = move; svg.onmouseleave = leave;
+  svg.ontouchstart = move; svg.ontouchmove = move; svg.ontouchend = leave;
+
+  const stats = lastPayload?.chart?.stats || {};
+  $id("chart-stats").textContent = [
+    `구간 ${stats.candles || candles.length}개 캔들`,
+    stats.change_percent == null ? null : `구간 변동 ${signed(stats.change_percent)}`,
+    stats.high == null ? null : `고가 ${price(stats.high)}`,
+    stats.low == null ? null : `저가 ${price(stats.low)}`,
+    lastPayload?.chart?.as_of ? `캔들 기준 ${timeText(lastPayload.chart.as_of)}` : null,
+  ].filter(Boolean).join(" · ");
+}
+
+function showFatal(message) {
+  $id("coin-state").hidden = false;
+  $id("coin-state").textContent = message;
+  $id("coin-kpis").hidden = true;
+  $id("chart-state").textContent = message;
+}
+
+async function load(withCandles) {
+  const needCandles = withCandles || !candles.length || Date.now() - candleFetchedAt > CANDLE_MS;
+  try {
+    const data = await fetchJson(`/api/crypto/coin/${encodeURIComponent(SYMBOL)}?interval=${encodeURIComponent(interval)}${needCandles ? "" : "&candles=false"}`);
+    lastPayload = data;
+    renderToolbar(data.chart?.intervals || []);
+    renderHead(data);
+    if (needCandles && Array.isArray(data.chart?.candles) && data.chart.candles.length) {
+      candles = data.chart.candles; candleFetchedAt = Date.now(); drawChart();
+    } else if (candles.length && data.market?.price?.value != null) {
+      const live = data.market.price.value, last = candles[candles.length - 1];
+      last.c = live; last.h = Math.max(last.h, live); last.l = Math.min(last.l, live);
+      drawChart();
+    } else if (!candles.length) {
+      drawChart();
+    }
+  } catch (error) {
+    if (error.status === 404) { showFatal("Hyperliquid에 상장된 시장이 아닙니다."); return; }
+    const code = error.body?.detail?.code;
+    if (code === "crypto_section_disabled" || code === "hip3_public_display_pending_rights") { showFatal("이 배포에서는 크립토 표시가 꺼져 있습니다."); return; }
+    if (!lastPayload) showFatal("데이터를 불러오지 못했습니다 · 잠시 후 다시 시도해 주세요.");
+  }
+}
+
+let resizeTimer = null;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawChart, 160); });
+load(true);
+setInterval(() => { if (!document.hidden) load(false); }, REFRESH_MS);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(false); });
+  </script>
+</body>
+</html>

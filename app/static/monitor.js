@@ -2536,6 +2536,14 @@ function renderBioFda() {
   footer.append(attribution, method, disclaimer);
 }
 
+function coinPath(symbol) { return `/crypto/${encodeURIComponent(String(symbol || "").trim())}`; }
+
+function coinLink(symbol) {
+  const link = document.createElement("a"); link.className = "cboard-sym";
+  link.href = coinPath(symbol); link.textContent = symbol;
+  return link;
+}
+
 function cryptoGateHidden(key) {
   const code = disabledCode(key);
   return code === "crypto_section_disabled" || code === "hip3_public_display_pending_rights" || code === "crypto_sentiment_disabled"
@@ -2566,7 +2574,9 @@ function renderCryptoOverview() {
     const article = document.createElement("article");
     article.className = `kro-card crypto-card ${changeClass(pct)}`;
     const header = document.createElement("header");
-    const title = document.createElement("h3"); title.textContent = localValue(card.label, state.lang);
+    const title = document.createElement("h3");
+    const detail = document.createElement("a"); detail.className = "kro-detail"; detail.href = coinPath(card.symbol); detail.textContent = localValue(card.label, state.lang);
+    title.append(detail);
     const symbol = document.createElement("a"); symbol.className = "kro-sym"; symbol.textContent = `${card.symbol}-PERP`;
     if (card.source?.url) { symbol.href = card.source.url; symbol.target = "_blank"; symbol.rel = "noopener noreferrer"; }
     header.append(title, symbol);
@@ -2594,6 +2604,8 @@ function renderCryptoOverview() {
     if (card.liquidity_status === "low") badge(t("weekend.liquidity"));
     if (card.funding?.heat === "high" || card.funding?.heat === "elevated") badge(cryptoSideText(card.funding), card.funding.heat === "high" ? "error" : "warn");
     article.append(header, priceNode, vs, meta);
+    // The whole card opens the coin page; the symbol link (venue) and any other link keep their own target.
+    article.addEventListener("click", (event) => { if (!event.target.closest("a")) window.location.href = coinPath(card.symbol); });
     if (badges.childElementCount) article.append(badges);
     return article;
   }));
@@ -2994,12 +3006,12 @@ function renderCryptoBoard() {
     const tbody = document.createElement("tbody");
     for (const row of rows) {
       const tr = document.createElement("tr");
-      columns.forEach(([key, cls, render]) => { const td = document.createElement("td"); const [text, extra] = render(row); td.className = `${cls || ""} ${extra || ""}`.trim(); td.textContent = text; tr.append(td); });
+      columns.forEach(([key, cls, render]) => { const td = document.createElement("td"); const [text, extra] = render(row); td.className = `${cls || ""} ${extra || ""}`.trim(); if (text instanceof Node) td.append(text); else td.textContent = text; tr.append(td); });
       tbody.append(tr);
     }
     tbl.append(thead, tbody); scroll.append(tbl); wrap.append(scroll); return wrap;
   };
-  const sym = (row) => [row.symbol, ""];
+  const sym = (row) => [coinLink(row.symbol), ""];
   const price = (row) => [cryptoUsd(safeNumber(row.price)), ""];
   const change = (row) => { const v = safeNumber(row.change_24h_percent); return [v === null ? "—" : formatSigned(v), changeClass(v)]; };
   const oi = (row) => [cryptoUsd(safeNumber(row.open_interest_usd), { compact: true }), ""];
