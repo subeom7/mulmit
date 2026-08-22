@@ -281,6 +281,27 @@ def _downsample_observations(
     return [observations[index] for index in sorted(indexes)]
 
 
+def _weekly_observations(
+    observations: list[tuple[dt.date, float]],
+) -> list[tuple[dt.date, float]]:
+    """One point per ISO week — the last value actually published that week.
+
+    Never an average. An average is a number the source never printed, and this
+    file only ever hands out values as published. Taking the last observation of
+    each week keeps every point real, and the most recent observation always
+    survives because the current (partial) week is its own group.
+
+    Idempotent for anything weekly or sparser: a monthly series has at most one
+    observation per week, so grouping changes nothing. Only dense daily series
+    actually shrink — which is the point.
+    """
+    by_week: dict[tuple[int, int], tuple[dt.date, float]] = {}
+    for date, value in observations:
+        iso = date.isocalendar()
+        by_week[(iso[0], iso[1])] = (date, value)
+    return [by_week[key] for key in sorted(by_week)]
+
+
 def _license_required_payload(spec: FredSeriesSpec) -> dict[str, Any]:
     """Describe a catalog item without redistributing its protected observations."""
     return {
@@ -412,6 +433,8 @@ def _series_payload(
     spec: FredSeriesSpec,
     record: dict,
     history: str,
+    *,
+    weekly: bool = False,
 ) -> dict[str, Any] | None:
     # Second line of defence. Callers already filter by lane, but this reader is
     # the only place that turns stored rows into public values, so it refuses on
@@ -424,10 +447,14 @@ def _series_payload(
     all_observations = _load_observations(spec, record, _history_start(history))
     if not all_observations:
         return None
-    observations = _downsample_observations(all_observations)
+    # The card's change is the move between the last two *published* values.
+    # Reading it off the shipped list instead would silently turn it into a
+    # week-over-week change the moment the list is sampled weekly.
+    latest_date, latest_value = all_observations[-1]
+    previous = all_observations[-2] if len(all_observations) > 1 else None
 
-    latest_date, latest_value = observations[-1]
-    previous = observations[-2] if len(observations) > 1 else None
+    observations = _weekly_observations(all_observations) if weekly else all_observations
+    observations = _downsample_observations(observations)
     change = None
     if previous is not None:
         delta = latest_value - previous[1]
@@ -510,6 +537,7 @@ def _series_payload(
             "returned": len(observations),
             "downsampled": len(observations) < len(all_observations),
             "limit": MAX_PUBLIC_OBSERVATIONS,
+            "sampling": "weekly" if weekly else "full",
         },
         "observations": [
             {"date": date.isoformat(), "value": value} for date, value in observations
@@ -559,7 +587,7 @@ def build_macro_snapshot(history: str = "3y") -> dict[str, Any]:
             payloads.append(_license_required_payload(spec))
             restricted.append(spec.series_id)
             continue
-        payload = _series_payload(spec, record, history) if record else None
+        payload = _series_payload(spec, record, history, weekly=True) if record else None
         if payload is None:
             missing.append(spec.series_id)
         else:
@@ -590,6 +618,26 @@ def build_macro_snapshot(history: str = "3y") -> dict[str, Any]:
             }
             for group in FRED_GROUPS
         ],
+        # The cards draw sparklines, and a sparkline does not need daily
+        # resolution over three years — that shape cost 863KB uncompressed and
+        # ~145ms of gzip on every request. One point per week is the same
+        # picture; the full daily series is one request away and named here.
+        "resolution": {
+            "sampling": "weekly",
+            "full_series_url": "/api/market/macro/{series_id}",
+            "note_ko": (
+                "차트용으로 주당 한 점씩만 싣습니다. 평균이 아니라 그 주에 실제로 발표된 "
+                "마지막 값이고, 최신 관측치는 항상 포함됩니다. 카드의 최신값·전일대비는 "
+                "주간 표본이 아니라 원본 관측치에서 계산합니다. 일간 전체는 "
+                "/api/market/macro/{series_id}에서 받습니다."
+            ),
+            "note_en": (
+                "Charts carry one point per week: not an average but the last value "
+                "actually published that week, and the most recent observation is always "
+                "included. The card's latest value and change come from the full series, "
+                "not the weekly sample. Full daily history is at /api/market/macro/{series_id}."
+            ),
+        },
         "series": payloads,
         "missing": missing,
         "restricted": restricted,

@@ -63,10 +63,24 @@ def test_macro_overview_has_cards_series_freshness_and_attribution(db, fred_serv
     assert treasury["freshness"]["status"] == "fresh"
     assert treasury["rights"]["copyrighted"] is False
     assert treasury["rights"]["public_display"] is True
-    assert treasury["observations"] == [
+    # The snapshot carries one point per week for the card sparklines, so two
+    # consecutive days collapse to the later one. The card's own numbers above
+    # are unaffected: latest and change are read from the full series, not from
+    # this sample — otherwise the change would quietly become week-over-week.
+    assert treasury["observation_count"]["sampling"] == "weekly"
+    assert treasury["observations"] == [{"date": TODAY.isoformat(), "value": 14.25}]
+    assert body["resolution"]["sampling"] == "weekly"
+    assert body["resolution"]["full_series_url"] == "/api/market/macro/{series_id}"
+
+    # And the full daily history stays one request away, at full resolution.
+    single = client.get("/api/market/macro/DGS10?history=max").json()["series"]
+    assert single["observation_count"]["sampling"] == "full"
+    assert single["observations"] == [
         {"date": YESTERDAY.isoformat(), "value": 14.0},
         {"date": TODAY.isoformat(), "value": 14.25},
     ]
+    assert single["change"]["value"] == 0.25
+
     assert set(body["restricted"]) == {"VIXCLS", "BAMLH0A0HYM2", "PCOPPUSDM"}
     for series_id in body["restricted"]:
         restricted = next(item for item in body["series"] if item["id"] == series_id)
