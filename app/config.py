@@ -190,6 +190,21 @@ CHAIN_RPC_ARBITRUM_URL = os.environ.get("CHAIN_RPC_ARBITRUM_URL", "").strip()
 CHAIN_RPC_PROVIDER_NAME = os.environ.get("CHAIN_RPC_PROVIDER_NAME", "").strip()
 CHAIN_RPC_TIMEOUT = _float("CHAIN_RPC_TIMEOUT", 6.0)
 
+# --- Bio section (ROADMAP #8): ClinicalTrials.gov watchlist + openFDA approvals. Gates default off.
+BIO_SECTION_ENABLED = _bool("BIO_SECTION_ENABLED", False)
+CLINICALTRIALS_ENABLED = _bool("CLINICALTRIALS_ENABLED", False)
+CLINICALTRIALS_TIMEOUT = _float("CLINICALTRIALS_TIMEOUT", 20.0)
+CLINICALTRIALS_RETRIES = _int("CLINICALTRIALS_RETRIES", 2)
+CLINICALTRIALS_MAX_AGE = _int("CLINICALTRIALS_MAX_AGE", 60 * 60 * 6)
+CLINICALTRIALS_PACE_SECONDS = _float("CLINICALTRIALS_PACE_SECONDS", 0.6)
+CLINICALTRIALS_PAGE_SIZE = _int("CLINICALTRIALS_PAGE_SIZE", 25)
+OPENFDA_ENABLED = _bool("OPENFDA_ENABLED", False)
+OPENFDA_API_KEY = os.environ.get("OPENFDA_API_KEY", "").strip()  # optional, ingest only
+OPENFDA_TIMEOUT = _float("OPENFDA_TIMEOUT", 20.0)
+OPENFDA_RETRIES = _int("OPENFDA_RETRIES", 2)
+OPENFDA_MAX_AGE = _int("OPENFDA_MAX_AGE", 60 * 60 * 24)
+OPENFDA_WINDOW_DAYS = _int("OPENFDA_WINDOW_DAYS", 60)
+
 # Financial Services Commission end-of-day data on data.go.kr. The three
 # datasets used here are registered with 이용허락범위 "제한 없음" — the portal's
 # widest licence tier — which is a different and broader grant than the KRX

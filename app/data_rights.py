@@ -33,6 +33,9 @@ ALTERNATIVE_ME = "alternative_me"
 COINMARKETCAP = "coinmarketcap"
 UPBIT = "upbit"
 CHAIN_GAS = "chain_gas"
+BIO = "bio"
+CLINICALTRIALS = "clinicaltrials"
+OPENFDA = "openfda"
 OFR = "ofr"
 
 # --- structured client contracts --------------------------------------------
@@ -161,6 +164,42 @@ CRYPTO_STRUCTURE_COLLECTING = {
     "message": (
         "The CoinMarketCap relay is enabled but has not stored its first observation "
         "yet (or the ingest key is missing); values appear after the next ingest pass."
+    ),
+}
+
+BIO_SECTION_DISABLED = {
+    "code": "bio_section_disabled",
+    "status": "disabled",
+    "message": "The bio section is not enabled for this deployment.",
+}
+
+BIO_TRIALS_DISABLED = {
+    "code": "bio_trials_disabled",
+    "status": "disabled",
+    "message": "The ClinicalTrials.gov watchlist relay is disabled for this deployment.",
+}
+
+BIO_TRIALS_COLLECTING = {
+    "code": "bio_trials_collecting",
+    "status": "collecting",
+    "message": (
+        "The ClinicalTrials.gov relay is enabled but has not stored its first pass yet; "
+        "values appear after the next ingest run."
+    ),
+}
+
+BIO_FDA_DISABLED = {
+    "code": "bio_fda_disabled",
+    "status": "disabled",
+    "message": "The openFDA approvals relay is disabled for this deployment.",
+}
+
+BIO_FDA_COLLECTING = {
+    "code": "bio_fda_collecting",
+    "status": "collecting",
+    "message": (
+        "The openFDA relay is enabled but has not stored its first pass yet; "
+        "values appear after the next ingest run."
     ),
 }
 
@@ -298,6 +337,29 @@ def upbit_serving_enabled() -> bool:
     return crypto_section_enabled() and bool(config.UPBIT_ENABLED)
 
 
+def bio_section_enabled() -> bool:
+    """The bio page and its lanes are a deliberate rollout behind one switch."""
+    return bool(config.BIO_SECTION_ENABLED)
+
+
+def clinicaltrials_serving_enabled() -> bool:
+    return bio_section_enabled() and bool(config.CLINICALTRIALS_ENABLED)
+
+
+def clinicaltrials_ingest_enabled() -> bool:
+    """Unkeyed public API — the same switch governs fetching and serving."""
+    return clinicaltrials_serving_enabled()
+
+
+def openfda_serving_enabled() -> bool:
+    return bio_section_enabled() and bool(config.OPENFDA_ENABLED)
+
+
+def openfda_ingest_enabled() -> bool:
+    """The openFDA key is optional; without it the per-IP allowance covers our few daily calls."""
+    return openfda_serving_enabled()
+
+
 def chain_gas_configured_chains() -> list[str]:
     return [
         name
@@ -389,6 +451,21 @@ def lane_report() -> dict[str, dict[str, str]]:
         UPBIT: {
             "status": "enabled" if upbit_serving_enabled() else "pending_rights",
             "gate": "CRYPTO_SECTION_ENABLED + UPBIT_ENABLED",
+        },
+        BIO: {
+            "status": "enabled" if bio_section_enabled() else "disabled",
+            "gate": "BIO_SECTION_ENABLED",
+        },
+        CLINICALTRIALS: {
+            "status": "enabled" if clinicaltrials_serving_enabled() else "disabled",
+            "gate": "BIO_SECTION_ENABLED + CLINICALTRIALS_ENABLED",
+            "display_duties": "attribution, currency, processed date, modifications stated (Terms 2023-01-31)",
+        },
+        OPENFDA: {
+            "status": "enabled" if openfda_serving_enabled() else "disabled",
+            "gate": "BIO_SECTION_ENABLED + OPENFDA_ENABLED",
+            "fetch_key": "present" if config.OPENFDA_API_KEY else "absent_optional",
+            "license": "public domain, CC0 1.0",
         },
         CHAIN_GAS: {
             "status": chain_gas_status(),
