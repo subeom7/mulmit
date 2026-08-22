@@ -1138,6 +1138,7 @@ const PAGE_FETCHES = {
   cryptoGas: ["crypto"],
   cryptoBoard: ["crypto"],
   cryptoRegime: ["crypto"],
+  cryptoLiquidations: ["crypto"],
   cryptoNews: ["crypto"],
   bioTrials: ["bio"],
   bioFda: ["bio"],
@@ -1149,7 +1150,7 @@ async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, cryptoRegime, cryptoNews, bioTrials, bioFda, bioAdcomm, bioMfds] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, cryptoRegime, cryptoLiquidations, cryptoNews, bioTrials, bioFda, bioAdcomm, bioMfds] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/market/sentiment", "sentiment"), request("/api/kr/indices", "krIndices"),
@@ -1179,7 +1180,7 @@ async function loadCore() {
   state.stress = stress; state.sentiment = sentiment; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krHoldings = krHoldings;
   state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
   state.cryptoOverview = cryptoOverview; state.cryptoSentiment = cryptoSentiment; state.cryptoVolatility = cryptoVolatility;
-  state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure; state.cryptoGas = cryptoGas; state.cryptoBoard = cryptoBoard; state.cryptoRegime = cryptoRegime; state.cryptoNews = cryptoNews; state.bioTrials = bioTrials; state.bioFda = bioFda; state.bioAdcomm = bioAdcomm; state.bioMfds = bioMfds;
+  state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure; state.cryptoGas = cryptoGas; state.cryptoBoard = cryptoBoard; state.cryptoRegime = cryptoRegime; state.cryptoLiquidations = cryptoLiquidations; state.cryptoNews = cryptoNews; state.bioTrials = bioTrials; state.bioFda = bioFda; state.bioAdcomm = bioAdcomm; state.bioMfds = bioMfds;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets"); ingestPayload(sentimentRecordPayload(sentiment), "sentiment");
   renderAll(); $("#refresh-button")?.removeAttribute("aria-busy");
 }
