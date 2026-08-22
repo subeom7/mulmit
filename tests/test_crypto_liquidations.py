@@ -172,6 +172,8 @@ def test_refresh_sums_only_the_venues_that_answered_and_names_them(lane_on):
 
     # The basis names the venues actually summed, so the card cannot imply more.
     assert "Binance" in payload["basis_ko"] and "전체 시장 합계가 아닙니다" in payload["basis_ko"]
+    # Rendered with textContent, so markdown emphasis would show as literal asterisks.
+    assert "**" not in payload["basis_ko"] and "**" not in payload["basis_en"]
     assert "not a market-wide total" in payload["basis_en"]
 
 

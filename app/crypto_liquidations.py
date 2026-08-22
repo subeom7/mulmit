@@ -201,8 +201,8 @@ def refresh_crypto_liquidations(*, force: bool = False) -> dict[str, Any]:
         "generated_at": _iso(now),
         "coins": coins,
         "basis_ko": (
-            f"최근 {WINDOW_HOURS}시간 청산 합계입니다. **{'·'.join(named)} {len(named)}개 거래소의 합이며 "
-            "전체 시장 합계가 아닙니다** — 나머지 거래소는 이 API가 청산 데이터를 주지 않습니다. "
+            f"최근 {WINDOW_HOURS}시간 청산 합계입니다. {'·'.join(named)} {len(named)}개 거래소의 합이며 "
+            "전체 시장 합계가 아닙니다 — 나머지 거래소는 이 API가 청산 데이터를 주지 않습니다. "
             "값은 1시간 단위로 집계되며 실시간 체결 피드가 아니고, 가장 최근 구간은 아직 채워지는 중일 수 있습니다. "
             "거래소마다 표시 단위가 달라 USD로 환산한 값입니다."
         ),
