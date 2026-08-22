@@ -1313,6 +1313,8 @@ HIP-3 합성 퍼프, 퍼프 파생 입력은 이력이 짧아(상장 2026-03~) �
 | Marketstack | Basic USD 9.99. 2026-08-18 재확인: 자체 약관 페이지가 Idera 범용 SaaS 계약으로 리다이렉트되며 데이터 재배포 조항이 명시돼 있지 않음 | 가격만 보면 가능 | 데이터 전용 허락 문구가 없어 서면 확인 전 구매 금지 유지 | [Idera legal](https://www.ideracorp.com/legal/APILayer) |
 | Alpha Vantage | 개인/표준 API와 commercial 문의 분리 | 불확실 | commercial/public display는 문의 필요 | [Terms](https://www.alphavantage.co/terms_of_service/) |
 | Finnhub | 재배포/enterprise는 문의형 | 예산 내 근거 없음 | enterprise 계약 전 사용 금지 | [Pricing](https://finnhub.io/pricing-startups-and-enterprise) |
+| roic.ai (2026-08-22) | Free $0 · $29 · $89 · **Enterprise custom = "Commercial-use API"**. ToS §7 "may not be redistributed or resold without explicit authorization" | Enterprise 견적형 — 예산 내 근거 없음 | 공개 표시 = 재배포 → Enterprise 승인 필요(§6.4) | [Pricing](https://www.roic.ai/pricing), [ToS](https://www.roic.ai/tos) |
+| 넥스트레이드(NXT) 시장정보 (2026-08-22) | 정보포털 계약 상품(실시간·마감·히스토리컬). 웹사이트용(CASE 3) **고정비**, 무상 2025-03~2027-02, 최초 계약에 유상 1년(~2028-02) 포함, 금액 비공개 | 금액 미확인 — Contact Sales 문의 후 판단 | 계약 없이는 표시 불가(§6.3) | [정보포털](https://portal.nextrade.co.kr/mdclient/) |
 
 ### 6.1 뉴스·피드 소스 후보 (2026-08-19 운영자 아이디어 접수 — ROADMAP #10 조사 대기)
 
@@ -1394,6 +1396,43 @@ HIP-3 합성 퍼프, 퍼프 파생 입력은 이력이 짧아(상장 2026-03~) �
 거시 보완재다. **재검토 조건**: KRX Open API에 투자자별 데이터셋이 추가되고
 약관의 비상업·제3자 제공 금지가 완화되거나, 금융공공데이터 개방 확대에
 포함되는 경우.
+
+### 6.3 넥스트레이드(NXT) 시장정보 — 조사 결과 `license_required` (2026-08-22, ROADMAP #9)
+
+ROADMAP #9의 "NXT 시세 재배포 약관 조사" 종결. 넥스트레이드는 시장정보를 **정보포털(portal.nextrade.co.kr, "NEXTRADE Market
+Data Services")의 계약 상품**으로만 제공한다 — 공개 API·무료 재배포 경로는 없다. 아래는 비로그인 상태의 정보포털 공개 페이지
+실측(접근 2026-08-22, 브라우저; `www.nextrade.co.kr` 본 사이트의 "시장정보" 메뉴는 체결 현황 조회용이며 데이터 제공 조건은
+정보포털에 있다).
+
+| 항목 | 확인 내용(원문·요지) |
+|---|---|
+| 상품 | **Real-Time Data** — "Real-time market data delivered with low latency during market hours", "Primarily available via global data vendors, with optional direct connectivity", ASCII/Binary × 호가 10/5/3단계(NXTA-10 기본), **Usage Type: "External Use (Redistribution Allowed)" / "Internal Use Only (End User)"**. **End-of-Day Data** — 장 마감 후 FTP 파일(OHLCV 등). **Historical** — "available upon request, subject to review and approval" |
+| 계약 절차 | Sign Up → Select Product(체크리스트 제출·심사) → Complete Contract(주문서·계약) → 데이터 수신. 가격은 포털 로그인 후 상품 선택/Contact Sales 단계 — **공개 페이지에 고정비 금액 없음(미확인)** |
+| 라이선스 구분 (FAQ "정보 라이선스는 어떻게 구분되나요?", 2026-04-28, 인포그래픽) | CASE 1 일반용(거래참가자용) 고정비+거래 기반 변동 요율 · CASE 2 일반용(비참가자용: 웹/앱 고객 서비스) 고정비+이용 기반 변동 요율, 매월 리포트 제출, "웹/앱 내 로그인 사용자 대상 실시간 체결가 표출 희망 시 별도 웹 노출 계약 필요" · **CASE 3 웹사이트용** — 목적 "웹사이트/앱 내 실시간 체결가 공개", 이용 대상 "비로그인 불특정 다수 고객", 데이터 유형 실시간, 이용 권한 "비로그인 사용자 대상 실시간 체결가에 한해 표출 가능 · 제한적 내부 이용 가능(개발/운영/테스트 목적)", 과금 **고정비**, 유의 "별도 리포트 제출 의무 없음 · 로그인 사용자 대상 서비스 필요 시 별도 계약 필요 · 방송 및 언론 채널 노출 필요 시 별도 계약 필요" · CASE 4 소매사업용 고정비+이용 기반 · CASE 5 방송매체용 고정비 · CASE 6 최종이용자용 고정비+이용 기반, "외부 제공 및 공개 불가". 단서: "상기 내용은 NEXTRADE 정보 이용 가이드 기준이며, 세부 내용은 계약 조건에 따라 달라질 수 있습니다." |
+| 무상 프로모션 (FAQ "무상 프로모션에 따른 계약기간 및 종료일 적용 방식", 2026-04-28) | "무상 제공 기간: 2025년 3월 ~ 2027년 2월(2년) — 이 기간에는 정보이용료가 부과되지 않습니다", "최초 계약 체결 시: 무상 기간 종료 후 유상 기간 1년을 포함하여 체결(2027년 3월~2028년 2월)", "계약 종료일: 2028년 2월(무상 기간 종료 전 체결 계약은 모두 고정)", "이후 1년 단위 자동 갱신" |
+| 이용약관 | 정보포털 Terms and Conditions는 포털 이용약관이며 데이터 라이선스 본문은 계약서(정보이용계약)에 있음 — 공개 페이지에서 미열람 |
+
+**판정 `license_required`.** Mulmit(비로그인 공개 대시보드)의 NXT 체결가 표시는 정확히 **CASE 3 웹사이트용 고정비 계약**에
+해당하며, 계약 없는 표시·크롤링·증권사 HTS/MTS 화면 재사용은 불가. 합법 경로는 있고 지금은 정보이용료 무상(2027-02까지)이지만
+**최초 계약에 2027-03~2028-02 유상 1년이 묶여 고정비 금액(비공개)을 모르면 예산 판단을 할 수 없다.** KRX 통합시세(KRX+NXT
+합산)는 KRX 마켓데이터 약관(§6.2)의 별도 문제다.
+
+- **현재 표시**: 변경 없음 — 프리장/애프터마켓(NXT 08:00–20:00) 한국 현물·지수 시세는 비표시, KR200 퍼프(§3.1)가 대체물.
+- **운영자 선택지(비용 0)**: 정보포털 Contact Sales에 "웹사이트용(CASE 3) 고정비 금액·무상 기간 적용·유상 1년 약정 해지 조건"을
+  문의. 회신 금액이 월 예산(5만원) 안이면 `pending_rights` → 계약 → `approved` 블록으로 진행, 아니면 기각 기록.
+- **재검토**: 고정비 회신 시 / 2027-01(무상 종료 직전, 약정 구조 변화 확인).
+
+### 6.4 roic.ai — 조사 결과 **현시점 기각** (`license_required`, Enterprise 전용) (2026-08-22, ROADMAP #11)
+
+| 항목 | 확인 내용(접근 2026-08-22) |
+|---|---|
+| 약관 | [Terms of Service](https://www.roic.ai/tos) (Last updated 2026-04-07) §7 "Data obtained through the API may only be used in accordance with your subscription plan and **may not be redistributed or resold without explicit authorization**." §8 금지 행위 "To redistribute, resell, or sublicense data obtained from the platform without authorization", "To scrape, crawl, or harvest data beyond the access granted by your plan". 준거법 영국, 문의 support@roic.ai |
+| 가격 | [Pricing](https://www.roic.ai/pricing): Free $0(5 req/분·2년·EOD) · Individual $29/월(300 req/분·5년) · Professional $89/월(무제한·40년+·벌크) · **Enterprise "Custom pricing" — "Commercial-use API"**(invoicing·multi-user). 상업 이용은 Enterprise에만 표기 |
+| 출처 | [FAQ](https://www.roic.ai/faq): "We refresh our data every day using data from SEC for financial statements and Nasdaq for stock prices." 어닝콜 트랜스크립트는 별도 API(벤더 저작물, 발화 내용의 전문 재게시는 Enterprise 승인과 별개로 저작권 확인 필요) |
+
+**판정**: 공개 사이트 표시 = 재배포 → Enterprise 개별 견적(명시 승인) 필요, self-serve 상업 티어 없음 → **월 예산 밖, 현시점
+기각**. 재무비율은 #4 XBRL 자체 산출(`/api/us/fundamentals`)로 이미 대체. 어닝콜 원문은 벤더·발행사 저작권 문제라 요약·링크
+이상의 표시는 애초에 부적합. **재검토 조건**: roic.ai가 self-serve 상업/표시 티어를 신설하거나 예산이 상향될 때.
 
 ## 7. 공급자 문의 템플릿
 
@@ -1568,3 +1607,4 @@ notes: "No confidential contract language here"
 | 2026-08-22 | 업비트 시세 lane 운영자 위험수용 개방(`DS-2026-012`, §3.19) — `UPBIT_ENABLED=true`; Deribit·Coinalyze 문의 발송(§4.1), 두나무 1:1 문의는 기록용 발송 예정 | Claude assisted |
 | 2026-08-22 | 가스 스트립 lane 활성화(`DS-2026-013`, §3.21 — 운영자 Alchemy 계정, 이더리움 라이브·Base/Arbitrum은 앱 네트워크 활성화 대기), 업비트 lane 라이브 확인(§3.19) | Claude assisted |
 | 2026-08-22 | CoinMarketCap lane 사용 범위 확장(§3.20) — `v2/cryptocurrency/quotes/latest` USDT·USDC 유통 공급(1크레딧/시간, 월 ≈ 720 추가, 같은 키·같은 Commercial Terms), 7d/30d 변화는 자체 일별 누적 | Claude assisted |
+| 2026-08-22 | ROADMAP #9·#11 조사 종결 — 넥스트레이드 시장정보 `license_required`(§6.3: 정보포털 계약형, 웹사이트용 CASE 3 고정비, 무상 2027-02까지·유상 1년 약정, 금액 비공개 → 운영자 문의 선택), roic.ai 현시점 기각(§6.4: ToS 재배포 금지, 상업 API는 Enterprise 견적만) | Claude assisted |
