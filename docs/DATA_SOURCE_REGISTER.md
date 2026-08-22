@@ -1220,7 +1220,7 @@ recheck_on: 2026-11-22
 | 항목 | 기록 |
 |---|---|
 | 내부 ID | `mfds_drug_permit` |
-| 현재 상태 | **`approved` (2026-08-22, `DS-2026-018`)** — 운영자 활용신청 승인(2026-08-22, 개발계정 자동승인), 같은 계정 키로 실측 완료. 서버 게이트 기본 OFF |
+| 현재 상태 | **`approved` (2026-08-22, `DS-2026-018`)** — 운영자 활용신청 승인(2026-08-22, 개발계정 자동승인), 같은 계정 키로 실측 완료. **서버 게이트 ON(2026-08-22 15:3x KST 첫 블롭: 30일 112품목·허가 72·신고 40·신약 1·희귀 2·실패 0, 라이브 확인)** |
 | 코드 위치 | `app/providers/mfds.py`, `app/bio.py`(`refresh_bio_mfds`·`build_bio_mfds`), `app/ingest.py::refresh_bio_mfds`, 라우트 `/api/bio/mfds` |
 | 게이트 | web·ingest: `BIO_SECTION_ENABLED` + `MFDS_ENABLED`; ingest 수집: + `MFDS_API_KEY`(비우면 `FSC_API_KEY` 사용 — data.go.kr 키는 계정 단위) |
 | 데이터셋 | [식품의약품안전처_의약품 제품 허가정보](https://www.data.go.kr/data/15095677/openapi.do) (수정일 2025-10-31, 활용신청 5,350건). Base URL `apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07`, 엔드포인트 `GET /getDrugPrdtPrmsnInq07`(의약품 제품 허가 목록)·`/getDrugPrdtPrmsnDtlInq06`(상세)·`/getDrugPrdtMcpnDtlInq07`(주성분), JSON/XML |
@@ -1780,3 +1780,4 @@ notes: "No confidential contract language here"
 | 2026-08-22 | 바이오 Phase 2 lane 2종 활성화(§3.24·§3.25) — 운영자가 게이트 ON, 첫 ingest 패스 저장·`/bio` 라이브 확인 | Claude assisted |
 | 2026-08-22 | 식약처 의약품 품목허가 lane 구현(§3.26, `DS-2026-018`) — 운영자 활용신청 승인 후 서버에서 실측(상세 엔드포인트 `item_permit_date` 필터), 게이트 OFF(`MFDS_ENABLED`), 키는 FSC 키 재사용 | Claude assisted |
 | 2026-08-22 | 가스 스트립 Base·Arbitrum 복구(§3.21) — 운영자 Alchemy 앱에서 두 Mainnet 네트워크 활성화, 3개 체인 라이브 확인 | Claude assisted |
+| 2026-08-22 | 식약처 품목허가 lane 활성화(§3.26) — 운영자가 `MFDS_ENABLED` ON(FSC 키 재사용), 첫 패스 30일 112품목 저장·`/bio` 라이브 확인; PubMed `NCBI_EMAIL` 설정(§3.25 정책상 연락처) | Claude assisted |
