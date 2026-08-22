@@ -218,6 +218,15 @@ FEDERAL_REGISTER_ENABLED = _bool("FEDERAL_REGISTER_ENABLED", False)
 FEDERAL_REGISTER_TIMEOUT = _float("FEDERAL_REGISTER_TIMEOUT", 20.0)
 FEDERAL_REGISTER_RETRIES = _int("FEDERAL_REGISTER_RETRIES", 2)
 ADCOMM_MAX_AGE = _int("ADCOMM_MAX_AGE", 60 * 60 * 6)
+# MFDS drug product permits (data.go.kr dataset 15095677). One service key per data.go.kr account,
+# so MFDS_API_KEY falls back to the FSC key when not set separately. Ingest only.
+MFDS_ENABLED = _bool("MFDS_ENABLED", False)
+MFDS_API_KEY = os.environ.get("MFDS_API_KEY", "").strip() or os.environ.get("FSC_API_KEY", "").strip()
+MFDS_TIMEOUT = _float("MFDS_TIMEOUT", 20.0)
+MFDS_RETRIES = _int("MFDS_RETRIES", 2)
+MFDS_MAX_AGE = _int("MFDS_MAX_AGE", 60 * 60 * 24)
+MFDS_WINDOW_DAYS = _int("MFDS_WINDOW_DAYS", 30)
+MFDS_PACE_SECONDS = _float("MFDS_PACE_SECONDS", 0.2)
 
 # Financial Services Commission end-of-day data on data.go.kr. The three
 # datasets used here are registered with 이용허락범위 "제한 없음" — the portal's

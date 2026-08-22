@@ -905,6 +905,21 @@ def refresh_bio_adcomm(*, force: bool = False) -> dict:
         return {"skipped": "error", "error": str(exc)}
 
 
+def refresh_bio_mfds(*, force: bool = False) -> dict:
+    """식약처 품목허가(공공데이터포털, 허가일자별 30일) — 하루 1회, ≈30회 호출. 키는 ingest에만."""
+    try:
+        result = bio.refresh_bio_mfds(force=force)
+        if not result.get("skipped"):
+            log.info("바이오 식약처 품목허가 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("data.go.kr(MFDS) 요청 제한 — 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("바이오 식약처 품목허가 갱신 실패: %s", exc)
+        return {"skipped": "error", "error": str(exc)}
+
+
 def refresh_bio_fda(*, force: bool = False) -> dict:
     """openFDA 원 신청 승인(최근 60일) — 하루 주기, 1~5회 호출."""
     try:
@@ -1159,6 +1174,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_bio_fda()
             refresh_bio_pubmed()
             refresh_bio_adcomm()
+            refresh_bio_mfds()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
             "skipped": "legacy_price_data_disabled",
@@ -1215,6 +1231,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_bio_fda()
             refresh_bio_pubmed()
             refresh_bio_adcomm()
+            refresh_bio_mfds()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
                 "skipped": "backoff",
@@ -1304,6 +1321,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         refresh_bio_fda()
         refresh_bio_pubmed()
         refresh_bio_adcomm()
+        refresh_bio_mfds()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged

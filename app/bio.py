@@ -20,6 +20,7 @@ from zoneinfo import ZoneInfo
 from . import config, data_rights, store
 from .providers import clinicaltrials as ct
 from .providers import federal_register as fr
+from .providers import mfds as mf
 from .providers import openfda as fda
 from .providers import pubmed as pm
 from .providers.base import DataUnavailable, RateLimited
@@ -791,4 +792,166 @@ def build_bio_adcomm(now: dt.datetime | None = None) -> dict[str, Any]:
         },
         "methodology": _ADCOMM_METHOD,
         "disclaimer": _ADCOMM_DISCLAIMER,
+    }
+
+
+# --- MFDS drug product permits (data.go.kr) --------------------------------------
+
+MFDS_CACHE_KEY = "bio_mfds_permits_v1"
+MFDS_STALE_AFTER_SECONDS = 60 * 60 * 36
+MFDS_ROW_LIMIT = 300
+MFDS_NOTABLE_LIMIT = 80
+MFDS_MAX_PAGES_PER_DAY = 5
+SEOUL = ZoneInfo("Asia/Seoul")
+
+
+def refresh_bio_mfds(*, force: bool = False, provider: Any | None = None, now: dt.datetime | None = None) -> dict[str, Any]:
+    """Ingest lane: one keyed call per KST day of the trailing window (plus paging on busy days), daily."""
+    if not data_rights.mfds_serving_enabled():
+        return {"skipped": "disabled"}
+    if not data_rights.mfds_ingest_enabled():
+        return {"skipped": "not_configured"}
+    if not force and store.load_report(MFDS_CACHE_KEY, config.MFDS_MAX_AGE) is not None:
+        return {"skipped": "fresh"}
+    client = provider or mf.MfdsProvider(config.MFDS_API_KEY, timeout=config.MFDS_TIMEOUT, retries=config.MFDS_RETRIES)
+    moment = now or dt.datetime.now(dt.UTC)
+    today = moment.astimezone(SEOUL).date()
+    days = [today - dt.timedelta(days=offset) for offset in range(max(1, config.MFDS_WINDOW_DAYS))]
+    permits: list[dict[str, Any]] = []
+    per_day: dict[str, int] = {}
+    failed = 0
+    stopped = False
+    for index, day in enumerate(days):
+        if index and config.MFDS_PACE_SECONDS > 0:
+            _sleep(config.MFDS_PACE_SECONDS)
+        try:
+            page = client.fetch_permits_on(day)
+            rows = list(page.get("permits") or [])
+            total = page.get("total_count")
+            page_no = 2
+            while isinstance(total, int) and len(rows) < total and page_no <= MFDS_MAX_PAGES_PER_DAY:
+                if config.MFDS_PACE_SECONDS > 0:
+                    _sleep(config.MFDS_PACE_SECONDS)
+                rows.extend(client.fetch_permits_on(day, page=page_no).get("permits") or [])
+                page_no += 1
+        except RateLimited:
+            failed += 1
+            stopped = True
+            log.warning("MFDS API rate limit — stopping this pass after %d days", index)
+            break
+        except DataUnavailable as exc:
+            failed += 1
+            log.warning("MFDS permits for %s failed: %s", day.isoformat(), exc)
+            continue
+        per_day[day.isoformat()] = len(rows)
+        permits.extend(rows)
+    if not per_day:
+        raise DataUnavailable("MFDS refresh produced no days")
+    seen: set[str] = set()
+    unique: list[dict[str, Any]] = []
+    for row in permits:
+        seq = str(row.get("item_seq") or "")
+        if seq in seen:
+            continue
+        seen.add(seq)
+        unique.append(row)
+    unique.sort(key=lambda r: (r.get("permit_date") or "", r.get("item_seq") or ""), reverse=True)
+    store.save_report(
+        MFDS_CACHE_KEY,
+        {
+            "generated_at": _iso_utc(),
+            "fetched_at": moment.astimezone(dt.UTC).isoformat().replace("+00:00", "Z"),
+            "window": {"start": days[-1].isoformat(), "end": days[0].isoformat()},
+            "days": per_day,
+            "failed_days": failed,
+            "stopped_early": stopped,
+            "permits": unique,
+        },
+    )
+    clear_cache()
+    return {"updated": len(unique), "days": len(per_day), "failed_days": failed}
+
+
+_MFDS_METHOD = {
+    "ko": (
+        "공공데이터포털 식품의약품안전처 의약품 제품 허가정보(getDrugPrdtPrmsnDtlInq06)를 허가일자(item_permit_date)별로 최근 30일(한국시간) 하루씩 조회해 "
+        "모았습니다. 허가/신고·전문/일반·신약 구분·희귀의약품 여부·주성분은 등록값 그대로이며, '주목'은 허가(신고 제외)된 전문의약품 또는 신약·희귀의약품입니다. "
+        "주성분의 성분코드([M…])는 표시에서 제거했습니다."
+    ),
+    "en": (
+        "Drug product permits from the Ministry of Food and Drug Safety dataset on data.go.kr (getDrugPrdtPrmsnDtlInq06), queried one KST day at a time "
+        "over the trailing 30 days by permit date. Permit/notification, prescription/OTC, new-drug class, orphan flag and main ingredients are the registered "
+        "values; 'notable' means a prescription product granted a permit (not a notification) or a new or orphan drug. Ingredient codes ([M…]) are dropped."
+    ),
+}
+
+_MFDS_DISCLAIMER = {
+    "ko": "품목허가 목록은 규제 기록이며 매출·주가와의 관계를 말하지 않습니다. 제네릭·보충 허가가 대부분이고, 신약 여부는 식약처 구분을 따릅니다. 투자 권유가 아닙니다.",
+    "en": "A permit list is a regulatory record; it says nothing about sales or share prices. Most entries are generics or supplements; new-drug status follows the MFDS classification. Not a recommendation.",
+}
+
+
+def build_bio_mfds(now: dt.datetime | None = None) -> dict[str, Any]:
+    if not data_rights.mfds_serving_enabled():
+        raise BioUnavailable("disabled")
+    blob = _load_cached(MFDS_CACHE_KEY)
+    permits = blob.get("permits") if isinstance(blob, dict) else None
+    if not isinstance(permits, list):
+        raise BioUnavailable("collecting")
+    moment = now or dt.datetime.now(dt.UTC)
+    fetched_at = _parse_iso(blob.get("fetched_at"))
+    age = (moment - fetched_at).total_seconds() if fetched_at else None
+    rows = [row for row in permits if isinstance(row, dict)]
+    counts = {
+        "total": len(rows),
+        "permit": sum(1 for r in rows if r.get("permit_kind") == "허가"),
+        "report": sum(1 for r in rows if r.get("permit_kind") == "신고"),
+        "rx": sum(1 for r in rows if r.get("etc_otc") == "전문의약품"),
+        "otc": sum(1 for r in rows if r.get("etc_otc") == "일반의약품"),
+        "new_drug": sum(1 for r in rows if r.get("newdrug_class")),
+        "rare": sum(1 for r in rows if r.get("rare")),
+    }
+    notable = [
+        r for r in rows
+        if r.get("newdrug_class") or r.get("rare") or (r.get("permit_kind") == "허가" and r.get("etc_otc") == "전문의약품")
+    ]
+    return {
+        "generated_at": _iso_utc(),
+        "as_of": blob.get("fetched_at"),
+        "window": blob.get("window"),
+        "days": blob.get("days"),
+        "counts": counts,
+        "permits": rows[:MFDS_ROW_LIMIT],
+        "notable": notable[:MFDS_NOTABLE_LIMIT],
+        "totals": {"permits": len(rows), "days": len(blob.get("days") or {}), "failed_days": blob.get("failed_days"), "stopped_early": blob.get("stopped_early")},
+        "freshness": {
+            "status": "stale" if age is None or age > MFDS_STALE_AFTER_SECONDS else "fresh",
+            "fetched_at": blob.get("fetched_at"),
+            "age_seconds": round(age, 1) if age is not None else None,
+            "cadence": f"ingest refresh every {config.MFDS_MAX_AGE}s; one call per day of the {config.MFDS_WINDOW_DAYS}-day window",
+            "stale_after_seconds": MFDS_STALE_AFTER_SECONDS,
+        },
+        "attribution": {
+            "text": mf.ATTRIBUTION,
+            "text_en": mf.ATTRIBUTION_EN,
+            "url": mf.DATASET_URL,
+            "placement": "adjacent_to_value",
+            "required": True,
+        },
+        "source": {
+            "provider": mf.PROVIDER_ID,
+            "provider_name": "식품의약품안전처 (공공데이터포털)",
+            "publisher": mf.PUBLISHER,
+            "url": mf.DATASET_URL,
+            "api_url": f"{mf.API_BASE}/{mf.DETAIL_ENDPOINT}",
+            "read_path": "stored_blob",
+        },
+        "rights": {
+            "status": "public_data_portal_unrestricted",
+            "evidence": mf.LICENSE_QUOTE,
+            "terms_url": mf.DATASET_URL,
+            "notice": "data.go.kr dataset with 이용허락범위 제한 없음; source shown with the values; registered values relayed without interpretation.",
+        },
+        "methodology": _MFDS_METHOD,
+        "disclaimer": _MFDS_DISCLAIMER,
     }

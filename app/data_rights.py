@@ -38,6 +38,7 @@ CLINICALTRIALS = "clinicaltrials"
 OPENFDA = "openfda"
 PUBMED = "pubmed"
 FEDERAL_REGISTER = "federal_register"
+MFDS = "mfds_drug_permit"
 OFR = "ofr"
 
 # --- structured client contracts --------------------------------------------
@@ -220,6 +221,21 @@ BIO_ADCOMM_COLLECTING = {
     ),
 }
 
+BIO_MFDS_DISABLED = {
+    "code": "bio_mfds_disabled",
+    "status": "disabled",
+    "message": "The MFDS drug-permit relay is disabled for this deployment.",
+}
+
+BIO_MFDS_COLLECTING = {
+    "code": "bio_mfds_collecting",
+    "status": "collecting",
+    "message": (
+        "The MFDS relay is enabled but has not stored its first pass yet (or the ingest key is missing); "
+        "values appear after the next ingest run."
+    ),
+}
+
 CHAIN_GAS_DISABLED = {
     "code": "chain_gas_disabled",
     "status": "disabled",
@@ -394,6 +410,15 @@ def federal_register_ingest_enabled() -> bool:
     return federal_register_serving_enabled()
 
 
+def mfds_serving_enabled() -> bool:
+    return bio_section_enabled() and bool(config.MFDS_ENABLED)
+
+
+def mfds_ingest_enabled() -> bool:
+    """Only ingest holds the data.go.kr key (MFDS_API_KEY, falling back to FSC_API_KEY)."""
+    return mfds_serving_enabled() and bool(config.MFDS_API_KEY)
+
+
 def chain_gas_configured_chains() -> list[str]:
     return [
         name
@@ -511,6 +536,12 @@ def lane_report() -> dict[str, dict[str, str]]:
             "status": "enabled" if federal_register_serving_enabled() else "disabled",
             "gate": "BIO_SECTION_ENABLED + FEDERAL_REGISTER_ENABLED",
             "restriction": "no NARA/OFR logos or seals",
+        },
+        MFDS: {
+            "status": "enabled" if mfds_serving_enabled() else "disabled",
+            "gate": "BIO_SECTION_ENABLED + MFDS_ENABLED",
+            "fetch_key": "present" if config.MFDS_API_KEY else "absent_in_this_process",
+            "fetch_gate": "MFDS_API_KEY or FSC_API_KEY (ingest only)",
         },
         CHAIN_GAS: {
             "status": chain_gas_status(),

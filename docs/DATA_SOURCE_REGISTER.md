@@ -1215,16 +1215,38 @@ gate: BIO_SECTION_ENABLED + CLINICALTRIALS_ENABLED + PUBMED_ENABLED
 recheck_on: 2026-11-22
 ```
 
-### 3.26 식품의약품안전처 의약품 제품 허가정보 (공공데이터포털) — **운영자 활용신청 대기** (2026-08-22)
+### 3.26 식품의약품안전처 의약품 제품 허가정보 (공공데이터포털) — 바이오 섹션 Phase 2
 
 | 항목 | 기록 |
 |---|---|
-| 내부 ID | `mfds_drug_permit` (예정) |
-| 현재 상태 | **`pending_operator_action`** — 데이터셋 확인 완료, 키 미발급(활용신청 필요) → 실측 후 구현 |
+| 내부 ID | `mfds_drug_permit` |
+| 현재 상태 | **`approved` (2026-08-22, `DS-2026-018`)** — 운영자 활용신청 승인(2026-08-22, 개발계정 자동승인), 같은 계정 키로 실측 완료. 서버 게이트 기본 OFF |
+| 코드 위치 | `app/providers/mfds.py`, `app/bio.py`(`refresh_bio_mfds`·`build_bio_mfds`), `app/ingest.py::refresh_bio_mfds`, 라우트 `/api/bio/mfds` |
+| 게이트 | web·ingest: `BIO_SECTION_ENABLED` + `MFDS_ENABLED`; ingest 수집: + `MFDS_API_KEY`(비우면 `FSC_API_KEY` 사용 — data.go.kr 키는 계정 단위) |
 | 데이터셋 | [식품의약품안전처_의약품 제품 허가정보](https://www.data.go.kr/data/15095677/openapi.do) (수정일 2025-10-31, 활용신청 5,350건). Base URL `apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07`, 엔드포인트 `GET /getDrugPrdtPrmsnInq07`(의약품 제품 허가 목록)·`/getDrugPrdtPrmsnDtlInq06`(상세)·`/getDrugPrdtMcpnDtlInq07`(주성분), JSON/XML |
 | 이용 조건(포털 표기, 접근 2026-08-22) | 비용 **무료**, 이용허락범위 **"이용허락범위 제한 없음"**(§3.9 FSC와 동일 등급), 심의 "개발단계: 자동승인 / 운영단계: 심의승인", 트래픽 개발계정 10,000/일 |
-| 필요 운영자 액션 | data.go.kr 로그인(FSC 키와 같은 계정) → 위 데이터셋 **활용신청**(개발계정 자동승인) → 기존 `FSC_API_KEY`와 같은 서비스키로 호출 가능 여부 확인 → 알려주면 응답 필드 실측 후 lane 구현(§3.26 갱신·DS 블록) |
-| 계획된 표시 | 최근 품목허가(허가일자·품목명·업체명·전문/일반·신약 구분·주성분) — FDA 승인 섹션의 한국 대응(KR/US 동형화) |
+| 현재 사용 | `GET /getDrugPrdtPrmsnDtlInq06?type=json&numOfRows=100&pageNo=n&item_permit_date=YYYYMMDD` — 한국시간 기준 최근 30일을 하루씩(≈30회/일, 바쁜 날 페이징) 하루 1회. 실측(서버 ingest, 2026-08-22): 목록 엔드포인트는 날짜 필터 무시·날짜순 아님, **상세 엔드포인트만 `item_permit_date` 필터 동작**(06-30 → 62건, 08-21 → 9건, 08-20 → 2건); 오류는 `OpenAPI_ServiceResponse.cmmMsgHeader.returnReasonCode`(30 미등록 키, 22 호출 초과) 또는 `header.resultCode`. 표시: 허가일·품목명(영문)·업체·전문/일반·허가/신고·신약 구분·희귀 여부·주성분(성분코드 제거)·취하/취소, 의약품안전나라 상세 링크(`nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetailCache?cacheSeq=`) |
+| 기술 비용 | 0원(개발계정 10,000/일 중 ≈30) |
+| 표시 경계 | 출처 "식품의약품안전처 의약품 제품 허가정보 (공공데이터포털)" + 데이터셋 링크를 값 옆·푸터에, 등록값 그대로(신약 여부는 식약처 구분), 매출·주가 해석 금지 |
+
+```yaml
+decision_id: DS-2026-018
+provider_id: mfds_drug_permit
+status: approved
+reviewed_at: 2026-08-22
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://www.data.go.kr/data/15095677/openapi.do (비용 무료 · 이용허락범위 제한 없음 · 개발단계 자동승인; 운영자 활용신청 승인 2026-08-22)
+approved_scope:
+  public_display: true
+  server_json_relay: true
+conditions:
+  - source attribution with the dataset link next to the values
+  - registered values relayed as published; no outcome or price interpretation
+  - key stays in the ingest process; ≈30 calls per day
+gate: BIO_SECTION_ENABLED + MFDS_ENABLED (+ MFDS_API_KEY or FSC_API_KEY in ingest)
+recheck_on: 2026-11-22
+```
 
 ## 4. 원 발행기관 후보
 
@@ -1756,3 +1778,4 @@ notes: "No confidential contract language here"
 | 2026-08-22 | 바이오 lane 2종 활성화(§3.22·§3.23) — 운영자가 게이트 3종 ON, 첫 ingest 패스 저장·`/bio` 라이브 확인 | Claude assisted |
 | 2026-08-22 | 바이오 Phase 2 — Federal Register 자문위 공고(§3.24, `DS-2026-016`)·PubMed 서지(§3.25, `DS-2026-017`, 초록 비표시) lane 추가(게이트 OFF), 식약처 품목허가는 운영자 활용신청 대기로 기록(§3.26); fda.gov 달력은 봇 감지로 보류 | Claude assisted |
 | 2026-08-22 | 바이오 Phase 2 lane 2종 활성화(§3.24·§3.25) — 운영자가 게이트 ON, 첫 ingest 패스 저장·`/bio` 라이브 확인 | Claude assisted |
+| 2026-08-22 | 식약처 의약품 품목허가 lane 구현(§3.26, `DS-2026-018`) — 운영자 활용신청 승인 후 서버에서 실측(상세 엔드포인트 `item_permit_date` 필터), 게이트 OFF(`MFDS_ENABLED`), 키는 FSC 키 재사용 | Claude assisted |
