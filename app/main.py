@@ -42,6 +42,7 @@ from . import (
     kr_press,
     kr_stocks,
     news_feed,
+    search,
     service,
     signal_feed,
     store,
@@ -867,6 +868,30 @@ def crypto_coin_route(
         ) from exc
     response.headers["Cache-Control"] = "private, max-age=15, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "Hyperliquid"
+    return payload
+
+
+@app.get("/api/search")
+@limiter.limit(config.RATE_LIMIT)
+def global_search(
+    request: Request,
+    response: Response,
+    q: str = Query(..., min_length=1, max_length=40),
+    limit: int = Query(search.DEFAULT_LIMIT, ge=1, le=search.MAX_LIMIT),
+) -> dict:
+    """한 칸에서 코인·국내 종목·미국 종목을 함께 찾는다.
+
+    저장된 로스터만 읽는다 — 코인은 대시보드가 이미 폴링하는 스냅샷 캐시,
+    국내는 금융위 상장 로스터, 미국은 공시 수집 대상 티커 표다. 타이핑마다
+    외부 API를 부르지 않는다. 세 로스터 중 하나가 꺼져 있거나 비어 있으면 그
+    묶음만 빠지고 나머지는 그대로 답한다 — 검색이 한 레인의 가용성에 걸리면
+    안 된다.
+    """
+    payload = search.search(q, limit=limit)
+    response.headers["Cache-Control"] = "public, max-age=120"
+    response.headers["X-Data-Source"] = (
+        "Hyperliquid; Financial Services Commission (data.go.kr); SEC EDGAR"
+    )
     return payload
 
 
