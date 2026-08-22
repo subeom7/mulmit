@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-5">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-6">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -121,6 +121,27 @@
       </div>
     </section>
 
+    <section class="dashboard-section" id="bio-mfds" aria-labelledby="biom-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">KOREA · MFDS · DRUG PRODUCT PERMITS · DATA.GO.KR</p><h2 id="biom-title" data-i18n="bio.mfds.title">식약처 최근 품목허가</h2></div>
+        <span class="source-pill">MFDS · DATA.GO.KR</span>
+      </div>
+      <p class="section-copy" data-i18n="bio.mfds.copy">식품의약품안전처 의약품 제품 허가정보(공공데이터포털)를 허가일자별로 최근 30일 모은 목록입니다. 기본 보기는 '주목'(허가된 전문의약품·신약·희귀의약품)이며 신고·일반의약품까지 전체를 볼 수 있습니다. 규제 기록일 뿐 매출·주가 해석이 아닙니다.</p>
+      <div id="biom-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div class="bio-filter" id="biom-filter" role="group" aria-label="Permit filter" hidden>
+        <button type="button" class="active" data-mfds-filter="notable" data-i18n="bio.mfds.filter.notable">주목</button>
+        <button type="button" data-mfds-filter="permit" data-i18n="bio.mfds.filter.permit">허가만</button>
+        <button type="button" data-mfds-filter="all" data-i18n="bio.mfds.filter.all">전체</button>
+      </div>
+      <div id="biom-strip" class="crypto-strip" hidden></div>
+      <div class="panel" id="biom-panel" hidden>
+        <div class="table-scroll">
+          <table id="biom-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.mfds.caption">식약처 품목허가 (최근 30일)</caption><thead></thead><tbody></tbody></table>
+        </div>
+        <footer class="panel-footer" id="biom-footer" hidden></footer>
+      </div>
+    </section>
+
     <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
 
     <section class="methodology" aria-labelledby="method-title">
@@ -156,6 +177,6 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "bio";</script>
-  <script src="/static/monitor.js?v=20260822-5" defer></script>
+  <script src="/static/monitor.js?v=20260822-6" defer></script>
 </body>
 </html>

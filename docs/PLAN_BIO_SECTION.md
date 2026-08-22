@@ -92,14 +92,19 @@
   "PubMed · 논문 n건 — 첫 논문 제목(저널, 일자)" + PubMed 검색 링크, 푸터 출처·고지.
 - **FDA 자문위 공고**(`app/providers/federal_register.py`, `bio.refresh_bio_adcomm`/`build_bio_adcomm`, `/api/bio/adcomm`): FR API 240일 창, 제목 필터(위원회명 + Notice of Meeting/Amendment), DATES 정규식으로 회의일,
   예정/최근 30일 종료/날짜 미기재 분류, 6시간 주기. 새 섹션 "FDA 자문위원회 회의 공고"(임상 표와 FDA 승인 사이). 로고·인장 미사용.
-- **식약처 품목허가**: 검증 없는 파서를 넣지 않는다 — 운영자 활용신청(자동승인) → 실측 → 구현(등록부 §3.26).
+- **식약처 품목허가**(`app/providers/mfds.py`, `bio.refresh_bio_mfds`/`build_bio_mfds`, `/api/bio/mfds`): 운영자 활용신청 승인(2026-08-22) 후 서버 ingest 컨테이너에서 같은 계정 키로 실측 —
+  목록 엔드포인트(`getDrugPrdtPrmsnInq07`)는 날짜 필터 무시·ITEM_SEQ 순(날짜순 아님), **상세 엔드포인트(`getDrugPrdtPrmsnDtlInq06`)가 `item_permit_date=YYYYMMDD`를 지원**(06-30 62건·08-21 9건·08-20 2건,
+  `numOfRows` 최대 100) → 한국시간 최근 30일을 하루씩 조회(≈30회/일, 바쁜 날 페이징), 블롭 `bio_mfds_permits_v1`. 필드: PERMIT_KIND_NAME(허가/신고)·ETC_OTC_CODE(전문/일반)·
+  NEWDRUG_CLASS_NAME(신약 구분)·RARE_DRUG_YN·MAIN_ITEM_INGR(성분코드 [M…] 제거)·CANCEL_NAME·MAKE_MATERIAL_FLAG. 오류: 게이트웨이 `returnReasonCode`(30 키 미등록, 22 호출 초과)
+  / `header.resultCode`. 상세 링크 `nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetailCache?cacheSeq=<ITEM_SEQ>`(200 확인). UI: "식약처 최근 품목허가" 섹션, 기본 '주목'(허가된 전문의약품·신약·
+  희귀) / 허가만 / 전체 필터. 게이트 `MFDS_ENABLED`, 키 `MFDS_API_KEY`(비우면 `FSC_API_KEY`). 등록부 §3.26 `DS-2026-018`.
 
 ## 6. 운영자 액션
 
 서버 `.env`에 `BIO_SECTION_ENABLED=true`, `CLINICALTRIALS_ENABLED=true`, `OPENFDA_ENABLED=true` → `compose up -d web ingest`. 첫 블롭은 다음 ingest 주기에 저장된다. (완료 2026-08-22)
 
 Phase 2: `PUBMED_ENABLED=true`(+ 권장 `NCBI_EMAIL=<연락 이메일>`, 선택 `NCBI_API_KEY`), `FEDERAL_REGISTER_ENABLED=true` → `compose up -d web ingest`. PubMed 첫 패스는 **ET 야간 창(KST 10~18시)**에 돈다.
-식약처: data.go.kr에서 데이터셋 15095677 활용신청(개발계정 자동승인) 후 알려주면 실측·구현.
+식약처: (완료) 활용신청 승인 → 구현. 켜기: `MFDS_ENABLED=true` → `compose up -d web ingest` (키는 FSC_API_KEY 재사용, 별도 설정 불필요).
 선택: openFDA 키(무료) 발급 후 `OPENFDA_API_KEY`(ingest 전용) — 일 1,000회 IP 한도는 현재 호출량(≈3/일)에 충분해 필수 아님.
 
 ## 변경 이력
@@ -110,3 +115,4 @@ Phase 2: `PUBMED_ENABLED=true`(+ 권장 `NCBI_EMAIL=<연락 이메일>`, 선택 
 | 2026-08-22 | Phase 1 라이브 — 운영자 게이트 ON(13:5x KST), 첫 패스 임상 34/34·FDA 140건, `/bio` 확인 |
 | 2026-08-22 | Phase 2 — PubMed 서지·FDA 자문위 공고(Federal Register) 구현(§5.1·§7), 식약처는 활용신청 대기, fda.gov 달력은 봇 감지로 보류 |
 | 2026-08-22 | Phase 2 라이브 — 운영자 게이트 ON(14:2x KST), 첫 패스 PubMed 150/150·적중 34(ET 주말 창), 자문위 공고 11건 |
+| 2026-08-22 | 식약처 품목허가 lane 구현(§7) — 활용신청 승인 후 서버 실측(상세 엔드포인트 일자 필터), 게이트 OFF |

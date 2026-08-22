@@ -655,6 +655,23 @@ def bio_adcomm_route(request: Request, response: Response) -> dict:
     return payload
 
 
+@app.get("/api/bio/mfds")
+@limiter.limit(config.RATE_LIMIT)
+def bio_mfds_route(request: Request, response: Response) -> dict:
+    """식약처 의약품 품목허가(공공데이터포털) — ingest가 저장한 블롭만 읽는다."""
+    require_bio_section()
+    try:
+        payload = bio.build_bio_mfds()
+    except bio.BioUnavailable as exc:
+        detail = data_rights.BIO_MFDS_DISABLED if exc.reason == "disabled" else data_rights.BIO_MFDS_COLLECTING
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=600, stale-while-revalidate=3600"
+    response.headers["X-Data-Source"] = "MFDS (data.go.kr)"
+    return payload
+
+
 @app.get("/api/crypto/structure")
 @limiter.limit(config.RATE_LIMIT)
 def crypto_structure_route(request: Request, response: Response) -> dict:

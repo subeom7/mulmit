@@ -557,6 +557,11 @@ a.feed-text:hover { color: var(--ink); }
 #bioa-table th:nth-child(2), #bioa-table td:nth-child(2) { width: 24%; }
 #bioa-table th:nth-child(3), #bioa-table td:nth-child(3) { width: 40%; }
 #bioa-table th:nth-child(4), #bioa-table td:nth-child(4) { width: 12%; }
+#biom-table th:nth-child(1), #biom-table td:nth-child(1) { width: 9%; }
+#biom-table th:nth-child(2), #biom-table td:nth-child(2) { width: 30%; }
+#biom-table th:nth-child(3), #biom-table td:nth-child(3) { width: 16%; }
+#biom-table th:nth-child(4), #biom-table td:nth-child(4) { width: 9%; }
+#biom-table th:nth-child(5), #biom-table td:nth-child(5) { width: 8%; }
 .cvol-card small.up { color: var(--green); }
 .cvol-card small.down { color: var(--red); }
 .cboard-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }

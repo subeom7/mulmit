@@ -40,6 +40,7 @@ x-app: &app
     OPENFDA_ENABLED: ${OPENFDA_ENABLED:-false}
     PUBMED_ENABLED: ${PUBMED_ENABLED:-false}
     FEDERAL_REGISTER_ENABLED: ${FEDERAL_REGISTER_ENABLED:-false}
+    MFDS_ENABLED: ${MFDS_ENABLED:-false}
     NYFED_ENABLED: ${NYFED_ENABLED:-false}
     FEDBOARD_ENABLED: ${FEDBOARD_ENABLED:-false}
     # 미 재무부 OFR 금융스트레스지수(연방 저작물). web 판정·ingest 수집 양쪽.
@@ -136,6 +137,7 @@ services:
       OPENFDA_API_KEY: ${OPENFDA_API_KEY:-}
       NCBI_EMAIL: ${NCBI_EMAIL:-}
       NCBI_API_KEY: ${NCBI_API_KEY:-}
+      MFDS_API_KEY: ${MFDS_API_KEY:-}
       ECOS_MAX_AGE: ${ECOS_MAX_AGE:-21600}
       BLS_API_KEY: ${BLS_API_KEY:-}
       BLS_MAX_AGE: ${BLS_MAX_AGE:-43200}
