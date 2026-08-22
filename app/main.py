@@ -28,6 +28,7 @@ from . import (
     crypto_coin,
     crypto_gas,
     crypto_kimchi,
+    crypto_liquidations,
     crypto_market,
     crypto_regime,
     crypto_structure,
@@ -801,6 +802,34 @@ def crypto_gas_route(request: Request, response: Response) -> dict:
     response.headers["Cache-Control"] = "private, max-age=30, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "EVM JSON-RPC (operator account)"
     return crypto_gas.build_crypto_gas()
+
+
+@app.get("/api/crypto/liquidations")
+@limiter.limit(config.RATE_LIMIT)
+def crypto_liquidations_route(request: Request, response: Response) -> dict:
+    """거래소 집계 청산·미결제약정 — 수집된 블롭만 읽는다.
+
+    합계는 **응답한 거래소들의 합**이며 전체 시장 합계가 아니다. Coinalyze에는
+    집계 심볼이 없고, 데이터가 없는 심볼은 없는 심볼과 똑같이 `200 []`로
+    돌아온다 — 그래서 포함된 거래소와 침묵한 거래소를 값과 함께 싣는다.
+    """
+    require_crypto_section()
+    try:
+        payload = crypto_liquidations.build_crypto_liquidations()
+    except crypto_liquidations.LiquidationsUnavailable as exc:
+        code = (
+            "crypto_liquidations_disabled"
+            if not data_rights.coinalyze_serving_enabled()
+            else "crypto_liquidations_collecting"
+        )
+        raise HTTPException(
+            status_code=503,
+            detail={"code": code, "message": str(exc)},
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=120"
+    response.headers["X-Data-Source"] = "Coinalyze"
+    return payload
 
 
 @app.get("/api/crypto/news")
