@@ -207,6 +207,7 @@ def test_samples_accumulate_and_yield_24h_changes(regime_on, monkeypatch):
     assert len(history["recent"]) == 2 and len(history["daily"]) == 2
     assert [row["date"] for row in history["daily"]] == ["2026-08-21", "2026-08-22"]
     changes = history["changes"]
+    assert changes["status"] == "ok"
     assert changes["price_24h_percent"] == pytest.approx((88000 / 77000 - 1) * 100, abs=1e-3)
     assert changes["oi_usd_24h_percent"] == pytest.approx((88000 * 1200) / (77000 * 1000) * 100 - 100, abs=1e-3)
     assert changes["flow"] == "new_longs" and changes["flow_label"]["ko"] == "신규 롱 유입"
@@ -215,6 +216,14 @@ def test_samples_accumulate_and_yield_24h_changes(regime_on, monkeypatch):
     market_history = crypto_regime.history_for(crypto_regime.MARKET_KEY, now=second)
     assert market_history["recent"][-1]["liquid"] == 4 and "crowded_share" in market_history["recent"][-1]
     assert crypto_regime.history_for("NOTACOIN") is None
+
+
+def test_a_single_sample_reports_collecting_rather_than_zero_change(regime_on):
+    crypto_regime.refresh_coin_price_parts(provider=FakeProvider(), now=NOW)
+    history = crypto_regime.history_for("BTC", now=NOW)
+    assert history["changes"] == {"status": "collecting", "samples": 1}
+    assert "flow" not in history["changes"] and "heat_24h_points" not in history["changes"]
+    assert len(history["recent"]) == 1  # the sample itself is still served for the sparkline
 
 
 def test_history_is_capped_and_one_point_per_day(regime_on, monkeypatch):

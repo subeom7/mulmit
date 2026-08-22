@@ -279,12 +279,23 @@ def history_for(key: str, *, now: dt.datetime | None = None) -> dict[str, Any] |
     moment = now or dt.datetime.now(dt.UTC)
     latest = recent[-1]
     reference = _oldest_within(recent, moment, 24.0)
-    changes: dict[str, Any] = {"reference_at": (reference or {}).get("t"), "samples": len(recent)}
+    # One observation is not a change. Comparing the latest sample with itself would
+    # print "±0.0 · little change", which reads as a measurement rather than as the
+    # absence of one, so the payload says it is still collecting instead.
+    if len(recent) < 2 or reference is None or reference is latest:
+        return {
+            "recent": recent,
+            "daily": daily,
+            "changes": {"status": "collecting", "samples": len(recent)},
+            "cadence_seconds": config.CRYPTO_HEAT_MAX_AGE,
+            "basis": "samples taken on the ingest pass that already reads this snapshot; one point per UTC day is kept for 90 days",
+        }
+    changes: dict[str, Any] = {"status": "ok", "reference_at": reference.get("t"), "samples": len(recent)}
     for field in ("heat", "direction", "funding_apr", "crowded_share", "advance_share"):
-        if isinstance(latest.get(field), (int, float)) and isinstance((reference or {}).get(field), (int, float)):
+        if isinstance(latest.get(field), (int, float)) and isinstance(reference.get(field), (int, float)):
             changes[f"{field}_24h_points"] = round(latest[field] - reference[field], 2)
     for field in ("price", "oi_usd", "volume_24h_usd"):
-        change = _percent_change(latest.get(field), (reference or {}).get(field))
+        change = _percent_change(latest.get(field), reference.get(field))
         if change is not None:
             changes[f"{field}_24h_percent"] = change
     flow = position_flow(changes.get("price_24h_percent"), changes.get("oi_usd_24h_percent"))
