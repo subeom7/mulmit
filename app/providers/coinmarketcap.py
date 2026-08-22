@@ -104,7 +104,9 @@ def parse_global_metrics(raw: Any, *, fetched_at: str) -> dict[str, Any]:
         "total_volume_24h_change_percent": _number(usd.get("total_volume_24h_yesterday_percentage_change")),
         "altcoin_market_cap_usd": _number(usd.get("altcoin_market_cap")),
         "stablecoin_market_cap_usd": _number(usd.get("stablecoin_market_cap")),
-        "stablecoin_24h_change_percent": _number(data.get("stablecoin_24h_percentage_change")),
+        # CMC's *_24h_percentage_change for stablecoin/defi/derivatives are changes in 24h *volume*
+        # (live 2026-08-22: +22.6% next to a $282B stablecoin market cap — a cap cannot move that much in a day).
+        "stablecoin_volume_24h_change_percent": _number(data.get("stablecoin_24h_percentage_change")),
         "stablecoin_volume_24h_usd": _number(
             usd.get("stablecoin_volume_24h") if usd.get("stablecoin_volume_24h") is not None else data.get("stablecoin_volume_24h")
         ),

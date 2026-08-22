@@ -2570,7 +2570,7 @@ function renderCryptoStructure() {
     [t("crypto.structure.ethDom"), pct(dom.eth_percent), pts(dom.eth_24h_change_points), changeClass(dom.eth_24h_change_points)],
     [t("crypto.structure.othersDom"), pct(dom.others_percent), null, ""],
     [t("crypto.structure.totalCap"), cryptoUsd(safeNumber(cap.total_usd), { compact: true }), signed(cap.total_24h_change_percent), changeClass(cap.total_24h_change_percent)],
-    [t("crypto.structure.stableCap"), cryptoUsd(safeNumber(cap.stablecoin_usd), { compact: true }), signed(cap.stablecoin_24h_change_percent), changeClass(cap.stablecoin_24h_change_percent)],
+    [t("crypto.structure.stableCap"), cryptoUsd(safeNumber(cap.stablecoin_usd), { compact: true }), null, ""],
     [t("crypto.structure.volume"), cryptoUsd(safeNumber(vol.total_usd), { compact: true }), signed(vol.change_percent), changeClass(vol.change_percent)],
   ].filter(([, value]) => value !== "—");
   grid.replaceChildren(...cards.map(([title, value, sub, cls]) => cryptoStatCard(title, value, sub, cls)));
@@ -2599,8 +2599,8 @@ function renderCryptoStructure() {
         if (safeNumber(coin.peg_deviation_bp) !== null) parts.push(t("crypto.structure.stable.peg", { v: `${coin.peg_deviation_bp >= 0 ? "+" : ""}${coin.peg_deviation_bp.toFixed(1)}` }));
         return [t("crypto.structure.stable.supply", { s: coin.symbol || "?" }), cryptoCompactNumber(safeNumber(coin.circulating_supply)), parts.join(" · ") || null, changeClass(coin.change_7d_percent)];
       });
-      if (safeNumber(agg.share_of_total_percent) !== null) stableCards.push([t("crypto.structure.stable.share"), `${agg.share_of_total_percent.toFixed(2)}%`, `${t("crypto.structure.stable.shareSub")}${safeNumber(agg.change_24h_percent) !== null ? ` · ${formatSigned(agg.change_24h_percent)} · 24h` : ""}`, changeClass(agg.change_24h_percent)]);
-      if (safeNumber(agg.volume_24h_usd) !== null) stableCards.push([t("crypto.structure.stable.volume"), cryptoUsd(agg.volume_24h_usd, { compact: true }), null, ""]);
+      if (safeNumber(agg.share_of_total_percent) !== null) stableCards.push([t("crypto.structure.stable.share"), `${agg.share_of_total_percent.toFixed(2)}%`, t("crypto.structure.stable.shareSub"), ""]);
+      if (safeNumber(agg.volume_24h_usd) !== null) stableCards.push([t("crypto.structure.stable.volume"), cryptoUsd(agg.volume_24h_usd, { compact: true }), signed(agg.volume_24h_change_percent), changeClass(agg.volume_24h_change_percent)]);
       stableGrid.replaceChildren(...stableCards.filter(([, value]) => value !== "—").map(([title, value, sub, cls]) => cryptoStatCard(title, value, sub, cls)));
       const since = stable.history?.since || null;
       stableNote.hidden = !since;

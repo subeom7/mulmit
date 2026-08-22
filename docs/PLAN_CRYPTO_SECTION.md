@@ -240,6 +240,10 @@ fail-closed, 수치 발명 금지)으로 하나씩 판정한 문서다. 소스�
   누적 시작일 각주. 출처 문구는 같은 섹션 푸터(값 바로 아래). 새 권리 없음 — 같은 키·같은 Commercial Terms·같은 1-product 표시
   (등록부 §3.20 사용 범위만 갱신).
 - 한계: ingest가 48시간 이상 멈추면 `purge_reports`가 블롭(히스토리 포함)을 지워 누적이 다시 시작된다 — 시작일이 그대로 드러난다.
+- **실측 함정(2026-08-22, 정정 PR)**: CMC 글로벌 메트릭의 `stablecoin_24h_percentage_change`(및 defi·derivatives 동명 필드)는 **24h
+  거래대금 변화**다 — 라이브 +22.56%가 스테이블 시총 $282B 옆에 붙어 있었고 총 거래대금 변화(+23.48%)와 같은 급(시총이 하루 22%
+  움직일 수 없음). Phase 2부터 "스테이블코인 시총 +x% · 24h"로 붙이던 라벨을 떼고 `volume_24h.stablecoin_change_percent`·
+  `stablecoins.aggregate.volume_24h_change_percent`로 옮겼다. CMC는 스테이블 시총의 24h 변화를 주지 않는다 → 자체 누적(7d/30d)이 그 자리.
 
 ## 8. 실측 로그 (2026-08-21, 서울 KT 가정망)
 
@@ -292,6 +296,7 @@ WebSocket(python websockets, `origin=https://mulmit.com`):
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-08-22 | 정정 — CMC `stablecoin_24h_percentage_change`는 거래대금 변화(실측 +22.6% vs 시총 $282B): 시총 카드의 24h 라벨 제거, 거래대금 카드로 이동(§7.5) |
 | 2026-08-22 | Phase 3b(§7.5) — 스테이블코인 공급·유동성(CMC quotes/latest USDT·USDC, 같은 키, 자체 일별 누적 7d/30d), 등록부 §3.20 사용 범위 갱신 |
 | 2026-08-22 | Phase 3a(§7.4) — HL 전체 시장 보드(급등·급락·OI·거래대금·펀딩 극단값·합계), 새 권리 없음 |
 | 2026-08-21 | Phase 2b(§7.3) — 가스 스트립 lane(운영자 RPC 계정 주입형), T 단위 포맷, Deribit·Coinalyze 문의 초안 생성 |

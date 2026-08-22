@@ -59,6 +59,7 @@ fail-closed, 수치 발명 금지)으로 판정한 문서다. 실행 순서의 �
 | 날짜 | 내용 |
 |---|---|
 | 2026-08-22 | #16 업비트 김치프리미엄 위험수용 개방·라이브(DS-2026-012), 가스 레인 Alchemy 계정으로 ON(DS-2026-013), Deribit·Coinalyze 문의 발송 |
+| 2026-08-22 | #16 정정 — CMC `stablecoin_24h_percentage_change`는 24h **거래대금** 변화(실측 +22.6% vs 시총 $282B): 스테이블 시총 카드의 24h 라벨 제거, 스테이블 거래대금 카드로 이동 |
 | 2026-08-22 | #16 Phase 3b — 스테이블코인 공급·유동성(`/api/crypto/structure`의 `stablecoins`: USDT·USDC 유통 공급·페그·비중, 자체 일별 누적 7d/30d), CMC 같은 키(quotes/latest 1크레딧/시간), 등록부 §3.20 사용 범위 갱신 |
 | 2026-08-22 | #16 Phase 3a — HL 전체 시장 보드(`/api/crypto/board`: 급등·급락·OI·거래대금 상위·펀딩 극단값·합계), 새 권리 없음 |
 | 2026-08-21 | #16 Phase 2b — 가스 스트립 lane(운영자 RPC 계정 주입형, 게이트 OFF), CMC 도미넌스 라이브(DS-2026-011), 총시총 T 포맷, Deribit·Coinalyze 문의 초안 |
