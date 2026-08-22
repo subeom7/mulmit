@@ -1,0 +1,534 @@
+/* 물밑 콘솔 — 새 셸과 보드 (2026-08-22)
+ *
+ * tokens.css 뒤에 온다. 여기 있는 것은 전부 신규 컴포넌트이거나, 랜딩에서만
+ * 쓰는 기존 컴포넌트의 재조정이다. 다른 페이지는 아직 이 파일을 불러오지
+ * 않는다 — 랜딩이 승인되면 같은 링크를 추가하는 방식으로 확산한다.
+ */
+
+/* ======================================================================
+ * 1. 마스트헤드 — 한 줄에 9개를 밀어넣던 것을 3구역으로 나눈다.
+ *    좌: 브랜드+내비 / 중: 검색 / 우: 모드·언어.
+ *    세션 상태·환율·접속자·연결 상태는 전부 아래 테이프로 내려보냈다.
+ * ================================================================== */
+.masthead {
+  min-height: var(--mast-h);
+  gap: var(--sp-4);
+  padding: 0 max(var(--sp-4), calc((100vw - 1320px) / 2));
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(20px) saturate(140%);
+  border-bottom: 1px solid var(--line);
+}
+.brand { min-width: 0; gap: var(--sp-2); }
+.brand-mark { width: 30px; height: 30px; border-radius: 8px; }
+.brand strong { font-size: var(--fs-lg); font-weight: 700; letter-spacing: -.03em; }
+/* 마스트헤드의 브랜드 부제를 뺀다. 두 줄짜리 로크업은 박스는 가운데여도
+ * "Mulmit" 글자가 6~7px 위로 뜨고, 그러면 옆의 탭이 내려앉아 보인다. 부제는
+ * 바로 아래 h1이 이미 하는 말이라 없어도 잃는 게 없다. */
+.brand small { display: none; }
+
+/* 탭은 헤더 높이를 꽉 채운다. 글자는 헤더 정중앙에 놓이고, 활성 밑줄은 공중에
+ * 뜨는 대신 헤더 아래 선 위에 정확히 앉는다. */
+.view-switch { align-self: stretch; align-items: stretch; min-width: 0; background: transparent; border: 0; padding: 0; gap: var(--sp-1); }
+.view-tab {
+  display: inline-flex; align-items: center;
+  padding: 0 12px; border-radius: 0; font-size: var(--fs-sm); font-weight: 600;
+  color: var(--ink-3);
+}
+.view-tab:hover { color: var(--ink); background: var(--panel-2); }
+.view-tab.active { background: transparent; color: var(--ink); box-shadow: inset 0 -2px var(--accent); }
+
+.mast-actions { gap: var(--sp-2); }
+.site-search-input { height: 32px; font-size: var(--fs-sm); border-radius: var(--r-sm); }
+.icon-button { height: 32px; border-radius: var(--r-sm); font-size: var(--fs-xs); }
+
+/* 쉬움 / 전문가 -------------------------------------------------------- */
+.mode-switch {
+  display: inline-flex; padding: 2px; gap: 2px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px;
+}
+.mode-switch button {
+  padding: 5px 12px; border: 0; border-radius: 999px; cursor: pointer;
+  background: transparent; color: var(--ink-3);
+  font-size: var(--fs-xs); font-weight: 700; letter-spacing: -.01em;
+}
+.mode-switch button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.mode-switch button:hover[aria-pressed="false"] { color: var(--ink); }
+
+/* 모드에 따른 노출. JS는 html[data-mode]만 바꾼다. */
+html[data-mode="easy"] .pro-only { display: none !important; }
+html[data-mode="pro"] .easy-only { display: none !important; }
+
+/* ======================================================================
+ * 2. 테이프 — 마스트헤드 아래 고정 한 줄. 터미널의 시세 띠.
+ * ================================================================== */
+.tape {
+  position: sticky; top: var(--mast-h); z-index: 90;
+  display: flex; align-items: center; gap: 0;
+  height: var(--tape-h); overflow: hidden;
+  padding: 0 max(var(--sp-4), calc((100vw - 1320px) / 2));
+  /* 불투명하게 둔다. 반투명 유리로 두면 스크롤할 때 뒤의 큰 숫자가 비쳐서
+   * 테이프 값과 겹쳐 읽힌다 — 얇은 띠에서 유리 질감은 얻는 게 없다. */
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--line);
+}
+
+/* 흐르는 칸. 같은 묶음 두 벌이 나란히 서서 함께 왼쪽으로 밀린다 — 첫 벌이
+ * 빠진 자리에 둘째 벌이 들어와 이음매가 없다. 속도는 console.js가 폭에 맞춰
+ * --tape-duration으로 넣는다. */
+.tape-track {
+  flex: 1 1 auto; min-width: 0; height: 100%; display: flex; overflow: hidden;
+  /* 양 끝을 흐리게 잘라 낸다. 그냥 자르면 세션 배지 옆에서 종목명이 반쯤
+   * 잘린 채 멈춰 보이는데, 페이드가 있으면 띠가 아래로 흘러 들어가는 것처럼
+   * 읽힌다. */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
+}
+.tape-run {
+  flex: none; height: 100%; display: flex;
+  animation: tape-marquee var(--tape-duration, 60s) linear infinite;
+  will-change: transform;
+}
+@keyframes tape-marquee { to { transform: translateX(-100%); } }
+/* 값을 읽으려고 올려둔 손을 존중한다 — 닿으면 멈춘다. :hover는 스크립트가
+ * 없을 때의 대비책이고, 실제 정지는 console.js가 .is-paused로 건다(터치에는
+ * hover가 없다). */
+.tape:hover .tape-run,
+.tape:focus-within .tape-run,
+.tape.is-paused .tape-run { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  /* 움직임을 줄여 달라고 한 사용자에게는 흐르지 않는 띠를 준다. 대신 손으로
+   * 옆으로 밀 수 있게 열어 둔다. */
+  .tape-run { animation: none; }
+  .tape-run + .tape-run { display: none; }
+  .tape-track { overflow-x: auto; scrollbar-width: none; }
+  .tape-track::-webkit-scrollbar { display: none; }
+}
+
+/* 세션 배지는 monitor.js가 채운다(휴장일 달력 반영). 테이프 안에서는 알약이
+ * 아니라 첫 칸처럼 보이게 한다. */
+.tape .session-badge {
+  flex: none; align-self: center; margin-right: var(--sp-3); padding: 0 var(--sp-4) 0 0;
+  border: 0; border-right: 1px solid var(--line); border-radius: 0;
+  color: var(--ink-2); font: 700 var(--fs-xs)/1 var(--sans); white-space: nowrap;
+}
+.tape .session-badge i { background: var(--amber); }
+.tape .session-badge.open { color: var(--up); }
+@media (max-width: 760px) { .tape .session-badge { display: inline-flex; } }
+
+/* 접속자 수도 마스트헤드가 아니라 테이프에 산다. */
+.tape .presence-badge {
+  flex: none; margin-right: var(--sp-2); padding: 0 var(--sp-3) 0 0;
+  border: 0; border-right: 1px solid var(--line); border-radius: 0;
+  color: var(--ink-3); font: 600 var(--fs-xs)/1 var(--sans); white-space: nowrap;
+}
+.tape .presence-badge:empty { display: none; }
+
+/* baseline 정렬은 34px 칸 안에서 글자를 위쪽에 붙여 놓는다 — 옆의 세션 배지와
+ * 높이가 어긋나 보이던 원인이다. 세 조각 모두 line-height를 1로 맞추고 가운데
+ * 정렬하면 배지와 같은 선에 앉는다. */
+.tape-item {
+  display: inline-flex; align-items: center; gap: 7px; flex: none;
+  padding: 0 var(--sp-4); height: 100%; text-decoration: none; white-space: nowrap;
+  border-right: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+}
+.tape-item:hover { background: var(--panel); color: inherit; }
+.tape-item > * { line-height: 1; }
+.tape-name { color: var(--ink-2); font-size: var(--fs-xs); font-weight: 600; }
+.tape-value { color: var(--ink); font: 650 var(--fs-sm)/1 var(--mono); }
+.tape-delta { font: 650 var(--fs-xs)/1 var(--mono); }
+.tape-delta.up { color: var(--up); }
+.tape-delta.down { color: var(--down); }
+.tape-delta.flat { color: var(--ink-3); }
+.tape-delta.none { display: none; }
+
+/* ======================================================================
+ * 3. 셸·섹션
+ * ================================================================== */
+.shell { width: min(1320px, 100%); padding: var(--sp-6) var(--sp-4) var(--sp-8); }
+
+/* 히어로 카피는 걷어냈다. 첫 화면은 값이 차지한다. */
+.console-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: var(--sp-4); flex-wrap: wrap;
+  padding-bottom: var(--sp-4); margin-bottom: var(--sp-4);
+}
+.console-head h1 {
+  margin: 0; font-size: var(--fs-xxl); font-weight: 700; letter-spacing: -.035em;
+}
+.console-h1-sub { color: var(--ink-3); font-size: var(--fs-lg); font-weight: 500; letter-spacing: -.02em; }
+.console-head .console-sub { margin: 4px 0 0; color: var(--ink-2); font-size: var(--fs-sm); }
+.console-meta {
+  display: flex; align-items: center; gap: var(--sp-3);
+  color: var(--ink-3); font-size: var(--fs-xs);
+}
+.console-meta strong { color: var(--ink-2); font-family: var(--mono); font-weight: 650; }
+.refresh-button { padding: 6px 11px; border-radius: var(--r-sm); font-size: var(--fs-xs); }
+
+.console-section { margin: var(--sp-7) 0 0; }
+.console-section > header {
+  display: flex; align-items: baseline; gap: var(--sp-3);
+  margin-bottom: var(--sp-4); padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+.console-section > header h2 { margin: 0; font-size: var(--fs-xl); font-weight: 700; }
+.console-section > header .sec-note { color: var(--ink-3); font-size: var(--fs-sm); }
+.console-section > header .sec-link { margin-left: auto; color: var(--accent); font-size: var(--fs-sm); font-weight: 600; text-decoration: none; }
+.console-section > header .sec-link:hover { text-decoration: underline; }
+
+/* ======================================================================
+ * 4. 보드 — 첫 화면의 대표 숫자들
+ * ================================================================== */
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+@media (max-width: 1080px) { .board { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); } }
+
+.tile {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  min-height: 158px; padding: var(--sp-4);
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-md);
+  text-decoration: none; color: inherit;
+  transition: border-color .15s, background .15s, transform .15s;
+}
+a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); transform: translateY(-1px); color: inherit; }
+
+.tile-head { display: flex; align-items: baseline; gap: var(--sp-2); }
+.tile-name { font-size: var(--fs-md); font-weight: 650; letter-spacing: -.015em; }
+.tile-tag { margin-left: auto; color: var(--ink-3); font: 600 var(--fs-xs)/1.2 var(--mono); }
+
+.tile-value {
+  display: flex; align-items: baseline; gap: 5px;
+  font: 680 var(--fs-display)/1.05 var(--mono); letter-spacing: -.035em;
+}
+.tile-unit { color: var(--ink-3); font-size: var(--fs-md); font-weight: 600; letter-spacing: 0; }
+
+.tile-delta { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; }
+.tile-change { font: 680 var(--fs-lg)/1.2 var(--mono); letter-spacing: -.02em; }
+.tile-change.up { color: var(--up); }
+.tile-change.down { color: var(--down); }
+.tile-change.flat { color: var(--ink-3); }
+.tile-basis { color: var(--ink-2); font-size: var(--fs-sm); }
+
+/* 스파크라인은 구조가 아니라 배경이다 — 없는 타일이 있어도 줄이 어긋나지
+ * 않게 절대배치로 깔았다. */
+.tile-spark {
+  display: flex; align-items: flex-end; gap: var(--sp-2);
+  height: 46px; padding-left: var(--sp-4); opacity: .9; pointer-events: none;
+}
+.tile-spark svg { flex: 1 1 auto; min-width: 0; height: 100%; display: block; }
+/* 기간 라벨은 선의 색을 따라가지 않는다 — 색은 방향의 신호이고 이건 축 이름이다. */
+.spark-period {
+  flex: none; padding-bottom: 9px;
+  color: var(--ink-3); font: 650 var(--fs-xs)/1 var(--mono);
+}
+.tile-spark path.fill { fill: currentColor; opacity: .12; }
+.tile-spark path.line { fill: none; stroke: currentColor; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+/* 추이선은 자기가 그린 30일 방향으로 물든다. 옆의 등락률과 기간이 다르므로
+ * 두 색이 갈릴 수 있는데, 그건 오류가 아니라 정보다 — "오늘은 빠졌지만 한 달은
+ * 올랐다". 기간은 전문가 모드의 '배경 추이선' 줄에 적어 둔다. */
+.tile-spark.up { color: var(--up); }
+.tile-spark.down { color: var(--down); }
+.tile-spark.flat { color: var(--ink-3); }
+
+/* 발판 — 추이선과 상세를 아래에 쌓는다. 타일 폭 끝까지 선이 닿게 좌우 여백을
+ * 되돌린다. */
+.tile-foot { margin: auto calc(var(--sp-4) * -1) calc(var(--sp-4) * -1); }
+@media (max-width: 560px) { .tile-foot { margin: auto calc(var(--sp-3) * -1) calc(var(--sp-3) * -1); } }
+
+/* 전문가 모드에서만 열리는 상세 줄 */
+.tile-detail { padding: var(--sp-2) var(--sp-4) var(--sp-3); border-top: 1px solid var(--line); background: var(--panel-2); }
+.tile-detail dl { display: grid; grid-template-columns: auto 1fr; gap: 3px var(--sp-3); margin: 0; }
+.tile-detail dt { color: var(--ink-3); font-size: var(--fs-xs); }
+.tile-detail dd { margin: 0; text-align: right; font: 600 var(--fs-xs)/1.5 var(--mono); color: var(--ink-2); }
+
+@media (max-width: 560px) {
+  /* 2열을 유지하되 값 크기를 폭에 맡긴다. 원화 7자리(1,739,718 KRW)가 한 칸에
+   * 들어가야 하는데, 22px 고정으로는 358px 화면에서 잘렸다. clamp로 화면이
+   * 좁아지는 만큼만 줄어들고 넓으면 22px에서 멈춘다. */
+  .tile { min-height: 124px; padding: var(--sp-3); }
+  .tile-value { font-size: clamp(16px, 5vw, 22px); letter-spacing: -.05em; }
+  .tile-unit { font-size: var(--fs-sm); }
+  .tile-change { font-size: var(--fs-md); }
+  .tile-basis { font-size: var(--fs-xs); }
+  .tile-delta { gap: 6px; }
+  .tile-head { gap: 6px; }
+  .tile-name { font-size: var(--fs-sm); }
+  .tile-spark { height: 34px; padding-left: var(--sp-3); gap: 6px; }
+  .spark-period { padding-bottom: 6px; }
+}
+/* 아주 좁은 화면에서는 종목코드를 줄이는 대신 뺀다 — 12px 바닥을 지키려고
+ * 읽히지 않는 크기로 밀어 넣지 않는다. 코드가 필요하면 타일을 누르면 된다. */
+@media (max-width: 440px) { .tile-tag { display: none; } }
+
+/* ======================================================================
+ * 4b. S&P 500 히트맵 — 홈에서도 본다 (TradingView 외부 위젯, 화면에 들어오면 로드)
+ * ================================================================== */
+.console-section > header .segmented { margin-left: auto; }
+.console-section > header .segmented button { font-size: var(--fs-xs); padding: 5px 11px; }
+.tv-panel { padding: 0; overflow: hidden; }
+.tv-panel .tradingview-host { height: min(560px, 62vh); min-height: 360px; }
+.tv-panel .tradingview-widget-container,
+.tv-panel .tradingview-widget-container__widget { height: 100%; }
+.tv-panel .panel-footer { display: flex; gap: var(--sp-2); padding: 10px var(--sp-4); }
+@media (max-width: 760px) {
+  .tv-panel .tradingview-host { height: 62vh; min-height: 300px; }
+  .console-section > header { flex-wrap: wrap; }
+  .console-section > header .segmented { margin-left: 0; }
+}
+
+/* ======================================================================
+ * 4c. 24시간 참고가 카드 = 보드 타일
+ *
+ * renderKrOvernight는 그대로 둔다 — 카드가 이미 이름·큰 값·등락·근거표라는
+ * 같은 뼈대를 갖고 있어서, 껍데기만 타일 시스템에 맞추면 된다. /kr에 별도
+ * 보드를 두지 않는 이유이기도 하다(같은 값을 두 번 그리게 된다).
+ * ================================================================== */
+.kro-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+@media (max-width: 1080px) { .kro-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .kro-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); } }
+
+.kro-card {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: var(--sp-4); border-radius: var(--r-md); box-shadow: none;
+}
+/* 카드 위쪽 색 테두리를 뺀다 — 등락은 숫자가 이미 말하고 있고, 카드마다 초록
+ * 빨강 띠가 서면 색이 다시 장식이 된다. */
+.kro-card.up, .kro-card.down { border-top: 1px solid var(--line); }
+.kro-card h3 { font-size: var(--fs-md); font-weight: 650; letter-spacing: -.015em; }
+.kro-card h3 a { text-decoration: none; }
+.kro-card h3 a:hover { color: var(--accent); text-decoration: underline; }
+.kro-sym { font: 600 var(--fs-xs)/1.2 var(--mono); }
+.kro-price {
+  margin: var(--sp-2) 0 0;
+  font: 680 var(--fs-display)/1.05 var(--mono); letter-spacing: -.035em;
+}
+/* 숫자와 문장이 한 줄에 섞여 있다 — 모노로 두면 한글이 대체 글꼴로 빠져 줄이
+ * 들쭉날쭉해진다. 본문 글꼴에 자리폭 숫자만 켠다. */
+.kro-vs { font: 650 var(--fs-sm)/1.45 var(--sans); font-variant-numeric: tabular-nums; }
+.kro-vs-ref { margin-top: 2px; font: 600 var(--fs-xs)/1.45 var(--sans); font-variant-numeric: tabular-nums; }
+.kro-meta { margin-top: auto; padding-top: var(--sp-2); gap: 3px; }
+.kro-meta dt { color: var(--ink-3); font: 500 var(--fs-xs)/1.5 var(--sans); }
+.kro-meta dd { color: var(--ink-2); font: 600 var(--fs-xs)/1.5 var(--mono); }
+.kro-badges { margin-top: var(--sp-2); }
+
+/* 쉬움에서는 두 번째 퍼센트와 근거표를 접는다.
+ * "−0.49%(종가 대비)"와 "−4.93%(15:30 퍼프 대비)"가 같은 카드에 같은 크기로
+ * 서 있으면 어느 쪽이 오늘 이야기인지 알 수 없다. 경고 칩(지연·저유동성)은
+ * 위험 정보라 접지 않는다. */
+html[data-mode="easy"] .kro-vs-ref,
+html[data-mode="easy"] .kro-meta { display: none; }
+
+.kro-official-strip { margin-top: var(--sp-4); font-size: var(--fs-xs); }
+.kro-official-strip .kro-strip-label { font-size: var(--fs-xs); }
+.kro-strip-item small, .kro-strip-item em { font-size: var(--fs-xs); }
+.kro-strip-item strong { font-size: var(--fs-sm); }
+.kro-footer { margin-top: var(--sp-3); }
+.kro-footer .kro-method, .kro-footer .kro-disclaimer { font-size: var(--fs-xs); color: var(--ink-3); }
+
+/* 주말 신호 카드·고지도 같은 바닥 위로. */
+.weekend-disclaimer { font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.6; }
+
+@media (max-width: 560px) {
+  .kro-card { padding: var(--sp-3); }
+  .kro-price { font-size: clamp(16px, 5vw, 22px); letter-spacing: -.05em; }
+  .kro-card h3 { font-size: var(--fs-sm); }
+  .kro-vs { font-size: var(--fs-xs); }
+}
+
+/* ======================================================================
+ * 5. 고지 — 8px 회색 네 줄 대신 접히는 한 줄
+ * ================================================================== */
+.disclose {
+  margin-top: var(--sp-3);
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel);
+}
+.disclose > summary {
+  padding: 9px var(--sp-3); cursor: pointer; list-style: none;
+  color: var(--ink-2); font-size: var(--fs-xs); font-weight: 600;
+}
+.disclose > summary::-webkit-details-marker { display: none; }
+.disclose > summary::before { content: "▸ "; color: var(--ink-3); }
+.disclose[open] > summary::before { content: "▾ "; }
+.disclose > summary:hover { color: var(--ink); }
+.disclose .disclose-body {
+  padding: 0 var(--sp-3) var(--sp-3);
+  color: var(--ink-2); font-size: var(--fs-xs); line-height: 1.7;
+}
+.disclose .disclose-body p { margin: 0 0 6px; }
+.disclose .disclose-body p:last-child { margin-bottom: 0; }
+
+/* 글자 표는 왼쪽에서 읽는다.
+ * `.accessible-table`의 기본은 전 열 우측 정렬이라 의원 이름과 종목명이
+ * 오른쪽 끝에 매달려 있었다. 숫자 열(.num)만 우측에 두고 나머지는 되돌린다.
+ * 값이 대부분 숫자인 표(상관행렬·섹터)는 건드리지 않으려고 섹션으로 좁혔다. */
+#us-ptr .accessible-table th:not(.num), #us-ptr .accessible-table td:not(.num),
+#us-events .accessible-table th:not(.num), #us-events .accessible-table td:not(.num),
+#econ-calendar .accessible-table th:not(.num), #econ-calendar .accessible-table td:not(.num),
+#kr-events .accessible-table th:not(.num), #kr-events .accessible-table td:not(.num),
+#kr-pension .accessible-table th:not(.num), #kr-pension .accessible-table td:not(.num),
+#kr-holdings .accessible-table th:not(.num), #kr-holdings .accessible-table td:not(.num) {
+  text-align: left;
+}
+
+/* 지표 자세히 보기 — 기존 대시보드 섹션들을 통째로 담는 큰 서랍.
+ * 쉬움에서는 닫혀 있고 전문가에서는 열린다(data-mode-open). 닫혀 있어도 본문은
+ * DOM에 있어 검색엔진은 그대로 읽는다. */
+.disclose-deep > summary { padding: 13px var(--sp-4); font-size: var(--fs-sm); }
+.disclose-deep .deep-body { padding: 0 var(--sp-4) var(--sp-4); }
+.disclose-deep .dashboard-section { margin: var(--sp-6) 0 0; }
+.disclose-deep .dashboard-section:first-of-type { margin-top: var(--sp-4); }
+.disclose-deep .jump-nav { position: static; margin: var(--sp-3) 0 0; }
+
+/* 위험 표시는 접지 않는다 — 다만 주황 알약 세 개가 나란히 서면 그것대로
+ * 소음이라, 테두리만 남긴 조용한 칩으로 바꾼다. */
+.risk-strip { gap: 6px; margin: var(--sp-3) 0 0; }
+.risk-strip .status-badge {
+  padding: 4px 10px; border-radius: 999px; font-size: var(--fs-xs); font-weight: 600;
+  color: var(--ink-3); background: transparent; border: 1px solid var(--line-strong);
+}
+
+/* KO/EN을 DOM에 함께 담고 골라 보여준다. legal.css와 같은 규칙이며, 같은
+ * 이유로 [lang="en"]이 아니라 클래스를 쓴다 — lang 속성으로 셀렉트하면
+ * <html lang="en">에 걸려 문서 전체가 사라진다. */
+.lang-en { display: none; }
+html[data-lang="en"] .lang-ko { display: none; }
+html[data-lang="en"] .lang-en { display: revert; }
+
+/* ======================================================================
+ * 6. 용어 — 점선 밑줄 + 팝오버
+ * ================================================================== */
+.term {
+  padding: 0 1px; border: 0; background: none; cursor: help; font: inherit;
+  color: var(--ink);
+  border-bottom: 1px dashed color-mix(in srgb, var(--accent) 65%, transparent);
+}
+.term::after { content: "ⓘ"; margin-left: 2px; color: var(--accent); font-size: .85em; vertical-align: .05em; }
+.term:hover, .term[aria-expanded="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+.term-pop {
+  position: absolute; z-index: 200; width: min(340px, calc(100vw - 24px));
+  padding: var(--sp-4); background: var(--panel-2);
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); box-shadow: var(--shadow);
+}
+.term-pop h3 { margin: 0 0 6px; font-size: var(--fs-md); font-weight: 700; }
+.term-pop .term-def { margin: 0 0 var(--sp-3); color: var(--ink); font-size: var(--fs-sm); line-height: 1.65; }
+.term-pop dl { margin: 0; display: grid; gap: var(--sp-2); }
+.term-pop dt { color: var(--accent); font-size: var(--fs-xs); font-weight: 700; }
+.term-pop dd { margin: 2px 0 0; color: var(--ink-2); font-size: var(--fs-sm); line-height: 1.6; }
+.term-pop .term-close {
+  position: absolute; top: 6px; right: 6px; width: 26px; height: 26px;
+  border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-3); cursor: pointer;
+  font-size: var(--fs-md); line-height: 1;
+}
+.term-pop .term-close:hover { background: var(--panel-3); color: var(--ink); }
+
+@media (max-width: 560px) {
+  /* 모바일에서는 하단 시트로 — 좁은 화면에서 떠 있는 말풍선은 잘린다. */
+  .term-pop {
+    position: fixed; inset: auto 0 0 0; width: 100%;
+    border-radius: var(--r-lg) var(--r-lg) 0 0; border-bottom: 0;
+    padding-bottom: var(--sp-6);
+  }
+}
+
+/* ======================================================================
+ * 7. 존 카드 · 피드 조정
+ * ================================================================== */
+.zone-links { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-3); }
+@media (max-width: 900px) { .zone-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.zone-link-card {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: var(--sp-4); background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--r-md); text-decoration: none; color: inherit;
+  transition: border-color .15s, background .15s;
+}
+.zone-link-card:hover { border-color: var(--accent); background: var(--panel-2); color: inherit; }
+.zone-link-card strong { font-size: var(--fs-md); font-weight: 650; }
+.zone-link-card span { color: var(--ink-3); font-size: var(--fs-sm); line-height: 1.55; }
+.zone-link-card .zone-mini {
+  margin-top: auto; padding-top: var(--sp-2);
+  color: var(--ink-2); font: 600 var(--fs-xs)/1.6 var(--mono);
+}
+.zone-link-card .zone-mini small { font-size: var(--fs-xs); color: var(--ink-3); }
+
+/* 피드 — 9~10px로 깔려 있던 메타를 전부 12px 바닥 위로 올린다. 날짜·출처·태그가
+ * 본문보다 작아야 할 이유는 있지만, 읽히지 않을 만큼 작아야 할 이유는 없다. */
+.feed-row { padding: 10px 14px; gap: 11px; }
+.feed-row, .feed-item, .feed-text { font-size: var(--fs-sm); }
+.feed-date { flex-basis: 52px; font-size: var(--fs-xs); color: var(--ink-3); }
+.feed-tag { padding: 3px 8px; font-size: var(--fs-xs); }
+.feed-domain { font-size: var(--fs-xs); color: var(--ink-3); }
+.feed-move { padding: 2px 8px; font-size: var(--fs-xs); }
+.feed-hub { font-size: var(--fs-xs); color: var(--ink-3); }
+.feed-filter button, .feed-upcoming a, .feed-upcoming span { font-size: var(--fs-xs); }
+@media (max-width: 560px) {
+  .feed-date { flex-basis: 46px; }
+  /* 좁은 화면에서 등락 칩과 허브 링크가 줄 밖으로 밀려 가로 스크롤을 만들었다.
+   * 한 줄을 고집하지 말고 접히게 둔다. */
+  .feed-row { flex-wrap: wrap; row-gap: 6px; }
+  .feed-hub { margin-left: 0; }
+}
+
+/* 데이터 원칙 블록은 랜딩 맨 아래로 내리고 조용하게. */
+.methodology { margin-top: var(--sp-7); padding-top: var(--sp-5); border-top: 1px solid var(--line); }
+.methodology h2 { font-size: var(--fs-lg); }
+.method-grid article strong { font-size: var(--fs-sm); }
+.method-grid article p { color: var(--ink-3); font-size: var(--fs-xs); }
+/* 출처 표기에는 끊을 곳 없는 긴 기관명·URL이 들어온다. 좁은 화면에서 이게
+ * 페이지 전체에 가로 스크롤을 만들고 있었다(318px 실측). */
+.attribution { overflow-wrap: anywhere; }
+.attribution a { word-break: break-word; }
+
+.site-footer { margin-top: var(--sp-6); color: var(--ink-3); font-size: var(--fs-xs); }
+.site-footer p, .site-footer nav a { font-size: var(--fs-xs); }
+
+/* ======================================================================
+ * 8. 좁은 화면
+ * ================================================================== */
+@media (max-width: 760px) {
+  /* 두 줄로 접는다: [로고 · 검색 · 모드 · 언어] / [탭]. 세 줄이 되면 첫 화면의
+   * 3분의 1을 머리말이 먹는다. */
+  .masthead { flex-wrap: wrap; padding-top: 6px; padding-bottom: 0; gap: var(--sp-2); row-gap: 0; }
+  .brand { order: 1; }
+  .mast-actions { order: 2; margin-left: auto; }
+  .view-switch { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .view-switch::-webkit-scrollbar { display: none; }
+  .view-tab { padding: 0 10px; height: 42px; }
+  .site-search-input { width: 128px; }
+  .site-search-input:focus { width: 172px; }
+  html { scroll-padding-top: 12px; }
+  /* 좁은 화면에서 고정 띠까지 붙어 있으면 볼 수 있는 높이가 얼마 안 남는다. */
+  .tape { top: 0; position: static; }
+  .console-head { padding-bottom: var(--sp-3); }
+  .console-head h1 { font-size: var(--fs-xl); }
+  .console-meta { flex-wrap: wrap; gap: var(--sp-2); }
+  .refresh-button { white-space: nowrap; }
+}
+
+@media (max-width: 560px) {
+  /* 로고는 마크만 남긴다. 워드마크까지 두면 검색·모드·언어가 다음 줄로 밀려
+   * 머리말이 다시 세 줄이 된다. 좌우 여백도 16 → 12로 줄여 한 줄에 담는다
+   * (356px 화면에서 실측: 320px가 필요한데 309px밖에 없었다). */
+  .brand strong { display: none; }
+  .masthead, .shell { padding-left: 12px; padding-right: 12px; }
+  .site-search-input { width: 96px; }
+  .site-search-input:focus { width: 150px; }
+  .mode-switch button { padding: 5px 9px; }
+  .tape { padding-left: 12px; padding-right: 12px; }
+}
+
+/* 아주 좁은 화면(≤400px)에서는 단위 글자를 한 칸 낮춘다 — 원화 7자리와 KRW가
+ * 같은 줄에 들어가야 한다. */
+@media (max-width: 400px) {
+  .tile-unit { font-size: var(--fs-xs); }
+}
+
+/* 320px대(구형 iPhone SE)에서는 검색칸을 한 번 더 줄여야 머리말이 두 줄로
+ * 유지된다. 포커스하면 넓어지므로 입력에는 지장이 없다. */
+@media (max-width: 360px) {
+  .site-search-input { width: 70px; }
+  .site-search-input:focus { width: 148px; }
+  .mode-switch button { padding: 5px 8px; }
+}

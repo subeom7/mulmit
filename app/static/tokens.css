@@ -1,0 +1,153 @@
+/* 물밑 디자인 토큰 — 콘솔 리디자인 (2026-08-22)
+ *
+ * monitor.css **뒤에** 불러 :root 변수를 덮어쓴다. 기존 컴포넌트는 전부
+ * var()를 쓰고 있어서, 여기서 값만 바꾸면 마크업을 건드리지 않고도 같은
+ * 시스템 위로 올라온다. 새 컴포넌트는 console.css에 있다.
+ *
+ * 원칙 세 가지.
+ *  1. 8~10px 텍스트를 없앤다. 최소 12px(--fs-xs). 읽히지 않는 고지는 고지가
+ *     아니라 소음이고, 소음은 법적 목적도 달성하지 못한다.
+ *  2. 색은 신호일 때만 쓴다. 등락(--up/--down)과 액센트 하나. 카드마다
+ *     보라·노랑·청록 테두리를 두르면 색이 의미를 잃는다.
+ *  3. 숫자가 주인공이다. 라벨은 작고 조용하게, 값은 크고 tabular하게.
+ */
+
+:root {
+  /* --- 면 ------------------------------------------------------------- */
+  /* 물밑 = 수면 아래. 위에서 아래로 아주 옅게 깊어진다. */
+  --bg: #0a0c0f;
+  --bg-deep: #070809;
+  --panel: #11151a;
+  --panel-2: #171c22;
+  --panel-3: #1d242b;
+
+  /* --- 잉크 ----------------------------------------------------------- */
+  /* muted를 #929ba3 → #b3bdc7로 올렸다. 기존 값은 본문 대비가 4.5:1에 못
+   * 미쳐 "숫자를 보기 어렵다"의 직접 원인이었다. */
+  --ink: #eff3f7;
+  --ink-2: #b3bdc7;
+  --muted: #b3bdc7;
+  --ink-3: #8b96a1;
+  --faint: #8b96a1;
+
+  /* --- 선 ------------------------------------------------------------- */
+  --line: #222a32;
+  --line-strong: #333d47;
+  --line-2: #333d47;
+
+  /* --- 신호색 --------------------------------------------------------- */
+  --up: #34d8a4;
+  --down: #ff6b81;
+  --green: #34d8a4;
+  --red: #ff6b81;
+  --amber: #f7c14b;
+  --accent: #4fa8ff;
+  --accent-ink: #0a0c0f;
+  --accent-soft: rgba(79, 168, 255, .14);
+  --violet: #a78bfa;
+  --cyan: #38bdf8;
+  --chart: #4fa8ff;
+  --chart-fill: rgba(79, 168, 255, .10);
+
+  /* --- 타이포 --------------------------------------------------------- */
+  --sans: "Pretendard Variable", Pretendard, system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+  --fs-display: 2.375rem; /* 38 — 보드 타일 대표 숫자 */
+  --fs-xxl: 1.75rem;      /* 28 */
+  --fs-xl: 1.375rem;      /* 22 — 섹션 제목 */
+  --fs-lg: 1.0625rem;     /* 17 */
+  --fs-md: 0.9375rem;     /* 15 — 본문 기준 */
+  --fs-sm: 0.8125rem;     /* 13 — 보조 */
+  --fs-xs: 0.75rem;       /* 12 — 라벨 하한선. 이보다 작게 쓰지 않는다 */
+
+  /* --- 간격·모서리 ---------------------------------------------------- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+
+  --shadow: 0 20px 60px rgba(0, 0, 0, .32);
+  --tape-h: 34px;
+  --mast-h: 58px;
+}
+
+/* --- 기준 타이포 ------------------------------------------------------ */
+html { font-size: 16px; scroll-padding-top: calc(var(--mast-h) + var(--tape-h) + 16px); }
+
+body {
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -10%, rgba(79, 168, 255, .07), transparent 70%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%) fixed;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+}
+
+/* 모든 숫자는 자리폭이 같아야 값이 흔들리지 않는다. */
+.num, .tnum, table td.num, table th.num,
+.tile-value, .tape-value, .metric-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* --- 최소 글자 크기 바닥 ---------------------------------------------
+ * monitor.css에 9~11px 하드코딩이 흩어져 있다. 한 번에 다 고치는 대신
+ * 실제로 작았던 셀렉터만 바닥을 올린다. 나머지 페이지로 확산할 때
+ * 원본 규칙을 정리한다. */
+/* 브랜드 로크업의 부제만 12px 아래를 허용한다 — 데이터가 아니라 장식이다. */
+.brand small { font-size: 11px; letter-spacing: .1em; }
+.eyebrow, .source-pill, .section-index,
+.connection-badge, .status-badge, .hint-chip,
+.panel-footer, .attribution, .kro-footer,
+.site-search-group, .site-search-hit .hit-meta { font-size: var(--fs-xs); }
+
+.section-copy, .hero-copy { font-size: var(--fs-md); color: var(--ink-2); }
+
+/* --- 표와 지표 카드 ---------------------------------------------------
+ * /us의 지표 섹션은 9~11.5px로 짜여 있었다(표 헤더 9px, 카드 키커 9px, 각주
+ * 9px). 여기가 페이지 글자 수의 대부분이라 바닥을 올리지 않으면 "글자가
+ * 작다"가 그대로 남는다. 다열 표는 이미 .table-scroll 안에서 가로로 흐르므로
+ * 폭이 늘어도 레이아웃이 깨지지 않는다. */
+.accessible-table { font-size: var(--fs-xs); }
+.accessible-table th { font-size: var(--fs-xs); }
+.metric-kicker { font-size: var(--fs-xs); }
+.metric-unit { font-size: var(--fs-xs); }
+.metric-change { font-size: var(--fs-xs); }
+.chart-slot .chart-empty { font-size: var(--fs-xs); }
+.metric-description { font-size: var(--fs-sm); color: var(--ink-2); }
+.hint-chip { font-size: var(--fs-xs); line-height: 1.45; }
+.metric-card > footer { font-size: var(--fs-xs); line-height: 1.5; }
+.panel-footer { font-size: var(--fs-xs); line-height: 1.5; }
+.krp-market { font-size: var(--fs-xs); }
+.feed-soon, .jump-nav a { font-size: var(--fs-xs); }
+.accessible-table td.range { font-size: var(--fs-xs); }
+.comparison-legend, .notice-line, .select-label, .select-label select { font-size: var(--fs-xs); }
+.comparison-card p { font-size: var(--fs-xs); color: var(--ink-2); }
+/* /kr — 공시 표의 원문 링크와 주말 카드 내부. 8.5~10px로 짜여 있었다. */
+.krp-source { font-size: var(--fs-xs); }
+.weekend-card h3 { font-size: var(--fs-md); font-weight: 650; }
+.weekend-symbol, .weekend-symbol a { font-size: var(--fs-xs); }
+.weekend-value { font-size: var(--fs-xxl); }
+.weekend-change { font-size: var(--fs-sm); }
+.weekend-meta, .weekend-meta strong { font-size: var(--fs-xs); line-height: 1.5; }
+.interpretation-note, .stress-scale-note, .stress-method, .stress-disclaimer,
+.stress-note, .sentiment-note { font-size: var(--fs-xs); line-height: 1.6; color: var(--ink-2); }
+
+h1 { letter-spacing: -0.03em; }
+h2 { font-size: var(--fs-xl); letter-spacing: -0.02em; }
+h3 { font-size: var(--fs-lg); letter-spacing: -0.01em; }
+
+/* --- 등락색은 등락에만 -------------------------------------------------
+ * 기존에는 카드마다 accent 색 좌측 보더가 붙어 초록·빨강·보라·노랑이
+ * 의미 없이 섞였다. 색이 신호이려면 다른 곳에서 색을 빼야 한다.
+ *
+ * 여기서 `.up`/`.down`을 전역으로 칠하지 않는 이유: 그 클래스는 값 자체가
+ * 아니라 **컨테이너**에도 붙는다(`.kro-card.up`). 전역으로 두면 카드 안의
+ * 종목명·근거표까지 통째로 초록이 된다 — 실제로 /kr에서 가격이 전부 물들었다.
+ * 색은 그 값을 그리는 규칙에서만 준다(.tile-change, .tape-delta, .kro-vs,
+ * monitor.css의 각 컴포넌트). */
+
+a { color: inherit; }
+a:hover { color: var(--accent); }
