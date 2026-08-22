@@ -14,7 +14,11 @@ Gate: ``CRYPTO_SECTION_ENABLED`` + ``CHAIN_GAS_ENABLED`` + at least one URL
 from __future__ import annotations
 
 import datetime as dt
+import logging
 import math
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -25,6 +29,21 @@ from .providers.evm_rpc import WEI_PER_ETH, WEI_PER_GWEI, EvmRpcProvider, host_l
 from .providers.hyperliquid import MAIN_DEX
 
 SIMPLE_TRANSFER_GAS = 21_000
+
+log = logging.getLogger(__name__)
+
+# Serving policy. Building the strip is four upstream round trips; measured
+# cold it took 1.57s while a warm one took 0.03s, so under the old shape one
+# visitor every 30 seconds paid the whole thing. Now a recent strip goes out
+# immediately and a single background thread refreshes behind it.
+SNAPSHOT_TTL = 30.0
+# Past this, a stale strip is not worth serving and the caller waits.
+SNAPSHOT_MAX_STALE = 600.0
+
+_snapshot_lock = threading.Lock()
+_snapshot: dict[str, Any] | None = None
+_snapshot_at = 0.0
+_refreshing = False
 
 
 @dataclass(frozen=True)
@@ -55,6 +74,59 @@ class DexProvider(Protocol):
 
 
 _providers: dict[str, EvmRpcProvider] = {}
+
+
+def _build_and_store() -> dict[str, Any]:
+    global _snapshot, _snapshot_at
+    payload = build_crypto_gas()
+    with _snapshot_lock:
+        _snapshot, _snapshot_at = payload, time.monotonic()
+    return payload
+
+
+def _refresh_in_background() -> None:
+    global _refreshing
+    try:
+        _build_and_store()
+    except Exception:  # noqa: BLE001 - the served strip is already good enough
+        log.warning("gas strip background refresh failed", exc_info=True)
+    finally:
+        with _snapshot_lock:
+            _refreshing = False
+
+
+def snapshot() -> dict[str, Any]:
+    """The strip the route serves: recent, and never paid for by the visitor.
+
+    Only the first request after a restart builds synchronously. After that a
+    strip younger than ``SNAPSHOT_MAX_STALE`` goes out at once, and if it is
+    older than ``SNAPSHOT_TTL`` one background thread refreshes it. That trades
+    up to a few seconds of staleness — on a value the response already caches
+    for 30 seconds — for never making a visitor wait on four RPC round trips.
+    """
+    global _refreshing
+    with _snapshot_lock:
+        cached, age = _snapshot, time.monotonic() - _snapshot_at
+        start_refresh = (
+            cached is not None and age > SNAPSHOT_TTL and not _refreshing
+        )
+        if start_refresh:
+            _refreshing = True
+    if cached is not None and age <= SNAPSHOT_MAX_STALE:
+        if start_refresh:
+            threading.Thread(target=_refresh_in_background, daemon=True).start()
+        return cached
+    if start_refresh:  # too old to serve; build here and let the flag go
+        with _snapshot_lock:
+            _refreshing = False
+    return _build_and_store()
+
+
+def reset_snapshot() -> None:
+    """Drop the served strip — tests and the first call after a config change."""
+    global _snapshot, _snapshot_at, _refreshing
+    with _snapshot_lock:
+        _snapshot, _snapshot_at, _refreshing = None, 0.0, False
 
 
 def configured_urls() -> dict[str, str]:
@@ -186,8 +258,8 @@ def build_crypto_gas(
     hl_provider: DexProvider | None = None,
 ) -> dict[str, Any]:
     urls = configured_urls()
-    eth_usd, eth_meta = _eth_usd(hl_provider or _HL_PROVIDER)
-    chains: list[dict[str, Any]] = []
+
+    targets: list[tuple[ChainSpec, FeeProvider]] = []
     for spec in CHAINS:
         provider = (providers or {}).get(spec.chain_id)
         if provider is None:
@@ -195,13 +267,28 @@ def build_crypto_gas(
             if not url:
                 continue
             provider = _provider_for(spec.chain_id, url)
+        targets.append((spec, provider))
+
+    def read(provider: FeeProvider) -> tuple[dict[str, Any] | None, str | None]:
         try:
-            fees = provider.fetch_fees()
-            chains.append(_chain_row(spec, fees, None, eth_usd))
+            return provider.fetch_fees(), None
         except RateLimited:
-            chains.append(_chain_row(spec, None, "rate_limited", eth_usd))
+            return None, "rate_limited"
         except DataUnavailable:
-            chains.append(_chain_row(spec, None, "unavailable", eth_usd))
+            return None, "unavailable"
+
+    # The chains do not depend on each other and the ETH price depends on none
+    # of them, so the wall time is the slowest call rather than their sum.
+    with ThreadPoolExecutor(max_workers=len(targets) + 1) as pool:
+        price = pool.submit(_eth_usd, hl_provider or _HL_PROVIDER)
+        reads = [pool.submit(read, provider) for _spec, provider in targets]
+        eth_usd, eth_meta = price.result()
+        results = [future.result() for future in reads]
+
+    chains = [
+        _chain_row(spec, fees, error, eth_usd)
+        for (spec, _provider), (fees, error) in zip(targets, results, strict=True)
+    ]
     return {
         "generated_at": _iso_utc(),
         "status": "ok" if any(row["status"] == "ok" for row in chains) else "unavailable",

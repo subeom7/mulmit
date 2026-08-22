@@ -789,7 +789,12 @@ def crypto_kimchi_route(request: Request, response: Response) -> dict:
 @app.get("/api/crypto/gas")
 @limiter.limit(config.RATE_LIMIT)
 def crypto_gas_route(request: Request, response: Response) -> dict:
-    """가스·수수료 스트립 — 운영자 RPC 계정으로 읽는 공개 체인 상태. 서버 30초 캐시, URL·키 비노출."""
+    """가스·수수료 스트립 — 운영자 RPC 계정으로 읽는 공개 체인 상태. URL·키 비노출.
+
+    저장된 스트립을 즉시 돌려주고 30초가 지났으면 뒤에서 갱신한다 — 이걸 만드는
+    데 업스트림 왕복 4번(실측 콜드 1.57초)이 들어서, 예전 모양에서는 30초마다
+    한 명이 그 값을 전부 물었다.
+    """
     require_crypto_section()
     status = data_rights.chain_gas_status()
     if status != "enabled":
@@ -801,7 +806,7 @@ def crypto_gas_route(request: Request, response: Response) -> dict:
         )
     response.headers["Cache-Control"] = "private, max-age=30, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "EVM JSON-RPC (operator account)"
-    return crypto_gas.build_crypto_gas()
+    return crypto_gas.snapshot()
 
 
 @app.get("/api/crypto/liquidations")
