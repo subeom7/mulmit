@@ -948,7 +948,7 @@ notes: "발행자 약관 페이지 문구 기반. 약관 변경 시 ALTERNATIVE_
 | 항목 | 기록 |
 |---|---|
 | 내부 ID | `upbit` |
-| 현재 상태 | **`pending_rights` + 운영자 위험수용 (2026-08-22, `DS-2026-012`)** — 서버 게이트 `UPBIT_ENABLED=true`로 개방. 두나무 1:1 문의는 기록용으로 발송(회신 시 이 블록 갱신, 거절이면 즉시 OFF) |
+| 현재 상태 | **`pending_rights` + 운영자 위험수용 (2026-08-22, `DS-2026-012`)** — 서버 게이트 `UPBIT_ENABLED=true`로 개방, 라이브 확인 00:5x KST(USDT/KRW 1,375·테더 프리미엄 −1.29%·BTC USDT 기준 −0.12%). 두나무 1:1 문의는 기록용으로 발송(회신 시 이 블록 갱신, 거절이면 즉시 OFF) |
 | 코드 위치 | `app/providers/upbit.py`, `app/crypto_kimchi.py`, 라우트 `/api/crypto/kimchi` |
 | 게이트 | `CRYPTO_SECTION_ENABLED` + `UPBIT_ENABLED` (+ HIP-3 표시 게이트: 오라클 참고가) |
 | 현재 사용(설계) | `GET /v1/ticker?markets=KRW-BTC,KRW-ETH,KRW-SOL,KRW-XRP,KRW-DOGE,KRW-USDT` — 서버 relay, 15초 단일 비행 캐시·300초 stale, 호출량 ≈ 4/분/프로세스(한도 IP당 600/분의 1%). 브라우저 직결 없음(Origin 요청은 10초 1회 제한). 표시: 원화 최근 체결가·24h, 테더 프리미엄(KRW-USDT ÷ ECOS 일별 고시 − 1, 날짜 표시), 코인 프리미엄 USDT 기준((KRW-코인 ÷ KRW-USDT) ÷ HL 오라클 − 1)·공식환율 기준 |
@@ -1053,6 +1053,34 @@ notes: "Basic 무료 15,000 credits/월 중 ≈2,900 사용. 키는 ingest 전�
 500 CUPS, "sufficient for development and low-traffic production apps"; 대안 Infura/MetaMask Developer 무료
 Core(일 3M 크레딧, 500/초). 우리 호출량 ≈ 체인당 2,880/일(30초 캐시) ≪ 한도. 가스 값은 공개 체인 상태이고
 제공자 약관은 계정 소유자(운영자)에게 적용되므로 권리 항목은 `public_chain_state`로 기록한다.
+
+**2026-08-22 활성화 — 운영자 Alchemy 무료 티어 계정(`DS-2026-013`).** 서버 `.env`에 `CHAIN_GAS_ENABLED=true`,
+`CHAIN_RPC_PROVIDER_NAME=Alchemy`, `CHAIN_RPC_{ETHEREUM,BASE,ARBITRUM}_URL` 추가(web 전용). 라이브 확인 00:5x KST:
+이더리움 유효 0.21 gwei(기본 0.11·p50 0.09, 전송 ≈ $0.01). **Base·Arbitrum은 Alchemy 앱의 네트워크가 아직 비활성**
+(RPC 403 "BASE_MAINNET is not enabled for this app … /apps/<id>/networks") — 대시보드에서 두 네트워크를 켜면 같은
+URL로 자동 복구(서버 30초 쿨다운 후 재시도). 응답에 키 미노출(호스트명만) 재확인.
+
+```yaml
+decision_id: DS-2026-013
+provider_id: chain_gas
+status: approved
+reviewed_at: 2026-08-22
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: https://www.alchemy.com/support/free-tier-details (월 30M CU·500 CUPS, "sufficient for development and low-traffic production apps") + 운영자 Alchemy 계정 약관 수락
+approved_scope:
+  public_display: true          # 공개 체인 상태(기본 수수료·우선 수수료·가스 가격)의 파생 표시
+  server_json_relay: true
+  cache_ttl_seconds: 30
+  stale_seconds: 300
+  historical_storage: false
+  derived_metrics: true         # 유효 가스 가격·21,000 gas 전송 비용·USD 환산(HL ETH 오라클)
+  advertising: true
+attribution: "RPC: Alchemy (운영자 계정)" — 로고 없음, URL·키 비노출
+expires_at: null
+recheck_at: 2026-11-22
+notes: "퍼블릭 RPC 미사용. 제공자 약관은 운영자 계정에 귀속. Base·Arbitrum은 앱 네트워크 활성화 후 자동 표시."
+```
 
 ## 4. 원 발행기관 후보
 
@@ -1538,3 +1566,4 @@ notes: "No confidential contract language here"
 | 2026-08-21 | CoinMarketCap lane 승인·활성화(`DS-2026-011`, §3.20) — Basic 키 발급·서버 게이트 ON, 첫 blob 라이브 확인. lane report의 CMC 상태를 서빙 기준으로 정정(키는 ingest 전용) | Claude assisted |
 | 2026-08-21 | 가스 스트립 lane 추가(§3.21 후속, `/api/crypto/gas`, 운영자 RPC 계정 URL 주입형·게이트 OFF), 총시총 T 단위 포맷, Deribit·Coinalyze 문의 초안을 운영자 Gmail에 생성(발송 대기) | Claude assisted |
 | 2026-08-22 | 업비트 시세 lane 운영자 위험수용 개방(`DS-2026-012`, §3.19) — `UPBIT_ENABLED=true`; Deribit·Coinalyze 문의 발송(§4.1), 두나무 1:1 문의는 기록용 발송 예정 | Claude assisted |
+| 2026-08-22 | 가스 스트립 lane 활성화(`DS-2026-013`, §3.21 — 운영자 Alchemy 계정, 이더리움 라이브·Base/Arbitrum은 앱 네트워크 활성화 대기), 업비트 lane 라이브 확인(§3.19) | Claude assisted |
