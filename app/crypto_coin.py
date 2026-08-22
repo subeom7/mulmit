@@ -271,12 +271,17 @@ def build_crypto_coin(
             signal_error = "rate_limited"
         except DataUnavailable:
             signal_error = "unavailable"
+    from . import crypto_regime  # local import: crypto_regime reads this module's parser
+
     signal = (
         crypto_signal.build_signal(signal_candles, card, as_of=signal_as_of)
         if signal_candles
         else {"status": "unavailable", "reason": signal_error or "no daily candles",
               "methodology": crypto_signal._METHOD, "disclaimer": crypto_signal._DISCLAIMER}
     )
+
+    if signal.get("status") == "ok":
+        signal["history"] = crypto_regime.history_for(resolved, now=moment)
 
     return {
         "generated_at": _iso_utc(),

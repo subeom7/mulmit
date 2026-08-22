@@ -19,7 +19,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-10">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-11">
   <style>
     .coin-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 26px 0 14px; border-bottom: 1px solid var(--line); }
     .coin-head h1 { margin: 0; font-size: clamp(24px, 3.6vw, 36px); letter-spacing: -.04em; }
@@ -54,7 +54,7 @@
     .coin-table th, .coin-table td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
     .coin-table th { color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .05em; }
     .coin-table td.num, .coin-table th.num { text-align: right; }
-    .sig-top { display: grid; grid-template-columns: repeat(2, minmax(150px, 220px)) 1fr; gap: 12px; align-items: stretch; margin-bottom: 14px; }
+    .sig-top { display: grid; grid-template-columns: repeat(3, minmax(140px, 200px)) 1fr; gap: 12px; align-items: stretch; margin-bottom: 14px; }
     .sig-gauge { padding: 12px 13px; border: 1px solid var(--line); border-radius: 9px; background: linear-gradient(145deg, var(--panel), var(--panel-2)); }
     .sig-gauge small { display: block; color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .06em; }
     .sig-gauge strong { display: block; margin-top: 5px; font: 750 22px/1.1 var(--mono); font-variant-numeric: tabular-nums; }
@@ -63,11 +63,13 @@
     .sig-bar i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px; background: var(--accent); }
     .sig-bar.center::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--muted); opacity: .6; }
     .sig-reading { margin: 0; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 9px; color: var(--ink); font-size: 12px; line-height: 1.65; }
+    .sig-spark { display: block; width: 100%; height: 28px; margin-top: 8px; }
+    .sig-spark path { fill: none; stroke-width: 1.6; }
     .sig-cell { display: block; }
     .sig-cell small { display: block; color: var(--faint); font-size: 10px; }
     .sig-contrib { position: relative; height: 5px; width: 90px; border-radius: 999px; background: var(--line); overflow: hidden; }
     .sig-contrib i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--accent); opacity: .8; }
-    @media (max-width: 720px) { .sig-top { grid-template-columns: 1fr 1fr; } .sig-reading { grid-column: 1 / -1; } }
+    @media (max-width: 900px) { .sig-top { grid-template-columns: 1fr 1fr; } .sig-reading { grid-column: 1 / -1; } }
     .coin-links { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 8px; }
     .coin-links a { padding: 6px 11px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font-size: 11px; font-weight: 700; text-decoration: none; }
     .coin-links a:hover { color: var(--ink); border-color: var(--accent); }
@@ -131,6 +133,12 @@
           <strong id="sig-dir">—</strong>
           <div class="sig-bar center"><i id="sig-dir-bar"></i></div>
           <span id="sig-dir-band">—</span>
+        </div>
+        <div class="sig-gauge">
+          <small>24시간 변화</small>
+          <strong id="sig-delta">—</strong>
+          <svg id="sig-spark" class="sig-spark" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <span id="sig-flow">—</span>
         </div>
         <p class="sig-reading" id="sig-reading"></p>
       </div>
@@ -274,6 +282,38 @@ function renderHead(data) {
 
 const HEAT_TONE = { cool: "var(--accent)", steady: "var(--accent)", warm: "var(--amber, var(--accent))", elevated: "var(--amber, var(--red))", overheated: "var(--red)" };
 
+function sparkPath(values, width = 120, height = 28) {
+  if (!Array.isArray(values) || values.length < 2) return null;
+  const lo = Math.min(...values), hi = Math.max(...values), span = hi - lo || 1;
+  return values.map((value, index) => {
+    const x = (index / (values.length - 1)) * width;
+    const y = height - 2 - ((value - lo) / span) * (height - 4);
+    return `${index ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+}
+
+function renderSignalHistory(history) {
+  const delta = $id("sig-delta"), spark = $id("sig-spark"), flow = $id("sig-flow");
+  const changes = history?.changes || null;
+  const points = (history?.recent || []).map((row) => row.heat).filter((v) => typeof v === "number");
+  if (!changes) { delta.textContent = "수집 중"; delta.className = ""; spark.replaceChildren(); flow.textContent = "첫 샘플 이후 표시됩니다"; return; }
+  const move = changes.heat_24h_points;
+  delta.textContent = move == null ? "—" : `${move > 0 ? "+" : move < 0 ? "−" : "±"}${nf(Math.abs(move), 1)}`;
+  delta.className = cls(move);
+  spark.replaceChildren();
+  const d = sparkPath(points);
+  if (d) {
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", d);
+    path.setAttribute("stroke", move > 0 ? "var(--red)" : move < 0 ? "var(--accent)" : "var(--muted)");
+    spark.append(path);
+  }
+  const parts = [];
+  if (changes.flow_label) parts.push(changes.flow_label.ko);
+  if (changes.oi_usd_24h_percent != null) parts.push(`OI ${signed(changes.oi_usd_24h_percent, 1)}`);
+  flow.textContent = parts.join(" · ") || "—";
+}
+
 function renderSignal(signal) {
   const section = $id("sec-signal");
   if (!signal || signal.status !== "ok") { section.hidden = true; return; }
@@ -291,6 +331,7 @@ function renderSignal(signal) {
   dirBar.style.background = score > 0 ? "var(--green)" : score < 0 ? "var(--red)" : "var(--muted)";
   $id("sig-dir-band").textContent = dir.label?.ko || "—";
   $id("sig-reading").textContent = signal.reading?.ko || "";
+  renderSignalHistory(signal.history);
 
   const table = $id("sig-table"), thead = table.querySelector("thead"), tbody = table.querySelector("tbody");
   thead.replaceChildren(); tbody.replaceChildren();
