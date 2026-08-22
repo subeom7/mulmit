@@ -135,6 +135,30 @@ def test_search_ranks_the_exact_name_above_substring_matches(db, fsc_lane):
     assert store.search_kr_listings("005930")[0]["itms_nm"] == "삼성전자"
 
 
+def test_search_is_case_insensitive_and_treats_wildcards_as_text(db, fsc_lane):
+    db.save_kr_listings(
+        [
+            {"srtn_cd": "282330", "itms_nm": "BGF리테일", "mrkt_ctg": "KOSPI",
+             "clpr": 121000.0, "flt_rt": -1.5, "mrkt_tot_amt": 2.1e12},
+            {"srtn_cd": "000660", "itms_nm": "SK하이닉스", "mrkt_ctg": "KOSPI",
+             "clpr": 1593000.0, "flt_rt": -0.5, "mrkt_tot_amt": 1.1e15},
+        ],
+        "2026-08-21",
+    )
+
+    # Roughly a tenth of the roster carries Latin letters. `LIKE` is
+    # case-sensitive on PostgreSQL, so lower-cased queries used to find nothing
+    # in production while passing here on SQLite.
+    for query in ("bgf", "BGF", "Bgf리테일"):
+        assert [r["itms_nm"] for r in store.search_kr_listings(query)] == ["BGF리테일"]
+    assert [r["itms_nm"] for r in store.search_kr_listings("sk하이닉스")] == ["SK하이닉스"]
+
+    # In a search box `%` and `_` are characters someone typed, not wildcards.
+    assert store.search_kr_listings("%") == []
+    assert store.search_kr_listings("_") == []
+    assert store.search_kr_listings("B_F리테일") == []
+
+
 def test_the_roster_is_a_replace_so_delistings_disappear(db, fsc_lane):
     _seed_roster(db)
     db.save_kr_listings(

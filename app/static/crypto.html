@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-17">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-19">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -224,6 +224,19 @@
       </div>
     </section>
 
+    <section class="dashboard-section" id="crypto-liq" aria-labelledby="cliq-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">LIQUIDATIONS · OPEN INTEREST · COINALYZE</p><h2 id="cliq-title" data-i18n="crypto.liq.title">청산 집계</h2></div>
+        <span class="source-pill">COINALYZE</span>
+      </div>
+      <p class="section-copy" data-i18n="crypto.liq.copy">최근 24시간 강제청산 규모를 롱·숏으로 나눠 봅니다. 응답한 거래소들의 합이며 전체 시장 합계가 아닙니다. 1시간 단위 집계이고 실시간 체결 피드가 아닙니다.</p>
+      <div id="cliq-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div class="panel" id="cliq-panel" hidden>
+        <div class="cliq-grid" id="cliq-grid"></div>
+        <footer class="panel-footer" id="cliq-footer" hidden></footer>
+      </div>
+    </section>
+
     <section class="dashboard-section" id="crypto-news" aria-labelledby="cnews-title">
       <div class="section-heading">
         <div><p class="eyebrow">HEADLINES · COIN TAGS · GDELT</p><h2 id="cnews-title" data-i18n="crypto.news.title">크립토 뉴스</h2></div>
@@ -272,7 +285,7 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "crypto";</script>
-  <script src="/static/monitor.js?v=20260822-17" defer></script>
-  <script src="/static/search.js?v=20260822-17" defer></script>
+  <script src="/static/monitor.js?v=20260822-19" defer></script>
+  <script src="/static/search.js?v=20260822-19" defer></script>
 </body>
 </html>

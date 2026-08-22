@@ -28,6 +28,7 @@ from . import (
     crypto_coin,
     crypto_gas,
     crypto_kimchi,
+    crypto_liquidations,
     crypto_market,
     crypto_regime,
     crypto_structure,
@@ -199,7 +200,7 @@ def crypto_coin_hub(symbol: str) -> HTMLResponse:
 
     require_crypto_section()
     raw = symbol.strip()
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9:._-]{0,23}", raw):
+    if not crypto_coin.PAGE_SYMBOL_PATTERN.fullmatch(raw):
         raise HTTPException(status_code=404, detail="unrecognized symbol")
     try:
         resolved = crypto_coin.resolve_page_symbol(raw)
@@ -351,6 +352,30 @@ def sitemap_stocks() -> PlainResponse:
     body = "\n".join(lines) + "\n"
     return PlainResponse(
         content=body, media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/sitemap-coins.xml", include_in_schema=False)
+def sitemap_coins() -> PlainResponse:
+    """코인 허브 URL — 거래소가 지금 상장한 시장만 싣는다.
+
+    목록은 페이지 라우트와 같은 판정을 쓴다(`crypto_coin.page_symbols`). 상장
+    폐지된 시장이나 라우트가 받지 않는 심볼을 사이트맵에 올리면 404를 색인하라고
+    광고하는 셈이라, 두 곳이 갈라지지 않도록 판정을 한 군데서만 한다.
+    섹션이 꺼져 있으면 빈 사이트맵 — 게이트가 닫힌 페이지를 권하지 않는다.
+    """
+    rows = crypto_coin.page_symbols() if data_rights.crypto_overview_enabled() else []
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>']
+    lines.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    lines.extend(
+        f"  <url><loc>https://mulmit.com/crypto/{symbol}</loc>"
+        f"<changefreq>hourly</changefreq><priority>{'0.7' if curated else '0.5'}</priority></url>"
+        for symbol, curated in rows
+    )
+    lines.append("</urlset>")
+    return PlainResponse(
+        content="\n".join(lines) + "\n", media_type="application/xml",
         headers={"Cache-Control": "public, max-age=3600"},
     )
 
@@ -764,7 +789,12 @@ def crypto_kimchi_route(request: Request, response: Response) -> dict:
 @app.get("/api/crypto/gas")
 @limiter.limit(config.RATE_LIMIT)
 def crypto_gas_route(request: Request, response: Response) -> dict:
-    """가스·수수료 스트립 — 운영자 RPC 계정으로 읽는 공개 체인 상태. 서버 30초 캐시, URL·키 비노출."""
+    """가스·수수료 스트립 — 운영자 RPC 계정으로 읽는 공개 체인 상태. URL·키 비노출.
+
+    저장된 스트립을 즉시 돌려주고 30초가 지났으면 뒤에서 갱신한다 — 이걸 만드는
+    데 업스트림 왕복 4번(실측 콜드 1.57초)이 들어서, 예전 모양에서는 30초마다
+    한 명이 그 값을 전부 물었다.
+    """
     require_crypto_section()
     status = data_rights.chain_gas_status()
     if status != "enabled":
@@ -776,7 +806,35 @@ def crypto_gas_route(request: Request, response: Response) -> dict:
         )
     response.headers["Cache-Control"] = "private, max-age=30, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "EVM JSON-RPC (operator account)"
-    return crypto_gas.build_crypto_gas()
+    return crypto_gas.snapshot()
+
+
+@app.get("/api/crypto/liquidations")
+@limiter.limit(config.RATE_LIMIT)
+def crypto_liquidations_route(request: Request, response: Response) -> dict:
+    """거래소 집계 청산·미결제약정 — 수집된 블롭만 읽는다.
+
+    합계는 **응답한 거래소들의 합**이며 전체 시장 합계가 아니다. Coinalyze에는
+    집계 심볼이 없고, 데이터가 없는 심볼은 없는 심볼과 똑같이 `200 []`로
+    돌아온다 — 그래서 포함된 거래소와 침묵한 거래소를 값과 함께 싣는다.
+    """
+    require_crypto_section()
+    try:
+        payload = crypto_liquidations.build_crypto_liquidations()
+    except crypto_liquidations.LiquidationsUnavailable as exc:
+        code = (
+            "crypto_liquidations_disabled"
+            if not data_rights.coinalyze_serving_enabled()
+            else "crypto_liquidations_collecting"
+        )
+        raise HTTPException(
+            status_code=503,
+            detail={"code": code, "message": str(exc)},
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=120"
+    response.headers["X-Data-Source"] = "Coinalyze"
+    return payload
 
 
 @app.get("/api/crypto/news")

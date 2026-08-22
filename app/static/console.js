@@ -30,7 +30,7 @@
       detailMark: "마크가격", detailFx: "환산 환율", detailFunding: "펀딩 APR",
       detailOi: "미결제약정", detail24h: "24시간 변화", detailClose: "공식 종가",
       detailSession: "15:30 퍼프 대비", detailVolume: "24시간 거래대금",
-      detailTrend: "배경 추이선", trend90d: "최근 30일 일봉 종가", sparkPeriod: "30일",
+      detailTrend: "배경 추이선", trendBasis: "최근 {n}일 종가", sparkPeriod: "{n}일",
       boardTitle: "지금 시장", boardNote: "장이 닫힌 시간의 값은 24시간 거래되는 참고가입니다.",
       won: "원", noValue: "값 없음",
     },
@@ -42,7 +42,7 @@
       detailMark: "Mark price", detailFx: "FX applied", detailFunding: "Funding APR",
       detailOi: "Open interest", detail24h: "24h change", detailClose: "Official close",
       detailSession: "vs 15:30 perp", detailVolume: "24h volume",
-      detailTrend: "Background line", trend90d: "last 30 daily closes", sparkPeriod: "30D",
+      detailTrend: "Background line", trendBasis: "closes over the last {n} days", sparkPeriod: "{n}D",
       boardTitle: "Markets now", boardNote: "Out-of-hours values are 24-hour reference prices.",
       won: "KRW", noValue: "no value",
     },
@@ -124,11 +124,40 @@
 
   /* --- 스파크라인 ------------------------------------------------------ */
   const SPARK_DAYS = 30;
+  const MIN_SPARK_POINTS = 8;
+
+  /* 창을 "마지막 30개"가 아니라 "마지막 30일"로 자른다.
+   *
+   * 개수로 자르면 공급 간격이 바뀌는 순간 라벨이 거짓말이 된다 — 실제로 macro
+   * 스냅샷은 2026-08-22에 일별에서 주별로 바뀌었고(#151), 같은 일이 자산
+   * lane에 일어나면 "30D"라고 적힌 선이 반년을 그리게 된다. 날짜로 자르고
+   * 라벨도 실제 span에서 뽑으면 어느 간격에서도 표기가 참이다. */
+  function sparkWindow(observations) {
+    const points = (observations || [])
+      .map((point) => ({ value: num(point.value), at: Date.parse(point.date) }))
+      .filter((point) => point.value !== null);
+    if (points.length < MIN_SPARK_POINTS) return null;
+    const last = points.at(-1);
+    let windowed;
+    if (Number.isFinite(last.at)) {
+      const cut = last.at - SPARK_DAYS * 86400000;
+      const inWindow = points.filter((point) => !Number.isFinite(point.at) || point.at >= cut);
+      windowed = inWindow.length >= MIN_SPARK_POINTS ? inWindow : points.slice(-MIN_SPARK_POINTS * 2);
+    } else {
+      windowed = points.slice(-SPARK_DAYS);
+    }
+    const first = windowed[0];
+    const days = Number.isFinite(first.at) && Number.isFinite(last.at)
+      ? Math.max(1, Math.round((last.at - first.at) / 86400000))
+      : null;
+    return { values: windowed.map((point) => point.value), days };
+  }
 
   function sparkline(observations) {
-    const values = (observations || []).map((point) => num(point.value)).filter((value) => value !== null);
-    const series = values.slice(-SPARK_DAYS);
-    if (series.length < 8) return null;
+    const windowed = sparkWindow(observations);
+    if (!windowed) return null;
+    const series = windowed.values;
+    if (series.length < MIN_SPARK_POINTS) return null;
     let min = Math.min(...series);
     let max = Math.max(...series);
     if (min === max) return null;
@@ -147,15 +176,15 @@
     // 선의 색은 그 선 자신이 그린 방향을 따른다 — 옆의 등락률(24시간·종가 대비)과
     // 기간이 다르므로, 선은 선의 이야기를 하고 등락률은 등락률의 이야기를 한다.
     const move = series.at(-1) - series[0];
-    return { node: svg, tone: move > 0 ? "up" : move < 0 ? "down" : "flat" };
+    return { node: svg, days: windowed.days, tone: move > 0 ? "up" : move < 0 ? "down" : "flat" };
   }
 
   /* --- 타일 ------------------------------------------------------------ */
   // 배경 추이선이 무엇인지 말하지 않으면 헤드라인 등락과 같은 기간으로 읽힌다.
   // 기간이 다르다는 사실을 전문가 모드에서 밝힌다.
-  const detailRows = (spec, hasSpark) => [
+  const detailRows = (spec, spark) => [
     ...(spec.detail || []),
-    hasSpark ? [t("detailTrend"), t("trend90d")] : null,
+    spark ? [t("detailTrend"), t("trendBasis", { n: spark.days ?? SPARK_DAYS })] : null,
   ].filter((row) => row && row[1]);
 
   const changeText = (value) => `${arrow(value)} ${percent(value)}`.trim();
@@ -176,7 +205,8 @@
     const basis = node.querySelector(".tile-basis");
     if (basis) basis.textContent = spec.basis || "";
     const values = node.querySelectorAll(".tile-detail dd");
-    detailRows(spec, Boolean(node.querySelector(".tile-spark")))
+    const sparkNode = node.querySelector(".tile-spark");
+    detailRows(spec, sparkNode ? { days: Number(sparkNode.dataset.days) || null } : null)
       .forEach((row, index) => { if (values[index]) values[index].textContent = row[1]; });
   }
 
@@ -215,7 +245,7 @@
     const foot = document.createElement("div");
     foot.className = "tile-foot";
     const spark = spec.observations ? sparkline(spec.observations) : null;
-    const rows = detailRows(spec, Boolean(spark));
+    const rows = detailRows(spec, spark);
     if (rows.length) {
       const detail = document.createElement("div");
       detail.className = "tile-detail pro-only";
@@ -234,11 +264,12 @@
     if (spark) {
       const wrap = document.createElement("div");
       wrap.className = `tile-spark ${spark.tone}`;
+      if (spark.days) wrap.dataset.days = String(spark.days);
       // 기간을 선 옆에 적어 둔다. 이게 없으면 "하루 −0.5%인데 선은 왜 초록이냐"가
       // 된다 — 선은 30일 이야기를 하고 등락률은 오늘 이야기를 하기 때문이다.
       const period = document.createElement("span");
       period.className = "spark-period";
-      period.textContent = t("sparkPeriod");
+      period.textContent = t("sparkPeriod", { n: spark.days ?? SPARK_DAYS });
       wrap.append(period, spark.node);
       foot.prepend(wrap);
     }

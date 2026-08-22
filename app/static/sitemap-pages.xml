@@ -5,16 +5,6 @@
   <url><loc>https://mulmit.com/us</loc><changefreq>hourly</changefreq><priority>0.9</priority></url>
   <url><loc>https://mulmit.com/crypto</loc><changefreq>hourly</changefreq><priority>0.9</priority></url>
   <url><loc>https://mulmit.com/bio</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
-  <url><loc>https://mulmit.com/crypto/BTC</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mulmit.com/crypto/ETH</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mulmit.com/crypto/SOL</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mulmit.com/crypto/XRP</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mulmit.com/crypto/BNB</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mulmit.com/crypto/DOGE</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mulmit.com/crypto/HYPE</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mulmit.com/crypto/SUI</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mulmit.com/crypto/LINK</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mulmit.com/crypto/AVAX</loc><changefreq>hourly</changefreq><priority>0.7</priority></url>
   <url><loc>https://mulmit.com/analytics</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
   <url><loc>https://mulmit.com/disclaimer</loc><changefreq>monthly</changefreq><priority>0.2</priority></url>
   <url><loc>https://mulmit.com/terms</loc><changefreq>monthly</changefreq><priority>0.2</priority></url>

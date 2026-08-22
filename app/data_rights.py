@@ -365,6 +365,16 @@ def cmc_status() -> str:
     return "enabled" if cmc_serving_enabled() else "disabled"
 
 
+def coinalyze_serving_enabled() -> bool:
+    """Web serves the stored Coinalyze blob once the operator switched the lane on."""
+    return crypto_section_enabled() and bool(config.COINALYZE_ENABLED)
+
+
+def coinalyze_ingest_enabled() -> bool:
+    """Only ingest holds the key; without it the lane is on but never fetches."""
+    return coinalyze_serving_enabled() and bool(config.COINALYZE_API_KEY)
+
+
 def upbit_serving_enabled() -> bool:
     """Upbit quotes stay withheld (`pending_rights`) until the operator opens the gate."""
     return crypto_section_enabled() and bool(config.UPBIT_ENABLED)

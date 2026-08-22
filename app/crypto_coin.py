@@ -18,9 +18,10 @@ from __future__ import annotations
 
 import datetime as dt
 import math
+import re
 from typing import Any, Protocol
 
-from . import crypto_signal
+from . import crypto_indicators, crypto_signal
 from .crypto_market import (
     _DEFAULT_PROVIDER,
     _RIGHTS,
@@ -117,6 +118,44 @@ def resolve_symbol(requested: str, snapshot: dict[str, Any]) -> tuple[str, dict[
             raise CoinNotFound(requested)
         return symbol.strip(), market
     raise CoinNotFound(requested)
+
+
+# What `/crypto/{symbol}` accepts in a path. Kept here so the route and the
+# sitemap cannot drift into advertising a URL the other would turn away.
+PAGE_SYMBOL_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9:._-]{0,23}")
+
+
+def page_symbols(*, provider: CoinProvider | None = None) -> list[tuple[str, bool]]:
+    """Every symbol the coin page will actually render, and whether it is curated.
+
+    Mirrors `resolve_page_symbol`: the venue decides which markets exist, and
+    only when it cannot be reached do the curated coins stand in. A coin the
+    venue simply does not list is *not* added back — the page route would 404
+    on it, and a sitemap must not advertise a URL that answers 404.
+    """
+    curated = {spec.symbol for spec in COIN_SPECS}
+    client = provider or _DEFAULT_PROVIDER
+    try:
+        snapshot = client.fetch_dex(MAIN_DEX)
+    except (RateLimited, DataUnavailable):
+        return [(spec.symbol, True) for spec in COIN_SPECS]
+
+    rows: list[tuple[str, bool]] = []
+    seen: set[str] = set()
+    for market in snapshot.get("markets") or []:
+        if not isinstance(market, dict):
+            continue
+        symbol = market.get("symbol")
+        metadata = market.get("metadata") if isinstance(market.get("metadata"), dict) else {}
+        if not isinstance(symbol, str) or metadata.get("isDelisted") is True:
+            continue
+        symbol = symbol.strip()
+        if not symbol or symbol in seen or not PAGE_SYMBOL_PATTERN.fullmatch(symbol):
+            continue
+        seen.add(symbol)
+        rows.append((symbol, symbol in curated))
+    rows.sort(key=lambda row: (not row[1], row[0]))
+    return rows
 
 
 def resolve_page_symbol(requested: str, *, provider: CoinProvider | None = None) -> str:
@@ -304,6 +343,7 @@ def build_crypto_coin(
             "error": candle_error,
             "omitted": not include_candles,
             "candles": candles,
+            "indicators": crypto_indicators.build(candles, interval=interval) if candles else None,
             "stats": _window_stats(candles),
             "basis": "Hyperliquid candleSnapshot for this market; open/high/low/close and base-unit volume as published",
         },

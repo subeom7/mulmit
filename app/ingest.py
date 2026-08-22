@@ -25,6 +25,7 @@ import time
 from . import (
     bio,
     config,
+    crypto_liquidations,
     crypto_market,
     crypto_regime,
     crypto_structure,
@@ -966,6 +967,21 @@ def refresh_crypto_stablecoins(*, force: bool = False) -> dict:
         return {"skipped": "error", "error": str(exc)}
 
 
+def refresh_crypto_liquidations(*, force: bool = False) -> dict:
+    """Coinalyze 거래소 집계 청산·미결제약정. 심볼 1개 = 호출 1회이고 회당 약 19회 — 실제 주기는 수집 틱(`INGEST_INTERVAL`, 기본 15분)."""
+    try:
+        result = crypto_liquidations.refresh_crypto_liquidations(force=force)
+        if result.get("status") == "ok":
+            log.info("크립토 청산 집계 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("Coinalyze 요청 제한(40/분) — 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("크립토 청산 집계 갱신 실패: %s", exc)
+        return {"skipped": "error", "error": str(exc)}
+
+
 def refresh_crypto_structure(*, force: bool = False) -> dict:
     """CoinMarketCap 글로벌 메트릭(도미넌스). 키는 여기(ingest)에만 있고 web은 블롭만 읽는다."""
     try:
@@ -1186,6 +1202,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             crypto_sentiment_result = refresh_crypto_sentiment()
             refresh_crypto_structure()
             refresh_crypto_stablecoins()
+            refresh_crypto_liquidations()
             refresh_crypto_coin_heat()
             refresh_bio_trials()
             refresh_bio_fda()
@@ -1244,6 +1261,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_crypto_sentiment()
             refresh_crypto_structure()
             refresh_crypto_stablecoins()
+            refresh_crypto_liquidations()
             refresh_crypto_coin_heat()
             refresh_bio_trials()
             refresh_bio_fda()
@@ -1335,6 +1353,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         crypto_sentiment_result = refresh_crypto_sentiment()
         refresh_crypto_structure()
         refresh_crypto_stablecoins()
+        refresh_crypto_liquidations()
         refresh_crypto_coin_heat()
         refresh_bio_trials()
         refresh_bio_fda()

@@ -113,6 +113,12 @@ def test_build_coin_reuses_the_card_builder_and_summarises_the_window(crypto_on)
     chart = payload["chart"]
     assert chart["interval"] == "1h" and chart["omitted"] is False and chart["error"] is None
     assert [row["t"] for row in chart["candles"]] == [BASE_MS, BASE_MS + 3_600_000, BASE_MS + 7_200_000]
+    # Studies travel with the candles and share their index, empty windows included.
+    studies = chart["indicators"]
+    assert len(studies["ma"]["fast"]["values"]) == len(chart["candles"]) == len(studies["rsi"]["values"])
+    assert studies["ma"]["fast"]["values"] == [None, None, None]   # three bars is not a 20-bar average
+    assert "1h 봉" in studies["basis_ko"]
+    assert studies["macd"]["signal_period"] == 9   # a scalar, not the signal series beside it
     # The chart window plus the daily window the regime signal always uses.
     assert fake.candle_calls == [("BTC", "1h", 14 * 24 * 3600), ("BTC", "1d", 400 * 24 * 3600)]
     # This fixture only has three candles, so the regime read refuses rather than guessing.
@@ -138,6 +144,7 @@ def test_candles_can_be_omitted_and_outages_are_labelled(crypto_on):
     # No chart window, but the daily window for the signal is still read (cached upstream).
     assert light.candle_calls == [("BTC", "1d", 400 * 24 * 3600)]
     assert payload["chart"]["omitted"] is True and payload["chart"]["candles"] == []
+    assert payload["chart"]["indicators"] is None   # no candles, nothing to compute studies from
     assert payload["chart"]["stats"]["candles"] == 0 and payload["market"]["price"]["value"] == 77000.0
 
     degraded = crypto_coin.build_crypto_coin("BTC", provider=FakeProvider(candle_error=RateLimited("slow")), now=NOW)

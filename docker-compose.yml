@@ -33,6 +33,8 @@ x-app: &app
     # Phase 2: CoinMarketCap 도미넌스(키는 ingest에만) · 업비트 김치프리미엄(pending_rights).
     CMC_ENABLED: ${CMC_ENABLED:-false}
     UPBIT_ENABLED: ${UPBIT_ENABLED:-false}
+    # 청산 집계·미결제약정(Coinalyze, 서면 승인 §3.27). 키는 ingest에만.
+    COINALYZE_ENABLED: ${COINALYZE_ENABLED:-false}
     # 가스 스트립: 스위치는 공통, RPC URL(키 포함)은 요청 경로를 가진 web에만 준다.
     CHAIN_GAS_ENABLED: ${CHAIN_GAS_ENABLED:-false}
     BIO_SECTION_ENABLED: ${BIO_SECTION_ENABLED:-false}
@@ -134,6 +136,7 @@ services:
       CMC_API_KEY: ${CMC_API_KEY:-}
       CMC_MAX_AGE: ${CMC_MAX_AGE:-900}
       CMC_STABLECOIN_MAX_AGE: ${CMC_STABLECOIN_MAX_AGE:-3600}
+      COINALYZE_API_KEY: ${COINALYZE_API_KEY:-}
       OPENFDA_API_KEY: ${OPENFDA_API_KEY:-}
       NCBI_EMAIL: ${NCBI_EMAIL:-}
       NCBI_API_KEY: ${NCBI_API_KEY:-}

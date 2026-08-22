@@ -1228,6 +1228,8 @@ recheck_on: 2026-11-22
 |---|---|
 | 내부 ID | `mfds_drug_permit` |
 | 현재 상태 | **`approved` (2026-08-22, `DS-2026-018`)** — 운영자 활용신청 승인(2026-08-22, 개발계정 자동승인), 같은 계정 키로 실측 완료. **서버 게이트 ON(2026-08-22 15:3x KST 첫 블롭: 30일 112품목·허가 72·신고 40·신약 1·희귀 2·실패 0, 라이브 확인)** |
+| 코드 위치(Coinalyze) | `app/providers/coinalyze.py`, `app/crypto_liquidations.py`, `app/ingest.py::refresh_crypto_liquidations`, 라우트 `/api/crypto/liquidations`, `/crypto` 청산 집계 섹션 |
+| 실측 (2026-08-22) | BTC 24h 롱 $63.6M·숏 $51.8M(롱 55.1%), ETH 롱 $76.9M·숏 $91.6M. 청산 응답 거래소 **Binance·Bybit·OKX·Huobi·BitMEX**, OI 응답 **Binance·Bybit·OKX·Hyperliquid**. BTC 퍼프 시장은 28개인데 청산을 주는 곳은 이 5곳뿐이고 나머지는 `200 []` |
 | 코드 위치 | `app/providers/mfds.py`, `app/bio.py`(`refresh_bio_mfds`·`build_bio_mfds`), `app/ingest.py::refresh_bio_mfds`, 라우트 `/api/bio/mfds` |
 | 게이트 | web·ingest: `BIO_SECTION_ENABLED` + `MFDS_ENABLED`; ingest 수집: + `MFDS_API_KEY`(비우면 `FSC_API_KEY` 사용 — data.go.kr 키는 계정 단위) |
 | 데이터셋 | [식품의약품안전처_의약품 제품 허가정보](https://www.data.go.kr/data/15095677/openapi.do) (수정일 2025-10-31, 활용신청 5,350건). Base URL `apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07`, 엔드포인트 `GET /getDrugPrdtPrmsnInq07`(의약품 제품 허가 목록)·`/getDrugPrdtPrmsnDtlInq06`(상세)·`/getDrugPrdtMcpnDtlInq07`(주성분), JSON/XML |
@@ -1252,6 +1254,45 @@ conditions:
   - registered values relayed as published; no outcome or price interpretation
   - key stays in the ingest process; ≈30 calls per day
 gate: BIO_SECTION_ENABLED + MFDS_ENABLED (+ MFDS_API_KEY or FSC_API_KEY in ingest)
+recheck_on: 2026-11-22
+```
+
+### 3.27 Coinalyze — 거래소 집계 청산·미결제약정 (크립토 섹션)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `coinalyze` |
+| 현재 상태 | **`approved` (2026-08-22, `DS-2026-019`)** — 운영자 문의(2026-08-21 15:05Z)에 대한 **서면 회신**(contact@coinalyze.net, 2026-08-22 08:59Z). 키 발급 후 실측하고 **레인 구현 완료**(2026-08-22), 게이트는 기본 OFF |
+| 회신 원문 | "Yes, you can use our API for your project. Regarding the attribution, the link(s) to Coinalyze website must be a **dofollow** link." |
+| 승인된 범위 | 문의에 열거한 그대로다. ① 거래소 집계 청산 합계(최근 1h/24h, 롱·숏 분리)와 미결제약정을 BTC·ETH 등 소수 코인에 대해 5분 주기로 표시 ② 우리 서버 JSON 엔드포인트로 중계(비인증·벌크 내보내기 없음), 최대 5분 캐시, 차트용 일별 집계는 **비공개 저장** ③ 값 옆 "Data: Coinalyze" + 사이트 링크 ④ 광고가 붙어도 동일 |
+| 조건 | **링크는 dofollow여야 한다** — `rel`에 `nofollow`·`ugc`·`sponsored`를 붙이지 않는다. 현 코드베이스의 외부 링크는 전부 `rel="noopener noreferrer"`(dofollow)이라 이미 충족하며, 회귀를 막는 테스트를 뒀다(`tests/test_outbound_links.py`) |
+| 회신이 **다루지 않은 것** | 문의 4항(집계 대상 거래소들이 이런 공개 표시에 조건을 두는지)에는 따로 답하지 않았다. 이 승인은 **Coinalyze 자신의 API에 대한 것**이며, 하위 거래소 권리를 이전하거나 면책한 것이 아니다. 우리가 싣는 것은 특정 거래소의 원시 피드가 아니라 **Coinalyze가 계산한 집계값**이라는 전제로 진행하고, 재확인일에 다시 본다 |
+| 게이트 | `CRYPTO_SECTION_ENABLED` + `COINALYZE_ENABLED` + `COINALYZE_API_KEY` (기본 OFF, 키는 ingest 프로세스에만) |
+| 기술 비용 | 0원. 키당 **40 call/분**. ⚠️ **심볼 1개 = 호출 1회** — `symbols`는 콤마로 최대 20개를 받지만 문서상 "each symbol consume one API call"이다. 코인 10종을 한 번에 물으면 요청은 1건이어도 예산은 10회가 빠진다. 수집 틱(`INGEST_INTERVAL` 기본 15분)마다 2코인 약 19회라 분당 1.3회꼴로 여유가 있으나, **거래소별 심볼을 합산해 집계를 만들 생각이면 비용이 심볼 수만큼 곱해진다** — 집계 심볼이 따로 있는지는 키가 있어야 `/future-markets`로 확인된다 |
+| 측정된 API 계약 (2026-08-22, 스펙 원문) | base `https://api.coinalyze.net/v1`. 인증은 `api_key` **헤더 또는 쿼리 파라미터**(문서: "The name of the header/query parameter is api_key"). 키는 **로그인 후 `/v1/doc/` 페이지에서 생성**한다. `GET /liquidation-history?symbols=&interval=&from=&to=&convert_to_usd=` → `[{symbol, history:[{t(초), l(롱 청산량), s(숏 청산량)}]}]`. `GET /open-interest?symbols=&convert_to_usd=` → `[{symbol, value, update(ms)}]`. `GET /open-interest-history` → `[{symbol, history:[{t,o,h,l,c}]}]`. `interval` enum: 1min·5min·15min·30min·1hour·2hour·4hour·6hour·12hour·daily. `/future-markets` → `{symbol, exchange, base_asset, quote_asset, is_perpetual, oi_lq_vol_denominated_in(BASE_ASSET|QUOTE_ASSET|CONTRACTS), …}` — **단위가 심볼마다 다르므로 `convert_to_usd=true`로 통일하고, 그 사실을 값 옆에 적는다** |
+| 표시 경계 | **집계값이며 틱 피드가 아니다** — "지난 1분 청산액" 같은 실시간 표기를 하지 않고, 집계 주기와 지연을 값 옆에 적는다(§PLAN_CRYPTO_SECTION.md #6에서 Binance 직결을 기각한 것과 같은 이유). 값은 받은 그대로, 해석·예측 없이 |
+
+```yaml
+decision_id: DS-2026-019
+provider_id: coinalyze
+status: approved
+reviewed_at: 2026-08-22
+reviewer: repository owner
+evidence_type: written_permission
+evidence_reference: email from contact@coinalyze.net, 2026-08-22T08:59:24Z, replying to the operator's five-point question of 2026-08-21T15:05:41Z
+approved_scope:
+  public_display: true
+  server_json_relay: true
+  private_daily_aggregates: true
+  advertising_supported_site: true
+conditions:
+  - attribution link to coinalyze.net must be dofollow (no nofollow, ugc or sponsored)
+  - aggregates only, labelled as aggregates with their interval and lag; never presented as a live tick feed
+  - cache at most five minutes; no bulk export endpoint
+  - key stays in the ingest process; 40 calls per minute per key
+open_questions:
+  - sub-exchange conditions were asked about and not separately answered; this grant is Coinalyze's own
+gate: CRYPTO_SECTION_ENABLED + COINALYZE_ENABLED + COINALYZE_API_KEY
 recheck_on: 2026-11-22
 ```
 
@@ -1285,7 +1326,7 @@ Fed Board DDP의 일부 데이터 전달 경로는 전환 공지가 있으므로
 | Cboe | VIX·SKEW·VVIX·OVX·Put/Call | 서면 허가가 명시적으로 필요하고 월 예산 안의 근거가 없어 **문의하지 않기로** 결정 | — |
 | Deribit (info@deribit.com) | BTC·ETH DVOL(크립토 내재변동성). ToS §4.6 "Market Data … is for personal use only … without explicit approval from us" — 서면 승인 전 `pending_rights`, 값 비공개 | **발송 2026-08-22 (운영자 Gmail)**. 무응답 시 위험수용 안 함(약관이 개인 용도를 명시). 회신 기한 2026-09-16 | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §1 |
 | 두나무(업비트 Open API) | KRW 시세·김치프리미엄(USDT 분모로 실시간 환율 소거). Open API 이용약관(2023-12-15) §5 저작권 조항, 공개 표시 허가·금지 조항 없음. Origin 요청 10초 1회라 서버 relay 전제 | **운영자 위험수용으로 개방(2026-08-22, DS-2026-012, §3.19)**. 1:1 문의는 기록용 발송(지원센터 폼) — 회신 시 갱신, 거절 시 즉시 OFF | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §2 |
-| Coinalyze (contact@coinalyze.net) | 거래소 집계 청산(1h/24h)·OI 히스토리. 문서 "The API is free, if you use the API/data in public places … please be kind and cite the data source" — 광고 사이트 포함 여부·하위 거래소 권리 확인 | **발송 2026-08-22 (운영자 Gmail)**. 회신 기한 2026-09-16 | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §3 |
+| Coinalyze (contact@coinalyze.net) | 거래소 집계 청산(1h/24h)·OI 히스토리 | ✅ **회신·승인 2026-08-22** — 조건은 dofollow 링크 하나. 하위 거래소 권리는 답하지 않음. §3.27 `DS-2026-019` | [`INQUIRY_CRYPTO_SOURCES.md`](INQUIRY_CRYPTO_SOURCES.md) §3 |
 
 뉴욕 연준 사례가 이 목록의 근거다. 약관을 실제로 읽기 전에는 “연준 계열이니
 공개겠지”와 “저작권을 주장하니 못 쓰겠지” 둘 다 추측이었고, 실제 약관은 저작권을
@@ -1777,6 +1818,7 @@ notes: "No confidential contract language here"
 | 2026-08-21 | 크립토 Phase 2 — §3.19 업비트 시세(`pending_rights`, 위험수용 템플릿), §3.20 CoinMarketCap 글로벌 메트릭(`pending_review`→키 발급 시 approved), §3.21 가스 스트립 조사 결과 보류(퍼블릭 RPC·mempool 약관). 코드는 게이트 기본 OFF로 배포 | Claude assisted |
 | 2026-08-21 | CoinMarketCap lane 승인·활성화(`DS-2026-011`, §3.20) — Basic 키 발급·서버 게이트 ON, 첫 blob 라이브 확인. lane report의 CMC 상태를 서빙 기준으로 정정(키는 ingest 전용) | Claude assisted |
 | 2026-08-21 | 가스 스트립 lane 추가(§3.21 후속, `/api/crypto/gas`, 운영자 RPC 계정 URL 주입형·게이트 OFF), 총시총 T 단위 포맷, Deribit·Coinalyze 문의 초안을 운영자 Gmail에 생성(발송 대기) | Claude assisted |
+| 2026-08-22 | **Coinalyze 서면 승인**(§3.27 신설, `DS-2026-019`) — 문의 5항 그대로 허용, 조건은 **dofollow 링크**. 코드는 무료 키 발급 후 실측하고 착수. 외부 링크 dofollow 회귀 테스트 추가 | Claude assisted |
 | 2026-08-22 | 업비트 시세 lane 운영자 위험수용 개방(`DS-2026-012`, §3.19) — `UPBIT_ENABLED=true`; Deribit·Coinalyze 문의 발송(§4.1), 두나무 1:1 문의는 기록용 발송 예정 | Claude assisted |
 | 2026-08-22 | 가스 스트립 lane 활성화(`DS-2026-013`, §3.21 — 운영자 Alchemy 계정, 이더리움 라이브·Base/Arbitrum은 앱 네트워크 활성화 대기), 업비트 lane 라이브 확인(§3.19) | Claude assisted |
 | 2026-08-22 | CoinMarketCap lane 사용 범위 확장(§3.20) — `v2/cryptocurrency/quotes/latest` USDT·USDC 유통 공급(1크레딧/시간, 월 ≈ 720 추가, 같은 키·같은 Commercial Terms), 7d/30d 변화는 자체 일별 누적 | Claude assisted |
