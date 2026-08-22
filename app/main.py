@@ -25,6 +25,7 @@ from . import (
     bio,
     config,
     crypto_board,
+    crypto_coin,
     crypto_gas,
     crypto_kimchi,
     crypto_market,
@@ -185,6 +186,42 @@ def bio_page() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "bio.html")
 
 
+@app.get("/crypto/{symbol}", include_in_schema=False)
+def crypto_coin_hub(symbol: str) -> HTMLResponse:
+    """코인 상세 — 서버가 심볼·이름·메타를 렌더한다(크롤러는 JS를 실행하지 않는다).
+
+    Hyperliquid 자체 DEX에 상장돼 있지 않은 심볼은 404 — 쓰레기 URL이 색인되지
+    않게 한다. 거래소가 닿지 않는 순간에는 큐레이션된 코인만 렌더한다.
+    """
+    import html as _html
+
+    require_crypto_section()
+    raw = symbol.strip()
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9:._-]{0,23}", raw):
+        raise HTTPException(status_code=404, detail="unrecognized symbol")
+    try:
+        resolved = crypto_coin.resolve_page_symbol(raw)
+    except crypto_coin.CoinNotFound as exc:
+        raise HTTPException(status_code=404, detail="unknown market") from exc
+    except crypto_coin.CoinUnavailable as exc:
+        raise HTTPException(status_code=503, detail="venue unavailable") from exc
+    spec = crypto_coin.coin_spec(resolved)
+    named = spec.label_ko != resolved
+    display = f"{spec.label_ko} ({resolved})" if named else resolved
+    title = f"{display} 무기한선물 시세·차트 · Hyperliquid | 물밑 Mulmit"
+    description = (
+        f"{display} Hyperliquid 무기한선물 마크가격과 캔들 차트, 펀딩비·미결제약정·거래소별 예상 펀딩을 "
+        "한 페이지에서. 현물 거래소 가격이 아니며 투자 권유가 아닙니다."
+    )
+    page = _crypto_coin_template()
+    for key, value in (
+        ("{{SYMBOL}}", resolved), ("{{NAME}}", spec.label_ko),
+        ("{{TITLE}}", title), ("{{DESCRIPTION}}", description),
+    ):
+        page = page.replace(key, _html.escape(value, quote=True))
+    return HTMLResponse(page, headers={"Cache-Control": "public, max-age=300"})
+
+
 @app.get("/monitor", include_in_schema=False)
 def market_monitor() -> FileResponse:
     """분리 전의 통합 모니터. 페이지 레이어의 기준 구현으로 남겨 둔다."""
@@ -226,6 +263,16 @@ def robots() -> FileResponse:
 
 
 _STOCK_TEMPLATE: str | None = None
+
+
+_CRYPTO_COIN_TEMPLATE: str | None = None
+
+
+def _crypto_coin_template() -> str:
+    global _CRYPTO_COIN_TEMPLATE
+    if _CRYPTO_COIN_TEMPLATE is None:
+        _CRYPTO_COIN_TEMPLATE = (config.STATIC_DIR / "crypto-coin.html").read_text(encoding="utf-8")
+    return _CRYPTO_COIN_TEMPLATE
 
 
 def _stock_template() -> str:
@@ -737,6 +784,36 @@ def crypto_board_route(request: Request, response: Response) -> dict:
     response.headers["Cache-Control"] = "private, max-age=15, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "Hyperliquid"
     return crypto_board.build_crypto_board()
+
+
+@app.get("/api/crypto/coin/{symbol}")
+@limiter.limit(config.RATE_LIMIT)
+def crypto_coin_route(
+    request: Request,
+    response: Response,
+    symbol: str,
+    interval: str = Query(crypto_coin.DEFAULT_INTERVAL),
+    candles: bool = Query(True),
+) -> dict:
+    """한 코인의 시장 컨텍스트(카드와 같은 빌더)와 캔들 — 같은 스냅샷·같은 게이트."""
+    require_crypto_section()
+    require_hip3_public_display()
+    if interval not in crypto_coin.INTERVALS:
+        raise HTTPException(status_code=422, detail="unsupported interval")
+    try:
+        payload = crypto_coin.build_crypto_coin(symbol, interval=interval, include_candles=candles)
+    except crypto_coin.CoinNotFound as exc:
+        raise HTTPException(status_code=404, detail="unknown market") from exc
+    except crypto_coin.CoinUnavailable as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "crypto_venue_unavailable", "status": "unavailable", "reason": exc.reason,
+                    "message": "Hyperliquid could not be reached for this market."},
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    response.headers["Cache-Control"] = "private, max-age=15, stale-while-revalidate=300"
+    response.headers["X-Data-Source"] = "Hyperliquid"
+    return payload
 
 
 @app.get("/api/kr/search")

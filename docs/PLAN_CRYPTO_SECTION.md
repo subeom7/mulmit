@@ -245,6 +245,23 @@ fail-closed, 수치 발명 금지)으로 하나씩 판정한 문서다. 소스�
   움직일 수 없음). Phase 2부터 "스테이블코인 시총 +x% · 24h"로 붙이던 라벨을 떼고 `volume_24h.stablecoin_change_percent`·
   `stablecoins.aggregate.volume_24h_change_percent`로 옮겼다. CMC는 스테이블 시총의 24h 변화를 주지 않는다 → 자체 누적(7d/30d)이 그 자리.
 
+### 7.6 Phase 4a — 코인 상세 페이지·캔들 차트 (2026-08-22)
+
+- 문제: 대시보드의 코인 카드를 눌러도 아무 일도 일어나지 않았다(카드가 `<article>`). **`/crypto/{symbol}`** 상세 페이지를 신설하고 카드·보드 심볼을
+  링크로 바꿨다.
+- **차트 소스 판단 — TradingView 위젯을 쓰지 않는다**: 등록부 §3.2에 TradingView 공식 위젯이 `provider_widget`으로 이미 승인돼 있어 *권리상으로는* 붙일 수
+  있다. 그러나 ① 위젯이 그리는 값은 Binance·Coinbase 등 **다른 거래소의 현물**이라 페이지 전체가 "Hyperliquid 무기한선물 참고가"라고 말하는 것과 표시
+  거래소가 어긋난다(§3.2 금지: "TradingView 데이터처럼 보이는 자체 API" 반대 방향의 혼동), ② iframe이 사용자 IP·페이지 URL을 제3자에 넘긴다(개인정보
+  §4에 이미 고지된 사항이지만 코인 페이지마다 반복된다), ③ 무게(수백 KB)와 테마 불일치. **결론: 같은 HL `candleSnapshot`을 서버가 릴레이하고 페이지가
+  자체 SVG로 그린다.** 드로잉 툴·지표가 필요하면 §3.2 경로로 나중에 "TradingView로 보기" 토글을 얹을 수 있다(새 권리 없음).
+- `GET /api/crypto/coin/{symbol}?interval=15m|1h|4h|1d&candles=true|false`(`app/crypto_coin.py`): 시장 컨텍스트는 **카드와 같은 `_coin_card` 빌더**를 재사용해
+  대시보드와 상세 페이지의 숫자가 어긋나지 않게 했고, 캔들은 `candleSnapshot` 한 창(15m 2일·1h 14일·4h 60일·1d 365일)을 요청 경로 캐시(30~300초)로 돌린다.
+  `candles=false`는 15초 폴링용 경량 응답(캔들 생략, 상단 지표만 갱신).
+- 페이지는 `/stock/{symbol}`과 같은 **서버 렌더 메타** 방식(크롤러용 제목·설명·canonical)이며, 상장돼 있지 않은 심볼은 404(거래소 미응답 시에는 큐레이션
+  10종만 렌더). 차트는 캔들·거래량·십자선·툴팁을 자체 SVG로 그리고, 인터벌 선택은 `localStorage`에 남는다.
+- 표시 경계: 상단 고지 배지(현물 아님·무기한선물·USD 기준·투자 권유 아님)와 방법론·면책을 응답에서 그대로 받아 쓴다. 새 권리 없음 — 같은 HIP-3 게이트
+  (`DS-2026-001`)와 같은 `metaAndAssetCtxs`·`candleSnapshot`.
+
 ## 8. 실측 로그 (2026-08-21, 서울 KT 가정망)
 
 REST(curl, `Mozilla/5.0 mulmit-probe`):
@@ -296,6 +313,7 @@ WebSocket(python websockets, `origin=https://mulmit.com`):
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-08-22 | Phase 4a(§7.6) — 코인 상세 페이지 `/crypto/{symbol}`·캔들 API(`/api/crypto/coin`), 카드·보드 링크 연결. TradingView 위젯 대신 HL 캔들 자체 렌더 판단 기록 |
 | 2026-08-22 | 정정 — CMC `stablecoin_24h_percentage_change`는 거래대금 변화(실측 +22.6% vs 시총 $282B): 시총 카드의 24h 라벨 제거, 거래대금 카드로 이동(§7.5) |
 | 2026-08-22 | Phase 3b(§7.5) — 스테이블코인 공급·유동성(CMC quotes/latest USDT·USDC, 같은 키, 자체 일별 누적 7d/30d), 등록부 §3.20 사용 범위 갱신 |
 | 2026-08-22 | Phase 3a(§7.4) — HL 전체 시장 보드(급등·급락·OI·거래대금·펀딩 극단값·합계), 새 권리 없음 |

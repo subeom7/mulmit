@@ -66,6 +66,7 @@ fail-closed, 수치 발명 금지)으로 판정한 문서다. 실행 순서의 �
 | 2026-08-22 | #8 바이오 섹션 Phase 1 **라이브** — 운영자가 `BIO_SECTION_ENABLED`·`CLINICALTRIALS_ENABLED`·`OPENFDA_ENABLED` ON, 첫 ingest 패스(임상 34/34·FDA 140건) 저장·`/bio` 확인 |
 | 2026-08-22 | #8 바이오 섹션 Phase 1 — `/bio` 페이지·`/api/bio/{trials,fda}`(ClinicalTrials.gov 워치리스트 임상 동향, openFDA 최근 NDA·BLA 승인), 등록부 §3.22·§3.23, 게이트 3종 기본 OFF, 계획 `PLAN_BIO_SECTION.md` |
 | 2026-08-22 | #9 NXT 시장정보 조사 종결(`license_required` — 정보포털 계약형, 웹사이트용 고정비·무상 2027-02·유상 1년 약정, 금액 비공개 → 운영자 문의 선택), #11 roic.ai 현시점 기각(재배포 금지·Enterprise 견적만), #2 상태 셀을 P1~P4 완료로 정정 (등록부 §6.3·§6.4) |
+| 2026-08-22 | #16 Phase 4a — 코인 상세 페이지 `/crypto/{symbol}`(서버 렌더 메타·자체 SVG 캔들 차트·인터벌 4종)와 `/api/crypto/coin/{symbol}`, 대시보드 카드·보드 심볼에서 링크. TradingView 위젯은 표시 거래소 혼동·iframe 추적 때문에 채택하지 않음(§3.2 경로는 열려 있음) |
 | 2026-08-22 | #16 정정 — CMC `stablecoin_24h_percentage_change`는 24h **거래대금** 변화(실측 +22.6% vs 시총 $282B): 스테이블 시총 카드의 24h 라벨 제거, 스테이블 거래대금 카드로 이동 |
 | 2026-08-22 | #16 Phase 3b — 스테이블코인 공급·유동성(`/api/crypto/structure`의 `stablecoins`: USDT·USDC 유통 공급·페그·비중, 자체 일별 누적 7d/30d), CMC 같은 키(quotes/latest 1크레딧/시간), 등록부 §3.20 사용 범위 갱신 |
 | 2026-08-22 | #16 Phase 3a — HL 전체 시장 보드(`/api/crypto/board`: 급등·급락·OI·거래대금 상위·펀딩 극단값·합계), 새 권리 없음 |
