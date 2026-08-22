@@ -194,3 +194,23 @@ def test_daily_chart_reuses_its_window_for_the_signal(crypto_on):
     assert fake.candle_calls == [("BTC", "1d", 365 * 24 * 3600)]  # one call, not two
     assert payload["signal"]["status"] == "ok" and payload["signal"]["candles_used"] == 120
     assert payload["signal"]["direction"]["band"] == "up"
+
+
+def test_coin_payload_carries_the_krw_block_when_the_lane_is_open(crypto_on, monkeypatch):
+    from app import crypto_kimchi
+
+    monkeypatch.setattr(crypto_kimchi, "build_for_coin", lambda symbol, **kwargs: {"symbol": symbol, "krw": 106_000_000.0})
+    payload = crypto_coin.build_crypto_coin("BTC", include_candles=False, provider=FakeProvider(), now=NOW)
+    assert payload["krw"] == {"symbol": "BTC", "krw": 106_000_000.0}
+
+    # A closed gate (or an unlisted coin) simply means no block…
+    monkeypatch.setattr(crypto_kimchi, "build_for_coin", lambda symbol, **kwargs: None)
+    assert crypto_coin.build_crypto_coin("BTC", include_candles=False, provider=FakeProvider(), now=NOW)["krw"] is None
+
+    # …and a failure in that lane never takes the page down.
+    def explode(symbol, **kwargs):
+        raise RuntimeError("upbit down")
+
+    monkeypatch.setattr(crypto_kimchi, "build_for_coin", explode)
+    degraded = crypto_coin.build_crypto_coin("BTC", include_candles=False, provider=FakeProvider(), now=NOW)
+    assert degraded["krw"] is None and degraded["market"]["price"]["value"] == 77000.0

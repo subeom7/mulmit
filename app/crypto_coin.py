@@ -271,7 +271,7 @@ def build_crypto_coin(
             signal_error = "rate_limited"
         except DataUnavailable:
             signal_error = "unavailable"
-    from . import crypto_regime  # local import: crypto_regime reads this module's parser
+    from . import crypto_kimchi, crypto_regime  # local imports: both read this module's parser
 
     signal = (
         crypto_signal.build_signal(signal_candles, card, as_of=signal_as_of)
@@ -282,6 +282,13 @@ def build_crypto_coin(
 
     if signal.get("status") == "ok":
         signal["history"] = crypto_regime.history_for(resolved, now=moment)
+
+    # Korean quote and premium, for the coins Upbit lists in KRW. The lane has its own
+    # gate and its own rights posture; when it is closed the block is simply absent.
+    try:
+        krw = crypto_kimchi.build_for_coin(resolved)
+    except Exception:  # noqa: BLE001 - the KRW block is an enrichment, never the reason a page fails
+        krw = None
 
     return {
         "generated_at": _iso_utc(),
@@ -301,6 +308,7 @@ def build_crypto_coin(
             "basis": "Hyperliquid candleSnapshot for this market; open/high/low/close and base-unit volume as published",
         },
         "signal": signal,
+        "krw": krw,
         "links": {
             "venue": f"https://app.hyperliquid.xyz/trade/{resolved}",
             "board": "/crypto#crypto-board",

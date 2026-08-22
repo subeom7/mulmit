@@ -19,7 +19,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-11">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-12">
   <style>
     .coin-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 26px 0 14px; border-bottom: 1px solid var(--line); }
     .coin-head h1 { margin: 0; font-size: clamp(24px, 3.6vw, 36px); letter-spacing: -.04em; }
@@ -159,6 +159,14 @@
       <p class="coin-note" id="chart-stats"></p>
     </section>
 
+    <section class="coin-section" id="sec-krw" hidden>
+      <h2>원화 시세 · 김치프리미엄</h2>
+      <p class="sub">업비트 원화 시장의 체결가와, 같은 코인의 해외 기준가 대비 괴리입니다. USDT 기준은 환율이 필요 없고, 공식환율 기준은 한국은행 고시(일별)를 씁니다.</p>
+      <div class="coin-kpis" id="krw-kpis"></div>
+      <p class="coin-note" id="krw-note"></p>
+      <p class="coin-note" id="krw-rights"></p>
+    </section>
+
     <section class="coin-section" id="sec-deriv" hidden>
       <h2>파생 지표</h2>
       <p class="sub">펀딩비는 시간당 지급률이며 연율(APR)은 × 24 × 365 환산입니다. 양수는 롱이 숏에 지불 — 롱 쏠림입니다.</p>
@@ -275,6 +283,7 @@ function renderHead(data) {
   section.hidden = rows.length === 0;
   $id("deriv-note").textContent = rows.length ? "Binance·Bybit 값은 Hyperliquid가 공표하는 예상값이며 Mulmit이 해당 거래소를 조회하지 않습니다." : "";
   renderSignal(data.signal);
+  renderKrw(data.krw);
   $id("method-note").textContent = data.methodology?.ko || "";
   $id("disclaimer-note").textContent = data.disclaimer?.ko || "";
   if (data.links?.venue) $id("link-venue").href = data.links.venue;
@@ -312,6 +321,32 @@ function renderSignalHistory(history) {
   if (changes.flow_label) parts.push(changes.flow_label.ko);
   if (changes.oi_usd_24h_percent != null) parts.push(`OI ${signed(changes.oi_usd_24h_percent, 1)}`);
   flow.textContent = parts.join(" · ") || "—";
+}
+
+const won = (v, digits = 0) => v == null ? "—" : "₩" + Number(v).toLocaleString("ko-KR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+function renderKrw(krw) {
+  const section = $id("sec-krw");
+  if (!krw || krw.krw == null) { section.hidden = true; return; }
+  section.hidden = false;
+  const usdt = krw.usdt || {}, fx = krw.fx || {};
+  const cards = [
+    ["업비트 원화가", won(krw.krw, krw.krw >= 1000 ? 0 : 2), krw.change_24h_percent == null ? null : `${signed(krw.change_24h_percent)} · 24h`, cls(krw.change_24h_percent)],
+    ["USDT 기준 프리미엄", krw.premium_usdt_basis_percent == null ? "—" : signed(krw.premium_usdt_basis_percent), "환율 불필요 · 실시간", cls(krw.premium_usdt_basis_percent)],
+    ["공식환율 기준", krw.premium_official_basis_percent == null ? "—" : signed(krw.premium_official_basis_percent), fx.date ? `한국은행 고시 ${fx.date}` : "고시환율 없음", cls(krw.premium_official_basis_percent)],
+    ["USDT/KRW", won(usdt.krw, 0), usdt.tether_premium_percent == null ? null : `테더 프리미엄 ${signed(usdt.tether_premium_percent)}`, cls(usdt.tether_premium_percent)],
+    ["업비트 24h 거래대금", krw.volume_24h_krw == null ? "—" : `₩${nf(krw.volume_24h_krw / 1e8, 0)}억`, null, ""],
+  ];
+  $id("krw-kpis").replaceChildren(...cards.map(([title, value, note, klass]) => {
+    const box = document.createElement("div"); box.className = "coin-kpi";
+    const small = document.createElement("small"); small.textContent = title;
+    const strong = document.createElement("strong"); strong.textContent = value; if (klass) strong.className = klass;
+    box.append(small, strong);
+    if (note) { const span = document.createElement("span"); span.textContent = note; box.append(span); }
+    return box;
+  }));
+  $id("krw-note").textContent = krw.methodology?.ko || "";
+  $id("krw-rights").textContent = [krw.rights?.notice_ko || krw.rights?.notice, krw.disclaimer?.ko].filter(Boolean).join(" ");
 }
 
 function renderSignal(signal) {
