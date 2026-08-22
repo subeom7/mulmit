@@ -209,6 +209,34 @@ def _source_block(upbit_snapshot: dict[str, Any] | None, hl_snapshot: dict[str, 
     }
 
 
+def kimchi_symbols() -> set[str]:
+    return {coin.symbol for coin in KIMCHI_COINS}
+
+
+def build_for_coin(symbol: str, **kwargs: Any) -> dict[str, Any] | None:
+    """One coin's KRW row with the context it needs to be read — or ``None`` when not covered.
+
+    The Upbit provider keeps a single-flight TTL cache, so a coin page asking for
+    this costs the same upstream call the dashboard section already makes.
+    """
+    if not enabled() or symbol.upper() not in kimchi_symbols():
+        return None
+    payload = build_crypto_kimchi(**kwargs)
+    row = next((coin for coin in payload.get("coins") or [] if coin.get("symbol") == symbol.upper()), None)
+    if row is None:
+        return None
+    return {
+        **row,
+        "as_of": payload.get("as_of"),
+        "usdt": payload.get("usdt"),
+        "fx": payload.get("fx"),
+        "source": payload.get("source"),
+        "methodology": payload.get("methodology"),
+        "disclaimer": payload.get("disclaimer"),
+        "rights": payload.get("rights"),
+    }
+
+
 def build_crypto_kimchi(
     provider: TickerProvider | None = None,
     hl_provider: DexProvider | None = None,

@@ -404,3 +404,19 @@ def test_lane_report_names_phase2_gates(db, monkeypatch):
 def test_crypto_page_has_phase2_sections(db):
     page = TestClient(app).get("/crypto").text
     assert 'id="crypto-kimchi"' in page and 'id="crypto-structure"' in page
+
+
+def test_build_for_coin_returns_one_row_with_its_context_or_nothing(phase2, monkeypatch):
+    hl = FakeHl({"BTC": 76600.0, "ETH": 2380.0})
+    row = crypto_kimchi.build_for_coin("btc", provider=FakeUpbit(), hl_provider=hl, fx_loader=_fx_ok)
+    assert row["symbol"] == "BTC" and row["market"] == "KRW-BTC" and row["krw"] == 105640000.0
+    assert row["premium_usdt_basis_percent"] is not None
+    assert row["usdt"]["krw"] == 1374.0 and row["fx"]["date"] == "2026-08-21"
+    assert row["rights"]["status"] and row["methodology"]["ko"] and row["disclaimer"]["ko"]
+
+    # Not listed in KRW on Upbit, present in the roster but absent from the snapshot, and the closed gate.
+    assert crypto_kimchi.build_for_coin("HYPE", provider=FakeUpbit(), hl_provider=hl, fx_loader=_fx_ok) is None
+    assert crypto_kimchi.build_for_coin("SOL", provider=FakeUpbit(), hl_provider=hl, fx_loader=_fx_ok) is None
+    monkeypatch.setattr(config, "UPBIT_ENABLED", False)
+    assert crypto_kimchi.build_for_coin("BTC", provider=FakeUpbit(), hl_provider=hl, fx_loader=_fx_ok) is None
+    assert crypto_kimchi.kimchi_symbols() == {"BTC", "ETH", "SOL", "XRP", "DOGE"}
