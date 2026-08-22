@@ -1030,21 +1030,34 @@ def search_kr_listings(query: str, limit: int = 10) -> list[dict[str, Any]]:
 
     A name-prefix match outranks a substring match so 삼성전자 beats 호텔삼성
     for the query 삼성, and the exact code always wins.
+
+    Matching is case-insensitive: a good share of the roster carries Latin
+    letters (BGF리테일, SK하이닉스, LG전자, POSCO홀딩스) and `LIKE` is
+    case-sensitive on PostgreSQL, so a lower-cased "bgf" found nothing while
+    the same query worked on SQLite. `%` and `_` are escaped — in a search box
+    they are text someone typed, not wildcards.
     """
     term = query.strip()
     if not term:
         return []
-    like = f"%{term}%"
-    prefix = f"{term}%"
+    # "!" as the escape character rather than a backslash: it survives the trip
+    # through Python, SQLAlchemy and both dialects without a second layer of
+    # quoting, and no listed name contains one.
+    escaped = term.replace("!", "!!").replace("%", "!%").replace("_", "!_")
+    like = f"%{escaped}%"
+    prefix = f"{escaped}%"
     rank = sa.case(
         (kr_listings.c.srtn_cd == term.upper(), 0),
-        (kr_listings.c.itms_nm == term, 1),
-        (kr_listings.c.itms_nm.like(prefix), 2),
+        (kr_listings.c.itms_nm.ilike(escaped, escape="!"), 1),
+        (kr_listings.c.itms_nm.ilike(prefix, escape="!"), 2),
         else_=3,
     )
     stmt = (
         sa.select(kr_listings)
-        .where(sa.or_(kr_listings.c.itms_nm.like(like), kr_listings.c.srtn_cd.like(prefix.upper())))
+        .where(sa.or_(
+            kr_listings.c.itms_nm.ilike(like, escape="!"),
+            kr_listings.c.srtn_cd.ilike(prefix, escape="!"),
+        ))
         .order_by(rank, sa.desc(sa.func.coalesce(kr_listings.c.mrkt_tot_amt, 0.0)))
         .limit(max(1, min(int(limit), 25)))
     )

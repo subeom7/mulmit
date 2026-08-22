@@ -108,6 +108,23 @@ def test_a_needle_only_one_roster_knows_drops_the_others(rosters):
     assert [group["kind"] for group in search.search("apple")["groups"]] == ["us_stock"]
 
 
+def test_kr_roster_receives_the_query_as_typed(rosters, monkeypatch):
+    """Case-folding the needle before the KR roster hid every Latin-letter name.
+
+    The coin and US rosters compare in Python and fold their own fields, but the
+    Korean roster matches in SQL — and `LIKE` is case-sensitive on PostgreSQL,
+    so "BGF" arrived as "bgf" and matched nothing on the live database.
+    """
+    seen: list[tuple[str, int]] = []
+    real = kr_stocks.search
+    monkeypatch.setattr(kr_stocks, "search", lambda query, limit: (seen.append((query, limit)), real(query, limit))[1])
+
+    assert [hit["symbol"] for hit in search.search("BGF")["groups"][0]["results"]] == ["282330"]
+    assert seen == [("BGF", search.DEFAULT_LIMIT)]
+
+    assert [hit["symbol"] for hit in search._kr_hits("bgf", 5)] == ["282330"]
+
+
 def test_us_hits_put_the_closer_match_first(rosters):
     hits = search._us_hits("a", 10)
     assert [hit["symbol"] for hit in hits] == ["AAPL", "BAC"]   # ticker prefix beats a substring
