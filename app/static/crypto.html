@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-12">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-13">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -224,6 +224,19 @@
       </div>
     </section>
 
+    <section class="dashboard-section" id="crypto-news" aria-labelledby="cnews-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">HEADLINES · COIN TAGS · GDELT</p><h2 id="cnews-title" data-i18n="crypto.news.title">크립토 뉴스</h2></div>
+        <span class="source-pill">GDELT</span>
+      </div>
+      <p class="section-copy" data-i18n="crypto.news.copy">GDELT가 수집한 글로벌 기사에서 코인 이름이 제목에 잡힌 헤드라인입니다. 제목·출처·링크까지만 전달하며 본문은 원문에서 확인하세요. 실시간 속보가 아니라 수집 주기 갱신입니다.</p>
+      <div id="cnews-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div class="panel" id="cnews-panel" hidden>
+        <ul class="crypto-news" id="cnews-list"></ul>
+        <footer class="panel-footer" id="cnews-footer" hidden></footer>
+      </div>
+    </section>
+
     <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
 
     <section class="methodology" aria-labelledby="method-title">
@@ -259,6 +272,6 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "crypto";</script>
-  <script src="/static/monitor.js?v=20260822-12" defer></script>
+  <script src="/static/monitor.js?v=20260822-13" defer></script>
 </body>
 </html>

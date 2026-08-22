@@ -308,6 +308,17 @@ fail-closed, 수치 발명 금지)으로 하나씩 판정한 문서다. 소스�
   대상 코인이 아니면 블록 자체가 없다(`krw: null`).
 - 권리: 새 권리 없음 — §3.19 업비트 lane(운영자 위험수용 `DS-2026-012`)의 표시 범위 안이며, 같은 고지 문구를 페이지 하단에 그대로 싣는다.
 
+### 7.11 Phase 5c — 크립토 헤드라인 (2026-08-22)
+
+- 기존 GDELT 뉴스 lane(#10)에 **크립토 축**을 붙였다. 실측: 저장된 헤드라인 8건 중 크립토 0건 — `TITLE_KEYWORDS`에 크립토 단어가 없어 필터를
+  통과하지 못하고 있었다. 키워드(bitcoin·ethereum·crypto·stablecoin·altcoin·digital asset)와 **코인 이름 사전**을 추가했다.
+- 태깅 규칙은 기존 종목 태그와 같다(닫힌 사전 + 단어 경계). **영어 단어와 겹치는 티커는 넣지 않는다** — SOL(스페인어), LINK, SUI, HYPE, ETH(취리히
+  공대), 그리고 **DOGE**(미 정부효율부: 2025년 이후 뉴스에서 코인보다 그쪽이 더 흔하다). 실측 확인: "DOGE cuts 2,000 federal jobs" → 무태깅,
+  "ETH Zurich researchers…" → 무태깅, "Chainlink and AVAX lead altcoin rally; XRP up 21%" → LINK·AVAX·XRP.
+- `/api/crypto/news?symbol=&limit=`: 저장 블롭에서 코인 태그가 붙은 기사만. 표시는 lane의 안전선 그대로 **제목 + 출처 도메인 + 원문 링크**까지이고
+  본문·요약은 없다. `/crypto`에 "크립토 뉴스" 섹션, 코인 페이지에 "관련 뉴스" 섹션(해당 코인 태그만).
+- 권리: 새 권리 없음 — GDELT lane(등록부 §6.1 승인)의 표시 범위와 attribution을 그대로 쓴다.
+
 ## 8. 실측 로그 (2026-08-21, 서울 KT 가정망)
 
 REST(curl, `Mozilla/5.0 mulmit-probe`):
@@ -359,6 +370,7 @@ WebSocket(python websockets, `origin=https://mulmit.com`):
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-08-22 | Phase 5c(§7.11) — 크립토 헤드라인(GDELT 키워드·코인 사전 추가, `/api/crypto/news`), 모호한 티커 제외 |
 | 2026-08-22 | Phase 5b(§7.10) — 코인 페이지 원화 시세·김치프리미엄(대상 5종, 같은 빌더 재사용, 새 권리 없음) |
 | 2026-08-22 | Phase 5a(§7.9) — 과열도·OI 시계열(블롭 `crypto_regime_history_v1`, 48샘플+90일), 포지션 흐름 해석, 카드·게이지에 24h 변화 |
 | 2026-08-22 | Phase 4c(§7.8) — 시장 국면(`/api/crypto/regime`)·카드 과열도 배지, **펀딩 기준선(+10.95% APR) 정정** |

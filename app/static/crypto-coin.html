@@ -19,7 +19,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-12">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-13">
   <style>
     .coin-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 26px 0 14px; border-bottom: 1px solid var(--line); }
     .coin-head h1 { margin: 0; font-size: clamp(24px, 3.6vw, 36px); letter-spacing: -.04em; }
@@ -70,6 +70,12 @@
     .sig-contrib { position: relative; height: 5px; width: 90px; border-radius: 999px; background: var(--line); overflow: hidden; }
     .sig-contrib i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--accent); opacity: .8; }
     @media (max-width: 900px) { .sig-top { grid-template-columns: 1fr 1fr; } .sig-reading { grid-column: 1 / -1; } }
+    .coin-news { list-style: none; margin: 0; padding: 0; }
+    .coin-news li { padding: 9px 2px; border-bottom: 1px solid var(--line); }
+    .coin-news li:last-child { border-bottom: 0; }
+    .coin-news a { color: inherit; font-size: 12.5px; font-weight: 650; line-height: 1.5; text-decoration: none; }
+    .coin-news a:hover { color: var(--accent); text-decoration: underline; }
+    .coin-news .meta { margin-top: 4px; color: var(--faint); font: 650 10px/1.4 var(--mono); }
     .coin-links { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 8px; }
     .coin-links a { padding: 6px 11px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font-size: 11px; font-weight: 700; text-decoration: none; }
     .coin-links a:hover { color: var(--ink); border-color: var(--accent); }
@@ -172,6 +178,13 @@
       <p class="sub">펀딩비는 시간당 지급률이며 연율(APR)은 × 24 × 365 환산입니다. 양수는 롱이 숏에 지불 — 롱 쏠림입니다.</p>
       <div class="table-scroll"><table class="coin-table" id="deriv-table"><thead></thead><tbody></tbody></table></div>
       <p class="coin-note" id="deriv-note"></p>
+    </section>
+
+    <section class="coin-section" id="sec-news" hidden>
+      <h2>관련 뉴스</h2>
+      <p class="sub">GDELT가 수집한 기사 중 제목에 이 코인이 잡힌 헤드라인입니다. 제목·출처·링크까지만 전달합니다.</p>
+      <ul class="coin-news" id="news-list"></ul>
+      <p class="coin-note" id="news-note"></p>
     </section>
 
     <section class="coin-section">
@@ -555,7 +568,29 @@ async function load(withCandles) {
 
 let resizeTimer = null;
 window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawChart, 160); });
+async function loadNews() {
+  try {
+    const data = await fetchJson(`/api/crypto/news?symbol=${encodeURIComponent(SYMBOL)}&limit=8`);
+    const list = $id("news-list");
+    if (!Array.isArray(data.articles) || !data.articles.length) { $id("sec-news").hidden = true; return; }
+    $id("sec-news").hidden = false;
+    list.replaceChildren(...data.articles.map((article) => {
+      const item = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = article.url; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = article.title;
+      const meta = document.createElement("div"); meta.className = "meta";
+      meta.textContent = [article.domain, article.seendate ? timeText(article.seendate) : null].filter(Boolean).join(" · ");
+      item.append(link, meta);
+      return item;
+    }));
+    $id("news-note").textContent = data.basis_ko || "";
+  } catch {
+    $id("sec-news").hidden = true;  // the news lane is an enrichment, never a blocker
+  }
+}
+
 load(true);
+loadNews();
 setInterval(() => { if (!document.hidden) load(false); }, REFRESH_MS);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) load(false); });
   </script>
