@@ -145,6 +145,9 @@ HIP3_HISTORY_TIMEOUT = _float("HIP3_HISTORY_TIMEOUT", 10.0)
 # HIP-3 display gate above (same API, same posture: perpetual references, not
 # spot quotes); this flag only decides whether the section is exposed at all.
 CRYPTO_SECTION_ENABLED = _bool("CRYPTO_SECTION_ENABLED", False)
+# Cached half of the per-coin regime read (daily candles for the curated coins);
+# funding is always scored live, so this only paces the candle calls.
+CRYPTO_HEAT_MAX_AGE = _int("CRYPTO_HEAT_MAX_AGE", 60 * 30)
 # alternative.me Crypto Fear & Greed Index. The publisher's terms allow
 # commercial use "as long as the attribution is given right next to the display
 # of the data" (accessed 2026-08-21); the payload carries that attribution and

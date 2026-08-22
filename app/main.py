@@ -29,6 +29,7 @@ from . import (
     crypto_gas,
     crypto_kimchi,
     crypto_market,
+    crypto_regime,
     crypto_structure,
     data_rights,
     econ_calendar,
@@ -606,7 +607,9 @@ def crypto_overview(request: Request, response: Response) -> dict:
     require_hip3_public_display()
     response.headers["Cache-Control"] = "private, max-age=15, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "Hyperliquid"
-    return crypto_market.build_crypto_overview()
+    # The regime badge rides along: its cached half comes from a stored blob and its
+    # funding half is scored against the very cards being served.
+    return crypto_regime.attach_coin_signals(crypto_market.build_crypto_overview())
 
 
 @app.get("/api/crypto/sentiment")
@@ -773,6 +776,26 @@ def crypto_gas_route(request: Request, response: Response) -> dict:
     response.headers["Cache-Control"] = "private, max-age=30, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "EVM JSON-RPC (operator account)"
     return crypto_gas.build_crypto_gas()
+
+
+@app.get("/api/crypto/regime")
+@limiter.limit(config.RATE_LIMIT)
+def crypto_regime_route(request: Request, response: Response) -> dict:
+    """시장 전체 국면 — 쏠림 폭·상승 폭·기준 코인 과열도·공포탐욕. 같은 스냅샷·같은 게이트."""
+    require_crypto_section()
+    require_hip3_public_display()
+    try:
+        payload = crypto_regime.build_crypto_regime()
+    except crypto_regime.RegimeUnavailable as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "crypto_regime_unavailable", "status": "unavailable", "reason": exc.reason,
+                    "message": "The market regime read could not be assembled."},
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    response.headers["Cache-Control"] = "private, max-age=30, stale-while-revalidate=300"
+    response.headers["X-Data-Source"] = "Hyperliquid"
+    return payload
 
 
 @app.get("/api/crypto/board")

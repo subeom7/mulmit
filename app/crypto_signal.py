@@ -36,8 +36,13 @@ TRADING_DAYS = 365
 
 # Heat weights — they sum to 1.0 and are published in the payload.
 WEIGHTS = {"funding": 0.30, "volatility": 0.25, "range": 0.25, "momentum": 0.20}
-# Funding heat anchors, in annualised percent, matching the card badges
-# (docs: |APR| ≥ 15 elevated, ≥ 30 high).
+# Hyperliquid funding carries a fixed interest-rate component of 0.01% per 8h,
+# so a market with no premium at all still prints +10.95% APR — measured live on
+# 2026-08-22, the minimum |APR| across 110 liquid markets was 10.9%.  Heat is
+# therefore the distance from that baseline, not the raw rate: at the baseline
+# nobody is paying to be crowded.
+FUNDING_BASELINE_APR = 10.95
+# Anchors on |APR − baseline|, in annualised percent.
 FUNDING_ANCHORS = ((0.0, 0.0), (15.0, 50.0), (30.0, 80.0), (60.0, 100.0))
 
 HEAT_BANDS = (
@@ -146,17 +151,19 @@ def _component(cid: str, label_ko: str, label_en: str, value: Any, score: float 
 
 _METHOD = {
     "ko": (
-        "일봉 종가(Hyperliquid)와 현재 시장 컨텍스트만으로 계산합니다. 과열도 = 펀딩 |APR|(30%) + 30일 실현변동성의 1년 백분위(25%) + "
+        "일봉 종가(Hyperliquid)와 현재 시장 컨텍스트만으로 계산합니다. 과열도 = 펀딩 쏠림(30%) + 30일 실현변동성의 1년 백분위(25%) + "
         f"{RANGE_WINDOW}일 고저 범위 내 위치(25%) + RSI({RSI_PERIOD})의 50 초과분(20%)을 0~100으로 합성한 값입니다. 추세는 "
         f"{TREND_FAST}·{TREND_SLOW}일 이동평균 구조(60%)와 RSI의 50 대비 위치(40%)를 −100~+100으로 합성합니다. 펀딩 환산은 "
-        "|APR| 0%→0, 15%→50, 30%→80, 60%→100의 구간 선형이며 15·30%는 카드의 '다소 높음·과열' 배지와 같은 기준입니다."
+        f"**기준선 +{FUNDING_BASELINE_APR:g}% APR과의 거리**를 씁니다 — Hyperliquid 펀딩에는 8시간당 0.01%의 고정 이자 성분이 있어 프리미엄이 "
+        f"0인 시장도 +{FUNDING_BASELINE_APR:g}%를 찍기 때문입니다. 거리 0%p→0, 15%p→50, 30%p→80, 60%p→100의 구간 선형입니다."
     ),
     "en": (
-        "Computed from Hyperliquid daily closes and the current market context only. Heat = funding |APR| (30%) + the 1-year percentile of "
+        "Computed from Hyperliquid daily closes and the current market context only. Heat = funding crowding (30%) + the 1-year percentile of "
         f"30-day realized volatility (25%) + position inside the {RANGE_WINDOW}-day range (25%) + how far RSI({RSI_PERIOD}) sits above 50 "
         f"(20%), combined on a 0–100 scale. Direction combines the {TREND_FAST}/{TREND_SLOW}-day moving-average structure (60%) with RSI "
-        "relative to 50 (40%) on a −100…+100 scale. Funding maps piecewise-linearly (|APR| 0%→0, 15%→50, 30%→80, 60%→100); the 15% and 30% "
-        "anchors are the same bands the cards badge as elevated and high."
+        f"relative to 50 (40%) on a −100…+100 scale. Funding is measured as the distance from Hyperliquid's +{FUNDING_BASELINE_APR:g}% APR "
+        "baseline (its fixed 0.01%-per-8h interest component means a market with no premium still prints that rate), mapped "
+        "piecewise-linearly: 0pp→0, 15pp→50, 30pp→80, 60pp→100."
     ),
 }
 
@@ -193,17 +200,11 @@ def _reading(heat: float, heat_label: dict[str, str], direction: float, directio
     }
 
 
-def build_signal(candles: list[dict[str, Any]], market: dict[str, Any] | None, *, as_of: str | None = None) -> dict[str, Any]:
-    """``candles`` are daily rows from :mod:`app.crypto_coin`; ``market`` is the coin card."""
+def price_components(candles: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """The part of the read that only needs candles â cacheable, unlike funding."""
     closes = [row["c"] for row in candles if isinstance(row.get("c"), (int, float))]
     if len(closes) < MIN_CANDLES:
-        return {
-            "status": "insufficient_data",
-            "reason": f"needs at least {MIN_CANDLES} daily candles, has {len(closes)}",
-            "as_of": as_of,
-            "methodology": _METHOD,
-            "disclaimer": _DISCLAIMER,
-        }
+        return None
 
     last = closes[-1]
     fast, slow = sma(closes, TREND_FAST), sma(closes, TREND_SLOW)
@@ -218,21 +219,9 @@ def build_signal(candles: list[dict[str, Any]], market: dict[str, Any] | None, *
     span = high - low
     range_position = ((last - low) / span * 100.0) if span > 0 else 50.0
     drawdown = ((last / high - 1.0) * 100.0) if high else None
-
-    funding_apr = None
-    if isinstance(market, dict):
-        funding_apr = (market.get("funding") or {}).get("apr_percent")
-    funding_heat = _interpolate(FUNDING_ANCHORS, abs(funding_apr)) if isinstance(funding_apr, (int, float)) else None
     momentum_heat = _clamp((momentum - 50.0) / 30.0 * 100.0) if momentum is not None else None
 
     components = [
-        _component(
-            "funding", "펀딩 압력", "funding pressure",
-            None if funding_apr is None else round(funding_apr, 2), funding_heat,
-            "—" if funding_apr is None else f"APR {funding_apr:+.1f}% · {'롱 쏠림' if funding_apr > 0 else '숏 쏠림' if funding_apr < 0 else '중립'}",
-            "—" if funding_apr is None else f"APR {funding_apr:+.1f}%, {'longs pay' if funding_apr > 0 else 'shorts pay' if funding_apr < 0 else 'flat'}",
-            {"apr_percent": funding_apr, "anchors": [{"apr": a, "heat": h} for a, h in FUNDING_ANCHORS]},
-        ),
         _component(
             "volatility", "변동성", "volatility",
             None if vol_slow is None else round(vol_slow, 1), vol_pct,
@@ -249,7 +238,8 @@ def build_signal(candles: list[dict[str, Any]], market: dict[str, Any] | None, *
             round(range_position, 1), _clamp(range_position),
             f"{RANGE_WINDOW}일 범위의 {range_position:.0f}%" + ("" if drawdown is None else f" · 고점 대비 {drawdown:+.1f}%"),
             f"{range_position:.0f}% of the {RANGE_WINDOW}-day range" + ("" if drawdown is None else f", {drawdown:+.1f}% from its high"),
-            {"window_days": RANGE_WINDOW, "high": high, "low": low, "drawdown_from_high_percent": None if drawdown is None else round(drawdown, 2)},
+            {"window_days": RANGE_WINDOW, "high": high, "low": low,
+             "drawdown_from_high_percent": None if drawdown is None else round(drawdown, 2)},
         ),
         _component(
             "momentum", "모멘텀", "momentum",
@@ -260,26 +250,17 @@ def build_signal(candles: list[dict[str, Any]], market: dict[str, Any] | None, *
         ),
     ]
 
-    scored = [(c["heat_score"], c["weight"]) for c in components if c["heat_score"] is not None and c["weight"]]
-    total_weight = sum(weight for _score, weight in scored)
-    heat = sum(score * weight for score, weight in scored) / total_weight if total_weight else 0.0
-    heat = round(_clamp(heat), 1)
-
     trend_score = 0.0
     if fast is not None and slow is not None:
-        above_fast, above_slow, fast_above_slow = last > fast, last > slow, fast > slow
-        trend_score = (40.0 if above_fast else -40.0) + (30.0 if above_slow else -30.0) + (30.0 if fast_above_slow else -30.0)
+        trend_score = ((40.0 if last > fast else -40.0) + (30.0 if last > slow else -30.0)
+                       + (30.0 if fast > slow else -30.0))
     momentum_direction = _clamp((momentum - 50.0) / 25.0 * 100.0, -100.0, 100.0) if momentum is not None else 0.0
     direction = round(max(-100.0, min(100.0, trend_score * 0.6 + momentum_direction * 0.4)), 1)
-
-    heat_key, heat_label = _band(HEAT_BANDS, heat)
     direction_key, direction_label = _band(DIRECTION_BANDS, direction)
 
     return {
-        "status": "ok",
-        "as_of": as_of,
         "candles_used": len(closes),
-        "heat": {"score": heat, "band": heat_key, "label": heat_label, "weights": WEIGHTS},
+        "components": components,
         "direction": {
             "score": direction, "band": direction_key, "label": direction_label,
             "detail": {
@@ -290,12 +271,68 @@ def build_signal(candles: list[dict[str, Any]], market: dict[str, Any] | None, *
                 "fast_over_slow": None if (fast is None or slow is None) else fast > slow,
             },
         },
+    }
+
+
+def funding_component(apr_percent: float | None) -> dict[str, Any]:
+    """Funding is the volatile input, so it is scored fresh even when the rest is cached."""
+    excess = abs(apr_percent - FUNDING_BASELINE_APR) if isinstance(apr_percent, (int, float)) else None
+    heat = _interpolate(FUNDING_ANCHORS, excess) if excess is not None else None
+    if apr_percent is None:
+        note_ko = note_en = "—"
+    else:
+        gap = apr_percent - FUNDING_BASELINE_APR
+        crowd_ko = " · 롱 쏠림" if gap > 0 else " · 숏 쏠림" if gap < 0 else " · 중립"
+        crowd_en = " · longs crowded" if gap > 0 else " · shorts crowded" if gap < 0 else " · neutral"
+        note_ko = f"APR {apr_percent:+.1f}% · 기준선(+{FUNDING_BASELINE_APR:g}%) 대비 {gap:+.1f}%p{crowd_ko}"
+        note_en = f"APR {apr_percent:+.1f}%, {gap:+.1f}pp from the +{FUNDING_BASELINE_APR:g}% baseline{crowd_en}"
+    return _component(
+        "funding", "펀딩 압력", "funding pressure",
+        None if apr_percent is None else round(apr_percent, 2), heat, note_ko, note_en,
+        {"apr_percent": apr_percent, "baseline_apr_percent": FUNDING_BASELINE_APR,
+         "excess_apr_points": None if excess is None else round(excess, 2),
+         "anchors": [{"excess_apr": a, "heat": h} for a, h in FUNDING_ANCHORS]},
+    )
+
+
+def compose(price_part: dict[str, Any] | None, funding: dict[str, Any], *, as_of: str | None = None) -> dict[str, Any]:
+    """Weighted heat over the four components, plus the trend read and a one-line summary."""
+    if not price_part:
+        return {
+            "status": "insufficient_data",
+            "reason": f"needs at least {MIN_CANDLES} daily candles",
+            "as_of": as_of,
+            "methodology": _METHOD,
+            "disclaimer": _DISCLAIMER,
+        }
+    components = [funding, *price_part["components"]]
+    scored = [(c["heat_score"], c["weight"]) for c in components if c["heat_score"] is not None and c["weight"]]
+    total_weight = sum(weight for _score, weight in scored)
+    heat = round(_clamp(sum(score * weight for score, weight in scored) / total_weight if total_weight else 0.0), 1)
+    heat_key, heat_label = _band(HEAT_BANDS, heat)
+    direction = price_part["direction"]
+    return {
+        "status": "ok",
+        "as_of": as_of,
+        "candles_used": price_part["candles_used"],
+        "heat": {"score": heat, "band": heat_key, "label": heat_label, "weights": WEIGHTS},
+        "direction": direction,
         "components": components,
-        "reading": _reading(heat, heat_label, direction, direction_label, components),
+        "reading": _reading(heat, heat_label, direction["score"], direction["label"], components),
         "methodology": _METHOD,
         "disclaimer": _DISCLAIMER,
         "basis": f"Hyperliquid {SIGNAL_INTERVAL} candles (up to {SIGNAL_LOOKBACK_DAYS} days) and the current market context",
     }
+
+
+def build_signal(candles: list[dict[str, Any]], market: dict[str, Any] | None, *, as_of: str | None = None) -> dict[str, Any]:
+    """``candles`` are daily rows from :mod:`app.crypto_coin`; ``market`` is the coin card."""
+    apr = (market.get("funding") or {}).get("apr_percent") if isinstance(market, dict) else None
+    signal = compose(price_components(candles), funding_component(apr), as_of=as_of)
+    if signal["status"] == "insufficient_data":
+        closes = [row["c"] for row in candles if isinstance(row.get("c"), (int, float))]
+        signal["reason"] = f"needs at least {MIN_CANDLES} daily candles, has {len(closes)}"
+    return signal
 
 
 def signal_window(now: dt.datetime) -> tuple[dt.datetime, dt.datetime]:
