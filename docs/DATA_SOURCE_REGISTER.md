@@ -1087,7 +1087,7 @@ notes: "퍼블릭 RPC 미사용. 제공자 약관은 운영자 계정에 귀속.
 | 항목 | 기록 |
 |---|---|
 | 내부 ID | `clinicaltrials` |
-| 현재 상태 | **`approved` (2026-08-22, `DS-2026-014`)** — 미 연방(NIH/NLM) 공공 데이터베이스, 약관의 4가지 표시 의무를 응답·화면에 구현. 서버 게이트는 기본 OFF(운영자가 켬) |
+| 현재 상태 | **`approved` (2026-08-22, `DS-2026-014`)** — 미 연방(NIH/NLM) 공공 데이터베이스, 약관의 4가지 표시 의무를 응답·화면에 구현. **서버 게이트 ON(2026-08-22 13:52 KST 첫 블롭: 34 스폰서·오류 0·처리일 2026-08-21, 라이브 확인)** |
 | 코드 위치 | `app/providers/clinicaltrials.py`, `app/bio.py`(`refresh_bio_trials`·`build_bio_trials`·`WATCHLIST`), `app/ingest.py::refresh_bio_trials`, 라우트 `/api/bio/trials`, 페이지 `/bio` |
 | 게이트 | web·ingest: `BIO_SECTION_ENABLED` + `CLINICALTRIALS_ENABLED`(키 없음) |
 | 현재 사용 | `GET /api/v2/studies?query.lead=<스폰서>&sort=LastUpdatePostDate:desc&pageSize=25&fields=<구조화 필드만>&countTotal=true` 워치리스트 34곳 × 6시간 주기(요청 간격 0.6초) + `GET /api/v2/version`(`dataTimestamp` = 처리일). blob 저장, 요청 경로는 blob만. 표시: 최근 14일 갱신 중재 2·3상(상태·단계·일자·적응증·중재·등록 인원), 스폰서별 등록 임상 수. **서술 텍스트(요약문 등)는 요청하지 않음** |
@@ -1122,7 +1122,7 @@ recheck_on: 2026-11-22
 | 항목 | 기록 |
 |---|---|
 | 내부 ID | `openfda` |
-| 현재 상태 | **`approved` (2026-08-22, `DS-2026-015`)** — 공개 도메인(CC0 1.0). 서버 게이트 기본 OFF |
+| 현재 상태 | **`approved` (2026-08-22, `DS-2026-015`)** — 공개 도메인(CC0 1.0). **서버 게이트 ON(2026-08-22 13:52 KST 첫 블롭: 60일 창 ORIG 140건·7페이지, 라이브 확인)** |
 | 코드 위치 | `app/providers/openfda.py`, `app/bio.py`(`refresh_bio_fda`·`build_bio_fda`), `app/ingest.py::refresh_bio_fda`, 라우트 `/api/bio/fda` |
 | 게이트 | web·ingest: `BIO_SECTION_ENABLED` + `OPENFDA_ENABLED`; 선택 `OPENFDA_API_KEY`(ingest 전용, 무료) |
 | 현재 사용 | `GET https://api.fda.gov/drug/drugsfda.json?search=submissions.submission_status:AP+AND+submissions.submission_type:ORIG+AND+submissions.submission_status_date:[start TO end]&limit=100` 최근 60일 창, 하루 1회(최대 5페이지). 표시: NDA·BLA 원 신청 승인 목록(승인일·신청번호·브랜드/성분·스폰서·제출 분류·심사 우선순위·Drugs@FDA 링크), ANDA는 건수 |
@@ -1676,3 +1676,4 @@ notes: "No confidential contract language here"
 | 2026-08-22 | CoinMarketCap lane 사용 범위 확장(§3.20) — `v2/cryptocurrency/quotes/latest` USDT·USDC 유통 공급(1크레딧/시간, 월 ≈ 720 추가, 같은 키·같은 Commercial Terms), 7d/30d 변화는 자체 일별 누적 | Claude assisted |
 | 2026-08-22 | ROADMAP #9·#11 조사 종결 — 넥스트레이드 시장정보 `license_required`(§6.3: 정보포털 계약형, 웹사이트용 CASE 3 고정비, 무상 2027-02까지·유상 1년 약정, 금액 비공개 → 운영자 문의 선택), roic.ai 현시점 기각(§6.4: ToS 재배포 금지, 상업 API는 Enterprise 견적만) | Claude assisted |
 | 2026-08-22 | 바이오 섹션(ROADMAP #8) Phase 1 — ClinicalTrials.gov(§3.22, `DS-2026-014`, 약관 4조건 동봉)·openFDA(§3.23, `DS-2026-015`, CC0) lane 추가, 게이트 OFF(`BIO_SECTION_ENABLED`·`CLINICALTRIALS_ENABLED`·`OPENFDA_ENABLED`), 계획 `PLAN_BIO_SECTION.md` | Claude assisted |
+| 2026-08-22 | 바이오 lane 2종 활성화(§3.22·§3.23) — 운영자가 게이트 3종 ON, 첫 ingest 패스 저장·`/bio` 라이브 확인 | Claude assisted |
