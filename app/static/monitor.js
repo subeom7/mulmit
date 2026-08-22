@@ -3066,7 +3066,8 @@ function renderCryptoRegime() {
   $("#creg-dir-band").textContent = localValue(dir.label, state.lang);
   $("#creg-reading").textContent = localValue(data.reading, state.lang);
   const history = data.history || null;
-  const anchorMove = safeNumber((history?.changes || {}).crowded_share_24h_points);
+  const collecting = (history?.changes || {}).status === "collecting";
+  const anchorMove = collecting ? null : safeNumber((history?.changes || {}).crowded_share_24h_points);
   const shares = (history?.recent || []).map((row) => row.crowded_share).filter((v) => typeof v === "number");
   const spark = $("#creg-spark");
   if (spark) {
