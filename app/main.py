@@ -199,7 +199,7 @@ def crypto_coin_hub(symbol: str) -> HTMLResponse:
 
     require_crypto_section()
     raw = symbol.strip()
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9:._-]{0,23}", raw):
+    if not crypto_coin.PAGE_SYMBOL_PATTERN.fullmatch(raw):
         raise HTTPException(status_code=404, detail="unrecognized symbol")
     try:
         resolved = crypto_coin.resolve_page_symbol(raw)
@@ -351,6 +351,30 @@ def sitemap_stocks() -> PlainResponse:
     body = "\n".join(lines) + "\n"
     return PlainResponse(
         content=body, media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/sitemap-coins.xml", include_in_schema=False)
+def sitemap_coins() -> PlainResponse:
+    """코인 허브 URL — 거래소가 지금 상장한 시장만 싣는다.
+
+    목록은 페이지 라우트와 같은 판정을 쓴다(`crypto_coin.page_symbols`). 상장
+    폐지된 시장이나 라우트가 받지 않는 심볼을 사이트맵에 올리면 404를 색인하라고
+    광고하는 셈이라, 두 곳이 갈라지지 않도록 판정을 한 군데서만 한다.
+    섹션이 꺼져 있으면 빈 사이트맵 — 게이트가 닫힌 페이지를 권하지 않는다.
+    """
+    rows = crypto_coin.page_symbols() if data_rights.crypto_overview_enabled() else []
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>']
+    lines.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    lines.extend(
+        f"  <url><loc>https://mulmit.com/crypto/{symbol}</loc>"
+        f"<changefreq>hourly</changefreq><priority>{'0.7' if curated else '0.5'}</priority></url>"
+        for symbol, curated in rows
+    )
+    lines.append("</urlset>")
+    return PlainResponse(
+        content="\n".join(lines) + "\n", media_type="application/xml",
         headers={"Cache-Control": "public, max-age=3600"},
     )
 
