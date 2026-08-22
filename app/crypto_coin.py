@@ -20,7 +20,7 @@ import datetime as dt
 import math
 from typing import Any, Protocol
 
-from . import crypto_signal
+from . import crypto_indicators, crypto_signal
 from .crypto_market import (
     _DEFAULT_PROVIDER,
     _RIGHTS,
@@ -304,6 +304,7 @@ def build_crypto_coin(
             "error": candle_error,
             "omitted": not include_candles,
             "candles": candles,
+            "indicators": crypto_indicators.build(candles, interval=interval) if candles else None,
             "stats": _window_stats(candles),
             "basis": "Hyperliquid candleSnapshot for this market; open/high/low/close and base-unit volume as published",
         },
