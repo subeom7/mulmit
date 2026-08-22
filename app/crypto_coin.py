@@ -20,6 +20,7 @@ import datetime as dt
 import math
 from typing import Any, Protocol
 
+from . import crypto_signal
 from .crypto_market import (
     _DEFAULT_PROVIDER,
     _RIGHTS,
@@ -256,6 +257,27 @@ def build_crypto_coin(
         except DataUnavailable:
             candle_error = "unavailable"
 
+    # The regime read always uses daily candles, so it does not change when the
+    # viewer switches the chart interval. The 1d chart window already covers it.
+    signal_candles, signal_as_of, signal_error = candles, candle_as_of, candle_error
+    if interval != crypto_signal.SIGNAL_INTERVAL or not signal_candles:
+        signal_candles, signal_as_of, signal_error = [], None, None
+        try:
+            start, end = crypto_signal.signal_window(moment)
+            daily = client.fetch_candles(resolved, interval=crypto_signal.SIGNAL_INTERVAL, start=start, end=end)
+            signal_candles = parse_candles(daily.get("candles"))
+            signal_as_of = daily.get("as_of") or daily.get("fetched_at")
+        except RateLimited:
+            signal_error = "rate_limited"
+        except DataUnavailable:
+            signal_error = "unavailable"
+    signal = (
+        crypto_signal.build_signal(signal_candles, card, as_of=signal_as_of)
+        if signal_candles
+        else {"status": "unavailable", "reason": signal_error or "no daily candles",
+              "methodology": crypto_signal._METHOD, "disclaimer": crypto_signal._DISCLAIMER}
+    )
+
     return {
         "generated_at": _iso_utc(),
         "symbol": resolved,
@@ -273,6 +295,7 @@ def build_crypto_coin(
             "stats": _window_stats(candles),
             "basis": "Hyperliquid candleSnapshot for this market; open/high/low/close and base-unit volume as published",
         },
+        "signal": signal,
         "links": {
             "venue": f"https://app.hyperliquid.xyz/trade/{resolved}",
             "board": "/crypto#crypto-board",

@@ -19,7 +19,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-8">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-9">
   <style>
     .coin-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 26px 0 14px; border-bottom: 1px solid var(--line); }
     .coin-head h1 { margin: 0; font-size: clamp(24px, 3.6vw, 36px); letter-spacing: -.04em; }
@@ -54,6 +54,20 @@
     .coin-table th, .coin-table td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
     .coin-table th { color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .05em; }
     .coin-table td.num, .coin-table th.num { text-align: right; }
+    .sig-top { display: grid; grid-template-columns: repeat(2, minmax(150px, 220px)) 1fr; gap: 12px; align-items: stretch; margin-bottom: 14px; }
+    .sig-gauge { padding: 12px 13px; border: 1px solid var(--line); border-radius: 9px; background: linear-gradient(145deg, var(--panel), var(--panel-2)); }
+    .sig-gauge small { display: block; color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+    .sig-gauge strong { display: block; margin-top: 5px; font: 750 22px/1.1 var(--mono); font-variant-numeric: tabular-nums; }
+    .sig-gauge span { display: block; margin-top: 6px; color: var(--muted); font: 650 10.5px/1.3 var(--mono); }
+    .sig-bar { position: relative; height: 6px; margin-top: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+    .sig-bar i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px; background: var(--accent); }
+    .sig-bar.center::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--muted); opacity: .6; }
+    .sig-reading { margin: 0; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 9px; color: var(--ink); font-size: 12px; line-height: 1.65; }
+    .sig-cell { display: block; }
+    .sig-cell small { display: block; color: var(--faint); font-size: 10px; }
+    .sig-contrib { position: relative; height: 5px; width: 90px; border-radius: 999px; background: var(--line); overflow: hidden; }
+    .sig-contrib i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--accent); opacity: .8; }
+    @media (max-width: 720px) { .sig-top { grid-template-columns: 1fr 1fr; } .sig-reading { grid-column: 1 / -1; } }
     .coin-links { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 8px; }
     .coin-links a { padding: 6px 11px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font-size: 11px; font-weight: 700; text-decoration: none; }
     .coin-links a:hover { color: var(--ink); border-color: var(--accent); }
@@ -101,6 +115,29 @@
 
     <div id="coin-state" class="state-line" style="margin-top:14px">시세를 불러오는 중입니다…</div>
     <div class="coin-kpis" id="coin-kpis" hidden></div>
+
+    <section class="coin-section" id="sec-signal" hidden>
+      <h2>시장 국면</h2>
+      <p class="sub">가격·펀딩을 요약한 <strong>상태 지표</strong>입니다. 매수·매도 신호가 아니며, 어떤 값에서도 시장은 양방향으로 움직일 수 있습니다.</p>
+      <div class="sig-top">
+        <div class="sig-gauge">
+          <small>과열도</small>
+          <strong id="sig-heat">—</strong>
+          <div class="sig-bar"><i id="sig-heat-bar"></i></div>
+          <span id="sig-heat-band">—</span>
+        </div>
+        <div class="sig-gauge">
+          <small>추세</small>
+          <strong id="sig-dir">—</strong>
+          <div class="sig-bar center"><i id="sig-dir-bar"></i></div>
+          <span id="sig-dir-band">—</span>
+        </div>
+        <p class="sig-reading" id="sig-reading"></p>
+      </div>
+      <div class="table-scroll"><table class="coin-table" id="sig-table"><thead></thead><tbody></tbody></table></div>
+      <p class="coin-note" id="sig-method"></p>
+      <p class="coin-note" id="sig-disclaimer"></p>
+    </section>
 
     <section class="coin-section" id="sec-chart">
       <h2>가격 차트</h2>
@@ -229,9 +266,56 @@ function renderHead(data) {
   });
   section.hidden = rows.length === 0;
   $id("deriv-note").textContent = rows.length ? "Binance·Bybit 값은 Hyperliquid가 공표하는 예상값이며 Mulmit이 해당 거래소를 조회하지 않습니다." : "";
+  renderSignal(data.signal);
   $id("method-note").textContent = data.methodology?.ko || "";
   $id("disclaimer-note").textContent = data.disclaimer?.ko || "";
   if (data.links?.venue) $id("link-venue").href = data.links.venue;
+}
+
+const HEAT_TONE = { cool: "var(--accent)", steady: "var(--accent)", warm: "var(--amber, var(--accent))", elevated: "var(--amber, var(--red))", overheated: "var(--red)" };
+
+function renderSignal(signal) {
+  const section = $id("sec-signal");
+  if (!signal || signal.status !== "ok") { section.hidden = true; return; }
+  section.hidden = false;
+  const heat = signal.heat || {}, dir = signal.direction || {};
+  $id("sig-heat").textContent = heat.score == null ? "—" : `${nf(heat.score, 0)} / 100`;
+  const heatBar = $id("sig-heat-bar");
+  heatBar.style.width = `${Math.max(0, Math.min(100, heat.score || 0))}%`;
+  heatBar.style.background = HEAT_TONE[heat.band] || "var(--accent)";
+  $id("sig-heat-band").textContent = heat.label?.ko || "—";
+  $id("sig-dir").textContent = dir.score == null ? "—" : `${dir.score > 0 ? "+" : dir.score < 0 ? "−" : ""}${nf(Math.abs(dir.score), 0)}`;
+  const dirBar = $id("sig-dir-bar"), score = Math.max(-100, Math.min(100, dir.score || 0));
+  dirBar.style.left = `${score >= 0 ? 50 : 50 + score / 2}%`;
+  dirBar.style.width = `${Math.abs(score) / 2}%`;
+  dirBar.style.background = score > 0 ? "var(--green)" : score < 0 ? "var(--red)" : "var(--muted)";
+  $id("sig-dir-band").textContent = dir.label?.ko || "—";
+  $id("sig-reading").textContent = signal.reading?.ko || "";
+
+  const table = $id("sig-table"), thead = table.querySelector("thead"), tbody = table.querySelector("tbody");
+  thead.replaceChildren(); tbody.replaceChildren();
+  const head = document.createElement("tr");
+  ["구성요소", "현재 값", "과열 기여", "가중치"].forEach((label, idx) => { const th = document.createElement("th"); th.scope = "col"; th.textContent = label; if (idx >= 2) th.className = "num"; head.append(th); });
+  thead.append(head);
+  (signal.components || []).forEach((component) => {
+    const tr = document.createElement("tr");
+    const name = document.createElement("td"); name.textContent = component.label?.ko || component.id;
+    const value = document.createElement("td");
+    const cell = document.createElement("span"); cell.className = "sig-cell";
+    cell.textContent = component.note?.ko || "—";
+    value.append(cell);
+    const contrib = document.createElement("td"); contrib.className = "num";
+    const bar = document.createElement("span"); bar.className = "sig-contrib";
+    const fill = document.createElement("i"); fill.style.width = `${Math.max(0, Math.min(100, component.heat_score ?? 0))}%`;
+    bar.append(fill);
+    const box = document.createElement("span"); box.style.display = "inline-flex"; box.style.alignItems = "center"; box.style.gap = "7px";
+    box.append(document.createTextNode(component.heat_score == null ? "—" : nf(component.heat_score, 0)), bar);
+    contrib.append(box);
+    const weight = document.createElement("td"); weight.className = "num"; weight.textContent = component.weight == null ? "—" : `${nf(component.weight * 100, 0)}%`;
+    tr.append(name, value, contrib, weight); tbody.append(tr);
+  });
+  $id("sig-method").textContent = signal.methodology?.ko || "";
+  $id("sig-disclaimer").textContent = signal.disclaimer?.ko || "";
 }
 
 function renderToolbar(options) {

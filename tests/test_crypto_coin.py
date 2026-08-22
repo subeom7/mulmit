@@ -113,7 +113,10 @@ def test_build_coin_reuses_the_card_builder_and_summarises_the_window(crypto_on)
     chart = payload["chart"]
     assert chart["interval"] == "1h" and chart["omitted"] is False and chart["error"] is None
     assert [row["t"] for row in chart["candles"]] == [BASE_MS, BASE_MS + 3_600_000, BASE_MS + 7_200_000]
-    assert fake.candle_calls == [("BTC", "1h", 14 * 24 * 3600)]
+    # The chart window plus the daily window the regime signal always uses.
+    assert fake.candle_calls == [("BTC", "1h", 14 * 24 * 3600), ("BTC", "1d", 400 * 24 * 3600)]
+    # This fixture only has three candles, so the regime read refuses rather than guessing.
+    assert payload["signal"]["status"] == "insufficient_data"
     stats = chart["stats"]
     def at(offset_ms: int) -> str:
         return dt.datetime.fromtimestamp((BASE_MS + offset_ms) / 1000, dt.UTC).isoformat().replace("+00:00", "Z")
@@ -132,11 +135,14 @@ def test_build_coin_reuses_the_card_builder_and_summarises_the_window(crypto_on)
 def test_candles_can_be_omitted_and_outages_are_labelled(crypto_on):
     light = FakeProvider()
     payload = crypto_coin.build_crypto_coin("BTC", interval="4h", include_candles=False, provider=light, now=NOW)
-    assert light.candle_calls == [] and payload["chart"]["omitted"] is True and payload["chart"]["candles"] == []
+    # No chart window, but the daily window for the signal is still read (cached upstream).
+    assert light.candle_calls == [("BTC", "1d", 400 * 24 * 3600)]
+    assert payload["chart"]["omitted"] is True and payload["chart"]["candles"] == []
     assert payload["chart"]["stats"]["candles"] == 0 and payload["market"]["price"]["value"] == 77000.0
 
     degraded = crypto_coin.build_crypto_coin("BTC", provider=FakeProvider(candle_error=RateLimited("slow")), now=NOW)
     assert degraded["chart"]["error"] == "rate_limited" and degraded["chart"]["candles"] == []
+    assert degraded["signal"]["status"] == "unavailable"  # no candles, so no invented regime
     assert degraded["market"]["price"]["value"] == 77000.0  # the price still serves without candles
 
     with pytest.raises(crypto_coin.CoinUnavailable) as excinfo:
@@ -180,3 +186,11 @@ def test_routes_gate_serve_and_render_the_page(db, monkeypatch):
     assert "비트코인 (BTC) 무기한선물 시세·차트" in named.text
     assert client.get("/crypto/NOTLISTED").status_code == 404
     assert client.get("/crypto/../etc").status_code == 404
+
+
+def test_daily_chart_reuses_its_window_for_the_signal(crypto_on):
+    fake = FakeProvider(candles=[_candle(BASE_MS + i * 86_400_000, 100 + i, 101 + i, 99 + i, 100.5 + i) for i in range(120)])
+    payload = crypto_coin.build_crypto_coin("BTC", interval="1d", provider=fake, now=NOW)
+    assert fake.candle_calls == [("BTC", "1d", 365 * 24 * 3600)]  # one call, not two
+    assert payload["signal"]["status"] == "ok" and payload["signal"]["candles_used"] == 120
+    assert payload["signal"]["direction"]["band"] == "up"
