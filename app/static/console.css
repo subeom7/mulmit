@@ -278,6 +278,65 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 }
 
 /* ======================================================================
+ * 4c. 24시간 참고가 카드 = 보드 타일
+ *
+ * renderKrOvernight는 그대로 둔다 — 카드가 이미 이름·큰 값·등락·근거표라는
+ * 같은 뼈대를 갖고 있어서, 껍데기만 타일 시스템에 맞추면 된다. /kr에 별도
+ * 보드를 두지 않는 이유이기도 하다(같은 값을 두 번 그리게 된다).
+ * ================================================================== */
+.kro-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+@media (max-width: 1080px) { .kro-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .kro-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); } }
+
+.kro-card {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: var(--sp-4); border-radius: var(--r-md); box-shadow: none;
+}
+/* 카드 위쪽 색 테두리를 뺀다 — 등락은 숫자가 이미 말하고 있고, 카드마다 초록
+ * 빨강 띠가 서면 색이 다시 장식이 된다. */
+.kro-card.up, .kro-card.down { border-top: 1px solid var(--line); }
+.kro-card h3 { font-size: var(--fs-md); font-weight: 650; letter-spacing: -.015em; }
+.kro-card h3 a { text-decoration: none; }
+.kro-card h3 a:hover { color: var(--accent); text-decoration: underline; }
+.kro-sym { font: 600 var(--fs-xs)/1.2 var(--mono); }
+.kro-price {
+  margin: var(--sp-2) 0 0;
+  font: 680 var(--fs-display)/1.05 var(--mono); letter-spacing: -.035em;
+}
+/* 숫자와 문장이 한 줄에 섞여 있다 — 모노로 두면 한글이 대체 글꼴로 빠져 줄이
+ * 들쭉날쭉해진다. 본문 글꼴에 자리폭 숫자만 켠다. */
+.kro-vs { font: 650 var(--fs-sm)/1.45 var(--sans); font-variant-numeric: tabular-nums; }
+.kro-vs-ref { margin-top: 2px; font: 600 var(--fs-xs)/1.45 var(--sans); font-variant-numeric: tabular-nums; }
+.kro-meta { margin-top: auto; padding-top: var(--sp-2); gap: 3px; }
+.kro-meta dt { color: var(--ink-3); font: 500 var(--fs-xs)/1.5 var(--sans); }
+.kro-meta dd { color: var(--ink-2); font: 600 var(--fs-xs)/1.5 var(--mono); }
+.kro-badges { margin-top: var(--sp-2); }
+
+/* 쉬움에서는 두 번째 퍼센트와 근거표를 접는다.
+ * "−0.49%(종가 대비)"와 "−4.93%(15:30 퍼프 대비)"가 같은 카드에 같은 크기로
+ * 서 있으면 어느 쪽이 오늘 이야기인지 알 수 없다. 경고 칩(지연·저유동성)은
+ * 위험 정보라 접지 않는다. */
+html[data-mode="easy"] .kro-vs-ref,
+html[data-mode="easy"] .kro-meta { display: none; }
+
+.kro-official-strip { margin-top: var(--sp-4); font-size: var(--fs-xs); }
+.kro-official-strip .kro-strip-label { font-size: var(--fs-xs); }
+.kro-strip-item small, .kro-strip-item em { font-size: var(--fs-xs); }
+.kro-strip-item strong { font-size: var(--fs-sm); }
+.kro-footer { margin-top: var(--sp-3); }
+.kro-footer .kro-method, .kro-footer .kro-disclaimer { font-size: var(--fs-xs); color: var(--ink-3); }
+
+/* 주말 신호 카드·고지도 같은 바닥 위로. */
+.weekend-disclaimer { font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.6; }
+
+@media (max-width: 560px) {
+  .kro-card { padding: var(--sp-3); }
+  .kro-price { font-size: clamp(16px, 5vw, 22px); letter-spacing: -.05em; }
+  .kro-card h3 { font-size: var(--fs-sm); }
+  .kro-vs { font-size: var(--fs-xs); }
+}
+
+/* ======================================================================
  * 5. 고지 — 8px 회색 네 줄 대신 접히는 한 줄
  * ================================================================== */
 .disclose {
@@ -305,7 +364,10 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
  * 값이 대부분 숫자인 표(상관행렬·섹터)는 건드리지 않으려고 섹션으로 좁혔다. */
 #us-ptr .accessible-table th:not(.num), #us-ptr .accessible-table td:not(.num),
 #us-events .accessible-table th:not(.num), #us-events .accessible-table td:not(.num),
-#econ-calendar .accessible-table th:not(.num), #econ-calendar .accessible-table td:not(.num) {
+#econ-calendar .accessible-table th:not(.num), #econ-calendar .accessible-table td:not(.num),
+#kr-events .accessible-table th:not(.num), #kr-events .accessible-table td:not(.num),
+#kr-pension .accessible-table th:not(.num), #kr-pension .accessible-table td:not(.num),
+#kr-holdings .accessible-table th:not(.num), #kr-holdings .accessible-table td:not(.num) {
   text-align: left;
 }
 

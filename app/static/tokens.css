@@ -125,6 +125,13 @@ body {
 .accessible-table td.range { font-size: var(--fs-xs); }
 .comparison-legend, .notice-line, .select-label, .select-label select { font-size: var(--fs-xs); }
 .comparison-card p { font-size: var(--fs-xs); color: var(--ink-2); }
+/* /kr — 공시 표의 원문 링크와 주말 카드 내부. 8.5~10px로 짜여 있었다. */
+.krp-source { font-size: var(--fs-xs); }
+.weekend-card h3 { font-size: var(--fs-md); font-weight: 650; }
+.weekend-symbol, .weekend-symbol a { font-size: var(--fs-xs); }
+.weekend-value { font-size: var(--fs-xxl); }
+.weekend-change { font-size: var(--fs-sm); }
+.weekend-meta, .weekend-meta strong { font-size: var(--fs-xs); line-height: 1.5; }
 .interpretation-note, .stress-scale-note, .stress-method, .stress-disclaimer,
 .stress-note, .sentiment-note { font-size: var(--fs-xs); line-height: 1.6; color: var(--ink-2); }
 
@@ -134,9 +141,13 @@ h3 { font-size: var(--fs-lg); letter-spacing: -0.01em; }
 
 /* --- 등락색은 등락에만 -------------------------------------------------
  * 기존에는 카드마다 accent 색 좌측 보더가 붙어 초록·빨강·보라·노랑이
- * 의미 없이 섞였다. 색이 신호이려면 다른 곳에서 색을 빼야 한다. */
-.up, .positive { color: var(--up); }
-.down, .negative { color: var(--down); }
+ * 의미 없이 섞였다. 색이 신호이려면 다른 곳에서 색을 빼야 한다.
+ *
+ * 여기서 `.up`/`.down`을 전역으로 칠하지 않는 이유: 그 클래스는 값 자체가
+ * 아니라 **컨테이너**에도 붙는다(`.kro-card.up`). 전역으로 두면 카드 안의
+ * 종목명·근거표까지 통째로 초록이 된다 — 실제로 /kr에서 가격이 전부 물들었다.
+ * 색은 그 값을 그리는 규칙에서만 준다(.tile-change, .tape-delta, .kro-vs,
+ * monitor.css의 각 컴포넌트). */
 
 a { color: inherit; }
 a:hover { color: var(--accent); }

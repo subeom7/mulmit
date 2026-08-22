@@ -1,17 +1,19 @@
 <!doctype html>
-<html lang="ko" data-theme="dark">
+<html lang="ko" data-theme="dark" data-mode="easy">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="물밑(Mulmit) 한국 시장 — 삼성전자·SK하이닉스·현대차 24시간 참고가, 코스피 공식 종가와 지수군, ETF 보드, 국민연금·5% 대량보유 공시, 주요사항보고, 한국 매크로.">
-  <meta name="keywords" content="물밑, Mulmit, 한국 주식, 코스피, 삼성전자 주말, SK하이닉스, 현대차, 국민연금 공시, 5% 대량보유, ETF">
+  <meta name="description" content="물밑(Mulmit) 한국 시장 — 삼성전자·SK하이닉스·코스피200의 24시간 참고가, 공식 종가, 코스피 지수군, ETF 보드, 주요사항보고, 국민연금·대량보유 5% 공시.">
+  <meta name="keywords" content="물밑, Mulmit, 삼성전자 주말 시세, SK하이닉스, 코스피200, 코스피 지수, 국민연금 공시, 대량보유, 주요사항보고, ETF">
   <title>한국 시장 — 삼성전자·코스피 주말 참고가, 연기금·5% 공시 | 물밑 Mulmit</title>
+  <meta name="doc-title-ko" content="한국 시장 — 삼성전자·코스피 주말 참고가, 연기금·5% 공시 | 물밑 Mulmit">
+  <meta name="doc-title-en" content="Korean markets — weekend reference prices, pension and 5% filings | Mulmit">
   <link rel="canonical" href="https://mulmit.com/kr">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Mulmit">
   <meta property="og:title" content="한국 시장 — 삼성전자·코스피 주말 참고가, 연기금·5% 공시 | 물밑 Mulmit">
-  <meta property="og:description" content="물밑(Mulmit) 한국 시장 — 삼성전자·SK하이닉스·현대차 24시간 참고가, 코스피 공식 종가와 지수군, ETF 보드, 연기금·5% 대량보유 공시.">
+  <meta property="og:description" content="물밑(Mulmit) 한국 시장 — 삼성전자·SK하이닉스 24시간 참고가, 코스피 지수군, ETF 보드, 국민연금·대량보유 5% 공시.">
   <meta property="og:url" content="https://mulmit.com/kr">
   <meta property="og:locale" content="ko_KR">
   <meta name="twitter:card" content="summary">
@@ -20,14 +22,17 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
   <link rel="stylesheet" href="/static/monitor.css?v=20260822-19">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260822-19">
+  <link rel="stylesheet" href="/static/console.css?v=20260822-19">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
   <header class="masthead">
     <a class="brand" href="/" aria-label="Mulmit home">
-      <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="36" height="36">
-      <span><strong>Mulmit</strong><small data-i18n="brand.tagline">MARKET SIGNAL CONSOLE</small></span>
+      <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="30" height="30">
+      <span><strong>Mulmit</strong></span>
     </a>
     <nav class="view-switch" aria-label="View">
       <a class="view-tab" href="/" data-i18n="nav.home">홈</a>
@@ -37,37 +42,38 @@
       <a class="view-tab" href="/bio" data-i18n="nav.bio">바이오</a>
       <a class="view-tab" href="/analytics" data-i18n="nav.analytics">종목 분석</a>
     </nav>
-    <nav class="mast-nav" aria-label="Secondary">
-      <a class="nav-chip" href="/docs">API</a>
-    </nav>
     <div class="mast-actions">
-      <span class="session-badge" id="session-badge" hidden title=""><i></i><span></span></span>
-      <span class="mast-ticker" id="mast-ticker" hidden title=""></span>
-      <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
+      <div class="mode-switch" id="mode-switch" role="group" data-i18n-aria="mode.label" aria-label="표시 수준">
+        <button type="button" data-mode="easy" aria-pressed="true" data-i18n="mode.easy">쉬움</button>
+        <button type="button" data-mode="pro" aria-pressed="false" data-i18n="mode.pro">전문가</button>
+      </div>
       <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
     </div>
   </header>
 
-  <main id="main" class="shell">
-    <section class="hero" aria-labelledby="hero-title">
-      <div>
-        <p class="kicker" data-i18n="krpage.kicker">KOREA MARKETS</p>
-        <h1 id="hero-title" data-i18n="krpage.title">한국 주식, 장 밖에서도 한눈에.</h1>
-        <p class="hero-copy" data-i18n="krpage.copy">24시간 참고가, 공식 종가, 코스피 지수군, 국민연금 대량보유 공시를 한 페이지에서 봅니다.</p>
-      </div>
-      <aside class="hero-meta" aria-live="polite">
-        <span data-i18n="hero.updated">마지막 갱신</span>
-        <strong id="updated-at">—</strong>
-        <button class="refresh-button" id="refresh-button" type="button"><span aria-hidden="true">↻</span> <span data-i18n="action.refresh">새로고침</span></button>
-      </aside>
-    </section>
+  <div class="tape" id="tape" role="region" data-i18n-aria="tape.label" aria-label="시세 요약" hidden>
+    <span class="session-badge" id="session-badge" hidden title=""><i></i><span></span></span>
+    <span class="presence-badge" id="presence-badge" title=""></span>
+  </div>
 
-    <section class="dashboard-section" id="kr-overnight" aria-labelledby="kro-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">KOREA · 24H PERP × OFFICIAL CLOSE</p><h2 id="kro-title" data-i18n="kro.title">한국 주식, 장 밖에서는</h2></div>
-        <span class="source-pill">HIP-3 × FSC × H.10</span>
+  <main id="main" class="shell">
+    <div class="console-head">
+      <div>
+        <h1><span data-i18n="krpage.h1">한국 시장</span> <span class="console-h1-sub" data-i18n="krpage.scope">장 밖의 값 · 공시 · 지수</span></h1>
+        <p class="console-sub" data-i18n="krpage.sub">한국장이 닫혀 있어도 주요 종목은 해외 시장에서 24시간 거래됩니다. 그 가격을 원화로 환산해 마지막 종가와 비교하고, 그 사이 쌓인 공시를 함께 봅니다.</p>
       </div>
-      <p class="section-copy" data-i18n="kro.copy">장이 닫혀 있어도 합성 무기한선물은 24시간 움직입니다. 마크가격을 공식환율로 환산해 마지막 공식 종가와 비교합니다. 현물 호가나 시초가 예측이 아닙니다.</p>
+      <div class="console-meta">
+        <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
+        <span><span data-i18n="hero.updated">마지막 갱신</span> <strong id="updated-at">—</strong></span>
+        <button class="refresh-button" id="refresh-button" type="button"><span aria-hidden="true">↻</span> <span data-i18n="action.refresh">새로고침</span></button>
+      </div>
+    </div>
+
+    <section class="console-section" id="kr-overnight" aria-labelledby="kro-title">
+      <header>
+        <h2 id="kro-title" data-i18n="kro.title">한국 주식, 장 밖에서는</h2>
+        <span class="sec-note" data-i18n="krpage.overnightNote">장이 닫힌 시간의 참고가 · 실제 체결가 아님</span>
+      </header>
       <div class="risk-strip" role="note">
         <span class="status-badge warn" data-i18n="weekend.notSpot">현물가격 아님</span>
         <span class="status-badge warn" data-i18n="weekend.syntheticPerp">USD 환산 합성 무기한선물</span>
@@ -79,70 +85,101 @@
       <footer class="kro-footer" id="kro-footer" hidden></footer>
     </section>
 
-    <section class="dashboard-section" id="kr-indices" hidden aria-labelledby="kridx-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">KOREA · FSC OPEN DATA · T+1</p><h2 id="kridx-title" data-i18n="kridx.title">코스피 지수군</h2></div>
+    <details class="disclose" data-mode-open>
+      <summary data-i18n="console.disclose">이 가격은 어떻게 계산한 값인가요?</summary>
+      <div class="disclose-body">
+        <div class="lang-ko">
+          <p>한국 종목은 해외에서 24시간 거래되는
+            <button class="term" type="button" data-term="perp" aria-expanded="false">무기한선물</button>
+            가격(<button class="term" type="button" data-term="mark-price" aria-expanded="false">마크가격</button>)에
+            <button class="term" type="button" data-term="fx-official" aria-expanded="false">고시환율</button>을 곱해
+            원화로 바꾼 값입니다. 등락률은 마지막
+            <button class="term" type="button" data-term="official-close" aria-expanded="false">공식 종가</button>와
+            비교한 결과입니다.</p>
+          <p><strong>실제로 이 가격에 사고팔 수 있다는 뜻은 아니고, 다음 개장 시초가를 예측한 값도 아닙니다.</strong>
+            거래가 적은 시간대에는 실제 시세와 벌어질 수 있습니다.
+            <button class="term" type="button" data-term="adr" aria-expanded="false">ADR</button> 카드의 퍼센트는
+            가격 상승률이 아니라 원주 대비 괴리(프리미엄)입니다.</p>
+          <p>위 <strong>전문가</strong>를 누르면 각 카드에 마크가격·공식 종가·환율과 직전 15:30 퍼프가 대비 변화가 함께 펼쳐집니다.</p>
+        </div>
+        <div class="lang-en">
+          <p>Korean names are priced from a
+            <button class="term" type="button" data-term="perp" aria-expanded="false">perpetual future</button>
+            that trades offshore around the clock. We take its
+            <button class="term" type="button" data-term="mark-price" aria-expanded="false">mark price</button>,
+            multiply by the <button class="term" type="button" data-term="fx-official" aria-expanded="false">official FX rate</button>
+            to get won, and compare that with the last
+            <button class="term" type="button" data-term="official-close" aria-expanded="false">official close</button>.</p>
+          <p><strong>This is not a price you can trade at, and it is not a forecast of the next opening price.</strong>
+            In thin hours it can drift away from the real market. On
+            <button class="term" type="button" data-term="adr" aria-expanded="false">ADR</button> cards the percentage is
+            the premium to the ordinary share, not a price gain.</p>
+          <p>Switch to <strong>Pro</strong> above to see mark price, official close, the FX rate applied and the move
+            versus the last 15:30 perp print on every card.</p>
+        </div>
       </div>
+    </details>
+
+    <section class="console-section" id="kr-indices" hidden aria-labelledby="kridx-title">
+      <header>
+        <h2 id="kridx-title" data-i18n="kridx.title">코스피 지수군</h2>
+      </header>
+      <p class="section-copy" data-i18n="kridx.copy" style="margin:0 0 12px">대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 52주 범위까지 한 표에서 봅니다.</p>
       <div class="panel">
-        <p class="section-copy" data-i18n="kridx.copy" style="margin:0 0 12px">대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 52주 범위까지 한 표에서 봅니다.</p>
         <div id="kridx-body"></div>
         <footer class="panel-footer" id="kridx-footer"></footer>
       </div>
     </section>
 
-    <section class="dashboard-section" id="kr-etf" hidden aria-labelledby="kre-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">KOREA · ETF BOARD · T+1</p><h2 id="kre-title" data-i18n="kre.title">ETF 보드</h2></div>
-      </div>
+    <section class="console-section" id="kr-events" hidden aria-labelledby="krev-title">
+      <header>
+        <h2 id="krev-title" data-i18n="krev.title">한국 기업 공시 속보 (주요사항보고)</h2>
+      </header>
+      <p class="section-copy" data-i18n="krev.copy" style="margin:0 0 12px">유가증권·코스닥 상장사의 주요사항보고서 접수 목록입니다. 제목은 공시 원문 제목이며, 수집 주기(약 1시간)로 갱신되어 실시간 속보가 아닙니다. 내용은 원문에서 확인하세요.</p>
       <div class="panel">
-        <p class="section-copy" data-i18n="kre.copy" style="margin:0 0 12px">거래대금 상위 ETF의 종가·NAV·괴리율입니다. 장 마감 확정값이며 실시간이 아닙니다.</p>
-        <div id="kre-body"></div>
-        <footer class="panel-footer" id="kre-footer"></footer>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="kr-events" hidden aria-labelledby="krev-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">KOREA · MATERIAL EVENT FILINGS · DART</p><h2 id="krev-title" data-i18n="krev.title">한국 기업 공시 속보 (주요사항보고)</h2></div>
-        <span class="source-pill">DART</span>
-      </div>
-      <div class="panel">
-        <p class="section-copy" data-i18n="krev.copy" style="margin:0 0 12px">유가증권·코스닥 상장사의 주요사항보고서 접수 목록입니다. 제목은 공시 원문 제목이며, 수집 주기(약 1시간)로 갱신되어 실시간 속보가 아닙니다. 내용은 원문에서 확인하세요.</p>
         <div id="krev-body"></div>
         <footer class="panel-footer" id="krev-footer"></footer>
       </div>
     </section>
 
-    <section class="dashboard-section" id="kr-pension" hidden aria-labelledby="krp-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">KOREA · NPS 5% FILINGS · DART</p><h2 id="krp-title" data-i18n="krp.title">국민연금 5% 공시</h2></div>
-        <span class="source-pill">DART</span>
-      </div>
+    <section class="console-section" id="kr-pension" hidden aria-labelledby="krp-title">
+      <header>
+        <h2 id="krp-title" data-i18n="krp.title">국민연금 5% 공시</h2>
+      </header>
+      <p class="section-copy" data-i18n="krp.copy" style="margin:0 0 12px">주식등의 대량보유 상황보고(5% 룰) 중 국민연금공단 제출분입니다. 보고서 단위의 보유비율 변동이며, 통상 한 달치가 월초에 일괄 공시됩니다. 일별 매매가 아닙니다.</p>
       <div class="panel">
-        <p class="section-copy" data-i18n="krp.copy" style="margin:0 0 12px">주식등의 대량보유 상황보고(5% 룰) 중 국민연금공단 제출분입니다. 보고서 단위의 보유비율 변동이며, 통상 한 달치가 월초에 일괄 공시됩니다. 일별 매매가 아닙니다.</p>
         <div id="krp-body"></div>
         <footer class="panel-footer" id="krp-footer"></footer>
       </div>
     </section>
 
-    <section class="dashboard-section" id="kr-holdings" hidden aria-labelledby="krh-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">KOREA · 5% RULE · ALL FILERS · DART</p><h2 id="krh-title" data-i18n="krh.title">대량보유 5% 공시 — 전체 보고자</h2></div>
-        <span class="source-pill">DART</span>
-      </div>
+    <section class="console-section" id="kr-holdings" hidden aria-labelledby="krh-title">
+      <header>
+        <h2 id="krh-title" data-i18n="krh.title">대량보유 5% 공시 — 전체 보고자</h2>
+      </header>
+      <p class="section-copy" data-i18n="krh.copy" style="margin:0 0 12px">자본시장법 5% 룰에 따른 주식등의 대량보유 상황보고 전체입니다 — 운용사·펀드·대주주 모두. 보고 기한이 5영업일이라 보고일은 변동일과 다를 수 있습니다. 일별 매매가 아닙니다.</p>
       <div class="panel">
-        <p class="section-copy" data-i18n="krh.copy" style="margin:0 0 12px">자본시장법 5% 룰에 따른 주식등의 대량보유 상황보고 전체입니다 — 운용사·펀드·대주주 모두. 보고 기한이 5영업일이라 보고일은 변동일과 다를 수 있습니다. 일별 매매가 아닙니다.</p>
         <div id="krh-body"></div>
         <footer class="panel-footer" id="krh-footer"></footer>
       </div>
     </section>
 
-    <section class="weekend-pulse" id="weekend-pulse" aria-labelledby="weekend-title">
-      <div class="section-heading compact">
-        <span class="section-index">W</span>
-        <div><p class="eyebrow">HYPERLIQUID HIP-3 · WEEKEND REFERENCE</p><h2 id="weekend-title" data-i18n="weekend.title">Weekend Pulse · 주말 참고 신호</h2></div>
-        <span class="source-pill">HIP-3</span>
+    <section class="console-section" id="kr-etf" hidden aria-labelledby="kre-title">
+      <header>
+        <h2 id="kre-title" data-i18n="kre.title">ETF 보드</h2>
+      </header>
+      <p class="section-copy" data-i18n="kre.copy" style="margin:0 0 12px">거래대금 상위 ETF의 종가·NAV·괴리율입니다. 장 마감 확정값이며 실시간이 아닙니다.</p>
+      <div class="panel">
+        <div id="kre-body"></div>
+        <footer class="panel-footer" id="kre-footer"></footer>
       </div>
+    </section>
+
+    <section class="console-section" id="weekend-pulse" aria-labelledby="weekend-title">
+      <header>
+        <h2 id="weekend-title" data-i18n="weekend.title">Weekend Pulse · 주말 참고 신호</h2>
+        <span class="sec-note" data-i18n="krpage.weekendNote">주말에만 의미가 있는 보조 신호</span>
+      </header>
       <div class="risk-strip" role="note">
         <span class="status-badge warn" data-i18n="weekend.notSpot">현물가격 아님</span>
         <span class="status-badge warn" data-i18n="weekend.leverage">레버리지 파생</span>
@@ -154,16 +191,17 @@
       <div id="weekend-grid" class="weekend-grid" hidden></div>
       <p class="weekend-disclaimer" id="weekend-disclaimer" data-i18n="weekend.defaultDisclaimer">주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.</p>
     </section>
-
-    <div id="deep-sections"></div>
+    <section class="console-section" id="kr-macro-host" aria-label="한국 매크로">
+      <div id="deep-sections"></div>
+    </section>
 
     <section class="methodology" aria-labelledby="method-title">
       <p class="eyebrow">DATA POLICY</p>
       <h2 id="method-title" data-i18n="method.title">숫자를 다루는 원칙</h2>
       <div class="method-grid">
-        <article><strong data-i18n="method.one.title">출처를 함께 표시</strong><p data-i18n="method.one.copy">각 수치는 공급자, 기준일, 신선도를 함께 보여줍니다.</p></article>
-        <article><strong data-i18n="method.two.title">단위를 추측하지 않음</strong><p data-i18n="method.two.copy">API가 제공한 단위와 배율만 사용합니다.</p></article>
-        <article><strong data-i18n="method.three.title">미연결은 미연결로</strong><p data-i18n="method.three.copy">라이선스나 API가 없는 지표는 숫자 대신 상태를 표시합니다.</p></article>
+        <article><strong data-i18n="method.one.title">숫자마다 출처가 붙습니다</strong><p data-i18n="method.one.copy">어디서 받은 값인지, 언제 기준인지, 얼마나 오래된 값인지 함께 보여줍니다.</p></article>
+        <article><strong data-i18n="method.two.title">단위를 바꾸지 않습니다</strong><p data-i18n="method.two.copy">받은 그대로의 단위로 보여줍니다. 보기 좋으라고 배율을 손대지 않습니다.</p></article>
+        <article><strong data-i18n="method.three.title">없는 값은 만들지 않습니다</strong><p data-i18n="method.three.copy">가져올 수 없는 지표는 비슷한 다른 값으로 대신하지 않습니다. 값이 없으면 왜 없는지 적습니다.</p></article>
       </div>
       <div id="attribution" class="attribution"></div>
     </section>
@@ -173,6 +211,7 @@
         <a href="/privacy" data-i18n="legal.privacy">개인정보처리방침</a>
         <a href="/terms" data-i18n="legal.terms">이용약관</a>
         <a href="/disclaimer" data-i18n="legal.disclaimer">면책 고지</a>
+        <a href="/docs">API</a>
       </nav>
       <p data-i18n="legal.notAdvice">Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.</p>
     </footer>
@@ -189,7 +228,9 @@
       <footer></footer>
     </article>
   </template>
+
   <script>window.MULMIT_PAGE = "kr";</script>
+  <script src="/static/console.js?v=20260822-19" defer></script>
   <script src="/static/monitor.js?v=20260822-19" defer></script>
   <script src="/static/search.js?v=20260822-19" defer></script>
 </body>
