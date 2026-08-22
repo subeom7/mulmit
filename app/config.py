@@ -187,6 +187,11 @@ UPBIT_RETRIES = _int("UPBIT_RETRIES", 1)
 # ones checked either forbid redistribution (PublicNode ToS), are "not suitable
 # for production traffic" (Base docs) or need a paid plan (register §3.21).
 CHAIN_GAS_ENABLED = _bool("CHAIN_GAS_ENABLED", False)
+# Coinalyze liquidation/open-interest lane. Written permission is on file
+# (register §3.27); the key is generated on the operator's Coinalyze account
+# and lives in the ingest process only.
+COINALYZE_ENABLED = _bool("COINALYZE_ENABLED", False)
+COINALYZE_API_KEY = os.environ.get("COINALYZE_API_KEY", "").strip()
 CHAIN_RPC_ETHEREUM_URL = os.environ.get("CHAIN_RPC_ETHEREUM_URL", "").strip()
 CHAIN_RPC_BASE_URL = os.environ.get("CHAIN_RPC_BASE_URL", "").strip()
 CHAIN_RPC_ARBITRUM_URL = os.environ.get("CHAIN_RPC_ARBITRUM_URL", "").strip()

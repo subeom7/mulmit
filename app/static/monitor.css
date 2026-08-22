@@ -102,6 +102,25 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 .icon-button { min-width: 38px; height: 34px; padding: 0 9px; cursor: pointer; font: 700 11px/1 var(--mono); }
 .icon-button:hover, .refresh-button:hover { color: var(--ink); border-color: var(--line-strong); background: var(--panel-2); }
 
+/* 청산 집계 — 거래소별 합계와, 답하지 않은 거래소를 함께 보여 준다. */
+.cliq-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.cliq-card { padding: 15px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
+.cliq-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.cliq-head a { color: inherit; font: 700 14px/1.2 var(--sans); text-decoration: none; }
+.cliq-head a:hover { color: var(--accent); }
+.cliq-head .oi { color: var(--muted); font: 650 10.5px/1.2 var(--mono); }
+.cliq-total { margin: 11px 0 3px; font: 700 22px/1 var(--mono); }
+.cliq-split { display: flex; height: 7px; margin: 9px 0 7px; border-radius: 4px; overflow: hidden; background: var(--line); }
+.cliq-split i { display: block; height: 100%; }
+.cliq-split .long { background: var(--green); }
+.cliq-split .short { background: var(--red); }
+.cliq-legend { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font: 650 10.5px/1.4 var(--mono); }
+.cliq-legend .long { color: var(--green); }
+.cliq-legend .short { color: var(--red); }
+.cliq-venues { margin: 11px 0 0; padding: 9px 0 0; border-top: 1px solid var(--line); color: var(--faint); font: 650 10px/1.6 var(--mono); }
+.cliq-venues b { color: var(--muted); font-weight: 650; }
+.cliq-silent { color: var(--faint); }
+
 /* 통합 검색 — 마스트헤드 한 칸에서 코인·국내·미국을 함께 찾는다. */
 .site-search { position: relative; display: flex; align-items: center; }
 .site-search-input {
