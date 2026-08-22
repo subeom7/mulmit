@@ -87,9 +87,11 @@ def _coin_hits(needle: str, limit: int) -> list[dict[str, Any]]:
     return [hit for _score_value, hit in hits[:limit]]
 
 
-def _kr_hits(needle: str, limit: int) -> list[dict[str, Any]]:
+def _kr_hits(query: str, limit: int) -> list[dict[str, Any]]:
+    # The raw text, not the case-folded needle: the roster ranks an exact code
+    # and an exact name itself, and those comparisons want what was typed.
     try:
-        payload = kr_stocks.search(needle, limit)
+        payload = kr_stocks.search(query, limit)
     except kr_stocks.KrStockDisabled:
         return []
     except Exception:  # noqa: BLE001 - one roster must not break the others
@@ -134,18 +136,19 @@ def _us_hits(needle: str, limit: int) -> list[dict[str, Any]]:
 
 def search(query: str, *, limit: int = DEFAULT_LIMIT) -> dict[str, Any]:
     """Grouped hits across the coin, Korean and US rosters."""
-    needle = (query or "").strip().casefold()
+    text = (query or "").strip()
+    needle = text.casefold()
     limit = max(1, min(MAX_LIMIT, int(limit)))
     if not needle:
-        return {"query": query, "groups": [], "count": 0}
+        return {"query": text, "groups": [], "count": 0}
     groups = [
         {"kind": "crypto", "label": {"ko": "코인", "en": "Coins"}, "results": _coin_hits(needle, limit)},
-        {"kind": "kr_stock", "label": {"ko": "국내 종목", "en": "Korean stocks"}, "results": _kr_hits(needle, limit)},
+        {"kind": "kr_stock", "label": {"ko": "국내 종목", "en": "Korean stocks"}, "results": _kr_hits(text, limit)},
         {"kind": "us_stock", "label": {"ko": "미국 종목", "en": "US stocks"}, "results": _us_hits(needle, limit)},
     ]
     filled = [group for group in groups if group["results"]]
     return {
-        "query": query.strip(),
+        "query": text,
         "groups": filled,
         "count": sum(len(group["results"]) for group in filled),
         "basis": {
