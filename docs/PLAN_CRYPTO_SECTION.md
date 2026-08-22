@@ -219,6 +219,13 @@ fail-closed, 수치 발명 금지)으로 하나씩 판정한 문서다. 소스�
   HL 선례(DS-2026-001 개정: 명시 거절만 OFF)대로 운영자 위험수용으로 개방 가능. 결정 시 등록부 §3.19 YAML 확정.
 - UI: `cryptoUsd` compact에 T(조) 단위 추가(총시총 "$2.59T").
 
+### 7.4 Phase 3a — HL 전체 시장 보드 (2026-08-22)
+
+- `/api/crypto/board`(`app/crypto_board.py`): 코인 카드와 같은 `metaAndAssetCtxs` 스냅샷(추가 호출 없음)을 정렬·합계 —
+  24h 급등·급락 TOP 8, OI·거래대금 상위 TOP 8, 펀딩 APR 최고·최저 TOP 8, 전체 상장 퍼프 수·OI 합계·24h 거래대금 합계.
+  급등·급락·펀딩 극단값은 24h 거래대금 $1M 이상 시장만(응답 `filters`에 명시), 상위 표는 전체. 같은 HIP-3 게이트·고지.
+  새 권리 없음(등록부 변경 없음). `/crypto`에 "HL 전체 시장 보드" 섹션(파생 표 아래), 30초 폴링.
+
 ## 8. 실측 로그 (2026-08-21, 서울 KT 가정망)
 
 REST(curl, `Mozilla/5.0 mulmit-probe`):
@@ -270,6 +277,7 @@ WebSocket(python websockets, `origin=https://mulmit.com`):
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-08-22 | Phase 3a(§7.4) — HL 전체 시장 보드(급등·급락·OI·거래대금·펀딩 극단값·합계), 새 권리 없음 |
 | 2026-08-21 | Phase 2b(§7.3) — 가스 스트립 lane(운영자 RPC 계정 주입형), T 단위 포맷, Deribit·Coinalyze 문의 초안 생성 |
 | 2026-08-21 | Phase 2 구현(§7.2) — 도미넌스(CMC, 키 대기)·김치프리미엄(업비트, pending_rights) 레인 + 가스 스트립 보류 판정 |
 | 2026-08-21 | Phase 1 구현(§7.1) — `/crypto`·`/api/crypto/{overview,sentiment,volatility}`, 게이트 2종, 등록부 §3.18 |

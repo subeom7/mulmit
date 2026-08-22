@@ -87,6 +87,10 @@ const TEXT = {
     "crypto.structure.btcDom": "BTC 도미넌스", "crypto.structure.ethDom": "ETH 도미넌스", "crypto.structure.othersDom": "기타 (100 − BTC − ETH)", "crypto.structure.totalCap": "총 시가총액", "crypto.structure.stableCap": "스테이블코인 시총", "crypto.structure.volume": "24h 거래대금", "crypto.structure.pts": "{v}p · 24h", "crypto.structure.sourceLabel": "출처",
     "crypto.gas.title": "가스·전송 수수료", "crypto.gas.copy": "이더리움 메인넷과 주요 L2의 다음 블록 기본 수수료·우선 수수료(50분위)와 단순 전송(21,000 gas) 비용입니다. 운영자 RPC 계정으로 읽는 공개 체인 상태이며, L2 행은 L1 데이터 수수료를 포함하지 않습니다.",
     "crypto.gas.base": "기본 수수료", "crypto.gas.priority": "우선 수수료 p50", "crypto.gas.gasPrice": "가스 가격", "crypto.gas.transfer": "단순 전송 ≈", "crypto.gas.l2note": "L1 데이터 수수료 제외", "crypto.gas.unavailable": "RPC 응답 없음",
+    "crypto.board.title": "HL 전체 시장 보드", "crypto.board.copy": "Hyperliquid에 상장된 모든 무기한선물 한 스냅샷을 정렬한 보드입니다. 24h 상위·하위와 펀딩 극단값은 24h 거래대금 $1M 이상 시장만, OI·거래대금 상위는 전체가 대상입니다. 현물 가격·투자 권유가 아닙니다.",
+    "crypto.board.markets": "상장 퍼프", "crypto.board.totalOi": "전체 OI", "crypto.board.totalVolume": "전체 24h 거래대금",
+    "crypto.board.gainers": "24h 상위", "crypto.board.losers": "24h 하위", "crypto.board.oiLeaders": "OI 상위", "crypto.board.volumeLeaders": "거래대금 상위", "crypto.board.fundingHigh": "펀딩 최고 (롱 과열)", "crypto.board.fundingLow": "펀딩 최저 (숏 과열)",
+    "crypto.board.colSymbol": "심볼", "crypto.board.colPrice": "가격", "crypto.board.colChange": "24h", "crypto.board.colOi": "OI", "crypto.board.colVolume": "거래대금", "crypto.board.colApr": "연율",
     "status.collecting": "수집 중 · 첫 수집 뒤 표시됩니다",
     "status.connecting": "연결 중", "status.live": "데이터 연결", "status.partial": "일부 데이터", "status.offline": "연결 오류",
     "status.loading": "불러오는 중", "status.viewport": "화면에 표시되면 불러옵니다", "status.unavailable": "데이터 미연결",
@@ -208,6 +212,10 @@ const TEXT = {
     "crypto.structure.btcDom": "BTC dominance", "crypto.structure.ethDom": "ETH dominance", "crypto.structure.othersDom": "Others (100 − BTC − ETH)", "crypto.structure.totalCap": "Total market cap", "crypto.structure.stableCap": "Stablecoin market cap", "crypto.structure.volume": "24h volume", "crypto.structure.pts": "{v}p · 24h", "crypto.structure.sourceLabel": "Source",
     "crypto.gas.title": "Gas · transfer cost", "crypto.gas.copy": "Next-block base fee and p50 priority fee on Ethereum mainnet and the main L2s, with the cost of a plain 21,000-gas transfer. Public chain state read through the operator's own RPC account; L2 rows exclude the L1 data fee.",
     "crypto.gas.base": "Base fee", "crypto.gas.priority": "Priority fee p50", "crypto.gas.gasPrice": "Gas price", "crypto.gas.transfer": "Plain transfer ≈", "crypto.gas.l2note": "excl. L1 data fee", "crypto.gas.unavailable": "No RPC response",
+    "crypto.board.title": "HL market board", "crypto.board.copy": "One sorted snapshot of every perpetual listed on Hyperliquid. Movers and funding extremes consider markets with ≥ $1M 24h volume; OI and volume leaders are unfiltered. Not spot prices or recommendations.",
+    "crypto.board.markets": "Listed perps", "crypto.board.totalOi": "Total OI", "crypto.board.totalVolume": "Total 24h volume",
+    "crypto.board.gainers": "24h top", "crypto.board.losers": "24h bottom", "crypto.board.oiLeaders": "OI leaders", "crypto.board.volumeLeaders": "Volume leaders", "crypto.board.fundingHigh": "Highest funding (long crowded)", "crypto.board.fundingLow": "Lowest funding (short crowded)",
+    "crypto.board.colSymbol": "Symbol", "crypto.board.colPrice": "Price", "crypto.board.colChange": "24h", "crypto.board.colOi": "OI", "crypto.board.colVolume": "Volume", "crypto.board.colApr": "APR",
     "status.collecting": "Collecting · shown after the first collection",
     "status.connecting": "Connecting", "status.live": "Data live", "status.partial": "Partial data", "status.offline": "Connection error",
     "status.loading": "Loading", "status.viewport": "Loads when scrolled into view", "status.unavailable": "Data not connected",
@@ -503,7 +511,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
+  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -882,6 +890,7 @@ function renderJumpNav() {
     { id: "crypto-sentiment", text: t("crypto.fng.title") },
     { id: "crypto-structure", text: t("crypto.structure.title") },
     { id: "crypto-derivatives", text: t("crypto.deriv.title") },
+    { id: "crypto-board", text: t("crypto.board.title") },
     { id: "crypto-gas", text: t("crypto.gas.title") },
     { id: "crypto-volatility", text: t("crypto.vol.title") },
     ...numbered,
@@ -1028,7 +1037,7 @@ function renderAttribution() {
   }
   // Say out loud which lanes are switched off. Otherwise a page full of blank
   // cards looks like a broken site rather than a deliberate rights decision.
-  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation", "stress", "sentiment", "cryptoOverview", "cryptoSentiment", "cryptoVolatility", "cryptoKimchi", "cryptoStructure", "cryptoGas"]
+  const laneReasons = [...new Set(["macro", "assets", "weekend", "sectors", "correlation", "stress", "sentiment", "cryptoOverview", "cryptoSentiment", "cryptoVolatility", "cryptoKimchi", "cryptoStructure", "cryptoGas", "cryptoBoard"]
     .map(disabledText).filter(Boolean))];
   if (laneReasons.length) {
     const title = document.createElement("p"); title.textContent = t("notice.disabledLanes"); host.append(title);
@@ -1111,13 +1120,14 @@ const PAGE_FETCHES = {
   cryptoKimchi: ["crypto"],
   cryptoStructure: ["crypto"],
   cryptoGas: ["crypto"],
+  cryptoBoard: ["crypto"],
 };
 
 async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/market/sentiment", "sentiment"), request("/api/kr/indices", "krIndices"),
@@ -1134,19 +1144,20 @@ async function loadCore() {
     request("/api/crypto/kimchi", "cryptoKimchi"),
     request("/api/crypto/structure", "cryptoStructure"),
     request("/api/crypto/gas", "cryptoGas"),
+    request("/api/crypto/board", "cryptoBoard"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
   state.stress = stress; state.sentiment = sentiment; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krHoldings = krHoldings;
   state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
   state.cryptoOverview = cryptoOverview; state.cryptoSentiment = cryptoSentiment; state.cryptoVolatility = cryptoVolatility;
-  state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure; state.cryptoGas = cryptoGas;
+  state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure; state.cryptoGas = cryptoGas; state.cryptoBoard = cryptoBoard;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets"); ingestPayload(sentimentRecordPayload(sentiment), "sentiment");
   renderAll(); $("#refresh-button")?.removeAttribute("aria-busy");
 }
 
 function renderAll() {
   renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
-  renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas();
+  renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas(); renderCryptoBoard();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -2612,6 +2623,62 @@ function renderCryptoGas() {
   footer.append(method, disclaimer);
 }
 
+function renderCryptoBoard() {
+  const section = $("#crypto-board"); if (!section) return;
+  const stateNode = $("#cboard-state"), strip = $("#cboard-strip"), grid = $("#cboard-grid"), footer = $("#cboard-footer");
+  const data = state.cryptoBoard;
+  const hasRows = data && ["movers", "leaders", "funding"].some((group) => Object.values(data[group] || {}).some((rows) => Array.isArray(rows) && rows.length));
+  if (!data || !hasRows) {
+    if (cryptoGateHidden("cryptoBoard")) { section.hidden = true; return; }
+    section.hidden = false; strip.hidden = true; grid.hidden = true; footer.hidden = true; stateNode.hidden = false;
+    stateNode.textContent = `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+  section.hidden = false; stateNode.hidden = true; strip.hidden = false; grid.hidden = false; footer.hidden = false;
+  strip.replaceChildren();
+  const totals = data.totals || {};
+  if (safeNumber(totals.markets) !== null) strip.append(cryptoStripItem(t("crypto.board.markets"), String(totals.markets)));
+  if (safeNumber(totals.open_interest_usd) !== null) strip.append(cryptoStripItem(t("crypto.board.totalOi"), cryptoUsd(totals.open_interest_usd, { compact: true })));
+  if (safeNumber(totals.volume_24h_usd) !== null) strip.append(cryptoStripItem(t("crypto.board.totalVolume"), cryptoUsd(totals.volume_24h_usd, { compact: true })));
+  if (data.as_of) strip.append(cryptoStripItem(t("date.asof"), dateText(data.as_of)));
+
+  const table = (titleKey, rows, columns) => {
+    const wrap = document.createElement("article"); wrap.className = "cboard-card";
+    const heading = document.createElement("h3"); heading.textContent = t(titleKey); wrap.append(heading);
+    const scroll = document.createElement("div"); scroll.className = "table-scroll";
+    const tbl = document.createElement("table"); tbl.className = "accessible-table crypto-table cboard-table";
+    const thead = document.createElement("thead"); thead.innerHTML = `<tr>${columns.map(([key, cls]) => `<th scope="col"${cls ? ` class="${cls}"` : ""}>${t(key)}</th>`).join("")}</tr>`;
+    const tbody = document.createElement("tbody");
+    for (const row of rows) {
+      const tr = document.createElement("tr");
+      columns.forEach(([key, cls, render]) => { const td = document.createElement("td"); const [text, extra] = render(row); td.className = `${cls || ""} ${extra || ""}`.trim(); td.textContent = text; tr.append(td); });
+      tbody.append(tr);
+    }
+    tbl.append(thead, tbody); scroll.append(tbl); wrap.append(scroll); return wrap;
+  };
+  const sym = (row) => [row.symbol, ""];
+  const price = (row) => [cryptoUsd(safeNumber(row.price)), ""];
+  const change = (row) => { const v = safeNumber(row.change_24h_percent); return [v === null ? "—" : formatSigned(v), changeClass(v)]; };
+  const oi = (row) => [cryptoUsd(safeNumber(row.open_interest_usd), { compact: true }), ""];
+  const vol = (row) => [cryptoUsd(safeNumber(row.volume_24h_usd), { compact: true }), ""];
+  const apr = (row) => { const v = safeNumber(row.funding_apr_percent); return [v === null ? "—" : formatSigned(v), changeClass(v)]; };
+  const moverCols = [["crypto.board.colSymbol", "", sym], ["crypto.board.colPrice", "num", price], ["crypto.board.colChange", "num", change], ["crypto.board.colVolume", "num", vol]];
+  const leaderCols = [["crypto.board.colSymbol", "", sym], ["crypto.board.colPrice", "num", price], ["crypto.board.colOi", "num", oi], ["crypto.board.colVolume", "num", vol]];
+  const fundingCols = [["crypto.board.colSymbol", "", sym], ["crypto.board.colApr", "num", apr], ["crypto.board.colChange", "num", change], ["crypto.board.colOi", "num", oi]];
+  grid.replaceChildren(
+    table("crypto.board.gainers", data.movers?.gainers || [], moverCols),
+    table("crypto.board.losers", data.movers?.losers || [], moverCols),
+    table("crypto.board.oiLeaders", data.leaders?.open_interest || [], leaderCols),
+    table("crypto.board.volumeLeaders", data.leaders?.volume || [], leaderCols),
+    table("crypto.board.fundingHigh", data.funding?.highest || [], fundingCols),
+    table("crypto.board.fundingLow", data.funding?.lowest || [], fundingCols),
+  );
+  footer.replaceChildren();
+  const method = document.createElement("p"); method.className = "kro-method"; method.textContent = localValue(data.methodology, state.lang);
+  const disclaimer = document.createElement("p"); disclaimer.className = "kro-disclaimer"; disclaimer.textContent = localValue(data.disclaimer, state.lang);
+  footer.append(method, disclaimer);
+}
+
 function renderSectors() {
   const payload = state.sectors; const stateNode = $("#sector-state"), bars = $("#sector-bars");
   if (!stateNode) return;
@@ -2932,6 +2999,11 @@ if (onPage(...PAGE_FETCHES.cryptoOverview)) {
     if (document.hidden || !document.getElementById("crypto-gas") || disabledCode("cryptoGas")) return;
     const gas = await fetchJson("/api/crypto/gas", "cryptoGas");
     if (gas) { state.cryptoGas = gas; renderCryptoGas(); }
+  }, 30 * 1000);
+  setInterval(async () => {
+    if (document.hidden || !document.getElementById("crypto-board") || disabledCode("cryptoBoard")) return;
+    const board = await fetchJson("/api/crypto/board", "cryptoBoard");
+    if (board) { state.cryptoBoard = board; renderCryptoBoard(); }
   }, 30 * 1000);
 }
 

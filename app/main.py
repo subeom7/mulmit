@@ -23,6 +23,7 @@ from slowapi.util import get_remote_address
 from . import (
     __version__,
     config,
+    crypto_board,
     crypto_gas,
     crypto_kimchi,
     crypto_market,
@@ -640,6 +641,17 @@ def crypto_gas_route(request: Request, response: Response) -> dict:
     response.headers["Cache-Control"] = "private, max-age=30, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "EVM JSON-RPC (operator account)"
     return crypto_gas.build_crypto_gas()
+
+
+@app.get("/api/crypto/board")
+@limiter.limit(config.RATE_LIMIT)
+def crypto_board_route(request: Request, response: Response) -> dict:
+    """Hyperliquid 전체 퍼프 보드 — 급등·급락, OI·거래대금 상위, 펀딩 극단값, 합계. 같은 스냅샷·같은 게이트."""
+    require_crypto_section()
+    require_hip3_public_display()
+    response.headers["Cache-Control"] = "private, max-age=15, stale-while-revalidate=300"
+    response.headers["X-Data-Source"] = "Hyperliquid"
+    return crypto_board.build_crypto_board()
 
 
 @app.get("/api/kr/search")

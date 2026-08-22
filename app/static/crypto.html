@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260821-9">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-1">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -149,6 +149,18 @@
       </div>
     </section>
 
+    <section class="dashboard-section" id="crypto-board" aria-labelledby="cboard-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">HYPERLIQUID · ALL PERPS · MOVERS × LEADERS × FUNDING</p><h2 id="cboard-title" data-i18n="crypto.board.title">HL 전체 시장 보드</h2></div>
+        <span class="source-pill">HYPERLIQUID</span>
+      </div>
+      <p class="section-copy" data-i18n="crypto.board.copy">Hyperliquid에 상장된 모든 무기한선물 한 스냅샷을 정렬한 보드입니다. 24h 상위·하위와 펀딩 극단값은 24h 거래대금 $1M 이상 시장만, OI·거래대금 상위는 전체가 대상입니다. 현물 가격·투자 권유가 아닙니다.</p>
+      <div id="cboard-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="cboard-strip" class="crypto-strip" hidden></div>
+      <div id="cboard-grid" class="cboard-grid" hidden></div>
+      <footer class="kro-footer" id="cboard-footer" hidden></footer>
+    </section>
+
     <section class="dashboard-section" id="crypto-gas" aria-labelledby="cgas-title">
       <div class="section-heading">
         <div><p class="eyebrow">ON-CHAIN · GAS × TRANSFER COST</p><h2 id="cgas-title" data-i18n="crypto.gas.title">가스·전송 수수료</h2></div>
@@ -213,6 +225,6 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "crypto";</script>
-  <script src="/static/monitor.js?v=20260821-9" defer></script>
+  <script src="/static/monitor.js?v=20260822-1" defer></script>
 </body>
 </html>
