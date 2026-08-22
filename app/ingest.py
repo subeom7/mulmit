@@ -859,6 +859,21 @@ def refresh_crypto_sentiment(*, force: bool = False) -> dict:
         return {"failed": str(exc)}
 
 
+def refresh_crypto_stablecoins(*, force: bool = False) -> dict:
+    """CoinMarketCap USDT·USDC 유통 공급(시간당 1크레딧) + 자체 일별 누적. 도미넌스와 같은 키·같은 게이트."""
+    try:
+        result = crypto_structure.refresh_crypto_stablecoins(force=force)
+        if not result.get("skipped"):
+            log.info("크립토 스테이블코인 공급 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("CoinMarketCap 요청 제한/크레딧(스테이블코인) — 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("크립토 스테이블코인 공급 갱신 실패: %s", exc)
+        return {"skipped": "error", "error": str(exc)}
+
+
 def refresh_crypto_structure(*, force: bool = False) -> dict:
     """CoinMarketCap 글로벌 메트릭(도미넌스). 키는 여기(ingest)에만 있고 web은 블롭만 읽는다."""
     try:
@@ -1078,6 +1093,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             hip3_result = refresh_hip3_history()
             crypto_sentiment_result = refresh_crypto_sentiment()
             refresh_crypto_structure()
+            refresh_crypto_stablecoins()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
             "skipped": "legacy_price_data_disabled",
@@ -1129,6 +1145,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             hip3_result = refresh_hip3_history()
             refresh_crypto_sentiment()
             refresh_crypto_structure()
+            refresh_crypto_stablecoins()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
                 "skipped": "backoff",
@@ -1213,6 +1230,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         hip3_result = refresh_hip3_history()
         crypto_sentiment_result = refresh_crypto_sentiment()
         refresh_crypto_structure()
+        refresh_crypto_stablecoins()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged

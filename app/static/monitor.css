@@ -523,6 +523,9 @@ a.feed-text:hover { color: var(--ink); }
 .crypto-dominance-bar .seg.btc { background: var(--amber); }
 .crypto-dominance-bar .seg.eth { background: var(--accent); }
 .crypto-dominance-bar .seg.others { background: var(--muted); }
+.cstr-stable { margin: 4px 0 12px; }
+.cstr-stable .cstr-sub { margin: 0 0 8px; font: 600 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.cstr-stable .kro-method { margin-top: 8px; }
 .cvol-card small.up { color: var(--green); }
 .cvol-card small.down { color: var(--red); }
 .cboard-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }

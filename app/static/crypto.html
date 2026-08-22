@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-1">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-2">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -127,10 +127,15 @@
         <div><p class="eyebrow">MARKET STRUCTURE · DOMINANCE · COINMARKETCAP</p><h2 id="cstr-title" data-i18n="crypto.structure.title">도미넌스 · 시장 구조</h2></div>
         <span class="source-pill">COINMARKETCAP</span>
       </div>
-      <p class="section-copy" data-i18n="crypto.structure.copy">비트코인·이더리움이 전체 크립토 시가총액에서 차지하는 비중과 총시총·스테이블코인 시총입니다. CoinMarketCap 집계 유니버스 기준이며 산출 기관마다 값이 다릅니다.</p>
+      <p class="section-copy" data-i18n="crypto.structure.copy">비트코인·이더리움이 전체 크립토 시가총액에서 차지하는 비중과 총시총·스테이블코인 시총, USDT·USDC 유통 공급입니다. CoinMarketCap 집계 유니버스 기준이며 산출 기관마다 값이 다릅니다.</p>
       <div id="cstr-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
       <div id="cstr-grid" class="cvol-grid" hidden></div>
       <div id="cstr-bar" class="crypto-dominance-bar" hidden aria-hidden="true"></div>
+      <div id="cstr-stable" class="cstr-stable" hidden>
+        <h3 class="cstr-sub" data-i18n="crypto.structure.stable.title">스테이블코인 공급 · 유동성</h3>
+        <div id="cstr-stable-grid" class="cvol-grid"></div>
+        <p id="cstr-stable-note" class="kro-method" hidden></p>
+      </div>
       <footer class="kro-footer" id="cstr-footer" hidden></footer>
     </section>
 
@@ -225,6 +230,6 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "crypto";</script>
-  <script src="/static/monitor.js?v=20260822-1" defer></script>
+  <script src="/static/monitor.js?v=20260822-2" defer></script>
 </body>
 </html>

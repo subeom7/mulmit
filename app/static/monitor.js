@@ -83,8 +83,8 @@ const TEXT = {
     "crypto.kimchi.title": "김치프리미엄 · 원화 시세", "crypto.kimchi.copy": "업비트 원화 최근 체결가를 Hyperliquid 오라클 참고가와 비교합니다. 헤드라인 프리미엄은 업비트 KRW-USDT로 나눠 환율을 소거한 'USDT 기준'이고, 공식환율 기준은 한국은행 일별 고시값(날짜 표시)입니다. 호가·수수료·출금 조건은 반영하지 않습니다.",
     "crypto.kimchi.lastTrade": "업비트 최근 체결가", "crypto.kimchi.usdtBasis": "USDT 기준 · 환율 소거",
     "crypto.kimchi.usdtKrw": "USDT/KRW (업비트)", "crypto.kimchi.tether": "테더 프리미엄", "crypto.kimchi.premiumUsdt": "USDT 기준 프리미엄", "crypto.kimchi.premiumOfficial": "공식환율 기준", "crypto.kimchi.upbit24h": "업비트 24h", "crypto.kimchi.oracle": "Hyperliquid 오라클", "crypto.kimchi.volume": "업비트 24h 거래대금", "crypto.kimchi.noReference": "참고가 없음", "crypto.kimchi.official": "고시",
-    "crypto.structure.title": "도미넌스 · 시장 구조", "crypto.structure.copy": "비트코인·이더리움이 전체 크립토 시가총액에서 차지하는 비중과 총시총·스테이블코인 시총입니다. CoinMarketCap 집계 유니버스 기준이며 산출 기관마다 값이 다릅니다.",
-    "crypto.structure.btcDom": "BTC 도미넌스", "crypto.structure.ethDom": "ETH 도미넌스", "crypto.structure.othersDom": "기타 (100 − BTC − ETH)", "crypto.structure.totalCap": "총 시가총액", "crypto.structure.stableCap": "스테이블코인 시총", "crypto.structure.volume": "24h 거래대금", "crypto.structure.pts": "{v}p · 24h", "crypto.structure.sourceLabel": "출처",
+    "crypto.structure.title": "도미넌스 · 시장 구조", "crypto.structure.copy": "비트코인·이더리움이 전체 크립토 시가총액에서 차지하는 비중과 총시총·스테이블코인 시총, USDT·USDC 유통 공급입니다. CoinMarketCap 집계 유니버스 기준이며 산출 기관마다 값이 다릅니다.",
+    "crypto.structure.btcDom": "BTC 도미넌스", "crypto.structure.ethDom": "ETH 도미넌스", "crypto.structure.othersDom": "기타 (100 − BTC − ETH)", "crypto.structure.totalCap": "총 시가총액", "crypto.structure.stableCap": "스테이블코인 시총", "crypto.structure.volume": "24h 거래대금", "crypto.structure.pts": "{v}p · 24h", "crypto.structure.sourceLabel": "출처", "crypto.structure.stable.title": "스테이블코인 공급 · 유동성", "crypto.structure.stable.supply": "{s} 유통 공급", "crypto.structure.stable.share": "스테이블코인 비중", "crypto.structure.stable.shareSub": "총시총 대비", "crypto.structure.stable.volume": "스테이블코인 24h 거래대금", "crypto.structure.stable.peg": "페그 {v}bp", "crypto.structure.stable.collecting": "7d 변화 수집 중", "crypto.structure.stable.history": "7d·30d 변화는 Mulmit이 {since}부터 매일 저장한 CoinMarketCap 유통 공급값으로 계산합니다({n}일 누적). 공급 증가는 발행, 감소는 상환이며 투자 권유가 아닙니다.",
     "crypto.gas.title": "가스·전송 수수료", "crypto.gas.copy": "이더리움 메인넷과 주요 L2의 다음 블록 기본 수수료·우선 수수료(50분위)와 단순 전송(21,000 gas) 비용입니다. 운영자 RPC 계정으로 읽는 공개 체인 상태이며, L2 행은 L1 데이터 수수료를 포함하지 않습니다.",
     "crypto.gas.base": "기본 수수료", "crypto.gas.priority": "우선 수수료 p50", "crypto.gas.gasPrice": "가스 가격", "crypto.gas.transfer": "단순 전송 ≈", "crypto.gas.l2note": "L1 데이터 수수료 제외", "crypto.gas.unavailable": "RPC 응답 없음",
     "crypto.board.title": "HL 전체 시장 보드", "crypto.board.copy": "Hyperliquid에 상장된 모든 무기한선물 한 스냅샷을 정렬한 보드입니다. 24h 상위·하위와 펀딩 극단값은 24h 거래대금 $1M 이상 시장만, OI·거래대금 상위는 전체가 대상입니다. 현물 가격·투자 권유가 아닙니다.",
@@ -208,8 +208,8 @@ const TEXT = {
     "crypto.kimchi.title": "Kimchi premium · KRW quotes", "crypto.kimchi.copy": "Upbit's last KRW trade prices against Hyperliquid's oracle reference. The headline premium is the 'USDT basis' — divided by Upbit KRW-USDT so the exchange rate cancels; the official basis uses the Bank of Korea's daily quotation (date shown). Order books, fees and withdrawal conditions are not reflected.",
     "crypto.kimchi.lastTrade": "Upbit last trade", "crypto.kimchi.usdtBasis": "USDT basis · FX cancels",
     "crypto.kimchi.usdtKrw": "USDT/KRW (Upbit)", "crypto.kimchi.tether": "Tether premium", "crypto.kimchi.premiumUsdt": "Premium (USDT basis)", "crypto.kimchi.premiumOfficial": "Official-rate basis", "crypto.kimchi.upbit24h": "Upbit 24h", "crypto.kimchi.oracle": "Hyperliquid oracle", "crypto.kimchi.volume": "Upbit 24h volume", "crypto.kimchi.noReference": "No reference price", "crypto.kimchi.official": "official",
-    "crypto.structure.title": "Dominance · market structure", "crypto.structure.copy": "Bitcoin's and Ethereum's share of total crypto market cap, plus total and stablecoin market cap. As aggregated by CoinMarketCap's universe; other publishers report different numbers.",
-    "crypto.structure.btcDom": "BTC dominance", "crypto.structure.ethDom": "ETH dominance", "crypto.structure.othersDom": "Others (100 − BTC − ETH)", "crypto.structure.totalCap": "Total market cap", "crypto.structure.stableCap": "Stablecoin market cap", "crypto.structure.volume": "24h volume", "crypto.structure.pts": "{v}p · 24h", "crypto.structure.sourceLabel": "Source",
+    "crypto.structure.title": "Dominance · market structure", "crypto.structure.copy": "Bitcoin's and Ethereum's share of total crypto market cap, plus total and stablecoin market cap and USDT/USDC circulating supply. As aggregated by CoinMarketCap's universe; other publishers report different numbers.",
+    "crypto.structure.btcDom": "BTC dominance", "crypto.structure.ethDom": "ETH dominance", "crypto.structure.othersDom": "Others (100 − BTC − ETH)", "crypto.structure.totalCap": "Total market cap", "crypto.structure.stableCap": "Stablecoin market cap", "crypto.structure.volume": "24h volume", "crypto.structure.pts": "{v}p · 24h", "crypto.structure.sourceLabel": "Source", "crypto.structure.stable.title": "Stablecoin supply · liquidity", "crypto.structure.stable.supply": "{s} circulating supply", "crypto.structure.stable.share": "Stablecoin share", "crypto.structure.stable.shareSub": "of total market cap", "crypto.structure.stable.volume": "Stablecoin 24h volume", "crypto.structure.stable.peg": "peg {v}bp", "crypto.structure.stable.collecting": "7d change collecting", "crypto.structure.stable.history": "7d/30d changes are computed from the CoinMarketCap circulating-supply values Mulmit has stored daily since {since} ({n} days so far). Supply growth means issuance, shrinkage means redemptions; not a recommendation.",
     "crypto.gas.title": "Gas · transfer cost", "crypto.gas.copy": "Next-block base fee and p50 priority fee on Ethereum mainnet and the main L2s, with the cost of a plain 21,000-gas transfer. Public chain state read through the operator's own RPC account; L2 rows exclude the L1 data fee.",
     "crypto.gas.base": "Base fee", "crypto.gas.priority": "Priority fee p50", "crypto.gas.gasPrice": "Gas price", "crypto.gas.transfer": "Plain transfer ≈", "crypto.gas.l2note": "excl. L1 data fee", "crypto.gas.unavailable": "No RPC response",
     "crypto.board.title": "HL market board", "crypto.board.copy": "One sorted snapshot of every perpetual listed on Hyperliquid. Movers and funding extremes consider markets with ≥ $1M 24h volume; OI and volume leaders are unfiltered. Not spot prices or recommendations.",
@@ -2190,6 +2190,16 @@ function cryptoUsd(value, { compact = false } = {}) {
   return `$${value.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
 }
 
+function cryptoCompactNumber(value) {
+  if (value === null || value === undefined) return "—";
+  const abs = Math.abs(value);
+  if (abs >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
+  if (abs >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
+  if (abs >= 1e3) return `${(value / 1e3).toFixed(0)}K`;
+  return value.toFixed(0);
+}
+
 function cryptoFundingText(funding) {
   const hourly = safeNumber(funding?.hourly_percent);
   if (hourly === null) return "—";
@@ -2545,6 +2555,7 @@ function renderCryptoStructure() {
     if (cryptoGateHidden("cryptoStructure")) { section.hidden = true; return; }
     const collecting = disabledCode("cryptoStructure") === "crypto_structure_collecting";
     section.hidden = false; grid.hidden = true; bar.hidden = true; footer.hidden = true; stateNode.hidden = false;
+    const stableWrapOff = $("#cstr-stable"); if (stableWrapOff) stableWrapOff.hidden = true;
     stateNode.classList.toggle("disabled", collecting);
     stateNode.textContent = collecting ? t("status.collecting") : `${t("status.unavailable")} · ${t("status.retry")}`;
     return;
@@ -2572,6 +2583,30 @@ function renderCryptoStructure() {
       const seg = document.createElement("span"); seg.className = `seg ${cls}`; seg.style.width = `${Math.max(0, Math.min(100, width))}%`; seg.title = `${label} ${width.toFixed(1)}%`; seg.textContent = width >= 8 ? `${label} ${width.toFixed(1)}%` : ""; bar.append(seg);
     });
   } else bar.hidden = true;
+
+  const stable = data.stablecoins, stableWrap = $("#cstr-stable"), stableGrid = $("#cstr-stable-grid"), stableNote = $("#cstr-stable-note");
+  if (stableWrap) {
+    const coins = Array.isArray(stable?.coins) ? stable.coins : [];
+    const agg = stable?.aggregate || {};
+    if (!coins.length) stableWrap.hidden = true;
+    else {
+      stableWrap.hidden = false;
+      const historyOk = stable.history?.status === "ok";
+      const stableCards = coins.map((coin) => {
+        const parts = [];
+        if (safeNumber(coin.change_7d_percent) !== null) parts.push(`${formatSigned(coin.change_7d_percent)} · 7d`);
+        else if (!historyOk) parts.push(t("crypto.structure.stable.collecting"));
+        if (safeNumber(coin.peg_deviation_bp) !== null) parts.push(t("crypto.structure.stable.peg", { v: `${coin.peg_deviation_bp >= 0 ? "+" : ""}${coin.peg_deviation_bp.toFixed(1)}` }));
+        return [t("crypto.structure.stable.supply", { s: coin.symbol || "?" }), cryptoCompactNumber(safeNumber(coin.circulating_supply)), parts.join(" · ") || null, changeClass(coin.change_7d_percent)];
+      });
+      if (safeNumber(agg.share_of_total_percent) !== null) stableCards.push([t("crypto.structure.stable.share"), `${agg.share_of_total_percent.toFixed(2)}%`, `${t("crypto.structure.stable.shareSub")}${safeNumber(agg.change_24h_percent) !== null ? ` · ${formatSigned(agg.change_24h_percent)} · 24h` : ""}`, changeClass(agg.change_24h_percent)]);
+      if (safeNumber(agg.volume_24h_usd) !== null) stableCards.push([t("crypto.structure.stable.volume"), cryptoUsd(agg.volume_24h_usd, { compact: true }), null, ""]);
+      stableGrid.replaceChildren(...stableCards.filter(([, value]) => value !== "—").map(([title, value, sub, cls]) => cryptoStatCard(title, value, sub, cls)));
+      const since = stable.history?.since || null;
+      stableNote.hidden = !since;
+      stableNote.textContent = since ? `${t("crypto.structure.stable.history", { since, n: stable.history?.points ?? 0 })}${stable.stale ? ` · ${t("badge.stale")}` : ""}` : "";
+    }
+  }
 
   footer.replaceChildren();
   // Attribution right under the values, as the commercial terms expect.
