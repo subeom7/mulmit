@@ -13,3 +13,8 @@ Caddyfile     text eol=lf
 *.jpg binary
 *.pkl binary
 *.db  binary
+# 웹폰트도 바이너리다. text=auto의 자동 판별에 맡기면 언젠가 한 바이트가
+# 바뀌어 폰트가 통째로 깨진다.
+*.woff2 binary
+*.woff  binary
+*.ico   binary

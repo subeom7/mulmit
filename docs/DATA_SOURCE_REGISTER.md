@@ -155,9 +155,11 @@ notes: >
 같은 위험수용(DS-2026-001 개정) 아래 전달한다. Binance·Bybit 값은 Hyperliquid가 산출·공표하는
 2차 데이터이며 Mulmit은 두 거래소를 조회하지 않는다 — 응답 `relayed_by: "Hyperliquid"`,
 화면은 "Hyperliquid 전달값" 라벨·보조 행·로고 없음·레퍼럴 링크 없음(`PLAN_CRYPTO_SECTION.md`
-§5). 이력 lane(`HIP3_HISTORY_ENABLED`)은 섹션이 켜진 동안 BTC·ETH·SOL 일봉을 추가 저장한다
+§5). 이력 lane(`HIP3_HISTORY_ENABLED`)은 섹션이 켜진 동안 SOL 일봉을 추가 저장한다
 (코인당 가중치 ≈26, 한도 대비 미미) — `/api/crypto/volatility`의 실현 변동성(√365)·BTC 대
-합성자산 상관은 이 저장값의 산술 파생이다. 페이지 노출 스위치는 `CRYPTO_SECTION_ENABLED`
+합성자산 상관은 이 저장값의 산술 파생이다. **BTC·ETH와 `xyz:SKHX`는 2026-08-22부터 자산
+목록(`ASSETS`)에 상시로 있다** — 홈 보드가 크립토 섹션 스위치와 무관하게 쓰는 대표 시세라
+같은 lane·같은 게이트로 항상 수집한다(추가 마켓 1개, 상류 호출 +1/패스). 페이지 노출 스위치는 `CRYPTO_SECTION_ENABLED`
 (기본 false). 소스별 판정표는 `docs/PLAN_CRYPTO_SECTION.md` §3.
 
 ### 3.2 TradingView 공식 위젯

@@ -1,0 +1,258 @@
+{
+  "version": "2026-08-22",
+  "note": "화면에 붙는 용어 설명. 각 항목은 정의(def) / 읽는 법(read) / 흔한 오해(caution) 셋으로 끝난다. 투자 판단 기준이 아니라 화면에 쓰인 말의 뜻이다.",
+  "terms": {
+    "perp": {
+      "ko": {
+        "title": "무기한선물 (퍼프)",
+        "def": "만기가 없는 선물 계약입니다. 만기가 없는 대신 '펀딩비'라는 수수료를 주고받으며 가격을 기초자산에 붙여 둡니다.",
+        "read": "24시간 거래되기 때문에 한국장·미국장이 닫혀 있어도 값이 움직입니다. 그래서 장 밖 참고가로 씁니다.",
+        "caution": "현물 가격이 아닙니다. 실제 주식·코인을 그 값에 살 수 있다는 뜻이 아니고, 거래가 얇을 때는 실제 시세와 벌어질 수 있습니다."
+      },
+      "en": {
+        "title": "Perpetual futures (perp)",
+        "def": "A futures contract with no expiry. Instead of settling, traders exchange a periodic 'funding' fee that keeps the price tethered to the underlying.",
+        "read": "It trades 24 hours, so it keeps moving while Korean and US markets are closed — that is why we use it as an out-of-hours reference.",
+        "caution": "It is not a spot price. You cannot assume you could buy the actual share or coin at that level, and thin markets can drift away from it."
+      }
+    },
+    "mark-price": {
+      "ko": {
+        "title": "마크가격",
+        "def": "거래소가 청산 계산에 쓰려고 산출하는 기준가입니다. 마지막 체결가 하나가 아니라 호가와 외부 지수를 섞어 계산합니다.",
+        "read": "체결가보다 튀는 값이 적어서 참고가로 안정적입니다.",
+        "caution": "내가 실제로 체결할 수 있는 가격은 아닙니다. 호가창의 매수·매도 가격과는 다릅니다."
+      },
+      "en": {
+        "title": "Mark price",
+        "def": "The reference price an exchange computes for liquidation math — a blend of the order book and an external index rather than the last trade.",
+        "read": "It jumps around less than the last traded price, which makes it a steadier reference.",
+        "caution": "It is not a price you can necessarily fill at; the bid and ask will differ."
+      }
+    },
+    "vs-close": {
+      "ko": {
+        "title": "종가 대비",
+        "def": "마지막 정규장 종가와 지금 참고가를 비교한 변화율입니다.",
+        "read": "'장이 닫힌 뒤 지금까지 얼마나 움직였나'를 뜻합니다. 예: 8/20 종가 271,000원 대비 −0.5%.",
+        "caution": "다음 개장 시초가 예측이 아닙니다. 개장하면 호가·수급으로 전혀 다른 가격에서 시작할 수 있습니다."
+      },
+      "en": {
+        "title": "Versus the close",
+        "def": "The change between the last official session close and the current reference price.",
+        "read": "It answers \"how far has this moved since the market shut?\"",
+        "caution": "It is not a forecast of the next opening price."
+      }
+    },
+    "implied-krw": {
+      "ko": {
+        "title": "원화 환산 참고가",
+        "def": "달러로 거래되는 합성 무기한선물의 마크가격에 공식 고시환율을 곱해 원화로 바꾼 값입니다.",
+        "read": "'지금 이 종목이 원화로 대략 얼마쯤에 거래되고 있나'를 보는 값입니다.",
+        "caution": "환율이 실시간이 아니라 하루 한 번 고시값이라, 환율이 크게 움직인 날은 그만큼 어긋납니다."
+      },
+      "en": {
+        "title": "Implied won price",
+        "def": "The dollar-quoted synthetic perpetual's mark price converted to won using the official published FX rate.",
+        "read": "A rough answer to \"what is this trading at in won right now?\"",
+        "caution": "The FX rate is a once-a-day official figure, not live, so it lags on days the currency moves a lot."
+      }
+    },
+    "official-close": {
+      "ko": {
+        "title": "공식 종가",
+        "def": "금융위원회 공공데이터로 받은 그 종목의 마지막 정규장 확정 종가입니다.",
+        "read": "장 밖 참고가를 비교하는 기준선입니다. 날짜가 함께 표시됩니다.",
+        "caution": "확정까지 시간이 걸려서, 방금 끝난 장의 종가는 아직 반영되지 않았을 수 있습니다."
+      },
+      "en": {
+        "title": "Official close",
+        "def": "The confirmed regular-session close published through the FSC's public data service.",
+        "read": "It is the baseline the out-of-hours reference is measured against; the date is always shown.",
+        "caution": "Confirmation takes time, so a session that just ended may not be reflected yet."
+      }
+    },
+    "fx-official": {
+      "ko": {
+        "title": "고시환율 (매매기준율)",
+        "def": "한국은행이 영업일마다 한 번 발표하는 원/달러 기준 환율입니다.",
+        "read": "환산에 쓰는 공식 기준값이고, 표시된 날짜가 그 값의 기준일입니다.",
+        "caution": "실시간 환율이 아닙니다. 주말·야간에는 며칠 전 값이 그대로 쓰입니다."
+      },
+      "en": {
+        "title": "Official FX rate",
+        "def": "The won/dollar trading-reference rate the Bank of Korea publishes once each business day.",
+        "read": "It is the official conversion basis; the date shown is the rate's own date.",
+        "caution": "It is not a live rate — over weekends it stays fixed at the last published value."
+      }
+    },
+    "funding": {
+      "ko": {
+        "title": "펀딩비",
+        "def": "무기한선물에서 롱(매수)과 숏(매도)이 주기적으로 주고받는 수수료입니다. 값이 양수면 롱이 숏에게 냅니다.",
+        "read": "양수가 크면 롱 쏠림, 음수면 숏 쏠림으로 읽습니다. 보통 연율(APR)로 환산해 봅니다.",
+        "caution": "펀딩이 높다고 곧 하락한다는 뜻이 아닙니다. 거래소마다 기본 이자 성분이 달라 0% 기준선 자체가 다를 수 있습니다."
+      },
+      "en": {
+        "title": "Funding rate",
+        "def": "The periodic fee longs and shorts exchange on a perpetual. Positive means longs pay shorts.",
+        "read": "Large positive values indicate crowded longs; negative indicates crowded shorts. It is usually annualised (APR) for comparison.",
+        "caution": "High funding does not mean a drop is coming, and each venue's neutral baseline differs."
+      }
+    },
+    "open-interest": {
+      "ko": {
+        "title": "미결제약정 (OI)",
+        "def": "아직 청산되지 않고 열려 있는 계약의 총량입니다.",
+        "read": "가격이 오르는데 OI도 늘면 새 자금이 들어온 것, 가격이 오르는데 OI가 줄면 숏이 정리된 것으로 읽습니다.",
+        "caution": "거래량과 다릅니다. 거래량은 '얼마나 손이 바뀌었나', OI는 '얼마가 아직 걸려 있나'입니다."
+      },
+      "en": {
+        "title": "Open interest (OI)",
+        "def": "The total size of contracts still open — not yet closed out.",
+        "read": "Price up with OI up means new money; price up with OI down usually means shorts covering.",
+        "caution": "It is not volume. Volume is how much changed hands; OI is how much is still on the table."
+      }
+    },
+    "kospi200": {
+      "ko": {
+        "title": "코스피 200",
+        "def": "유가증권시장 대표 200종목으로 만든 지수입니다. 코스피 전체 시가총액의 대부분을 담습니다.",
+        "read": "'한국 대형주가 오늘 어땠나'의 요약값으로 봅니다.",
+        "caution": "코스피 지수와 다른 값입니다. 두 지수는 구성종목과 기준점이 다릅니다."
+      },
+      "en": {
+        "title": "KOSPI 200",
+        "def": "An index of 200 large listings on the KOSPI market, covering most of its market capitalisation.",
+        "read": "Treat it as the summary of how Korean large caps did.",
+        "caution": "It is a different number from the headline KOSPI index — different constituents and base."
+      }
+    },
+    "adr": {
+      "ko": {
+        "title": "ADR (미국주식예탁증서)",
+        "def": "외국 기업의 주식을 미국 시장에서 거래할 수 있게 만든 증서입니다.",
+        "read": "한국장이 닫힌 시간에도 미국에서 거래되기 때문에 야간 참고 신호로 씁니다. 1 ADR이 원주 몇 주에 해당하는지(비율)를 반드시 함께 봅니다.",
+        "caution": "ADR 가격 × 환율이 곧 국내 주가가 아닙니다. 프리미엄·할인이 상시로 붙습니다."
+      },
+      "en": {
+        "title": "ADR",
+        "def": "A US-listed receipt representing shares of a foreign company.",
+        "read": "It trades while the Korean market is closed, so it works as an overnight cue. Always check the ratio of shares per ADR.",
+        "caution": "ADR price times FX is not the domestic share price — a premium or discount is normal."
+      }
+    },
+    "kimchi-premium": {
+      "ko": {
+        "title": "김치프리미엄",
+        "def": "국내 거래소 코인 가격이 해외 시세보다 얼마나 비싼지를 나타내는 비율입니다.",
+        "read": "양수면 국내가 더 비싸다는 뜻이고, 보통 국내 수요가 몰릴 때 벌어집니다.",
+        "caution": "차익거래로 바로 먹을 수 있는 값이 아닙니다. 송금 한도·출금 시간·수수료·환전이 전부 빠져 있습니다."
+      },
+      "en": {
+        "title": "Kimchi premium",
+        "def": "How much more expensive a coin is on Korean exchanges than offshore.",
+        "read": "Positive means Korea is paying up, which usually happens when local demand surges.",
+        "caution": "It is not free arbitrage — transfer limits, withdrawal times, fees and FX are all excluded."
+      }
+    },
+    "fear-greed": {
+      "ko": {
+        "title": "공포·탐욕 지수",
+        "def": "변동성·거래량·설문 등을 섞어 0(극단적 공포)~100(극단적 탐욕)으로 표현한 심리 지표입니다.",
+        "read": "시장 참여자들이 지금 얼마나 겁먹었는지 또는 들떠 있는지를 한 숫자로 봅니다.",
+        "caution": "매수·매도 신호가 아닙니다. 극단값이 오래 유지되는 구간도 흔합니다."
+      },
+      "en": {
+        "title": "Fear & Greed index",
+        "def": "A sentiment gauge from 0 (extreme fear) to 100 (extreme greed), blending volatility, volume and surveys.",
+        "read": "One number for how frightened or euphoric participants currently are.",
+        "caution": "It is not a buy or sell signal; extremes can persist for a long time."
+      }
+    },
+    "stress-index": {
+      "ko": {
+        "title": "금융스트레스지수",
+        "def": "신용·주식·자금조달·변동성 등 여러 시장의 긴장도를 하나로 합친 지수입니다. 0이 장기 평균입니다.",
+        "read": "0보다 크면 평균보다 긴장된 상태, 작으면 평균보다 느슨한 상태입니다.",
+        "caution": "%가 아니라 포인트입니다. 위기 예측이 아니라 현재 상태의 요약입니다."
+      },
+      "en": {
+        "title": "Financial stress index",
+        "def": "A composite of credit, equity, funding and volatility conditions where zero is the long-run average.",
+        "read": "Above zero means conditions are tighter than average; below zero, looser.",
+        "caution": "The units are points, not percent, and it describes now — it does not predict a crisis."
+      }
+    },
+    "realized-vol": {
+      "ko": {
+        "title": "실현 변동성",
+        "def": "이미 일어난 가격 변동의 크기를 표준편차로 계산해 연율로 환산한 값입니다.",
+        "read": "숫자가 클수록 최근 가격이 심하게 흔들렸다는 뜻입니다.",
+        "caution": "VIX 같은 내재변동성이 아닙니다. 앞으로의 변동을 시장이 어떻게 보는지가 아니라, 과거에 얼마나 흔들렸는지입니다."
+      },
+      "en": {
+        "title": "Realized volatility",
+        "def": "The standard deviation of returns that already happened, annualised.",
+        "read": "Higher means the price has been swinging harder recently.",
+        "caution": "It is not implied volatility like the VIX — it looks backwards, not forwards."
+      }
+    },
+    "dominance": {
+      "ko": {
+        "title": "도미넌스",
+        "def": "전체 크립토 시가총액에서 특정 코인이 차지하는 비중입니다.",
+        "read": "비트코인 도미넌스가 오르면 자금이 대형 코인 쪽으로, 내리면 알트코인 쪽으로 기울었다고 읽습니다.",
+        "caution": "집계 기관마다 대상 코인이 달라 값이 다릅니다. 비중이 오르는 것과 가격이 오르는 것은 다른 이야기입니다."
+      },
+      "en": {
+        "title": "Dominance",
+        "def": "One coin's share of total crypto market capitalisation.",
+        "read": "Rising bitcoin dominance suggests money leaning to majors; falling suggests altcoins.",
+        "caution": "Different providers count different universes, and a rising share is not the same as a rising price."
+      }
+    },
+    "mdd": {
+      "ko": {
+        "title": "최대낙폭 (MDD)",
+        "def": "전고점에서 저점까지 가장 크게 빠졌던 폭입니다.",
+        "read": "'최악일 때 얼마나 잠겼었나'를 보는 값입니다. 물밑이라는 이름이 여기서 왔습니다.",
+        "caution": "과거 최대낙폭이 미래의 한계선은 아닙니다. 더 깊이 빠지는 일은 언제든 가능합니다."
+      },
+      "en": {
+        "title": "Maximum drawdown (MDD)",
+        "def": "The largest peak-to-trough decline over a period.",
+        "read": "It answers \"how far underwater did this go at its worst?\"",
+        "caution": "A past maximum is not a floor — deeper declines are always possible."
+      }
+    },
+    "bollinger": {
+      "ko": {
+        "title": "볼린저 밴드",
+        "def": "이동평균선 위아래로 표준편차 배수만큼 띠를 그린 지표입니다. 보통 20일 평균에 ±2 표준편차를 씁니다.",
+        "read": "띠가 좁아지면 변동이 잦아든 구간, 넓어지면 변동이 커진 구간입니다. 가격이 띠 밖으로 나가면 평소보다 큰 움직임이라는 뜻입니다.",
+        "caution": "밴드 상단이 매도, 하단이 매수 신호가 아닙니다. 강한 추세에서는 가격이 상단을 타고 계속 오르기도 합니다."
+      },
+      "en": {
+        "title": "Bollinger Bands",
+        "def": "Bands drawn a number of standard deviations above and below a moving average — usually ±2σ around a 20-period mean.",
+        "read": "Narrow bands mean a quiet stretch, wide bands a volatile one. Price outside the band means an unusually large move.",
+        "caution": "The upper band is not a sell signal — in a strong trend price can ride it for a long time."
+      }
+    },
+    "rsi": {
+      "ko": {
+        "title": "RSI (상대강도지수)",
+        "def": "일정 기간 오른 폭과 내린 폭의 비율을 0~100으로 표현한 지표입니다. 보통 14일을 씁니다.",
+        "read": "70 위는 최근 오름폭이 컸던 구간, 30 아래는 내림폭이 컸던 구간으로 읽습니다.",
+        "caution": "70이 곧 고점, 30이 곧 저점이 아닙니다. 추세가 강하면 RSI는 한쪽에 오래 머뭅니다."
+      },
+      "en": {
+        "title": "RSI",
+        "def": "The ratio of recent gains to recent losses, scaled 0–100, usually over 14 periods.",
+        "read": "Above 70 means gains have dominated recently; below 30, losses have.",
+        "caution": "70 is not a top and 30 is not a bottom — in a strong trend RSI stays pinned for weeks."
+      }
+    }
+  }
+}
