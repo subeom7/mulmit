@@ -88,7 +88,7 @@ def _top(rows: list[dict[str, Any]], key: str, *, limit: int, reverse: bool, min
 _METHOD = {
     "ko": (
         "Hyperliquid 자체 DEX 전체 무기한선물 한 스냅샷의 정렬·합계입니다. 24h = markPx 대 prevDayPx, OI(USD) = openInterest × 가격, "
-        "펀딩 APR = 시간당 펀딩 × 24 × 365. 급등·급락과 펀딩 극단값은 24h 거래대금 기준 이상 시장만 대상(표시), OI·거래대금 상위는 전체."
+        "펀딩 APR = 시간당 펀딩 × 24 × 365. 24h 상위·하위와 펀딩 극단값은 24h 거래대금 기준 이상 시장만 대상(표시), OI·거래대금 상위는 전체."
     ),
     "en": (
         "Sorting and sums over one snapshot of every perpetual on Hyperliquid's own DEX. 24h = markPx vs prevDayPx, OI (USD) = "
