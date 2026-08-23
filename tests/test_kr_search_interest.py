@@ -304,3 +304,36 @@ def test_too_few_samples_of_that_weekday_means_no_number(open_lane, roster):
     assert stock["vs_baseline"] is None
     assert stock["baseline"] is None
     assert stock["compared_to"]["samples"] < kr_search_interest.MIN_WEEKDAY_SAMPLES
+
+
+def test_the_screen_never_puts_raw_ratios_side_by_side():
+    """표에 세우는 숫자는 자기 대비 지표뿐이어야 한다.
+
+    데이터랩은 요청 기간의 최댓값을 100으로 둔다. 2026-08-24 실측에서 삼성전자의
+    최대가 100이고 LG에너지솔루션의 최대도 100이었다 — 서로 다른 요청이라 **다른
+    자로 잰 100**이다. 그 원값을 한 열에 나란히 세우면 화면이 조용히 거짓말을 한다.
+
+    원값은 추이선의 모양으로만 쓴다(모양은 계열 안에서 닫혀 있어 안전하다).
+    """
+    from pathlib import Path
+
+    static = Path(__file__).resolve().parents[1] / "app" / "static"
+    source = (static / "monitor.js").read_text(encoding="utf-8")
+    start = source.index("function renderKrSearchInterest()")
+    block = source[start : source.index("function renderKrEtf()", start)]
+
+    assert "vs_baseline" in block and "percentile" in block, "비교 열은 자기 대비 지표다"
+    assert "stock.latest" not in block and "stock.peak" not in block, (
+        "원값(latest·peak)을 표에 세우면 요청이 다른 종목끼리 다른 자로 잰 값이 나란히 선다"
+    )
+    assert "mulmitSparkline" in block, "추이선은 홈 타일·야간 카드와 같은 함수를 써야 창 규칙이 갈리지 않는다"
+
+
+def test_the_section_says_what_it_is_not():
+    """절댓값이 없으므로 검색량 순위처럼 읽히면 안 된다 — 화면이 그걸 밝혀야 한다."""
+    from pathlib import Path
+
+    html = (Path(__file__).resolve().parents[1] / "app" / "static" / "kr.html").read_text(encoding="utf-8")
+    assert 'id="kr-search-interest"' in html
+    assert "ksi.badgeNotRank" in html, "검색량 순위가 아니라는 배지가 있어야 한다"
+    assert "ksi.badgeWeekday" in html, "같은 요일끼리 견준다는 사실이 화면에 있어야 한다"

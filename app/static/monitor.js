@@ -175,6 +175,10 @@ const TEXT = {
     "krh.colReporter": "보고자", "krh.colType": "보고구분",
     "krh.window": "최근 {days}일 공시 {total}건 중 {count}건",
     "kre.title": "ETF 보드", "kre.copy": "거래대금 상위 ETF의 종가·NAV·괴리율입니다. 장 마감 확정값이며 실시간이 아닙니다.",
+    "ksi.title": "종목 검색 관심도", "ksi.note": "네이버에서 평소보다 많이 찾아본 종목",
+    "ksi.copy": "네이버 통합검색의 90일 검색 추이입니다. 주식 검색은 주말에 평일의 10~20%로 떨어지므로 같은 요일끼리 견줍니다. 검색량 순위가 아니라 각 종목이 자기 평소와 얼마나 다른지입니다.",
+    "ksi.badgeRelative": "상대값 · 절댓값 아님", "ksi.badgeWeekday": "같은 요일끼리 비교", "ksi.badgeNotRank": "검색량 순위 아님",
+    "ksi.colVs": "평소 대비", "ksi.colPercentile": "90일 위치", "ksi.colTrend": "추이", "ksi.thinSample": "표본 부족",
     "kre.colName": "종목", "kre.colClose": "종가", "kre.colDay": "등락", "kre.colNav": "NAV", "kre.colPremium": "괴리율", "kre.colIndex": "기초지수", "kre.colValue": "거래대금",
     "kre.window": "상장 {total}종목 중 거래대금 상위 {count}", "kre.asof": "기준 {date}",
     "ptr.title": "미 하원 의원 주식 거래", "ptr.copy": "STOCK Act에 따른 주기거래보고(PTR)를 그대로 옮깁니다. 금액은 구간으로만 공시되며, 수기 제출분은 원문 링크로 안내합니다. 상원은 수집 경로가 막혀 있어 포함되지 않습니다.",
@@ -346,6 +350,10 @@ const TEXT = {
     "krp.colDate": "Filed", "krp.colCompany": "Company", "krp.colRatio": "Stake", "krp.colChange": "Change", "krp.colShares": "Shares held", "krp.colReason": "Reason",
     "krp.detailPending": "Detail pending", "krp.window": "{count} of {total} filings in the last {days} days",
     "kre.title": "ETF board", "kre.copy": "Top ETFs by traded value with close, NAV and the premium/discount. Confirmed end-of-day values, not live quotes.",
+    "ksi.title": "Search interest by stock", "ksi.note": "Looked up more than usual on NAVER",
+    "ksi.copy": "NAVER integrated-search interest over 90 days. Stock searches fall to 10-20% of weekday levels at weekends, so each day is compared with the same weekday. This is not a search-volume ranking — it shows how far each stock sits from its own normal.",
+    "ksi.badgeRelative": "Relative, not absolute", "ksi.badgeWeekday": "Same weekday compared", "ksi.badgeNotRank": "Not a volume ranking",
+    "ksi.colVs": "vs usual", "ksi.colPercentile": "90-day position", "ksi.colTrend": "Trend", "ksi.thinSample": "Too few samples",
     "kre.colName": "Fund", "kre.colClose": "Close", "kre.colDay": "Day", "kre.colNav": "NAV", "kre.colPremium": "Premium", "kre.colIndex": "Underlying index", "kre.colValue": "Value traded",
     "kre.window": "Top {count} of {total} listed, by traded value", "kre.asof": "As of {date}",
     "ptr.title": "US House stock trades", "ptr.copy": "Periodic transaction reports under the STOCK Act, relayed verbatim. Amounts are disclosed only as ranges; scanned paper filings link to the original. The Senate is not included because its portal blocks server collection.",
@@ -603,7 +611,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, cryptoRegime: null, cryptoNews: null, bioTrials: null, bioFda: null, bioAdcomm: null, bioMfds: null, bioMfdsFilter: "notable", krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, usOvernight: null, calendar: null,
+  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, cryptoRegime: null, cryptoNews: null, bioTrials: null, bioFda: null, bioAdcomm: null, bioMfds: null, bioMfdsFilter: "notable", krOvernight: null, krPension: null, krHoldings: null, krEtf: null, krSearchInterest: null, usPtr: null, usOvernight: null, calendar: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -991,6 +999,7 @@ function renderJumpNav() {
   [{ id: "kr-overnight", text: t("kro.title") },
     { id: "kr-indices", text: t("kridx.title") },
     { id: "kr-etf", text: t("kre.title") },
+    { id: "kr-search-interest", text: t("ksi.title") },
     { id: "kr-events", text: t("krev.title") },
     { id: "kr-pension", text: t("krp.title") },
     { id: "constituent-heatmap", text: t("tv.title") },
@@ -1310,6 +1319,7 @@ const PAGE_FETCHES = {
   bioTrials: ["bio"],
   bioFda: ["bio"],
   bioAdcomm: ["bio"],
+  krSearchInterest: ["kr"],
   bioMfds: ["bio"],
 };
 
@@ -1317,7 +1327,7 @@ async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usOvernight, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, cryptoRegime, cryptoLiquidations, cryptoNews, bioTrials, bioFda, bioAdcomm, bioMfds, newsVideos] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usOvernight, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, cryptoRegime, cryptoLiquidations, cryptoNews, bioTrials, bioFda, bioAdcomm, bioMfds, newsVideos, krSearchInterest] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/market/sentiment", "sentiment"), request("/api/kr/indices", "krIndices"),
@@ -1344,10 +1354,11 @@ async function loadCore() {
     request("/api/bio/adcomm", "bioAdcomm"),
     request("/api/bio/mfds", "bioMfds"),
     request("/api/news/videos", "newsVideos"),
+    request("/api/kr/search-interest", "krSearchInterest"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
   state.stress = stress; state.sentiment = sentiment; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krHoldings = krHoldings;
-  state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usOvernight = usOvernight; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
+  state.krEvents = krEvents; state.krEtf = krEtf; state.krSearchInterest = krSearchInterest; state.usPtr = usPtr; state.usOvernight = usOvernight; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
   state.cryptoOverview = cryptoOverview; state.cryptoSentiment = cryptoSentiment; state.cryptoVolatility = cryptoVolatility;
   state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure; state.cryptoGas = cryptoGas; state.cryptoBoard = cryptoBoard; state.cryptoRegime = cryptoRegime; state.cryptoLiquidations = cryptoLiquidations; state.cryptoNews = cryptoNews; state.bioTrials = bioTrials; state.bioFda = bioFda; state.bioAdcomm = bioAdcomm; state.bioMfds = bioMfds; state.newsVideos = newsVideos;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets"); ingestPayload(sentimentRecordPayload(sentiment), "sentiment");
@@ -1355,7 +1366,7 @@ async function loadCore() {
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderKrSearchInterest(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
   renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas(); renderCryptoBoard(); renderCryptoRegime(); renderCryptoLiquidations(); renderUsOvernight(); renderCryptoNews(); renderBioCatalysts(); renderBioTrials(); renderBioFda(); renderBioAdcomm(); renderBioMfds(); renderNewsVideos();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
@@ -1634,6 +1645,97 @@ function renderKrPension() {
   const basis = document.createElement("span");
   basis.textContent = state.lang === "ko" ? (payload.basis_ko || "") : (payload.basis_en || "");
   footer.append(link, note, basis);
+}
+
+/* 종목 검색 관심도.
+ *
+ * 이 표에서 가장 조심할 것은 **원값을 나란히 놓지 않는 것**이다. 데이터랩은 요청
+ * 기간의 최댓값을 100으로 두므로, 한 요청에 다섯 종목씩 들어가면 요청이 갈릴 때마다
+ * 100의 뜻도 갈린다(2026-08-24 실측: 삼성전자 최대 100, LG에너지솔루션도 최대 100 —
+ * 서로 다른 자다). 그래서 화면에 세우는 숫자는 자기 평소 대비 배수와 자기 창 안의
+ * 백분위뿐이고, 원값은 추이선의 모양으로만 쓴다.
+ *
+ * 추이선은 홈 타일·야간 카드와 같은 함수를 부른다 — 창을 자르는 규칙이 화면마다
+ * 갈리면 같은 그림이 다른 뜻이 된다. */
+function renderKrSearchInterest() {
+  const section = $("#kr-search-interest"); if (!section) return;
+  const stateNode = $("#ksi-state"), panel = $("#ksi-panel");
+  const payload = state.krSearchInterest;
+  const stocks = Array.isArray(payload?.stocks) ? payload.stocks : [];
+
+  if (!stocks.length) {
+    // 게이트가 닫혀 있으면 섹션을 아예 숨긴다 — 빈 표보다 없는 편이 정직하다.
+    if (disabledCode("krSearchInterest") || !payload) { section.hidden = true; return; }
+    section.hidden = false; panel.hidden = true; stateNode.hidden = false;
+    stateNode.textContent = `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+  section.hidden = false; stateNode.hidden = true; panel.hidden = false;
+
+  const body = $("#ksi-body"); body.replaceChildren();
+  const scroll = document.createElement("div"); scroll.className = "table-scroll";
+  const table = document.createElement("table"); table.className = "accessible-table kridx-table";
+  table.innerHTML = `<thead><tr>
+    <th scope="col">${t("krev.colCode")}</th><th scope="col">${t("kre.colName")}</th>
+    <th scope="col" class="num">${t("ksi.colVs")}</th><th scope="col" class="num">${t("ksi.colPercentile")}</th>
+    <th scope="col">${t("ksi.colTrend")}</th>
+  </tr></thead>`;
+  const tbody = document.createElement("tbody");
+
+  for (const stock of stocks) {
+    const tr = document.createElement("tr");
+    const codeTd = document.createElement("td"); codeTd.className = "krp-code";
+    const link = document.createElement("a"); link.href = stock.hub || `/stock/${stock.code}`;
+    link.textContent = stock.code || "—"; codeTd.append(link);
+    const nameTd = document.createElement("td"); nameTd.className = "krp-company";
+    nameTd.textContent = stock.name || "—";
+
+    // 배수. 1을 넘으면 평소보다 많이 찾아본 것이고, 그 방향으로만 색을 준다.
+    const multiple = safeNumber(stock.vs_baseline);
+    const vsTd = document.createElement("td");
+    vsTd.className = `num ${multiple === null ? "" : multiple > 1 ? "up" : multiple < 1 ? "down" : ""}`;
+    if (multiple === null) {
+      // 요일 표본이 얇아 숫자를 못 낸 경우다. 빈칸으로 두면 0으로 읽힌다.
+      vsTd.textContent = t("ksi.thinSample");
+      vsTd.classList.add("muted");
+    } else {
+      vsTd.textContent = `×${multiple.toFixed(2)}`;
+    }
+
+    const percentile = safeNumber(stock.percentile);
+    const pctTd = document.createElement("td"); pctTd.className = "num";
+    pctTd.textContent = percentile === null ? "—" : `${percentile.toFixed(0)}%`;
+
+    const trendTd = document.createElement("td");
+    const series = Array.isArray(stock.series) ? stock.series : [];
+    const spark = window.mulmitSparkline?.(series.map((point) => ({ date: point.period, value: point.ratio })));
+    if (spark) {
+      const wrap = document.createElement("div");
+      wrap.className = `tile-spark card-spark ${spark.tone}`;
+      const period = document.createElement("span");
+      period.className = "spark-period"; period.textContent = spark.label;
+      wrap.append(period, spark.node);
+      trendTd.append(wrap);
+    } else {
+      trendTd.textContent = "—";
+    }
+
+    tr.append(codeTd, nameTd, vsTd, pctTd, trendTd);
+    tbody.append(tr);
+  }
+  table.append(tbody); scroll.append(table); body.append(scroll);
+
+  const footer = $("#ksi-footer"); footer.replaceChildren();
+  const basis = document.createElement("span");
+  basis.textContent = state.lang === "ko" ? (payload.basis_ko || "") : (payload.basis_en || payload.basis_ko || "");
+  footer.append(basis);
+  const attribution = payload.attribution || {};
+  if (attribution.url) {
+    const link = document.createElement("a");
+    link.href = attribution.url; link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.textContent = state.lang === "ko" ? (attribution.text_ko || attribution.text) : attribution.text;
+    footer.append(link);
+  }
 }
 
 function renderKrEtf() {
