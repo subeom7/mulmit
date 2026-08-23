@@ -1,9 +1,15 @@
 """시장 뉴스 영상 lane — 못 박은 뉴스 채널의 최근 업로드.
 
-표시하는 것은 **제목 + 채널명 + 게시시각 + 유튜브 링크**뿐이다. 썸네일은
-일부러 가져오지 않는다: 이미지를 부르는 순간 독자가 아무것도 누르기 전에
-구글로 요청이 나가기 때문이고, 이 lane의 설계 전체가 "누르기 전에는 구글로
-아무 요청도 가지 않는다"에 걸려 있다(등록부 §3.28, `DS-2026-020`).
+표시하는 것은 **제목 + 채널명 + 게시시각 + 썸네일 + 유튜브 링크**다. 썸네일은
+구글 CDN에서 브라우저가 직접 받아 온다 — 우리 서버로 복사해 두는 편이
+프라이버시에는 더 낫지만, Developer Policies III.E.1.a가 유튜브 콘텐츠의
+다운로드·캐시·저장을 서면 승인 없이 금지한다. 그래서 **URL만 실어 나르고
+바이트는 나르지 않는다**(등록부 §3.28, `DS-2026-020`).
+
+그 대가는 시청자의 IP 하나이고, 실측으로는 그게 전부다: `i.ytimg.com`은
+`Set-Cookie`를 하나도 주지 않는다(2026-08-23). 쿠키가 붙는 것은 플레이어이고,
+플레이어는 **누르기 전에는 로드되지 않는다**. 이 lane이 지키는 약속은 바뀌지
+않았다 — 바뀐 것은 그 약속의 범위를 정확히 말하는 방식이다.
 
 수집은 ingest 전용이고 web은 저장 블롭만 읽는다. 채널은 **ID로** 못 박는다 —
 핸들은 채널을 식별하지 못한다(providers/youtube.py의 실측 참조).
@@ -34,24 +40,24 @@ log = logging.getLogger(__name__)
 
 CACHE_KEY = "news_videos_v1"
 PER_CHANNEL = 4          # 채널당 이만큼 읽어서
-MAX_VIDEOS = 12          # 언어별로 번갈아 이만큼 남긴다
+MAX_VIDEOS = 16          # 채널을 돌아가며 이만큼 남긴다(언어별 8편)
 RETENTION_DAYS = 30      # 약관 상한 그대로. 넘기지 않는다.
 
 ATTRIBUTION = "Video listings from YouTube"
 ATTRIBUTION_KO = "영상 목록 출처: YouTube"
 
 BASIS_KO = (
-    "못 박은 뉴스 채널의 최근 업로드 목록입니다. 제목·채널·게시시각만 가져오며, "
-    "썸네일은 부르지 않습니다 — 누르기 전에는 유튜브로 아무 요청도 나가지 "
-    "않습니다. 재생을 누르면 그때 유튜브가 로드되고 유튜브의 쿠키·정책이 "
+    "못 박은 뉴스 채널의 최근 업로드 목록입니다. 썸네일은 구글 이미지 서버에서 "
+    "직접 불러오며(쿠키는 심지 않습니다), 재생을 누르기 전까지 유튜브 플레이어는 "
+    "로드되지 않습니다. 재생을 누르면 그때 유튜브가 로드되고 유튜브의 쿠키·정책이 "
     "적용됩니다. 영상의 내용은 각 채널의 것이며 이 사이트의 수치와는 무관합니다."
 )
 BASIS_EN = (
-    "Recent uploads from a pinned set of news channels. Titles, channel names and "
-    "publication times only — no thumbnails are fetched, so nothing reaches YouTube "
-    "until you ask for it. Pressing play loads YouTube at that moment, under "
-    "YouTube's own cookies and policies. The videos are their channels' content and "
-    "carry none of this site's figures."
+    "Recent uploads from a pinned set of news channels. Thumbnails load from Google's "
+    "image servers, which set no cookies; the YouTube player itself does not load "
+    "until you press play. Pressing play loads YouTube at that moment, under YouTube's "
+    "own cookies and policies. The videos are their channels' content and carry none "
+    "of this site's figures."
 )
 
 

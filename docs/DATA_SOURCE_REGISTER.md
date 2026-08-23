@@ -1316,7 +1316,10 @@ recheck_on: 2026-11-22
 | 함정 3 — 채널 편중 | 언어로만 번갈아 뽑으니 업로드 잦은 채널이 슬롯을 독식했다(한국어 6칸 중 YTN 4칸, 영어 6칸 중 블룸버그 4칸). **채널 단위 라운드로빈**으로 3/3/3/3 |
 | 채널 선정 | SBS Biz 뉴스 `UCbMjg2EvXs_RUGW-KrdM3pw`, YTN `UChlgI3UHCOnwUGzWzbJ3H5w`, CNBC Television `UCrp_UI8XtuYfpiqluWLD7Lw`, Bloomberg Television `UCIALMKvObZNtJ6AmdCLP7Lg`. **한국경제TV는 제외** — "월요일 공략할 TOP4" 류 팁 콘텐츠와 무릎 관절염 건강매거진이 섞여 수치 옆에 둘 수 없다 |
 | 30일 상한 이행 | 문서가 아니라 **코드로** 지킨다. 각 항목에 `stored_at`을 박고, 읽는 시점에 30일 지난 항목은 떨어뜨린다(`_within_retention`). ingest가 멈춰도 블롭이 스스로 빈다 — "갱신하고 있을 것"이라는 가정보다 안전하다 |
-| 썸네일 | **가져오지 않는다.** 약관상 표시는 가능하지만 이미지 한 장이 곧 "클릭 전 구글 요청"이라 파사드의 전제가 깨진다. 목록은 제목·채널·시각뿐 |
+| 썸네일 (2026-08-23 재검토) | **URL은 나르고 바이트는 안 나른다.** 우리 서버로 프록시하면 프라이버시가 가장 깨끗하지만 **Developer Policies III.E.1.a**가 "download, import, backup, cache, or store copies of YouTube audiovisual content without YouTube's prior written approval"을 금지하고, ToS §1은 API Data를 "data, content (**including audiovisual content**)"로 정의한다 — 재호스팅은 이 조항이 겨냥하는 행위라 서면 승인 없이는 안 한다. 그래서 브라우저가 구글 CDN에서 직접 받는다 |
+| 그 비용의 실측 | `i.ytimg.com`은 **`Set-Cookie` 0건**(2026-08-23 헤더 확인). `Access-Control-Allow-Origin: *`인 순수 이미지 CDN이라 비용은 **IP 하나**이고, `referrerpolicy="no-referrer"`로 어느 페이지인지는 안 넘긴다. 쿠키(`VISITOR_INFO1_LIVE`·`YSC`·`GPS`·`IDE`)가 붙는 지점은 여전히 **재생 클릭**뿐이다 |
+| 썸네일 크기 | 16:9는 `medium`(320×180)·`maxres`(1280×720)뿐. `high`(480×360)·`standard`(640×480)는 4:3이라 와이드 영상에 검은 띠가 생긴다. `maxres`는 없는 영상이 흔해 `srcset` 후보로만 쓰고 404면 글자 카드로 물러난다 |
+| 언어 분리 | 읽는 언어의 채널만 노출한다(한국어 화면=SBS Biz·YTN, 영어 화면=CNBC·Bloomberg). 수집은 16편(언어별 8편)이고 거르는 것은 화면에서 한다 — 언어 토글이 즉시 반영된다 |
 
 ```yaml
 decision_id: DS-2026-020
@@ -1334,12 +1337,15 @@ approved_scope:
   public_display: true
   server_json_relay: true
 conditions:
-  - click-to-load facade; no request to Google before the viewer asks for one
+  - click-to-load facade for the player; no player loads before a click
   - stored search results refreshed well inside 30 days
   - YouTube named as the source; our own figures kept visually separate
   - the embedded player is used unmodified, with no overlay and no autoplay
   - the privacy policy states what reaches Google and when
-  - no thumbnail is fetched; the listing is text only
+  - thumbnail URLs are displayed from Google's CDN; the bytes are never copied,
+    cached or re-hosted (III.E.1.a)
+  - thumbnails carry referrerpolicy=no-referrer and load lazily
+  - the player is still built only on a click; cookies enter there, not earlier
   - channels are pinned by id, never by handle
 enforced_by:
   - tests/test_news_videos.py (retention cutoff, facade, player size, balance)

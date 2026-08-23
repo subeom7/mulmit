@@ -20,10 +20,19 @@ Three things measured on 2026-08-23 shape this module:
    draw one unit each from the 10,000-a-day pool. Reading each channel's uploads
    playlist keeps the search bucket entirely unused.
 
-3. **No thumbnails.** The images are ours to display under the API terms, but
-   fetching one is a request to Google before the reader has asked for anything.
-   The whole point of the facade is that nothing reaches Google until a click,
-   so titles and channel names travel and images do not.
+3. **Thumbnail URLs travel; thumbnail bytes do not.** Re-hosting the images on
+   our own server would be the cleanest thing for privacy, but section III.E.1.a
+   of the Developer Policies forbids downloading, caching or storing copies of
+   YouTube content without written approval, so the browser loads them from
+   Google's CDN. That costs the viewer an IP address — and measurably nothing
+   else: `i.ytimg.com` returned no `Set-Cookie` at all on 2026-08-23, unlike the
+   player, which sets `VISITOR_INFO1_LIVE`, `YSC`, `GPS` and DoubleClick `IDE`.
+   The player still loads only on a click.
+
+4. **Only the 16:9 sizes are usable.** `high` (480x360) and `standard` (640x480)
+   are 4:3 and letterbox a widescreen video with black bars; `medium` (320x180)
+   and `maxres` (1280x720) are the real aspect. `maxres` is often absent, so it
+   is carried when present and never depended on.
 """
 
 from __future__ import annotations
@@ -102,6 +111,22 @@ def parse_uploads_playlists(raw: Any) -> dict[str, str]:
     return playlists
 
 
+def _thumbnails(raw: Any) -> list[dict[str, Any]]:
+    """16:9인 크기만, 좁은 것부터. 4:3짜리는 검은 띠가 생겨 쓰지 않는다."""
+    if not isinstance(raw, dict):
+        return []
+    sizes: list[dict[str, Any]] = []
+    for key in ("medium", "maxres"):
+        entry = raw.get(key)
+        if not isinstance(entry, dict):
+            continue
+        url, width = entry.get("url"), entry.get("width")
+        if not isinstance(url, str) or not url.startswith("https://"):
+            continue
+        sizes.append({"url": url, "width": int(width) if isinstance(width, int) else 0})
+    return sorted(sizes, key=lambda size: size["width"])
+
+
 def parse_uploads(raw: Any, channel: NewsChannel) -> list[dict[str, Any]]:
     """Recent videos as title, channel, time and watch link — no image, by design."""
     if not isinstance(raw, dict):
@@ -122,6 +147,7 @@ def parse_uploads(raw: Any, channel: NewsChannel) -> list[dict[str, Any]]:
             continue
         videos.append({
             "video_id": video_id,
+            "thumbnails": _thumbnails(snippet.get("thumbnails")),
             "title": title.strip(),
             # 유튜브가 돌려주는 채널명에는 앞뒤 공백이 붙어 오기도 한다(" YTN").
             "channel": str(
