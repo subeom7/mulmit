@@ -201,3 +201,43 @@ def test_the_parser_drops_unreadable_rows_instead_of_guessing():
 def test_an_empty_result_is_an_error_not_an_empty_chart():
     with pytest.raises(DataUnavailable):
         naver_datalab.parse_trend({"results": []}, fetched_at="2026-08-23T00:00:00Z")
+
+
+def test_the_request_goes_to_the_ncp_gateway_with_ncp_headers():
+    """경로도 헤더도 구 개발자센터와 다르다 — 실측으로 확정했다(2026-08-24).
+
+    게이트웨이는 키가 없어도 **401(경로 있음) 대 404(경로 없음)**로 답이 갈려서,
+    자격증명을 만지지 않고 확인할 수 있었다:
+
+        POST naveropenapi.apigw.ntruss.com/datalab/v1/search → 401  ← 여기 있다
+        POST naverapihub.apigw.ntruss.com/datalab/v1/search  → 404  ← 검색 API가 간 곳
+
+    헤더 이름도 같은 방법으로 갈랐다. 구 헤더를 보내면 "Authentication information
+    are missing"(못 봤다), NCP 헤더를 보내면 "Invalid authentication information"
+    (읽고 거절했다)이다.
+
+    이 갈림은 권리 판정과 겹친다 — 데이터랩은 검색 특약이 붙은 API HUB 약관이
+    아니라 `AI·Naver API 서비스 이용약관`을 따른다(등록부 §3.29·§6.7).
+    """
+    captured: dict[str, object] = {}
+
+    def transport(url, body, headers, timeout):
+        captured["url"] = url
+        captured["headers"] = headers
+        return {
+            "startDate": "2026-08-01",
+            "endDate": "2026-08-01",
+            "timeUnit": "date",
+            "results": [{"title": "x", "keywords": ["x"], "data": [{"period": "2026-08-01", "ratio": 1}]}],
+        }
+
+    provider = naver_datalab.DatalabProvider(
+        client_id="id", client_secret="secret", transport=transport
+    )
+    provider.fetch_trend([("x", ["x"])], start=dt.date(2026, 8, 1), end=dt.date(2026, 8, 1))
+
+    assert captured["url"] == "https://naveropenapi.apigw.ntruss.com/datalab/v1/search"
+    headers = captured["headers"]
+    assert headers["X-NCP-APIGW-API-KEY-ID"] == "id"
+    assert headers["X-NCP-APIGW-API-KEY"] == "secret"
+    assert "X-Naver-Client-Id" not in headers, "구 개발자센터 헤더로는 게이트웨이가 못 알아본다"
