@@ -816,15 +816,28 @@
   document.addEventListener("mulmit:render", (event) => {
     const state = event.detail;
     if (!state) return;
-    // legal.css와 같은 규칙(.lang-ko/.lang-en)을 쓰기 위한 축. monitor.js는
-    // <html lang>만 바꾸는데, lang 속성으로 직접 셀렉트하면 문서 전체가 걸린다.
-    document.documentElement.dataset.lang = lang();
     const session = sessionState();
     renderTape(state);
     renderBoard(state, session);
     rollOvernightPrices();
   });
 
+  /* legal.css와 같은 규칙(.lang-ko/.lang-en)을 쓰기 위한 축.
+   *
+   * lang 속성으로 직접 셀렉트하면 <html lang="en">에 걸려 문서 전체가 사라지므로
+   * data-lang을 따로 둔다. 언어를 바꾸는 주체는 페이지마다 다르다 — 대시보드는
+   * monitor.js, /analytics는 자기 인라인 스크립트다. 누가 바꾸든 <html lang>은
+   * 건드리므로 그것만 지켜보고 따라간다. */
+  function mirrorLang() {
+    document.documentElement.dataset.lang = lang();
+  }
+  function setupLangMirror() {
+    mirrorLang();
+    new MutationObserver(mirrorLang)
+      .observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
+  }
+
+  setupLangMirror();
   setupMode();
   setupDisclosures();
   setupTerms();

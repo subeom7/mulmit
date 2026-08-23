@@ -135,6 +135,20 @@ body {
 .fng-attribution, .fng-attribution a { font-size: var(--fs-xs); }
 .cstr-stable .cstr-sub { font-size: var(--fs-xs); }
 .crypto-news .meta, .crypto-news .meta span, .coin-tag { font-size: var(--fs-xs); }
+/* /analytics — 자체 인라인 CSS로 짜인 페이지. 표 머리·펄스 카드·기간 버튼·
+ * 내부자 역할 줄이 10~11.5px였다. */
+.data-table th, .data-table td, .insider-table th, .insider-table td { font-size: var(--fs-xs); }
+.pulse-label, .pulse-note, .period-button { font-size: var(--fs-xs); }
+.insider-source, .heatmap-subtitle, .heatmap-footer { font-size: var(--fs-xs); }
+.sub, .intro-copy { font-size: var(--fs-xs); }
+/* 이 페이지의 규칙이 더 구체적이라 선택자 무게를 맞춘다. */
+.insider-table .role { font-size: var(--fs-xs); }
+.insider-stat .k, .insider-stat .n { font-size: var(--fs-xs); }
+.insider-basis, .kr-meta { font-size: var(--fs-xs); }
+.kpi .d, .hub-badge { font-size: var(--fs-xs); }
+
+/* 예외 하나: 차트 축 눈금(SVG <text>)은 12px 바닥에서 뺀다. 산문이 아니라
+ * 그래프 부속이고, 축 위에서 서로 겹치면 오히려 못 읽는다. */
 .metric-card .meta span, .kro-card .meta span { font-size: var(--fs-xs); }
 /* /kr — 공시 표의 원문 링크와 주말 카드 내부. 8.5~10px로 짜여 있었다. */
 .krp-source { font-size: var(--fs-xs); }
