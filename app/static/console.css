@@ -256,6 +256,28 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 .card-spark { height: 34px; padding-left: 0; margin: var(--sp-2) 0 0; }
 .card-spark .spark-period { padding-bottom: 6px; }
 
+/* 검색 관심도 표.
+ *
+ * 순위 칸에는 숫자와 변동 배지가 함께 선다. 변동은 어제 대비이고 하루에 한 번만
+ * 바뀌므로 깜빡이지 않는다 — 초 단위로 움직이면 없는 움직임을 그리는 것이다. */
+.ksi-rank { white-space: nowrap; }
+.ksi-rank b { font: 700 var(--fs-sm)/1 var(--num); font-variant-numeric: tabular-nums; }
+.ksi-move { margin-left: 4px; font: 650 var(--fs-xs)/1 var(--num); font-variant-numeric: tabular-nums; }
+.ksi-move.up { color: var(--up); }
+.ksi-move.down { color: var(--down); }
+/* 자리를 옮긴 줄. 눈이 그 줄을 다시 찾도록 배경만 옅게 남긴다 — 표 전체가
+   깜빡이면 어느 줄이 움직였는지 오히려 안 보인다. */
+.kridx-table tr.rank-up td { background: color-mix(in srgb, var(--up) 7%, transparent); }
+.kridx-table tr.rank-down td { background: color-mix(in srgb, var(--down) 7%, transparent); }
+/* 기준 종목 표시. 100의 출처를 밝히지 않으면 100이 절댓값처럼 읽힌다. */
+.ksi-anchor-tag {
+  padding: 1px 5px; border: 1px solid var(--line); border-radius: 999px;
+  color: var(--faint); font: 650 var(--fs-xs)/1.4 var(--num); font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+}
+/* 정렬 토글은 헤더가 아니라 본문 위에 선다 — margin-left:auto를 되돌린다. */
+#ksi-sort { margin: 0 0 var(--sp-3); }
+
 .tile-spark.up { color: var(--up); }
 .tile-spark.down { color: var(--down); }
 .tile-spark.flat { color: var(--ink-3); }

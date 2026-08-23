@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
   <link rel="stylesheet" href="/static/monitor.css?v=08cab506e0">
   <link rel="stylesheet" href="/static/tokens.css?v=ccb2656202">
-  <link rel="stylesheet" href="/static/console.css?v=f4201cc4bd">
+  <link rel="stylesheet" href="/static/console.css?v=8c0067e8e2">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -196,6 +196,10 @@
         <span class="status-badge warn" data-i18n="ksi.badgeWeekday">같은 요일끼리 비교</span>
         <span class="status-badge warn" data-i18n="ksi.badgeNotRank">검색량 순위 아님</span>
       </div>
+      <div class="segmented" id="ksi-sort" role="group" aria-label="정렬 기준">
+        <button type="button" data-ksi-sort="spike" class="active" aria-pressed="true"><span data-i18n="ksi.sortSpike">평소 대비</span></button>
+        <button type="button" data-ksi-sort="level" aria-pressed="false"><span data-i18n="ksi.sortLevel">관심도 수준</span></button>
+      </div>
       <div id="ksi-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
       <div class="panel" id="ksi-panel" hidden>
         <div id="ksi-body"></div>
@@ -262,7 +266,7 @@
 
   <script>window.MULMIT_PAGE = "kr";</script>
   <script src="/static/console.js?v=fafc741bcd" defer></script>
-  <script src="/static/monitor.js?v=61d98bac62" defer></script>
+  <script src="/static/monitor.js?v=bf43e85faa" defer></script>
   <script src="/static/search.js?v=e2093e0d4d" defer></script>
 </body>
 </html>

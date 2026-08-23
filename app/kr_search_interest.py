@@ -192,8 +192,54 @@ def _describe(series: list[dict[str, Any]]) -> dict[str, Any]:
 def _weekday_of(period: str) -> int:
     return dt.date.fromisoformat(period).weekday()
 
-def _batches(entries: list[dict[str, str]]) -> list[list[dict[str, str]]]:
-    return [entries[i : i + MAX_GROUPS] for i in range(0, len(entries), MAX_GROUPS)]
+def _batches(others: list[dict[str, str]]) -> list[list[dict[str, str]]]:
+    """앵커가 **모든 요청에 들어간다** — 그래서 한 요청에 담을 나머지는 하나 적다.
+
+    앵커가 요청을 잇는 다리다. 같은 날 앵커 대비 비율은 그 요청의 정규화와 무관하다
+    (분자와 분모가 같은 요청에서 나오므로 100의 뜻이 갈려도 비율은 안 갈린다).
+    그래서 요청이 갈려도 종목 간 수준을 견줄 수 있다.
+    """
+    room = MAX_GROUPS - 1
+    return [others[i : i + room] for i in range(0, len(others), room)] or [[]]
+
+
+def _level_series(stock: dict[str, float], anchor: dict[str, float]) -> dict[str, float]:
+    """앵커=100으로 놓은 같은 날 수준. 요청의 정규화가 분자·분모에서 함께 사라진다."""
+    out: dict[str, float] = {}
+    for day, value in stock.items():
+        base = anchor.get(day)
+        if base:
+            out[day] = value / base * 100.0
+    return out
+
+
+def _attach_level_ranks(stocks: list[dict[str, Any]]) -> None:
+    """수준 순위와 어제 대비 순위 변동.
+
+    수준은 앵커 대비 비율이라 요청을 가로질러 비교할 수 있다. 순위 변동은
+    **데이터에 실제로 있는 움직임**이다 — 하루에 한 번 바뀐다. 실측(2026-08-24,
+    최근 7일)에서 하루 평균 이동이 0.00~0.22칸, 최대 1칸이었다. 그래서 다듬지
+    않고 그날 값을 쓴다: 잡음이 아니라 신호이고, 다듬으면 오히려 늦어진다.
+
+    이 화면에서 **"실시간"은 없다**. 데이터랩은 일별이고 마지막 점이 하루~이틀
+    전이다(실측: 8/24에 요청해도 마지막 점이 8/22). 초 단위로 움직이는 UI는
+    없는 움직임을 그리는 것이다.
+    """
+    def order(key: str) -> list[str]:
+        ranked = [row for row in stocks if row.get(key) is not None]
+        ranked.sort(key=lambda row: -float(row[key]))
+        return [row["code"] for row in ranked]
+
+    today_order = order("level")
+    prev_order = order("_level_prev")
+    for row in stocks:
+        code = row["code"]
+        rank = today_order.index(code) + 1 if code in today_order else None
+        was = prev_order.index(code) + 1 if code in prev_order else None
+        row["level_rank"] = rank
+        # 어제 순위를 모르면 변동도 모른다 — 0으로 두면 "제자리"라는 거짓이 된다.
+        row["level_rank_change"] = None if (rank is None or was is None) else was - rank
+        row.pop("_level_prev", None)
 
 
 def build(
@@ -214,48 +260,96 @@ def build(
     entries = [entry for entry in (_label_for(code, keyword) for code, keyword in wanted) if entry]
     if not entries:
         raise DataUnavailable("워치리스트의 종목이 국내 로스터에 없다")
-    end = (today or seoul_today()) - dt.timedelta(days=LAG_DAYS)
-    start = end - dt.timedelta(days=WINDOW_DAYS - 1)
-    client = provider or _provider()
+    end_date = (today or seoul_today()) - dt.timedelta(days=LAG_DAYS)
+    start_date = end_date - dt.timedelta(days=WINDOW_DAYS - 1)
 
+    # 앵커는 다리다. 모든 요청에 함께 넣어, 요청이 갈려도 종목 간 수준을 견준다.
+    anchor_entry = next((entry for entry in entries if entry["code"] == config.NAVER_DATALAB_ANCHOR), entries[0])
+    others = [entry for entry in entries if entry["code"] != anchor_entry["code"]]
+
+    client = provider or _provider()
     stocks: list[dict[str, Any]] = []
-    for index, batch in enumerate(_batches(entries)):
+    anchor_row: dict[str, Any] | None = None
+
+    for index, batch in enumerate(_batches(others)):
+        wanted_entries = [anchor_entry, *batch]
         # groupName이 응답의 title로 돌아오므로 그것이 매칭 열쇠다.
-        groups = [(entry["keyword"], [entry["keyword"]]) for entry in batch]
+        groups = [(entry["keyword"], [entry["keyword"]]) for entry in wanted_entries]
         try:
-            payload = client.fetch_trend(groups, start=start, end=end, time_unit="date")
+            payload = client.fetch_trend(groups, start=start_date, end=end_date, time_unit="date")
         except (DataUnavailable, RateLimited):
             # 한 묶음이 실패해도 나머지는 살린다. 빈 자리를 지어내지는 않는다.
             log.warning("datalab batch %s failed", index, exc_info=True)
             continue
         by_title = {group["title"]: group for group in payload.get("groups") or []}
+
+        anchor_group = by_title.get(anchor_entry["keyword"])
+        anchor_points = (
+            {point["period"]: float(point["ratio"]) for point in anchor_group["series"]}
+            if anchor_group and anchor_group.get("series")
+            else {}
+        )
+        # 앵커가 이 요청에서 안 왔으면 이 묶음의 수준은 잴 수 없다. 지어내지 않는다.
+        if anchor_row is None and anchor_points:
+            anchor_row = {
+                **anchor_entry,
+                "hub": f"/stock/{anchor_entry['code']}",
+                "batch": index,
+                "is_anchor": True,
+                "series": anchor_group["series"],
+                "level": 100.0,
+                **_describe(anchor_group["series"]),
+            }
+
         for entry in batch:
             group = by_title.get(entry["keyword"])
             if not group or not group.get("series"):
                 continue
+            points = {point["period"]: float(point["ratio"]) for point in group["series"]}
+            levels = _level_series(points, anchor_points)
+            days = sorted(levels)
             stocks.append(
                 {
                     **entry,
                     "hub": f"/stock/{entry['code']}",
-                    # 같은 batch 안에서만 ratio 원값을 비교할 수 있다.
+                    # 같은 batch 안에서만 ratio 원값을 비교할 수 있다. 수준(level)은
+                    # 앵커로 정규화가 사라져서 batch를 가로질러 비교해도 된다.
                     "batch": index,
+                    "is_anchor": False,
                     "series": group["series"],
+                    "level": round(levels[days[-1]], 3) if days else None,
+                    "_level_prev": round(levels[days[-2]], 3) if len(days) > 1 else None,
                     **_describe(group["series"]),
                 }
             )
 
+    if anchor_row is not None:
+        anchor_days = sorted(point["period"] for point in anchor_row["series"])
+        anchor_row["_level_prev"] = 100.0 if len(anchor_days) > 1 else None
+        stocks.append(anchor_row)
+
     if not stocks:
         raise DataUnavailable("데이터랩이 워치리스트에서 읽을 수 있는 계열을 주지 않았다")
 
-    # 줄 세우기는 자기 대비 급등 정도로만 한다 — 검색량 순위가 아니다.
-    # 배수를 못 낸 종목(같은 요일 표본 부족)은 뒤로 — 0으로 세우면 급락처럼 보인다.
-    stocks.sort(key=lambda row: (row.get("vs_baseline") is not None, row.get("vs_baseline") or 0.0, row.get("percentile") or 0.0), reverse=True)
+    _attach_level_ranks(stocks)
 
+    # 표의 기본 정렬은 자기 대비 급등 정도다 — 검색량 순위가 아니다.
+    # 배수를 못 낸 종목(같은 요일 표본 부족)은 뒤로 — 0으로 세우면 급락처럼 보인다.
+    stocks.sort(
+        key=lambda row: (
+            row.get("vs_baseline") is not None,
+            row.get("vs_baseline") or 0.0,
+            row.get("percentile") or 0.0,
+        ),
+        reverse=True,
+    )
     return {
         "generated_at": dt.datetime.now(dt.UTC).isoformat().replace("+00:00", "Z"),
-        "window": {"start": start.isoformat(), "end": end.isoformat(), "days": WINDOW_DAYS},
+        "window": {"start": start_date.isoformat(), "end": end_date.isoformat(), "days": WINDOW_DAYS},
         "stocks": stocks,
         "count": len(stocks),
+        # 수준의 기준이 무엇인지 밝히지 않으면 100이 절댓값처럼 읽힌다.
+        "anchor": {"code": anchor_entry["code"], "name": anchor_entry["name"]},
         "basis_ko": (
             f"네이버 통합검색 {WINDOW_DAYS}일 검색 추이입니다. 값은 절댓값이 아니라 "
             "요청 기간의 최댓값을 100으로 둔 상대값입니다. 주식 검색은 주말에 평일의 10~20%로 "
@@ -263,11 +357,12 @@ def build(
             "배수와 백분위로만 합니다. 검색량 순위가 아닙니다."
         ),
         "basis_en": (
-            f"NAVER integrated-search interest over {WINDOW_DAYS} days. Values are relative to "
-            "each request's own peak (100), not absolute counts. Stock search drops to 10-20% of "
-            "weekday levels at weekends, so each day is compared with the same weekday. Stocks "
-            "are ranked only by "
-            "how far each sits above its own baseline. This is not a search-volume ranking."
+            f"**Korean-language** searches on NAVER over {WINDOW_DAYS} days. This measures what "
+            "Korean retail investors are looking up, so the keywords stay in Korean — searching an "
+            "English company name on NAVER would count a different, far smaller population. "
+            "Values are relative to each request's own peak (100), not absolute counts. Stock "
+            "search drops to 10-20% of weekday levels at weekends, so each day is compared with "
+            "the same weekday. This is not a search-volume ranking."
         ),
         "attribution": {
             "text": DATALAB_ATTRIBUTION_EN,
