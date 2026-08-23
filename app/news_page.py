@@ -99,7 +99,8 @@ def _filter_html(counts: dict[str, int]) -> str:
 
 def render() -> dict[str, str]:
     """(필터, 항목, 근거, 출처 표기) — 템플릿이 그대로 끼워 넣는다."""
-    payload = signal_feed.build_feed(limit=PAGE_ITEMS)
+    # 이 페이지는 기록을 다 보여 주는 곳이라 홈의 7일 문을 통과하지 않는다.
+    payload = signal_feed.build_feed(limit=PAGE_ITEMS, max_age_days=None)
     items = [item for item in payload.get("items") or [] if isinstance(item, dict)]
 
     counts: dict[str, int] = {}
