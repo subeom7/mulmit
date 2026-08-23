@@ -151,6 +151,7 @@ const TEXT = {
     "uso.copy": "미국장이 닫혀 있어도 대형주를 추종하는 합성 무기한선물은 24시간 거래됩니다. 마지막 정규장 마감(16:00 ET) 시점의 퍼프 가격과 지금을 견줍니다. 현물 호가가 아니고 다음 시초가를 예측하지도 않습니다.",
     "uso.badgePerp": "USD 합성 무기한선물", "uso.sinceClose": "{date} 마감 이후",
     "uso.close": "마감 시점 퍼프", "uso.noClose": "마감 시점 값 없음",
+    "uso.more": "종목 더 보기 →",
     "kridx.title": "코스피 지수군", "kridx.copy": "대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 연중 최고에서 얼마나 내려와 있는지까지 한 표에서 봅니다.",
     "kridx.peakTip": "연중 최고 {value} · {date}", "kridx.peakNone": "연중 최고가 아직 공표되지 않았습니다",
     "kridx.lowNote": "연중 최저는 금융위가 확정 전 0으로 공표해 표시하지 않습니다",
@@ -321,6 +322,7 @@ const TEXT = {
     "uso.copy": "Even with the US market shut, synthetic perpetuals tracking these names trade around the clock. Each card compares the mark now with the mark at the last regular-session close (16:00 ET). Not a spot quote, and not a prediction of the next open.",
     "uso.badgePerp": "USD synthetic perpetual", "uso.sinceClose": "since the {date} close",
     "uso.close": "Mark at close", "uso.noClose": "No value at the close",
+    "uso.more": "More names →",
     "kridx.title": "KOSPI index family", "kridx.copy": "Confirmed closes for the headline indices and KOSPI 200 sectors, with year-to-date change and how far each sits below its high for the year.",
     "kridx.peakTip": "High for the year {value} · {date}", "kridx.peakNone": "No high published yet for this index",
     "kridx.lowNote": "The year's low is published as 0 until it is finalised, so it is not shown",
@@ -1283,7 +1285,7 @@ const PAGE_FETCHES = {
   krEvents: ["kr"],
   krEtf: ["kr"],
   usPtr: ["us"],
-  usOvernight: ["us"],
+  usOvernight: ["landing", "us"],
   usEvents: ["us"],
   calendar: ["landing", "us"],
   cryptoOverview: ["landing", "crypto"],
@@ -2621,10 +2623,28 @@ function usoCloseDate(iso) {
 
 // 주식 가격은 소수 두 자리다. 암호화폐 포맷터는 $0.09100처럼 잔돈까지 보여
 // 주려고 자릿수를 늘리는데, 그 규칙을 주식에 쓰면 $218.040이 된다.
-function usoPrice(value) {
-  return value === null ? "—" : `$${value.toLocaleString("en-US", {
-    minimumFractionDigits: 2, maximumFractionDigits: 2,
-  })}`;
+function usoPrice(value, card) {
+  if (value === null) return "—";
+  if (card && card.kind === "index") {
+    // 지수는 USDC로 호가되는 참조 포인트다. 달러 기호를 붙이면 없는 통화를
+    // 만들고, 종목 카드와 나란히 서면 "29,321달러"로 읽힌다.
+    return `${value.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} pt`;
+  }
+  return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/* 어느 카드를 세울지는 페이지가 정한다.
+ *
+ * 홈은 훑는 자리라 한 줄(3칸)이면 충분하다 — 시장 전체가 어느 쪽인지(지수)와
+ * 가장 두꺼운 종목 둘. /us는 종목을 다 보여 주되 지수는 뺀다. 바로 아래에
+ * XYZ100 전용 서랍이 이미 있어서, 같은 값이 한 화면에 두 번 서게 된다. */
+const USO_HOME_IDS = ["nasdaq", "nvda", "tsla"];
+
+function usoVisibleCards(cards) {
+  if (PAGE === "landing") {
+    return USO_HOME_IDS.map((id) => cards.find((card) => card.id === id)).filter(Boolean);
+  }
+  return cards.filter((card) => card.kind !== "index");
 }
 
 function renderUsOvernight() {
@@ -2646,7 +2666,7 @@ function renderUsOvernight() {
   }
 
   const cards = Array.isArray(payload.cards) ? payload.cards : [];
-  const usable = cards.filter((card) => safeNumber(card.price?.value) !== null);
+  const usable = usoVisibleCards(cards.filter((card) => safeNumber(card.price?.value) !== null));
   if (!usable.length) {
     section.hidden = false; grid.hidden = true; footer.hidden = true;
     stateNode.hidden = false;
@@ -2672,7 +2692,7 @@ function renderUsOvernight() {
 
     const priceNode = document.createElement("div");
     priceNode.className = "kro-price";
-    priceNode.textContent = usoPrice(price);
+    priceNode.textContent = usoPrice(price, card);
     const previous = usoPrevValues.get(card.id);
     if (previous !== undefined && price !== previous) {
       priceNode.classList.add(price > previous ? "tick-up" : "tick-down");
@@ -2696,8 +2716,8 @@ function renderUsOvernight() {
       wrap.append(dt, dd); return wrap;
     };
     const refClose = safeNumber(card.session_reference?.close);
-    meta.append(row(t("uso.close"), usoPrice(refClose)));
-    meta.append(row(t("kro.mark"), change24h === null ? usoPrice(price) : `${usoPrice(price)} · 24h ${formatSigned(change24h)}`));
+    meta.append(row(t("uso.close"), usoPrice(refClose, card)));
+    meta.append(row(t("kro.mark"), change24h === null ? usoPrice(price, card) : `${usoPrice(price, card)} · 24h ${formatSigned(change24h)}`));
     meta.append(row(t("crypto.volume"), cryptoUsd(safeNumber(card.volume_24h_usd), { compact: true })));
 
     const badges = document.createElement("div");
