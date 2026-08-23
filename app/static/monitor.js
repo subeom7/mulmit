@@ -179,6 +179,9 @@ const TEXT = {
     "ksi.copy": "네이버 통합검색의 90일 검색 추이입니다. 주식 검색은 주말에 평일의 10~20%로 떨어지므로 같은 요일끼리 견줍니다. 검색량 순위가 아니라 각 종목이 자기 평소와 얼마나 다른지입니다.",
     "ksi.badgeRelative": "상대값 · 절댓값 아님", "ksi.badgeWeekday": "같은 요일끼리 비교", "ksi.badgeNotRank": "검색량 순위 아님",
     "ksi.colVs": "평소 대비", "ksi.colPercentile": "90일 위치", "ksi.colTrend": "추이", "ksi.thinSample": "표본 부족",
+    "ksi.colRank": "순위", "ksi.colLevel": "관심도 수준", "ksi.anchorTag": "기준",
+    "ksi.sortSpike": "평소 대비", "ksi.sortLevel": "관심도 수준",
+    "ksi.anchorNote": "수준은 {name}를 100으로 둔 상대 위치입니다. 검색량의 절댓값이 아니며, 순위 변동은 전날 대비입니다.",
     "kre.colName": "종목", "kre.colClose": "종가", "kre.colDay": "등락", "kre.colNav": "NAV", "kre.colPremium": "괴리율", "kre.colIndex": "기초지수", "kre.colValue": "거래대금",
     "kre.window": "상장 {total}종목 중 거래대금 상위 {count}", "kre.asof": "기준 {date}",
     "ptr.title": "미 하원 의원 주식 거래", "ptr.copy": "STOCK Act에 따른 주기거래보고(PTR)를 그대로 옮깁니다. 금액은 구간으로만 공시되며, 수기 제출분은 원문 링크로 안내합니다. 상원은 수집 경로가 막혀 있어 포함되지 않습니다.",
@@ -354,6 +357,9 @@ const TEXT = {
     "ksi.copy": "NAVER integrated-search interest over 90 days. Stock searches fall to 10-20% of weekday levels at weekends, so each day is compared with the same weekday. This is not a search-volume ranking — it shows how far each stock sits from its own normal.",
     "ksi.badgeRelative": "Relative, not absolute", "ksi.badgeWeekday": "Same weekday compared", "ksi.badgeNotRank": "Not a volume ranking",
     "ksi.colVs": "vs usual", "ksi.colPercentile": "90-day position", "ksi.colTrend": "Trend", "ksi.thinSample": "Too few samples",
+    "ksi.colRank": "Rank", "ksi.colLevel": "Interest level", "ksi.anchorTag": "baseline",
+    "ksi.sortSpike": "vs usual", "ksi.sortLevel": "Interest level",
+    "ksi.anchorNote": "Level is measured against {name} at 100. It is not an absolute search count, and rank moves are against the previous day.",
     "kre.colName": "Fund", "kre.colClose": "Close", "kre.colDay": "Day", "kre.colNav": "NAV", "kre.colPremium": "Premium", "kre.colIndex": "Underlying index", "kre.colValue": "Value traded",
     "kre.window": "Top {count} of {total} listed, by traded value", "kre.asof": "As of {date}",
     "ptr.title": "US House stock trades", "ptr.copy": "Periodic transaction reports under the STOCK Act, relayed verbatim. Amounts are disclosed only as ranges; scanned paper filings link to the original. The Senate is not included because its portal blocks server collection.",
@@ -611,7 +617,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, cryptoRegime: null, cryptoNews: null, bioTrials: null, bioFda: null, bioAdcomm: null, bioMfds: null, bioMfdsFilter: "notable", krOvernight: null, krPension: null, krHoldings: null, krEtf: null, krSearchInterest: null, usPtr: null, usOvernight: null, calendar: null,
+  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, cryptoRegime: null, cryptoNews: null, bioTrials: null, bioFda: null, bioAdcomm: null, bioMfds: null, bioMfdsFilter: "notable", krOvernight: null, krPension: null, krHoldings: null, krEtf: null, krSearchInterest: null, ksiSort: "spike", usPtr: null, usOvernight: null, calendar: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -1672,11 +1678,26 @@ function renderKrSearchInterest() {
   }
   section.hidden = false; stateNode.hidden = true; panel.hidden = false;
 
+  // 두 질문은 다르다. "누가 평소보다 튀었나"(spike)와 "누가 더 많이 검색되나"(level).
+  // 어느 쪽을 보고 있는지 화면이 밝혀야 하고, 정렬만 바뀌지 값은 안 바뀐다.
+  const mode = state.ksiSort === "level" ? "level" : "spike";
+  $$("#ksi-sort button").forEach((button) => {
+    const active = button.dataset.ksiSort === mode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+
+  const rows = stocks.slice().sort((a, b) => mode === "level"
+    ? (safeNumber(b.level) ?? -1) - (safeNumber(a.level) ?? -1)
+    : (safeNumber(b.vs_baseline) ?? -1) - (safeNumber(a.vs_baseline) ?? -1));
+
   const body = $("#ksi-body"); body.replaceChildren();
   const scroll = document.createElement("div"); scroll.className = "table-scroll";
   const table = document.createElement("table"); table.className = "accessible-table kridx-table";
   table.innerHTML = `<thead><tr>
+    <th scope="col" class="num">${t("ksi.colRank")}</th>
     <th scope="col">${t("krev.colCode")}</th><th scope="col">${t("kre.colName")}</th>
+    <th scope="col" class="num">${t("ksi.colLevel")}</th>
     <th scope="col" class="num">${t("ksi.colVs")}</th><th scope="col" class="num">${t("ksi.colPercentile")}</th>
     <th scope="col" id="ksi-trend-head">${t("ksi.colTrend")}</th>
   </tr></thead>`;
@@ -1684,13 +1705,47 @@ function renderKrSearchInterest() {
   // 열 이름에 붙일 기간. 첫 줄에서 정해지고, 다른 줄이 다르면 그 줄에만 적는다.
   let spanLabel = null;
 
-  for (const stock of stocks) {
+  rows.forEach((stock, position) => {
     const tr = document.createElement("tr");
+    // 자리를 옮긴 줄은 잠깐 밝아진다. 값이 아니라 순위가 움직인 것이라, 눈이 그
+    // 줄을 다시 찾을 수 있어야 한다.
+    const change = safeNumber(stock.level_rank_change);
+    if (mode === "level" && change) tr.classList.add(change > 0 ? "rank-up" : "rank-down");
+
+    const rankTd = document.createElement("td"); rankTd.className = "num ksi-rank";
+    const rank = safeNumber(stock.level_rank);
+    if (mode === "level" && rank !== null) {
+      const number = document.createElement("b"); number.textContent = String(rank);
+      rankTd.append(number);
+      if (change) {
+        const badge = document.createElement("span");
+        badge.className = `ksi-move ${change > 0 ? "up" : "down"}`;
+        badge.textContent = `${change > 0 ? "▲" : "▼"}${Math.abs(change)}`;
+        rankTd.append(badge);
+      }
+    } else {
+      rankTd.textContent = mode === "level" ? "—" : String(position + 1);
+      rankTd.classList.add("muted");
+    }
+
     const codeTd = document.createElement("td"); codeTd.className = "krp-code";
     const link = document.createElement("a"); link.href = stock.hub || `/stock/${stock.code}`;
     link.textContent = stock.code || "—"; codeTd.append(link);
     const nameTd = document.createElement("td"); nameTd.className = "krp-company";
     nameTd.textContent = stock.name || "—";
+    if (stock.is_anchor) {
+      // 100의 출처를 밝힌다. 안 밝히면 100이 절댓값처럼 읽힌다.
+      const tag = document.createElement("span"); tag.className = "ksi-anchor-tag";
+      tag.textContent = t("ksi.anchorTag"); nameTd.append(" ", tag);
+    }
+
+    // 수준: 앵커=100 기준. 요청이 갈려도 견줄 수 있는 유일한 위치다.
+    const level = safeNumber(stock.level);
+    const levelTd = document.createElement("td"); levelTd.className = "num";
+    levelTd.textContent = level === null ? "—"
+      : level >= 10 ? level.toFixed(1)
+      : level >= 1 ? level.toFixed(2)
+      : level.toFixed(3);
 
     // 배수. 1을 넘으면 평소보다 많이 찾아본 것이고, 그 방향으로만 색을 준다.
     const multiple = safeNumber(stock.vs_baseline);
@@ -1714,10 +1769,9 @@ function renderKrSearchInterest() {
     if (spark) {
       const wrap = document.createElement("div");
       wrap.className = `tile-spark card-spark ${spark.tone}`;
-      // 기간은 열 이름에 한 번만 적는다 — 여덟 줄에 "30일"을 여덟 번 쓰면 그건
-      // 정보가 아니라 소음이다. 다만 어느 한 줄의 창이 짧으면(계열이 덜 모인
-      // 종목) 그 줄에만 적는다 — 같은 열의 선들이 다른 기간이면 모양을 나란히
-      // 읽을 수 없기 때문이다.
+      // 기간은 열 이름에 한 번만 적는다 — 열 줄에 "30일"을 열 번 쓰면 그건 정보가
+      // 아니라 소음이다. 다만 어느 줄의 창이 짧으면 그 줄에만 적는다 — 같은 열의
+      // 선들이 다른 기간이면 모양을 나란히 읽을 수 없기 때문이다.
       if (spanLabel === null) spanLabel = spark.label;
       else if (spark.label !== spanLabel) {
         const period = document.createElement("span");
@@ -1730,9 +1784,9 @@ function renderKrSearchInterest() {
       trendTd.textContent = "—";
     }
 
-    tr.append(codeTd, nameTd, vsTd, pctTd, trendTd);
+    tr.append(rankTd, codeTd, nameTd, levelTd, vsTd, pctTd, trendTd);
     tbody.append(tr);
-  }
+  });
   table.append(tbody); scroll.append(table); body.append(scroll);
   if (spanLabel) {
     const head = table.querySelector("#ksi-trend-head");
@@ -1741,7 +1795,9 @@ function renderKrSearchInterest() {
 
   const footer = $("#ksi-footer"); footer.replaceChildren();
   const basis = document.createElement("span");
-  basis.textContent = state.lang === "ko" ? (payload.basis_ko || "") : (payload.basis_en || payload.basis_ko || "");
+  const anchorName = payload.anchor?.name;
+  const written = state.lang === "ko" ? (payload.basis_ko || "") : (payload.basis_en || payload.basis_ko || "");
+  basis.textContent = anchorName ? `${written} ${t("ksi.anchorNote", { name: anchorName })}` : written;
   footer.append(basis);
   const attribution = payload.attribution || {};
   if (attribution.url) {
@@ -4677,6 +4733,15 @@ function setupControls() {
   $("#corr-period")?.addEventListener("change", () => { if (state.correlationLoaded) loadCorrelation(); });
   $$("#tv-period button").forEach((node) => { const active = node.dataset.period === state.tvPeriod; node.classList.toggle("active", active); node.setAttribute("aria-pressed", String(active)); });
 }
+
+// 검색 관심도 표의 정렬 토글. 값은 그대로고 순서만 바뀐다 — 두 질문이 다르기
+// 때문이다: "누가 평소보다 튀었나"와 "누가 더 많이 검색되나".
+document.getElementById("ksi-sort")?.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-ksi-sort]");
+  if (!button) return;
+  state.ksiSort = button.dataset.ksiSort;
+  renderKrSearchInterest();
+});
 
 setupControls(); applyLocale(); setupLazySections(); loadCore();
 setInterval(() => { if (!document.hidden) loadCore(); }, 15 * 60 * 1000);

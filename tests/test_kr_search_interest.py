@@ -96,12 +96,19 @@ def test_the_lane_stays_shut_without_credentials(monkeypatch, roster):
         kr_search_interest.build(["005930"])
 
 
-def test_more_than_five_stocks_split_into_separate_requests(open_lane, roster):
-    """다섯을 넘으면 요청이 갈라진다 — 상류가 주제어 5개까지만 받는다."""
+def test_every_request_carries_the_anchor(open_lane, roster):
+    """상류는 주제어 5개까지 받는데, 그중 한 자리는 늘 앵커가 쓴다.
+
+    앵커가 요청을 잇는 다리다. 같은 날 앵커 대비 비율은 그 요청의 정규화와
+    무관하므로(분자·분모가 같은 요청에서 나온다), 요청이 갈려도 종목 간 수준을
+    견줄 수 있다. 앵커를 빠뜨린 요청의 종목들은 수준을 잴 방법이 없다.
+    """
     provider = FakeProvider({name: _flat(50.0) for name in roster.values()})
     payload = kr_search_interest.build(list(roster), today=dt.date(2026, 8, 23), provider=provider)
     assert len(provider.calls) == 2
-    assert [len(call) for call in provider.calls] == [5, 1]
+    assert [len(call) for call in provider.calls] == [5, 2], "앵커 1 + 나머지 4가 한 요청의 상한"
+    for call in provider.calls:
+        assert call[0] == "삼성전자", "앵커는 모든 요청의 첫 자리에 있어야 한다"
     assert payload["count"] == 6
 
 
@@ -397,3 +404,101 @@ def test_a_watchlist_entry_without_an_override_still_uses_the_company_name(open_
     payload = kr_search_interest.build(today=dt.date(2026, 8, 23), provider=provider)
     assert provider.calls == [["삼성전자"]]
     assert payload["stocks"][0]["name"] == "삼성전자"
+
+
+def test_the_level_is_measured_against_the_anchor_not_the_request(open_lane, roster):
+    """수준은 요청을 가로질러 비교할 수 있어야 한다.
+
+    데이터랩은 요청마다 최댓값을 100으로 둔다. 그래서 두 요청의 원값은 다른 자로
+    잰 길이다. 앵커를 두 요청에 함께 넣으면 그 문제가 사라진다 — 같은 날 앵커
+    대비 비율은 분자와 분모가 같은 요청에서 나오므로 정규화가 약분된다.
+
+    여기서는 두 번째 묶음의 종목이 앵커의 절반이다. 요청이 갈렸어도 수준은
+    50이어야 한다.
+    """
+    provider = FakeProvider(
+        {
+            "삼성전자": _flat(80.0),
+            "SK하이닉스": _flat(40.0),
+            "NAVER": _flat(20.0),
+            "LG화학": _flat(10.0),
+            "현대차": _flat(8.0),
+            # 두 번째 묶음. 상류는 이 요청에서 앵커를 100으로 정규화해서 준다고
+            # 가정해도(FakeProvider는 원값을 그대로 주지만) 비율은 같아야 한다.
+            "삼성바이오로직스": _flat(40.0),
+        }
+    )
+    payload = kr_search_interest.build(list(roster), today=dt.date(2026, 8, 23), provider=provider)
+    levels = {stock["code"]: stock["level"] for stock in payload["stocks"]}
+    assert levels["005930"] == 100.0, "앵커가 기준이다"
+    assert levels["000660"] == 50.0
+    assert levels["207940"] == 50.0, "다른 요청에 있어도 같은 자로 잰 값이어야 한다"
+
+
+def test_rank_change_is_unknown_rather_than_zero_when_yesterday_is_missing(open_lane, roster):
+    """어제 순위를 모르면 변동도 모른다 — 0으로 두면 "제자리"라는 거짓이 된다."""
+    provider = FakeProvider({"삼성전자": [50.0], "SK하이닉스": [25.0]})
+    payload = kr_search_interest.build(
+        ["005930", "000660"], today=dt.date(2026, 8, 23), provider=provider
+    )
+    for stock in payload["stocks"]:
+        assert stock["level_rank"] is not None
+        assert stock["level_rank_change"] is None
+
+
+def test_rank_change_reports_real_movement(open_lane, roster):
+    """어제 3등이던 종목이 오늘 1등이면 ▲2다."""
+    # 마지막 날에 순서가 뒤집힌다.
+    provider = FakeProvider(
+        {
+            "삼성전자": _flat(100.0),
+            "SK하이닉스": _flat(10.0, 89) + [1.0],
+            "NAVER": _flat(5.0, 89) + [50.0],
+        }
+    )
+    payload = kr_search_interest.build(
+        ["005930", "000660", "035420"], today=dt.date(2026, 8, 23), provider=provider
+    )
+    by_code = {stock["code"]: stock for stock in payload["stocks"]}
+    assert by_code["035420"]["level_rank"] == 2
+    assert by_code["035420"]["level_rank_change"] == 1, "3등 → 2등이면 ▲1"
+    assert by_code["000660"]["level_rank_change"] == -1
+
+
+def test_the_two_sort_modes_ask_different_questions():
+    """정렬 토글은 값을 바꾸지 않는다 — 순서만 바꾼다.
+
+    "누가 평소보다 튀었나"(vs_baseline)와 "누가 더 많이 검색되나"(level)는 다른
+    질문이고, 답도 다르게 나온다. 어느 쪽을 보고 있는지 화면이 밝혀야 한다.
+    """
+    from pathlib import Path
+
+    static = Path(__file__).resolve().parents[1] / "app" / "static"
+    source = (static / "monitor.js").read_text(encoding="utf-8")
+    start = source.index("function renderKrSearchInterest()")
+    block = source[start : source.index("function renderKrEtf()", start)]
+    assert 'state.ksiSort === "level"' in block
+    assert "b.level" in block and "b.vs_baseline" in block, "두 정렬 기준이 모두 있어야 한다"
+
+    html = (static / "kr.html").read_text(encoding="utf-8")
+    assert 'id="ksi-sort"' in html
+    assert "ksi.sortSpike" in html and "ksi.sortLevel" in html
+
+
+def test_the_rank_move_badge_does_not_pretend_to_be_realtime():
+    """데이터랩은 일별이고 마지막 점이 하루~이틀 전이다.
+
+    실측(2026-08-24): endDate를 오늘로 줘도 마지막 점이 8/22였다. 순위 변동은
+    전날 대비이며 하루에 한 번만 바뀐다 — 초 단위로 깜빡이는 장치를 붙이면
+    없는 움직임을 그리는 것이다.
+    """
+    from pathlib import Path
+
+    css = (Path(__file__).resolve().parents[1] / "app" / "static" / "console.css").read_text(
+        encoding="utf-8"
+    )
+    start = css.index(".ksi-rank")
+    block = css[start : start + 1200]
+    assert "animation" not in block and "@keyframes" not in block, (
+        "순위 변동에 반복 애니메이션을 붙이지 말 것 — 데이터는 하루에 한 번 바뀐다"
+    )

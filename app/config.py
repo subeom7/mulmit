@@ -209,6 +209,10 @@ NAVER_DATALAB_MAX_AGE = _int("NAVER_DATALAB_MAX_AGE", 6 * 60 * 60)
 # 로스터 전체를 도는 것은
 # 쿼터가 아니라 뜻에서 틀린다(거래 없는 종목의 검색 추이는 잡음이다).
 NAVER_DATALAB_WATCHLIST = os.environ.get("NAVER_DATALAB_WATCHLIST", "").strip()
+# 요청을 잇는 앵커. 모든 요청에 함께 넣어, 같은 날 앵커 대비 비율로 종목 간
+# 수준을 견준다(정규화가 분자·분모에서 함께 사라진다). 검색량이 가장 큰 종목을
+# 두어야 작은 종목의 값이 반올림에 뭉개지지 않는다. 워치리스트에 없으면 첫 항목.
+NAVER_DATALAB_ANCHOR = os.environ.get("NAVER_DATALAB_ANCHOR", "005930").strip().upper()
 
 COINALYZE_ENABLED = _bool("COINALYZE_ENABLED", False)
 COINALYZE_API_KEY = os.environ.get("COINALYZE_API_KEY", "").strip()
