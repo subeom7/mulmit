@@ -732,6 +732,7 @@ const DISABLED_CODES = {
   bio_mfds_disabled: "status.disabled",
   bio_mfds_collecting: "status.collecting",
   chain_gas_not_configured: "status.disabled",
+  news_videos_disabled: "status.disabled",
 };
 
 // Which endpoint would have filled a card. Only consulted when the card is
