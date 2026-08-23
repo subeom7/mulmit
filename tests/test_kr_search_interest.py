@@ -337,3 +337,36 @@ def test_the_section_says_what_it_is_not():
     assert 'id="kr-search-interest"' in html
     assert "ksi.badgeNotRank" in html, "검색량 순위가 아니라는 배지가 있어야 한다"
     assert "ksi.badgeWeekday" in html, "같은 요일끼리 견준다는 사실이 화면에 있어야 한다"
+
+
+def test_the_span_label_is_written_once_not_once_per_row():
+    """여덟 줄에 "30일"을 여덟 번 쓰면 그건 정보가 아니라 소음이다.
+
+    카드에서는 카드마다 하나였으니 맞았다. 표에서는 같은 말이 세로로 반복되면서
+    추이 열의 폭을 먹는다 — 기간은 열 이름에 한 번만 적는다.
+
+    다만 어느 줄의 창이 짧으면(계열이 덜 모인 종목) 그 줄에만 적는다. 같은 열의
+    선들이 서로 다른 기간이면 모양을 나란히 읽을 수 없기 때문이다.
+    """
+    from pathlib import Path
+
+    source = (Path(__file__).resolve().parents[1] / "app" / "static" / "monitor.js").read_text(
+        encoding="utf-8"
+    )
+    start = source.index("function renderKrSearchInterest()")
+    block = source[start : source.index("function renderKrEtf()", start)]
+    assert "ksi-trend-head" in block, "기간은 열 이름에 붙는다"
+    assert "spark.label !== spanLabel" in block, (
+        "창이 다른 줄에만 따로 적어야 한다 — 전부 지우면 다른 기간의 선이 같은 기간처럼 보인다"
+    )
+
+
+def test_the_not_a_ranking_badge_shows_in_beginner_mode_too():
+    """정렬된 표를 순위로 오해하는 것은 초보자다 — 전문가 모드에 숨길 것이 아니다."""
+    from pathlib import Path
+
+    html = (Path(__file__).resolve().parents[1] / "app" / "static" / "kr.html").read_text(
+        encoding="utf-8"
+    )
+    line = next(row for row in html.splitlines() if "ksi.badgeNotRank" in row)
+    assert "pro-only" not in line, "이 배지는 두 모드 모두에서 보여야 한다"
