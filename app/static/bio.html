@@ -20,10 +20,10 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260823-37">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-38">
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
-  <link rel="stylesheet" href="/static/tokens.css?v=20260823-37">
-  <link rel="stylesheet" href="/static/console.css?v=20260823-37">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260823-38">
+  <link rel="stylesheet" href="/static/console.css?v=20260823-38">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -51,100 +51,138 @@
   </header>
 
   <main id="main" class="shell">
-    <section class="hero" aria-labelledby="hero-title">
+    <div class="console-head">
       <div>
-        <p class="kicker" data-i18n="biopage.kicker">BIOPHARMA</p>
-        <h1 id="hero-title" data-i18n="biopage.title">바이오, 임상과 승인을 기록으로 봅니다.</h1>
-        <p class="hero-copy" data-i18n="biopage.copy">국내·글로벌 제약바이오 워치리스트의 임상 파이프라인 갱신(ClinicalTrials.gov)과 FDA의 최근 신약·바이오의약품 승인(openFDA)을 공공 기록 그대로 봅니다. 결과의 성패나 주가 해석, 투자 권유가 아닙니다.</p>
+        <h1>
+          <span data-i18n="biopage.h1">바이오</span>
+          <span class="console-h1-sub" data-i18n="biopage.scope">다가올 결정 · 한국 · 미국·글로벌</span>
+        </h1>
+        <p class="console-sub" data-i18n="biopage.sub">바이오 종목은 결정 하나에 움직입니다. 그래서 날짜가 잡힌 것을 맨 앞에 두고, 이미 난 결정은 시장별로 나눠 봅니다. 전부 공공 기록 그대로이며 결과의 성패나 주가 해석이 아닙니다.</p>
       </div>
-      <aside class="hero-meta" aria-live="polite">
-        <span data-i18n="hero.updated">마지막 갱신</span>
-        <strong id="updated-at">—</strong>
+      <div class="console-meta">
+        <span><span data-i18n="hero.updated">마지막 갱신</span> <strong id="updated-at">—</strong></span>
         <button class="refresh-button" id="refresh-button" type="button"><span aria-hidden="true">↻</span> <span data-i18n="action.refresh">새로고침</span></button>
-      </aside>
-    </section>
-
-    <section class="dashboard-section" id="bio-trials" aria-labelledby="biot-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">CLINICAL PIPELINE · WATCHLIST · CLINICALTRIALS.GOV</p><h2 id="biot-title" data-i18n="bio.trials.title">임상 파이프라인 동향</h2></div>
-        <span class="source-pill">CLINICALTRIALS.GOV</span>
       </div>
-      <p class="section-copy" data-i18n="bio.trials.copy">워치리스트 34개 스폰서(주 스폰서 기준)의 임상 중 최근 14일 내 갱신된 중재 2·3상입니다(스폰서당 최대 8건). 상태·단계·일자는 ClinicalTrials.gov 등록값 그대로이며, 한국어 이름과 상장 라벨은 Mulmit이 붙인 참고 라벨입니다.</p>
+    </div>
+
+    <section class="console-section" id="bio-catalysts" aria-labelledby="cat-title">
+      <header>
+        <h2 id="cat-title" data-i18n="bio.cat.title">다가오는 결정</h2>
+        <span class="sec-note" data-i18n="bio.cat.note">날짜가 잡힌 것만 · 가까운 순서</span>
+      </header>
+      <p class="section-copy" data-i18n="bio.cat.copy">FDA 자문위원회 회의처럼 날짜가 확정된 것과, 임상의 1차 완료 예정일을 한 줄에 놓고 가까운 순서로 봅니다. 1차 완료 예정일은 스폰서가 등록부에 적어 둔 계획값이라 자주 바뀌고, 완료가 곧 결과 발표도 아닙니다.</p>
       <div class="risk-strip" role="note">
+        <span class="status-badge warn" data-i18n="bio.cat.badgePlan">계획일 포함 · 확정 아님</span>
         <span class="status-badge warn" data-i18n="bio.badge.registry">등록 정보 · 결과 아님</span>
-        <span class="status-badge warn" data-i18n="bio.badge.sponsorEntered">스폰서 직접 등록</span>
         <span class="status-badge warn" data-i18n="bio.badge.notAdvice">투자 권유 아님</span>
       </div>
-      <div id="biot-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
-      <div class="bio-filter" id="biot-filter" role="group" aria-label="Sponsor filter" hidden>
-        <button type="button" class="active" data-bio-filter="all" data-i18n="bio.filter.all">전체</button>
-        <button type="button" data-bio-filter="KR" data-i18n="bio.filter.kr">한국</button>
-        <button type="button" data-bio-filter="global" data-i18n="bio.filter.global">글로벌</button>
-      </div>
-      <div id="biot-strip" class="crypto-strip" hidden></div>
-      <div id="biot-sponsors" class="bio-sponsors" hidden></div>
-      <div class="panel" id="biot-panel" hidden>
-        <div class="table-scroll">
-          <table id="biot-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.trials.caption">최근 갱신 임상 (중재 2·3상, 14일)</caption><thead></thead><tbody></tbody></table>
-        </div>
-        <footer class="panel-footer" id="biot-footer" hidden></footer>
+      <div id="cat-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="cat-strip" class="crypto-strip" hidden></div>
+      <div class="panel" id="cat-panel" hidden>
+        <ol id="cat-list" class="bio-cat"></ol>
+        <footer class="panel-footer" id="cat-footer" hidden></footer>
       </div>
     </section>
 
-    <section class="dashboard-section" id="bio-adcomm" aria-labelledby="bioa-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">FDA · ADVISORY COMMITTEES · FEDERAL REGISTER</p><h2 id="bioa-title" data-i18n="bio.adcomm.title">FDA 자문위원회 회의 공고</h2></div>
-        <span class="source-pill">FEDERAL REGISTER</span>
+    <div class="bio-zone" id="bio-korea">
+      <div class="zone-head">
+        <h2 data-i18n="bio.zone.kr">한국</h2>
+        <span class="sec-note" data-i18n="bio.zone.krNote">식약처 허가 · 국내 스폰서 임상</span>
       </div>
-      <p class="section-copy" data-i18n="bio.adcomm.copy">Federal Register에 게재된 FDA 자문위원회 회의 공고입니다(예정 회의와 최근 30일 종료 회의). 회의일은 공고의 DATES 단락에서 추출한 값이며 최종 일정은 링크된 공고를 따릅니다. 자문위 결론이나 승인 여부가 아닙니다.</p>
-      <div id="bioa-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
-      <div id="bioa-strip" class="crypto-strip" hidden></div>
-      <div class="panel" id="bioa-panel" hidden>
-        <div class="table-scroll">
-          <table id="bioa-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.adcomm.caption">자문위원회 회의 공고 (예정 · 최근 종료)</caption><thead></thead><tbody></tbody></table>
-        </div>
-        <footer class="panel-footer" id="bioa-footer" hidden></footer>
-      </div>
-    </section>
 
-    <section class="dashboard-section" id="bio-fda" aria-labelledby="biof-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">FDA · ORIGINAL APPROVALS · OPENFDA</p><h2 id="biof-title" data-i18n="bio.fda.title">FDA 최근 승인</h2></div>
-        <span class="source-pill">OPENFDA</span>
-      </div>
-      <p class="section-copy" data-i18n="bio.fda.copy">최근 60일 안에 원 신청(ORIG)이 승인된 NDA(신약)·BLA(바이오의약품) 목록입니다. 제네릭(ANDA)은 건수만 표시합니다. openFDA 공개 도메인 데이터이며 규제 기록일 뿐 매출·주가 해석이 아닙니다.</p>
-      <div id="biof-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
-      <div id="biof-strip" class="crypto-strip" hidden></div>
-      <div class="panel" id="biof-panel" hidden>
-        <div class="table-scroll">
-          <table id="biof-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.fda.caption">최근 원 신청 승인 (NDA·BLA)</caption><thead></thead><tbody></tbody></table>
+      <section class="console-section" id="bio-mfds" aria-labelledby="biom-title">
+        <header>
+          <h2 id="biom-title" data-i18n="bio.mfds.title">식약처 최근 품목허가</h2>
+          <span class="sec-note">MFDS · DATA.GO.KR</span>
+        </header>
+        <p class="section-copy" data-i18n="bio.mfds.copy">식품의약품안전처 의약품 제품 허가정보(공공데이터포털)를 허가일자별로 최근 30일 모은 목록입니다. 기본 보기는 '주목'(허가된 전문의약품·신약·희귀의약품)이며 신고·일반의약품까지 전체를 볼 수 있습니다. 규제 기록일 뿐 매출·주가 해석이 아닙니다.</p>
+        <div id="biom-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+        <div class="bio-filter" id="biom-filter" role="group" aria-label="Permit filter" hidden>
+          <button type="button" class="active" data-mfds-filter="notable" data-i18n="bio.mfds.filter.notable">주목</button>
+          <button type="button" data-mfds-filter="permit" data-i18n="bio.mfds.filter.permit">허가만</button>
+          <button type="button" data-mfds-filter="all" data-i18n="bio.mfds.filter.all">전체</button>
         </div>
-        <footer class="panel-footer" id="biof-footer" hidden></footer>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="bio-mfds" aria-labelledby="biom-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">KOREA · MFDS · DRUG PRODUCT PERMITS · DATA.GO.KR</p><h2 id="biom-title" data-i18n="bio.mfds.title">식약처 최근 품목허가</h2></div>
-        <span class="source-pill">MFDS · DATA.GO.KR</span>
-      </div>
-      <p class="section-copy" data-i18n="bio.mfds.copy">식품의약품안전처 의약품 제품 허가정보(공공데이터포털)를 허가일자별로 최근 30일 모은 목록입니다. 기본 보기는 '주목'(허가된 전문의약품·신약·희귀의약품)이며 신고·일반의약품까지 전체를 볼 수 있습니다. 규제 기록일 뿐 매출·주가 해석이 아닙니다.</p>
-      <div id="biom-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
-      <div class="bio-filter" id="biom-filter" role="group" aria-label="Permit filter" hidden>
-        <button type="button" class="active" data-mfds-filter="notable" data-i18n="bio.mfds.filter.notable">주목</button>
-        <button type="button" data-mfds-filter="permit" data-i18n="bio.mfds.filter.permit">허가만</button>
-        <button type="button" data-mfds-filter="all" data-i18n="bio.mfds.filter.all">전체</button>
-      </div>
-      <div id="biom-strip" class="crypto-strip" hidden></div>
-      <div class="panel" id="biom-panel" hidden>
-        <div class="table-scroll">
-          <table id="biom-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.mfds.caption">식약처 품목허가 (최근 30일)</caption><thead></thead><tbody></tbody></table>
+        <div id="biom-strip" class="crypto-strip" hidden></div>
+        <div class="panel" id="biom-panel" hidden>
+          <div class="table-scroll">
+            <table id="biom-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.mfds.caption">식약처 품목허가 (최근 30일)</caption><thead></thead><tbody></tbody></table>
+          </div>
+          <footer class="panel-footer" id="biom-footer" hidden></footer>
         </div>
-        <footer class="panel-footer" id="biom-footer" hidden></footer>
-      </div>
-    </section>
+      </section>
 
-    <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
+      <section class="console-section" id="bio-trials-kr" aria-labelledby="biotkr-title">
+        <header>
+          <h2 id="biotkr-title" data-i18n="bio.trials.krTitle">국내 스폰서 임상</h2>
+          <span class="sec-note" data-i18n="bio.trials.note">최근 14일 갱신 · 중재 2·3상</span>
+        </header>
+        <p class="section-copy" data-i18n="bio.trials.copy">워치리스트 34개 스폰서(주 스폰서 기준)의 임상 중 최근 14일 내 갱신된 중재 2·3상입니다(스폰서당 최대 8건). 상태·단계·일자는 ClinicalTrials.gov 등록값 그대로이며, 한국어 이름과 상장 라벨은 Mulmit이 붙인 참고 라벨입니다.</p>
+        <div id="biotkr-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+        <div id="biotkr-strip" class="crypto-strip" hidden></div>
+        <div id="biotkr-sponsors" class="bio-sponsors" hidden></div>
+        <div class="panel" id="biotkr-panel" hidden>
+          <div class="table-scroll">
+            <table id="biotkr-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.trials.caption">최근 갱신 임상 (중재 2·3상, 14일)</caption><thead></thead><tbody></tbody></table>
+          </div>
+          <footer class="panel-footer" id="biotkr-footer" hidden></footer>
+        </div>
+      </section>
+    </div>
+
+    <div class="bio-zone" id="bio-global">
+      <div class="zone-head">
+        <h2 data-i18n="bio.zone.global">미국 · 글로벌</h2>
+        <span class="sec-note" data-i18n="bio.zone.globalNote">FDA 승인 · 글로벌 스폰서 임상 · 자문위</span>
+      </div>
+
+      <section class="console-section" id="bio-fda" aria-labelledby="biof-title">
+        <header>
+          <h2 id="biof-title" data-i18n="bio.fda.title">FDA 최근 승인</h2>
+          <span class="sec-note">OPENFDA</span>
+        </header>
+        <p class="section-copy" data-i18n="bio.fda.copy">최근 60일 안에 원 신청(ORIG)이 승인된 NDA(신약)·BLA(바이오의약품) 목록입니다. 제네릭(ANDA)은 건수만 표시합니다. openFDA 공개 도메인 데이터이며 규제 기록일 뿐 매출·주가 해석이 아닙니다.</p>
+        <div id="biof-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+        <div id="biof-strip" class="crypto-strip" hidden></div>
+        <div class="panel" id="biof-panel" hidden>
+          <div class="table-scroll">
+            <table id="biof-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.fda.caption">최근 원 신청 승인 (NDA·BLA)</caption><thead></thead><tbody></tbody></table>
+          </div>
+          <footer class="panel-footer" id="biof-footer" hidden></footer>
+        </div>
+      </section>
+
+      <section class="console-section" id="bio-trials-global" aria-labelledby="biotgl-title">
+        <header>
+          <h2 id="biotgl-title" data-i18n="bio.trials.globalTitle">글로벌 스폰서 임상</h2>
+          <span class="sec-note" data-i18n="bio.trials.note">최근 14일 갱신 · 중재 2·3상</span>
+        </header>
+        <div id="biotgl-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+        <div id="biotgl-strip" class="crypto-strip" hidden></div>
+        <div id="biotgl-sponsors" class="bio-sponsors" hidden></div>
+        <div class="panel" id="biotgl-panel" hidden>
+          <div class="table-scroll">
+            <table id="biotgl-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.trials.caption">최근 갱신 임상 (중재 2·3상, 14일)</caption><thead></thead><tbody></tbody></table>
+          </div>
+          <footer class="panel-footer" id="biotgl-footer" hidden></footer>
+        </div>
+      </section>
+
+      <section class="console-section" id="bio-adcomm" aria-labelledby="bioa-title">
+        <header>
+          <h2 id="bioa-title" data-i18n="bio.adcomm.title">FDA 자문위원회 회의 공고</h2>
+          <span class="sec-note">FEDERAL REGISTER</span>
+        </header>
+        <p class="section-copy" data-i18n="bio.adcomm.copy">Federal Register에 게재된 FDA 자문위원회 회의 공고입니다(예정 회의와 최근 30일 종료 회의). 회의일은 공고의 DATES 단락에서 추출한 값이며 최종 일정은 링크된 공고를 따릅니다. 자문위 결론이나 승인 여부가 아닙니다.</p>
+        <div id="bioa-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+        <div id="bioa-strip" class="crypto-strip" hidden></div>
+        <div class="panel" id="bioa-panel" hidden>
+          <div class="table-scroll">
+            <table id="bioa-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.adcomm.caption">자문위원회 회의 공고 (예정 · 최근 종료)</caption><thead></thead><tbody></tbody></table>
+          </div>
+          <footer class="panel-footer" id="bioa-footer" hidden></footer>
+        </div>
+      </section>
+    </div>
 
     <section class="methodology" aria-labelledby="method-title">
       <p class="eyebrow">DATA POLICY</p>
@@ -167,6 +205,7 @@
       </nav>
       <p data-i18n="legal.notAdvice">Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.</p>
     </footer>
+
   </main>
 
   <template id="metric-card-template">
@@ -181,7 +220,7 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "bio";</script>
-  <script src="/static/monitor.js?v=20260823-37" defer></script>
-  <script src="/static/search.js?v=20260823-37" defer></script>
+  <script src="/static/monitor.js?v=20260823-38" defer></script>
+  <script src="/static/search.js?v=20260823-38" defer></script>
 </body>
 </html>
