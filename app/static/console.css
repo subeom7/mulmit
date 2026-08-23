@@ -395,12 +395,31 @@ html[data-mode="easy"] .kro-meta { display: none; }
 .kro-footer { margin-top: var(--sp-3); }
 .kro-footer .kro-method, .kro-footer .kro-disclaimer { font-size: var(--fs-xs); color: var(--ink-3); }
 
+/* 계산 방법은 전문가 모드에서만 펼친다.
+ *
+ * /crypto의 시장 국면은 게이지보다 방법 설명이 면적을 더 쓰고 있었다. 방법은
+ * 값을 검증하려는 사람에게 필요한 글이고, 한계를 알리는 고지(.kro-disclaimer)는
+ * 누구에게나 필요한 글이다 — 접는 것은 앞쪽뿐이다.
+ *
+ * **섹션을 하나하나 적는다.** `.kro-method`는 계산 방법 말고 출처 표기에도
+ * 쓰인다(바이오의 ClinicalTrials.gov·PubMed·Federal Register attribution).
+ * 그건 약관상 표시 의무가 걸린 문구라 어떤 모드에서도 숨기면 안 된다. 여기
+ * 나열된 것은 전부 Mulmit이 스스로 계산한 값의 방법 설명뿐이다. */
+html[data-mode="easy"] #crypto-tape .kro-footer .kro-method,
+html[data-mode="easy"] #crypto-regime .kro-footer .kro-method,
+html[data-mode="easy"] #crypto-kimchi .kro-footer .kro-method,
+html[data-mode="easy"] #crypto-board .kro-footer .kro-method,
+html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
+
 /* 주말 신호 카드·고지도 같은 바닥 위로. */
 .weekend-disclaimer { font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.6; }
 
 @media (max-width: 560px) {
   .kro-card { padding: var(--sp-3); }
-  .kro-price { font-size: clamp(16px, 5vw, 22px); letter-spacing: -.05em; }
+  /* .crypto-card .kro-price가 monitor.css에서 24px로 못박혀 있어 선택자 무게를
+   * 맞춰 준다 — 안 그러면 $77,323.00이 388px 화면에서 잘린다(실측). */
+  .kro-price,
+  .crypto-card .kro-price { font-size: clamp(16px, 5vw, 22px); letter-spacing: -.05em; }
   .kro-card h3 { font-size: var(--fs-sm); }
   .kro-vs { font-size: var(--fs-xs); }
 }

@@ -125,6 +125,17 @@ body {
 .accessible-table td.range { font-size: var(--fs-xs); }
 .comparison-legend, .notice-line, .select-label, .select-label select { font-size: var(--fs-xs); }
 .comparison-card p { font-size: var(--fs-xs); color: var(--ink-2); }
+/* /crypto — 전체 시장 보드 표, 청산 카드, 국면 게이지, 요약 스트립. */
+.cboard-sym, .cboard-table td, .cboard-table th { font-size: var(--fs-xs); }
+.cliq-head .oi, .cliq-legend { font-size: var(--fs-xs); }
+.crypto-strip, .crypto-strip small, .kro-strip-item, .kro-strip-item small { font-size: var(--fs-xs); }
+.sig-gauge small, .sig-gauge span, .sig-reading, .creg-delta { font-size: var(--fs-xs); }
+.cvol-card small, .fng-deltas span, .cliq-venues, .cliq-venues b { font-size: var(--fs-xs); }
+.crypto-dominance-bar .seg { font-size: var(--fs-xs); }
+.fng-attribution, .fng-attribution a { font-size: var(--fs-xs); }
+.cstr-stable .cstr-sub { font-size: var(--fs-xs); }
+.crypto-news .meta, .crypto-news .meta span, .coin-tag { font-size: var(--fs-xs); }
+.metric-card .meta span, .kro-card .meta span { font-size: var(--fs-xs); }
 /* /kr — 공시 표의 원문 링크와 주말 카드 내부. 8.5~10px로 짜여 있었다. */
 .krp-source { font-size: var(--fs-xs); }
 .weekend-card h3 { font-size: var(--fs-md); font-weight: 650; }
