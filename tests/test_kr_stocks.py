@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import threading
+import time
 
 import pytest
 from fastapi.testclient import TestClient
@@ -157,6 +159,64 @@ def test_search_is_case_insensitive_and_treats_wildcards_as_text(db, fsc_lane):
     assert store.search_kr_listings("%") == []
     assert store.search_kr_listings("_") == []
     assert store.search_kr_listings("B_F리테일") == []
+
+
+def test_each_code_gets_its_own_fetch_lock():
+    """One global lock made every cold read queue behind every other one.
+
+    A cold read is one upstream round trip of several seconds, so ten visitors
+    opening ten uncollected stocks left the last waiting for all nine ahead.
+    The lock's real job — collapsing a stampede on the *same* code into one
+    fetch — needs only per-code granularity.
+    """
+    first = kr_stocks._series_lock("005930")
+    assert kr_stocks._series_lock("005930") is first          # same code, same lock
+    assert kr_stocks._series_lock("000660") is not first      # different code, no queue
+
+
+def test_two_uncollected_codes_do_not_wait_for_each_other(db, fsc_lane, monkeypatch):
+    started = threading.Barrier(2, timeout=5)
+
+    def slow_fetch(code, name):
+        started.wait()          # both must be inside the fetch at once
+        time.sleep(0.25)
+        db.save_economic_series(
+            f"kr_stock_{code}",
+            provider_id="fsc",
+            provider_series_id=code,
+            metadata_fields={"title": code, "units": "KRW", "units_short": "원",
+                             "frequency": "Daily", "frequency_short": "D"},
+            observations=[(dt.date(2026, 8, 20), 100.0), (dt.date(2026, 8, 21), 101.0)],
+            publisher="금융위원회",
+            publisher_url="https://www.fsc.go.kr/",
+            series_url="https://www.data.go.kr/data/15094808/openapi.do",
+            rights_status="approved",
+        )
+        return 2
+
+    monkeypatch.setattr(kr_stocks, "_fetch_series", slow_fetch)
+    _seed_roster(db)
+
+    errors: list[BaseException] = []
+
+    def run(code):
+        try:
+            kr_stocks.get_analysis(code)
+        except BaseException as exc:  # noqa: BLE001 - reported below
+            errors.append(exc)
+
+    threads = [threading.Thread(target=run, args=(code,)) for code in ("005930", "000660")]
+    began = time.perf_counter()
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=5)
+    elapsed = time.perf_counter() - began
+
+    # The barrier is the assertion: it only releases if both fetches are running
+    # at the same time. Under one global lock the second never reaches it.
+    assert not errors, errors
+    assert elapsed < 0.5, f"the two codes serialised: {elapsed:.2f}s"
 
 
 def test_the_roster_is_a_replace_so_delistings_disappear(db, fsc_lane):

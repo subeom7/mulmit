@@ -52,7 +52,25 @@ RETURN_WINDOWS = (("1m", 30), ("3m", 91), ("6m", 182), ("1y", 366), ("3y", 366 *
 TRADING_DAYS_PER_YEAR = 252
 MAX_CHART_POINTS = 1300  # five years of daily closes, undecimated
 
+# Guards the one-time bootstraps that fill a *single* shared table — the
+# listing roster and the index/ETF snapshots. Those are singletons, so one lock
+# between them is right.
 _fetch_lock = threading.Lock()
+# Per-code locks for the series fetch, which is not a singleton. One global lock
+# made every cold read serialise behind every other: a cold read is one upstream
+# round trip of several seconds, so ten visitors opening ten uncollected stocks
+# left the last waiting for all nine ahead. A lock per code still does the job
+# that matters — collapsing a stampede on the same code into one fetch.
+_series_locks: dict[str, threading.Lock] = {}
+_series_locks_guard = threading.Lock()
+
+
+def _series_lock(code: str) -> threading.Lock:
+    with _series_locks_guard:
+        lock = _series_locks.get(code)
+        if lock is None:
+            lock = _series_locks[code] = threading.Lock()
+        return lock
 _recent_failures: dict[str, float] = {}
 FAILURE_MEMO_SECONDS = 60.0
 
@@ -426,7 +444,7 @@ def get_analysis(code: str) -> dict[str, Any]:
         failed_at = _recent_failures.get(code, 0.0)
         can_retry = time.time() - failed_at > FAILURE_MEMO_SECONDS
         if config.FSC_API_KEY and can_retry:
-            with _fetch_lock:
+            with _series_lock(code):
                 record = store.get_economic_series(series_key)
                 fresh = (
                     record is not None

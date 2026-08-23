@@ -43,6 +43,7 @@ import json
 import math
 import time
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from json import JSONDecodeError
 from typing import Any
@@ -90,6 +91,9 @@ _KEY_ERROR_CODES = frozenset({"30", "31", "20", "23"})
 
 MAX_ROWS_PER_PAGE = 1000
 MAX_PAGES = 40
+# How many pages may go out at once after the first. Five years of daily
+# closes is two pages, so this is headroom, not a target.
+PARALLEL_PAGES = 8
 
 
 class FscConfigurationError(DataError):
@@ -366,20 +370,58 @@ class FscProvider:
             raise DataUnavailable(f"FSC response for {endpoint} has no body block")
         return payload
 
+    def _page(self, endpoint: str, params: dict[str, str], page: int) -> dict[str, Any]:
+        return self._get(
+            endpoint,
+            {**params, "numOfRows": str(MAX_ROWS_PER_PAGE), "pageNo": str(page)},
+        )
+
     def _paged_rows(
         self, endpoint: str, params: dict[str, str]
     ) -> list[dict[str, Any]]:
-        rows: list[dict[str, Any]] = []
-        for page in range(1, MAX_PAGES + 1):
-            payload = self._get(
-                endpoint,
-                {**params, "numOfRows": str(MAX_ROWS_PER_PAGE), "pageNo": str(page)},
-            )
-            page_rows = _as_rows(payload.get("items"))
-            rows.extend(page_rows)
-            total = _parse_number(payload.get("totalCount"))
-            if not page_rows or total is None or len(rows) >= int(total):
+        """Page 1 tells us how many there are; the rest are fetched together.
+
+        A round trip to this API measures a few seconds, so paging one after
+        another put the whole count on the caller's clock — five years of daily
+        closes is two pages and cost about 5.8s in production. The page count is
+        known after the first response, so the remainder go out at once and the
+        wall time is one more round trip rather than N.
+        """
+        first = self._page(endpoint, params, 1)
+        rows = _as_rows(first.get("items"))
+        total = _parse_number(first.get("totalCount"))
+        if not rows or total is None or len(rows) >= int(total):
+            return rows
+
+        # Estimate from what page one actually returned, not from what was
+        # asked for: this API is free to hand back fewer rows than numOfRows,
+        # and dividing by the request size would then stop short of the total.
+        #
+        # Capped, because the estimate trusts totalCount: an inflated count
+        # would otherwise spend a burst of calls on empty pages, and the daily
+        # quota is the scarce thing here. Beyond the cap the walk continues one
+        # page at a time and stops the moment a page comes back empty.
+        expected = min(MAX_PAGES, PARALLEL_PAGES, -(-int(total) // len(rows)))
+        if expected > 1:
+            with ThreadPoolExecutor(max_workers=min(8, expected - 1)) as pool:
+                futures = [
+                    pool.submit(self._page, endpoint, params, page)
+                    for page in range(2, expected + 1)
+                ]
+                # Kept in page order: rows are sorted by date downstream, but a
+                # stable order keeps a truncated fetch reproducible.
+                for future in futures:
+                    rows.extend(_as_rows(future.result().get("items")))
+
+        # If the pages came back smaller than page one, the estimate was short.
+        # Fall back to walking the rest one at a time, exactly as before.
+        page = expected + 1
+        while len(rows) < int(total) and page <= MAX_PAGES:
+            page_rows = _as_rows(self._page(endpoint, params, page).get("items"))
+            if not page_rows:
                 break
+            rows.extend(page_rows)
+            page += 1
         return rows
 
     # -- selection ----------------------------------------------------------
