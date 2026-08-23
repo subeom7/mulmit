@@ -19,21 +19,21 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260823-29">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-30">
   <style>
     .coin-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 26px 0 14px; border-bottom: 1px solid var(--line); }
     .coin-head h1 { margin: 0; font-size: clamp(24px, 3.6vw, 36px); letter-spacing: -.04em; }
-    .coin-head code { color: var(--faint); font: 700 13px/1 var(--mono); }
-    .coin-head .market-tag { padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 650 10px/1 var(--mono); }
+    .coin-head code { color: var(--faint); font: 700 13px/1 var(--num); font-variant-numeric: tabular-nums; }
+    .coin-head .market-tag { padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 650 10px/1 var(--num); font-variant-numeric: tabular-nums; }
     .coin-price { display: flex; align-items: baseline; gap: 10px; margin: 16px 0 4px; flex-wrap: wrap; }
-    .coin-price strong { font: 750 clamp(28px, 4.4vw, 44px)/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
-    .coin-price em { font: 700 15px/1 var(--mono); font-style: normal; }
-    .coin-price small { color: var(--faint); font: 650 10.5px/1 var(--mono); }
+    .coin-price strong { font: 750 clamp(28px, 4.4vw, 44px)/1 var(--num); font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+    .coin-price em { font: 700 15px/1 var(--num); font-variant-numeric: tabular-nums; font-style: normal; }
+    .coin-price small { color: var(--faint); font: 650 10.5px/1 var(--num); font-variant-numeric: tabular-nums; }
     .coin-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 8px; margin: 16px 0 4px; }
     .coin-kpi { padding: 12px 13px; border: 1px solid var(--line); border-radius: 9px; background: linear-gradient(145deg, var(--panel), var(--panel-2)); min-width: 0; }
-    .coin-kpi small { display: block; color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .06em; }
-    .coin-kpi strong { display: block; margin-top: 5px; font: 750 16px/1.15 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.03em; word-break: break-all; }
-    .coin-kpi span { display: block; margin-top: 3px; color: var(--muted); font: 650 10px/1.3 var(--mono); }
+    .coin-kpi small { display: block; color: var(--faint); font: 650 9.5px/1.4 var(--num); font-variant-numeric: tabular-nums; text-transform: uppercase; letter-spacing: .06em; }
+    .coin-kpi strong { display: block; margin-top: 5px; font: 750 16px/1.15 var(--num); font-variant-numeric: tabular-nums; letter-spacing: -.03em; word-break: break-all; }
+    .coin-kpi span { display: block; margin-top: 3px; color: var(--muted); font: 650 10px/1.3 var(--num); font-variant-numeric: tabular-nums; }
     .coin-section { margin: 30px 0; }
     .coin-section h2 { margin: 0 0 4px; font-size: 16px; letter-spacing: -.02em; }
     .coin-section .sub { margin: 0 0 12px; color: var(--muted); font-size: 11.5px; }
@@ -43,7 +43,7 @@
     .chart-toolbar button.active { color: var(--ink); border-color: var(--accent); }
     .chart-toolbar .spacer { flex: 1 1 auto; }
     .chart-studies { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: -3px 0 10px; }
-    .chart-studies .group-label { color: var(--faint); font: 650 9.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .chart-studies .group-label { color: var(--faint); font: 650 9.5px/1 var(--num); font-variant-numeric: tabular-nums; letter-spacing: .08em; text-transform: uppercase; }
     .chart-studies button { font: inherit; font-size: 10.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--faint); cursor: pointer; }
     .chart-studies button.active { color: var(--ink); border-color: var(--line-strong, var(--muted)); background: var(--panel); }
     .chart-studies .swatch { display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 2px; opacity: .3; }
@@ -58,20 +58,20 @@
     .chart-wrap { position: relative; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); padding: 8px 4px 4px; }
     .chart-wrap svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
     .chart-wrap .cc-grid { stroke: var(--line); stroke-width: 1; }
-    .chart-wrap .cc-axis { fill: var(--faint); font: 650 9.5px/1 var(--mono); }
+    .chart-wrap .cc-axis { fill: var(--faint); font: 650 9.5px/1 var(--num); font-variant-numeric: tabular-nums; }
     .chart-wrap .cc-cross { stroke: var(--line-strong, var(--muted)); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
-    .chart-tip { position: absolute; z-index: 3; pointer-events: none; padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel-2, var(--panel)); color: var(--ink); font: 650 10.5px/1.55 var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+    .chart-tip { position: absolute; z-index: 3; pointer-events: none; padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel-2, var(--panel)); color: var(--ink); font: 650 10.5px/1.55 var(--num); font-variant-numeric: tabular-nums; white-space: nowrap; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
     .chart-tip b { color: var(--muted); font-weight: 650; }
     .chart-state { padding: 26px 14px; text-align: center; color: var(--faint); font-size: 11.5px; }
     .coin-table { width: 100%; border-collapse: collapse; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
     .coin-table th, .coin-table td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
-    .coin-table th { color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+    .coin-table th { color: var(--faint); font: 650 9.5px/1.4 var(--num); font-variant-numeric: tabular-nums; text-transform: uppercase; letter-spacing: .05em; }
     .coin-table td.num, .coin-table th.num { text-align: right; }
     .sig-top { display: grid; grid-template-columns: repeat(3, minmax(140px, 200px)) 1fr; gap: 12px; align-items: stretch; margin-bottom: 14px; }
     .sig-gauge { padding: 12px 13px; border: 1px solid var(--line); border-radius: 9px; background: linear-gradient(145deg, var(--panel), var(--panel-2)); }
-    .sig-gauge small { display: block; color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .06em; }
-    .sig-gauge strong { display: block; margin-top: 5px; font: 750 22px/1.1 var(--mono); font-variant-numeric: tabular-nums; }
-    .sig-gauge span { display: block; margin-top: 6px; color: var(--muted); font: 650 10.5px/1.3 var(--mono); }
+    .sig-gauge small { display: block; color: var(--faint); font: 650 9.5px/1.4 var(--num); font-variant-numeric: tabular-nums; text-transform: uppercase; letter-spacing: .06em; }
+    .sig-gauge strong { display: block; margin-top: 5px; font: 750 22px/1.1 var(--num); font-variant-numeric: tabular-nums; }
+    .sig-gauge span { display: block; margin-top: 6px; color: var(--muted); font: 650 10.5px/1.3 var(--num); font-variant-numeric: tabular-nums; }
     .sig-bar { position: relative; height: 6px; margin-top: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
     .sig-bar i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px; background: var(--accent); }
     .sig-bar.center::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--muted); opacity: .6; }
@@ -88,7 +88,7 @@
     .coin-news li:last-child { border-bottom: 0; }
     .coin-news a { color: inherit; font-size: 12.5px; font-weight: 650; line-height: 1.5; text-decoration: none; }
     .coin-news a:hover { color: var(--accent); text-decoration: underline; }
-    .coin-news .meta { margin-top: 4px; color: var(--faint); font: 650 10px/1.4 var(--mono); }
+    .coin-news .meta { margin-top: 4px; color: var(--faint); font: 650 10px/1.4 var(--num); font-variant-numeric: tabular-nums; }
     .coin-links { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 8px; }
     .coin-links a { padding: 6px 11px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font-size: 11px; font-weight: 700; text-decoration: none; }
     .coin-links a:hover { color: var(--ink); border-color: var(--accent); }
@@ -96,19 +96,22 @@
     .up { color: var(--green); } .down { color: var(--red); }
     @media (max-width: 560px) { .coin-table { min-width: 560px; } }
   </style>
+  <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260823-30">
+  <link rel="stylesheet" href="/static/console.css?v=20260823-30">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="masthead">
     <a class="brand" href="/" aria-label="Mulmit home">
       <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="36" height="36">
-      <span><strong>Mulmit</strong><small>MARKET SIGNAL CONSOLE</small></span>
+      <span><strong>Mulmit</strong></span>
     </a>
     <nav class="view-switch" aria-label="View">
       <a class="view-tab" href="/">홈</a>
       <a class="view-tab" href="/kr">한국</a>
       <a class="view-tab" href="/us">미국·글로벌</a>
-      <a class="view-tab active" href="/crypto">크립토</a>
+      <a class="view-tab active" href="/crypto">암호화폐</a>
       <a class="view-tab" href="/analytics">종목 분석</a>
     </nav>
     <div class="mast-actions"></div>
@@ -203,7 +206,7 @@
 
     <section class="coin-section">
       <div class="coin-links">
-        <a href="/crypto">← 크립토 대시보드</a>
+        <a href="/crypto">← 암호화폐 대시보드</a>
         <a href="/crypto#crypto-board">HL 전체 시장 보드</a>
         <a id="link-venue" href="https://app.hyperliquid.xyz/trade/{{SYMBOL}}" target="_blank" rel="noopener noreferrer">Hyperliquid 마켓 페이지 ↗</a>
       </div>
@@ -732,7 +735,7 @@ async function load(withCandles) {
   } catch (error) {
     if (error.status === 404) { showFatal("Hyperliquid에 상장된 시장이 아닙니다."); return; }
     const code = error.body?.detail?.code;
-    if (code === "crypto_section_disabled" || code === "hip3_public_display_pending_rights") { showFatal("이 배포에서는 크립토 표시가 꺼져 있습니다."); return; }
+    if (code === "crypto_section_disabled" || code === "hip3_public_display_pending_rights") { showFatal("이 배포에서는 암호화폐 표시가 꺼져 있습니다."); return; }
     if (!lastPayload) showFatal("데이터를 불러오지 못했습니다 · 잠시 후 다시 시도해 주세요.");
   }
 }
@@ -765,6 +768,6 @@ loadNews();
 setInterval(() => { if (!document.hidden) load(false); }, REFRESH_MS);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) load(false); });
   </script>
-  <script src="/static/search.js?v=20260823-29" defer></script>
+  <script src="/static/search.js?v=20260823-30" defer></script>
 </body>
 </html>

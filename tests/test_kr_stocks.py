@@ -515,3 +515,20 @@ def test_the_missing_year_low_is_explained_on_screen():
     monitor = (Path(config.STATIC_DIR) / "monitor.js").read_text(encoding="utf-8")
     assert monitor.count('"kridx.lowNote":') == 2, "근거 문구가 두 언어에 다 있어야 한다"
     assert 'lowNote.textContent = t("kridx.lowNote")' in monitor, "근거 문구를 푸터에 붙이지 않았다"
+
+
+def test_the_stock_page_sends_korean_codes_to_the_korean_analyser():
+    """종목 상세의 '위험 분석' 링크가 미국 조회로 가고 있었다.
+
+    `/analytics?ticker=005380`으로 넘겼는데, 저쪽에서 `ticker`는 **미국 상장사
+    전용** SEC EDGAR 입력란으로 들어간다. 그래서 국내 종목코드를 들고 미국
+    내부자거래 공시를 조회하고 있었다. 국내는 `?kr=`로 넘긴다.
+    """
+    static = Path(config.STATIC_DIR)
+    stock = (static / "stock.html").read_text(encoding="utf-8")
+    assert '"/analytics?kr=" + SYMBOL' in stock, "국내 종목을 kr 파라미터로 넘기지 않는다"
+    assert '"/analytics?ticker=" + SYMBOL' not in stock, "미국 티커 입력란으로 다시 보내고 있다"
+
+    analytics = (static / "index.html").read_text(encoding="utf-8")
+    assert 'get("kr")' in analytics, "분석 페이지가 kr 파라미터를 읽지 않는다"
+    assert "loadKrStock(wantedKr.toUpperCase()" in analytics, "kr 파라미터로 국내 분석을 돌리지 않는다"

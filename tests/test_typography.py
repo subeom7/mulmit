@@ -16,7 +16,11 @@ import re
 from pathlib import Path
 
 STATIC = Path(__file__).resolve().parents[1] / "app" / "static"
-SHEETS = ["monitor.css", "console.css", "tokens.css", "index.html"]
+# 인라인 <style>을 가진 페이지까지 본다. stock.html과 crypto-coin.html이 목록에
+# 없어서 등폭 글꼴이 3,130개 상세 페이지에 그대로 남아 있었다(실측 2026-08-23:
+# 종목 2,953 + 코인 177). 새 시트가 생기면 여기에 더한다.
+SHEETS = ["monitor.css", "console.css", "tokens.css",
+          "index.html", "stock.html", "crypto-coin.html"]
 
 # 등폭을 써도 되는 곳: 글이 아니라 식별자인 것들.
 IDENTIFIER_SELECTORS = {".kro-sym"}
@@ -79,3 +83,23 @@ def test_the_number_face_is_not_actually_monospace():
     value = declaration.group(1)
     assert "Pretendard" in value, f"--num이 본문 글꼴이 아니다: {value}"
     assert "monospace" not in value, f"--num이 등폭으로 되돌아갔다: {value}"
+
+
+def test_every_page_that_ships_its_own_styles_loads_the_design_system():
+    """인라인 <style>을 가진 페이지도 토큰과 콘솔 시트를 불러야 한다.
+
+    `/stock/{코드}`와 `/crypto/{심볼}`은 제 스타일만 들고 있어서 리디자인을
+    통째로 놓쳤다. 사이트맵 기준 3,130개 — 종목 2,953 + 코인 177로, URL 수로는
+    사이트의 대부분이고 검색 유입이 닿는 면 전체다(실측 2026-08-23).
+
+    시트는 인라인 <style> **뒤에** 와야 한다. 앞에 두면 같은 특이도에서 지고,
+    `/analytics`에서 실제로 그렇게 토큰이 먹히지 않았다.
+    """
+    for name in ("index.html", "stock.html", "crypto-coin.html"):
+        source = (STATIC / name).read_text(encoding="utf-8")
+        assert "<style>" in source, f"{name}에 인라인 스타일이 없다 — 목록을 손보라"
+        for sheet in ("tokens.css", "console.css"):
+            assert sheet in source, f"{name}이 {sheet}를 부르지 않는다"
+            assert source.index("</style>") < source.index(sheet), (
+                f"{name}: {sheet}가 인라인 <style>보다 앞에 있어 특이도에서 진다"
+            )
