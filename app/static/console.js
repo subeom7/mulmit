@@ -182,6 +182,19 @@
     return { node: svg, days: windowed.days, tone: move > 0 ? "up" : move < 0 ? "down" : "flat" };
   }
 
+  /* 추이선은 여기 하나뿐이다. /crypto 카드는 monitor.js가 그리므로 그쪽에
+   * 같은 코드를 두 벌 두는 대신 이 함수를 내준다 — 창을 자르는 규칙(개수가
+   * 아니라 날짜)과 색을 정하는 규칙(선 자신의 방향)이 화면마다 달라지면
+   * 같은 그림이 다른 뜻이 된다.
+   *
+   * 기간 라벨도 함께 내준다. "104일"을 "3개월"로 바꿔 읽는 규칙이 이쪽에만
+   * 있어서, 부르는 쪽이 제 사전으로 라벨을 다시 만들면 두 화면의 같은 선에
+   * 다른 기간이 적힌다. */
+  window.mulmitSparkline = (observations) => {
+    const spark = sparkline(observations);
+    return spark ? { ...spark, label: spanLabel(spark.days) } : null;
+  };
+
   /* --- 타일 ------------------------------------------------------------ */
   // 배경 추이선이 무엇인지 말하지 않으면 헤드라인 등락과 같은 기간으로 읽힌다.
   // 기간이 다르다는 사실을 전문가 모드에서 밝힌다.

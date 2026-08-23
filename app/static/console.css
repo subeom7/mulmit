@@ -234,6 +234,11 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 /* 추이선은 자기가 그린 30일 방향으로 물든다. 옆의 등락률과 기간이 다르므로
  * 두 색이 갈릴 수 있는데, 그건 오류가 아니라 정보다 — "오늘은 빠졌지만 한 달은
  * 올랐다". 기간은 전문가 모드의 '배경 추이선' 줄에 적어 둔다. */
+/* 카드 안의 추이선. 타일과 같은 부품이지만 카드 폭에 맞춰 낮고, 카드가
+ * 통째로 코인 페이지로 가는 링크라 클릭을 가로채지 않는다. */
+.card-spark { height: 34px; padding-left: 0; margin: var(--sp-2) 0 0; }
+.card-spark .spark-period { padding-bottom: 6px; }
+
 .tile-spark.up { color: var(--up); }
 .tile-spark.down { color: var(--down); }
 .tile-spark.flat { color: var(--ink-3); }

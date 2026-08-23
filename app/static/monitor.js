@@ -3094,6 +3094,21 @@ function renderCryptoOverview() {
     cryptoPrevValues.set(card.symbol, price);
     const vs = document.createElement("div"); vs.className = `kro-vs ${changeClass(pct)}`;
     vs.textContent = pct === null ? "—" : `${formatSigned(pct)} · 24h`;
+
+    // 30일 추이선. 홈 보드 타일과 **같은 함수**를 부른다(console.js) — 창을
+    // 자르는 규칙과 색 규칙이 화면마다 갈리면 같은 그림이 다른 뜻이 된다.
+    // 아직 안 모인 코인은 선 없이 카드만 선다.
+    const spark = window.mulmitSparkline?.(card.observations);
+    let sparkNode = null;
+    if (spark) {
+      sparkNode = document.createElement("div");
+      sparkNode.className = `tile-spark card-spark ${spark.tone}`;
+      const period = document.createElement("span");
+      period.className = "spark-period";
+      period.textContent = spark.label;
+      sparkNode.append(period, spark.node);
+    }
+
     const meta = document.createElement("dl"); meta.className = "kro-meta";
     const row = (labelText, valueText) => {
       const wrap = document.createElement("div");
@@ -3119,7 +3134,9 @@ function renderCryptoOverview() {
     if (card.status === "stale") badge(t("badge.stale"));
     if (card.liquidity_status === "low") badge(t("weekend.liquidity"));
     if (card.funding?.heat === "high" || card.funding?.heat === "elevated") badge(cryptoSideText(card.funding), card.funding.heat === "high" ? "error" : "warn");
-    article.append(header, priceNode, vs, meta);
+    article.append(header, priceNode, vs);
+    if (sparkNode) article.append(sparkNode);
+    article.append(meta);
     // The whole card opens the coin page; the symbol link (venue) and any other link keep their own target.
     article.addEventListener("click", (event) => { if (!event.target.closest("a")) window.location.href = coinPath(card.symbol); });
     if (badges.childElementCount) article.append(badges);

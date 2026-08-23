@@ -548,3 +548,52 @@ def test_lane_report_names_the_crypto_gates(db, monkeypatch):
     report = data_rights.lane_report()
     assert report["alternative_me"]["status"] == "enabled"
     assert report["crypto"]["overview"] == "withheld"  # HIP-3 display gate still closed
+
+
+def test_every_card_coin_is_collected_so_its_trend_line_can_exist(monkeypatch):
+    """카드가 있는 코인은 전부 이력 lane이 모아야 한다.
+
+    추이선은 카드마다 필요한데, 예전에는 lane이 BTC·ETH·SOL 셋만 모았다. 코인을
+    카드에 더해도 선은 영영 비어 있었을 것이다 — 그리고 그건 에러가 아니라
+    "선이 없는 카드"로만 보인다.
+    """
+    monkeypatch.setattr(config, "CRYPTO_SECTION_ENABLED", True)
+    collected = set(crypto_market.history_symbols())
+    for symbol in crypto_market.coin_symbols():
+        assert symbol in collected, f"{symbol} 카드는 있는데 이력을 모으지 않는다"
+    # 변동성·상관 표본은 손으로 고른 목록 그대로다. 여기에 코인이 늘면 그 표에
+    # 줄이 따라 늘어나는데, 둘은 서로 다른 질문에 답한다.
+    assert crypto_market.HISTORY_COINS == ("BTC", "ETH", "SOL")
+
+
+def test_the_lane_stays_closed_when_the_crypto_section_is_off(monkeypatch):
+    monkeypatch.setattr(config, "CRYPTO_SECTION_ENABLED", False)
+    assert crypto_market.history_symbols() == []
+
+
+def test_a_coin_without_stored_history_gets_no_invented_line(monkeypatch):
+    """없는 값은 만들지 않는다 — 아직 안 모인 코인은 선 없이 카드만 선다."""
+    monkeypatch.setattr(hip3_history, "enabled", lambda: True)
+    monkeypatch.setattr(hip3_history, "load", lambda: {"series": {}})
+    cards = [{"symbol": "BTC"}, {"symbol": "SUI"}]
+    crypto_market._attach_sparklines(cards)
+    assert all("observations" not in card for card in cards)
+
+
+def test_a_coin_with_stored_history_carries_its_daily_closes(monkeypatch):
+    rows = [{"date": f"2026-08-{day:02d}", "value": 100.0 + day} for day in range(1, 21)]
+    monkeypatch.setattr(hip3_history, "enabled", lambda: True)
+    monkeypatch.setattr(hip3_history, "load", lambda: {"series": {"BTC": {"observations": rows}}})
+    cards = [{"symbol": "BTC"}, {"symbol": "SUI"}]
+    crypto_market._attach_sparklines(cards)
+    assert cards[0]["observations"], "저장된 종가가 카드에 실리지 않았다"
+    assert cards[0]["observations"][-1]["value"] == 120.0
+    assert "observations" not in cards[1]
+
+
+def test_the_history_lane_being_shut_costs_only_the_line(monkeypatch):
+    """블롭이 닫혀 있어도 카드 자체는 그대로 서야 한다."""
+    monkeypatch.setattr(hip3_history, "enabled", lambda: False)
+    cards = [{"symbol": "BTC", "price": {"value": 1.0}}]
+    crypto_market._attach_sparklines(cards)
+    assert cards == [{"symbol": "BTC", "price": {"value": 1.0}}]
