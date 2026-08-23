@@ -54,6 +54,16 @@ MOVE_DEDUPE_MINUTES = 10
 MOVE_STATE_KEY = "feed_index_move_v1"
 MOVE_HISTORY = 8
 MAX_UPCOMING = 5
+# "지금 일어나는 일"에 3주 전 항목이 올라오면 안 된다.
+#
+# 종류별로 한 바퀴씩 도는 규칙(`_balanced`)에는 대가가 있다: 조용한 소스도
+# 자리를 얻으므로, 그 소스의 "최신"이 낡았으면 낡은 채로 올라온다. 실측
+# 2026-08-23: 국민연금 5% 공시는 20일 전 것이 홈에 두 건 실렸다 — 나머지
+# 14건이 모두 사흘 안쪽인 화면에서.
+#
+# 그래서 균형은 **최근 안에서만** 맞춘다. 전용 /news는 기록을 다 보여 주는
+# 페이지라 이 문을 통과하지 않는다(`max_age_days=None`).
+MAX_AGE_DAYS = 7
 
 _KST = dt.timezone(dt.timedelta(hours=9))
 
@@ -395,7 +405,12 @@ def _balanced(items: list[dict[str, Any]], cap: int) -> list[dict[str, Any]]:
     return [item for _rank, _position, item in ordered[:cap]]
 
 
-def build_feed(*, today: dt.date | None = None, limit: int | None = None) -> dict[str, Any]:
+def build_feed(
+    *,
+    today: dt.date | None = None,
+    limit: int | None = None,
+    max_age_days: int | None = MAX_AGE_DAYS,
+) -> dict[str, Any]:
     """신호 피드. `limit`은 화면이 정한다.
 
     홈 위젯은 30건이면 충분하지만 전용 `/news` 페이지는 더 길게 보여 준다.
@@ -412,6 +427,11 @@ def build_feed(*, today: dt.date | None = None, limit: int | None = None) -> dic
     # ISO 문자열 내림차순: 같은 날짜에서는 시각이 붙은 항목(8-K acceptance)이
     # 날짜뿐인 항목보다 뒤가 아니라 앞에 오도록 문자열 비교가 그대로 맞는다.
     items = [item for item in items if item["at"]]
+    if max_age_days is not None:
+        oldest = (today - dt.timedelta(days=max_age_days)).isoformat()
+        # `at`은 날짜(YYYY-MM-DD)이거나 시각이 붙은 ISO 문자열이고, 둘 다 앞
+        # 열 자리가 날짜라 문자열 비교가 그대로 날짜 비교가 된다.
+        items = [item for item in items if item["at"][:10] >= oldest]
     items.sort(key=lambda item: item["at"], reverse=True)
     kept = _balanced(items, cap)
     attribution = None

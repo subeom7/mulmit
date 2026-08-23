@@ -67,3 +67,78 @@ def test_a_thin_day_does_not_shrink_the_widget():
 def test_ordering_is_stable_for_the_same_input():
     items = _feed()
     assert [i["at"] for i in _balanced(items, MAX_ITEMS)] == [i["at"] for i in _balanced(items, MAX_ITEMS)]
+
+
+# --- 균형의 대가: 조용한 소스의 "최신"이 낡았을 때 -------------------------
+
+import datetime as dt  # noqa: E402
+
+from app.signal_feed import MAX_AGE_DAYS, build_feed  # noqa: E402
+
+
+def test_a_three_week_old_item_does_not_reach_a_section_called_what_is_happening_now(monkeypatch):
+    """종류별 배분이 조용한 소스의 낡은 항목을 끌어올렸다 — 실측 20일 전."""
+    today = dt.date(2026, 8, 23)
+    fresh = {"at": "2026-08-22", "kind": "news", "title": {"ko": "새것", "en": "new"}}
+    stale = {"at": "2026-08-03", "kind": "kr_pension", "title": {"ko": "20일 전", "en": "old"}}
+    monkeypatch.setattr(
+        "app.signal_feed._news_items", lambda: [fresh]
+    )
+    monkeypatch.setattr("app.signal_feed._kr_pension_items", lambda: [stale])
+    for name in ("_us_8k_items", "_kr_material_items", "_us_ptr_items",
+                 "_kr_holdings_items", "_index_move_items", "_kr_press_items"):
+        monkeypatch.setattr(f"app.signal_feed.{name}", list)
+
+    kinds = {item["kind"] for item in build_feed(today=today)["items"]}
+
+    assert "news" in kinds
+    assert "kr_pension" not in kinds, "20일 전 항목이 '지금 일어나는 일'에 올라왔다"
+
+
+def test_the_dedicated_page_still_keeps_the_history(monkeypatch):
+    today = dt.date(2026, 8, 23)
+    stale = {"at": "2026-08-03", "kind": "kr_pension", "title": {"ko": "20일 전", "en": "old"}}
+    monkeypatch.setattr("app.signal_feed._kr_pension_items", lambda: [stale])
+    for name in ("_us_8k_items", "_kr_material_items", "_us_ptr_items", "_news_items",
+                 "_kr_holdings_items", "_index_move_items", "_kr_press_items"):
+        monkeypatch.setattr(f"app.signal_feed.{name}", list)
+
+    kept = build_feed(today=today, limit=120, max_age_days=None)["items"]
+
+    assert [item["kind"] for item in kept] == ["kr_pension"]
+
+
+def test_the_cutoff_keeps_an_item_on_its_last_eligible_day(monkeypatch):
+    """경계에서 하루 어긋나면 매일 한 건씩 조용히 사라진다."""
+    today = dt.date(2026, 8, 23)
+    edge = (today - dt.timedelta(days=MAX_AGE_DAYS)).isoformat()
+    just_past = (today - dt.timedelta(days=MAX_AGE_DAYS + 1)).isoformat()
+    monkeypatch.setattr("app.signal_feed._news_items", lambda: [
+        {"at": edge, "kind": "news", "title": {"ko": "경계", "en": "edge"}},
+        {"at": just_past, "kind": "news", "title": {"ko": "하루 넘음", "en": "past"}},
+    ])
+    for name in ("_us_8k_items", "_kr_material_items", "_us_ptr_items", "_kr_pension_items",
+                 "_kr_holdings_items", "_index_move_items", "_kr_press_items"):
+        monkeypatch.setattr(f"app.signal_feed.{name}", list)
+
+    kept = [item["at"] for item in build_feed(today=today)["items"]]
+
+    assert kept == [edge]
+
+
+def test_timestamped_and_date_only_items_are_cut_by_the_same_line(monkeypatch):
+    """`at`은 날짜뿐이기도 하고 시각이 붙기도 한다."""
+    today = dt.date(2026, 8, 23)
+    inside = (today - dt.timedelta(days=1)).isoformat()
+    outside = (today - dt.timedelta(days=30)).isoformat()
+    monkeypatch.setattr("app.signal_feed._us_8k_items", lambda: [
+        {"at": f"{inside}T23:59:59Z", "kind": "us_8k", "title": {"ko": "a", "en": "a"}},
+        {"at": f"{outside}T23:59:59Z", "kind": "us_8k", "title": {"ko": "b", "en": "b"}},
+    ])
+    for name in ("_news_items", "_kr_material_items", "_us_ptr_items", "_kr_pension_items",
+                 "_kr_holdings_items", "_index_move_items", "_kr_press_items"):
+        monkeypatch.setattr(f"app.signal_feed.{name}", list)
+
+    kept = [item["at"][:10] for item in build_feed(today=today)["items"]]
+
+    assert kept == [inside]
