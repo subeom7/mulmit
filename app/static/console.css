@@ -504,6 +504,11 @@ html[data-lang="en"] .lang-en { display: revert; }
 .term-pop dl { margin: 0; display: grid; gap: var(--sp-2); }
 .term-pop dt { color: var(--accent); font-size: var(--fs-xs); font-weight: 700; }
 .term-pop dd { margin: 2px 0 0; color: var(--ink-2); font-size: var(--fs-sm); line-height: 1.6; }
+.term-pop .term-more {
+  display: inline-block; margin-top: var(--sp-3);
+  color: var(--accent); font-size: var(--fs-xs); font-weight: 700; text-decoration: none;
+}
+.term-pop .term-more:hover { text-decoration: underline; }
 .term-pop .term-close {
   position: absolute; top: 6px; right: 6px; width: 26px; height: 26px;
   border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink-3); cursor: pointer;
@@ -519,6 +524,46 @@ html[data-lang="en"] .lang-en { display: revert; }
     padding-bottom: var(--sp-6);
   }
 }
+
+/* ======================================================================
+ * 6b. 용어 사전 페이지
+ * ================================================================== */
+.glossary .console-head { border-bottom: 1px solid var(--line); }
+.glossary-index {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: var(--sp-4) 0 0; padding: var(--sp-3);
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel);
+}
+.glossary-chip {
+  padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px;
+  color: var(--ink-2); font-size: var(--fs-xs); font-weight: 600; text-decoration: none;
+}
+.glossary-chip:hover { color: var(--ink); border-color: var(--accent); background: var(--panel-2); }
+
+.term-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
+@media (max-width: 900px) { .term-list { grid-template-columns: 1fr; } }
+
+.term-entry {
+  position: relative;
+  padding: var(--sp-4); border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--panel);
+  /* 목차에서 눌러 내려왔을 때 고정 헤더 밑으로 숨지 않게. */
+  scroll-margin-top: calc(var(--mast-h) + var(--sp-4));
+}
+.term-entry:target { border-color: var(--accent); background: var(--panel-2); }
+.term-entry h3 { margin: 0 0 var(--sp-2); font-size: var(--fs-lg); font-weight: 700; }
+.term-entry .term-def { margin: 0 0 var(--sp-3); color: var(--ink); font-size: var(--fs-sm); line-height: 1.7; }
+.term-entry dl { margin: 0; display: grid; gap: var(--sp-2); }
+.term-entry dt { color: var(--accent); font-size: var(--fs-xs); font-weight: 700; }
+.term-entry dd { margin: 2px 0 0; color: var(--ink-2); font-size: var(--fs-sm); line-height: 1.65; }
+.term-anchor {
+  position: absolute; top: var(--sp-3); right: var(--sp-3);
+  color: var(--ink-3); font: 700 var(--fs-sm)/1 var(--mono); text-decoration: none; opacity: 0;
+}
+.term-entry:hover .term-anchor, .term-anchor:focus-visible { opacity: 1; }
+.term-anchor:hover { color: var(--accent); }
+
+.glossary .console-section { margin-top: var(--sp-6); }
 
 /* ======================================================================
  * 7. 존 카드 · 피드 조정

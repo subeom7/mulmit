@@ -35,6 +35,7 @@ from . import (
     crypto_structure,
     data_rights,
     econ_calendar,
+    glossary,
     ingest,
     kr_events,
     kr_fundamentals,
@@ -278,6 +279,7 @@ _STOCK_TEMPLATE: str | None = None
 
 
 _CRYPTO_COIN_TEMPLATE: str | None = None
+_GLOSSARY_TEMPLATE: str | None = None
 
 
 def _crypto_coin_template() -> str:
@@ -285,6 +287,13 @@ def _crypto_coin_template() -> str:
     if _CRYPTO_COIN_TEMPLATE is None:
         _CRYPTO_COIN_TEMPLATE = (config.STATIC_DIR / "crypto-coin.html").read_text(encoding="utf-8")
     return _CRYPTO_COIN_TEMPLATE
+
+
+def _glossary_template() -> str:
+    global _GLOSSARY_TEMPLATE
+    if _GLOSSARY_TEMPLATE is None:
+        _GLOSSARY_TEMPLATE = (config.STATIC_DIR / "glossary.html").read_text(encoding="utf-8")
+    return _GLOSSARY_TEMPLATE
 
 
 def _stock_template() -> str:
@@ -402,6 +411,23 @@ def privacy_policy() -> FileResponse:
 @app.get("/terms", include_in_schema=False)
 def terms_of_use() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "terms.html")
+
+
+@app.get("/glossary", include_in_schema=False)
+def glossary_page() -> HTMLResponse:
+    """용어 사전. 크롤러가 JS를 실행하지 않으므로 서버가 본문을 렌더한다.
+
+    "펀딩비 뜻" 같은 검색 유입이 이 페이지의 존재 이유라 내용이 HTML 안에
+    있어야 한다. 사전은 화면의 용어 팝오버와 같은 파일(static/terms.json)이다.
+    """
+    page = _glossary_template()
+    for key, value in (
+        ("{{JSONLD}}", glossary.json_ld()),
+        ("{{INDEX}}", glossary.index_html()),
+        ("{{TERMS}}", glossary.terms_html()),
+    ):
+        page = page.replace(key, value)
+    return HTMLResponse(page, headers={"Cache-Control": "public, max-age=3600"})
 
 
 @app.get("/disclaimer", include_in_schema=False)

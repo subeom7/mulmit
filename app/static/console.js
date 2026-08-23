@@ -774,6 +774,12 @@
       dd.textContent = text;
       list.append(dt, dd);
     }
+    // 팝오버는 한 용어만 보여준다. 더 보려는 사람에게 나가는 문을 둔다.
+    const more = document.createElement("a");
+    more.className = "term-more";
+    more.href = `/glossary#${trigger.dataset.term}`;
+    more.textContent = lang() === "ko" ? "용어 사전에서 보기 →" : "See the full glossary →";
+    popover.append(more);
     document.body.append(popover);
 
     if (window.matchMedia("(min-width: 561px)").matches) {
