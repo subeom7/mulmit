@@ -23,13 +23,19 @@
 이 함정은 상류의 성질이라 여기서 고칠 수 없고, 부르는 쪽(`kr_search_interest`)이
 같은 요청 안에서만 비교하도록 설계돼 있다.
 
-경로(2026-08-24 무자격 프로브로 확정): 데이터랩은 **`naveropenapi.apigw.ntruss.com`**
-(AI·NAVER API 게이트웨이)에 있고, 검색 API가 옮겨 간 `naverapihub.apigw.ntruss.com`에는
-**없다**(404). 이 갈림은 권리 판정과 정확히 겹친다 — 데이터랩을 지배하는 문서가 검색 특약이
-붙은 API HUB 약관이 아니라 `AI·Naver API 서비스 이용약관`이라는 것을 라우팅이 다시 확인해
-준다. 게이트웨이는 키 없이도 **401(경로 있음) 대 404(경로 없음)**로 답이 갈려서, 자격증명을
-만지지 않고 경로를 확인할 수 있었다.
+경로(2026-08-24, 운영자가 콘솔의 Dev guide를 열어 확정):
+**`POST https://naverapihub.apigw.ntruss.com/search-trend/v1/search`**.
 
+여기까지 두 번 틀렸다. 처음엔 구 개발자센터 주소(`openapi.naver.com/v1/datalab/search`),
+다음엔 구 게이트웨이(`naveropenapi.apigw.ntruss.com/datalab/v1/search`)였다. 두 번째가
+특히 함정이었다 — 그 주소는 **401 code=210 "A subscription to the API is required"**를
+돌려준다. 400·404가 아니라 권한 얘기를 하니 "경로는 맞는데 구독만 없다"로 읽힌다. 실제로는
+**구 게이트웨이에 남아 있는 레거시 경로**였고, API HUB로 발급된 키에 거기 구독이 없는 것이
+정상이었다. 그 210은 "여기가 맞다"가 아니라 "여기가 아니다"였다.
+
+경로 추측을 41가지 조합으로 훑고도 못 찾았다. 접두어를 `/datalab`·`/data-lab`·`/insight`·
+`/trend`로 잡았는데 정답은 접두어 자체가 `/search-trend`였다. **추측 sweep은 답을 찾는
+방법이 아니다** — 404가 아닌 응답 하나를 답으로 오인하기까지 했다. 공식 가이드가 답이었다.
 쿼터: NCP API HUB 구독 실측 **월 50,000회 · 일 한도 없음**(구 개발자센터는 일 1,000회).
 게이트 `NAVER_DATALAB_ENABLED` + 클라이언트 아이디/시크릿.
 """
@@ -51,7 +57,7 @@ DATALAB_PROVIDER_ID = "naver_datalab"
 DATALAB_PUBLISHER = "네이버 데이터랩"
 DATALAB_PUBLISHER_EN = "NAVER DataLab"
 DATALAB_PUBLISHER_URL = "https://datalab.naver.com/"
-DATALAB_TREND_URL = "https://naveropenapi.apigw.ntruss.com/datalab/v1/search"
+DATALAB_TREND_URL = "https://naverapihub.apigw.ntruss.com/search-trend/v1/search"
 DATALAB_DOCS_URL = "https://developers.naver.com/docs/serviceapi/datalab/search/search.md"
 DATALAB_TERMS_URL = "https://www.ncloud.com/policy/terms/opapi"
 DATALAB_ATTRIBUTION = "네이버 데이터랩 검색어 트렌드"

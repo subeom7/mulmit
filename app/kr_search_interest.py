@@ -55,9 +55,15 @@ log = logging.getLogger(__name__)
 WINDOW_DAYS = 90
 # 데이터랩은 어제까지를 준다. 오늘을 끝으로 달라고 하면 마지막 점이 비거나 덜 찬다.
 LAG_DAYS = 1
-# "평소"를 무엇으로 볼지. 창 전체의 중앙값은 급등 구간에 끌려가므로, 최근을 뺀
-# 앞부분을 기준선으로 쓴다.
-BASELINE_TAIL_DAYS = 7
+# "평소"는 **같은 요일**의 중앙값이다. 주식 검색은 주중/주말 진폭이 압도적이라
+# (2026-08-24 실측: 삼성전자 평일 중앙값 55~64 대 토 8.9·일 7.5 — 주말이 평일의
+# 12~14%, 현대차도 20~23%), 요일을 섞은 기준선에 오늘을 견주면 토·일마다 "85%
+# 급락", 월요일마다 "7배 급등"이 찍힌다. 에러 없이 매주 거짓말을 하는 종류다.
+# 같은 요일끼리 견주면 그 주기가 분자와 분모에서 함께 사라진다.
+#
+# 표본이 이보다 적으면 중앙값이 흔들려서 배수가 뜻을 잃는다 — 그때는 숫자를
+# 내지 않는다. 90일 창이면 요일당 12~13개가 모인다.
+MIN_WEEKDAY_SAMPLES = 4
 _KST = dt.timezone(dt.timedelta(hours=9))
 
 _DEFAULT_PROVIDER: DatalabProvider | None = None
@@ -123,27 +129,48 @@ def _label_for(code: str) -> dict[str, str] | None:
 
 
 def _describe(series: list[dict[str, Any]]) -> dict[str, Any]:
-    """한 계열 안에서 끝나는 계산만 한다 — 요청이 갈라져도 뜻이 변하지 않도록."""
+    """한 계열 안에서 끝나는 계산만 한다 — 요청이 갈라져도 뜻이 변하지 않도록.
+
+    그리고 **같은 요일끼리만** 견준다. 위 MIN_WEEKDAY_SAMPLES 주석의 실측대로
+    주간 주기가 값의 대부분을 설명하기 때문에, 요일을 섞으면 주말마다 급락이,
+    월요일마다 급등이 나온다.
+    """
     values = [float(point["ratio"]) for point in series]
     latest = values[-1]
     peak = max(values)
-    baseline_values = values[:-BASELINE_TAIL_DAYS] or values
-    baseline = statistics.median(baseline_values)
-    # 백분위: 오늘보다 낮았던 날의 비율. 창 안에서만 뜻이 있고 종목 간 비교가 된다.
-    below = sum(1 for value in values if value < latest)
-    percentile = round(below / len(values) * 100.0, 1) if len(values) > 1 else None
-    # 배수: 기준선이 0이면(그 창 내내 검색이 거의 없었다면) 배수는 뜻이 없다.
-    multiple = round(latest / baseline, 2) if baseline > 0 else None
+
+    latest_day = _weekday_of(series[-1]["period"])
+    same_weekday = [
+        float(point["ratio"])
+        for point in series[:-1]
+        if _weekday_of(point["period"]) == latest_day
+    ]
+
+    baseline: float | None = None
+    multiple: float | None = None
+    percentile: float | None = None
+    if len(same_weekday) >= MIN_WEEKDAY_SAMPLES:
+        baseline = statistics.median(same_weekday)
+        # 기준선이 0이면(그 요일 내내 검색이 거의 없었다면) 배수는 뜻이 없다.
+        multiple = round(latest / baseline, 2) if baseline > 0 else None
+        below = sum(1 for value in same_weekday if value < latest)
+        percentile = round(below / len(same_weekday) * 100.0, 1)
+
     return {
         "latest": round(latest, 2),
         "peak": round(peak, 2),
-        "baseline": round(baseline, 2),
+        "baseline": None if baseline is None else round(baseline, 2),
         "percentile": percentile,
         "vs_baseline": multiple,
         "points": len(values),
+        # 무엇에 견줬는지 밝힌다 — 같은 요일 몇 개인지 모르면 배수를 읽을 수 없다.
+        "compared_to": {"weekday": latest_day, "samples": len(same_weekday)},
         "at_window_high": latest >= peak,
     }
 
+
+def _weekday_of(period: str) -> int:
+    return dt.date.fromisoformat(period).weekday()
 
 def _batches(entries: list[dict[str, str]]) -> list[list[dict[str, str]]]:
     return [entries[i : i + MAX_GROUPS] for i in range(0, len(entries), MAX_GROUPS)]
@@ -198,7 +225,8 @@ def build(
         raise DataUnavailable("데이터랩이 워치리스트에서 읽을 수 있는 계열을 주지 않았다")
 
     # 줄 세우기는 자기 대비 급등 정도로만 한다 — 검색량 순위가 아니다.
-    stocks.sort(key=lambda row: (row.get("vs_baseline") or 0.0, row.get("percentile") or 0.0), reverse=True)
+    # 배수를 못 낸 종목(같은 요일 표본 부족)은 뒤로 — 0으로 세우면 급락처럼 보인다.
+    stocks.sort(key=lambda row: (row.get("vs_baseline") is not None, row.get("vs_baseline") or 0.0, row.get("percentile") or 0.0), reverse=True)
 
     return {
         "generated_at": dt.datetime.now(dt.UTC).isoformat().replace("+00:00", "Z"),
@@ -207,12 +235,15 @@ def build(
         "count": len(stocks),
         "basis_ko": (
             f"네이버 통합검색 {WINDOW_DAYS}일 검색 추이입니다. 값은 절댓값이 아니라 "
-            "요청 기간의 최댓값을 100으로 둔 상대값이며, 종목 간 비교는 자기 평소 대비 "
+            "요청 기간의 최댓값을 100으로 둔 상대값입니다. 주식 검색은 주말에 평일의 10~20%로 "
+            "떨어지므로 **같은 요일끼리** 견줍니다. 종목 간 비교는 자기 평소 대비 "
             "배수와 백분위로만 합니다. 검색량 순위가 아닙니다."
         ),
         "basis_en": (
             f"NAVER integrated-search interest over {WINDOW_DAYS} days. Values are relative to "
-            "each request's own peak (100), not absolute counts; stocks are compared only by "
+            "each request's own peak (100), not absolute counts. Stock search drops to 10-20% of "
+            "weekday levels at weekends, so each day is compared with the same weekday. Stocks "
+            "are ranked only by "
             "how far each sits above its own baseline. This is not a search-volume ranking."
         ),
         "attribution": {

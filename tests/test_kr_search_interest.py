@@ -76,6 +76,17 @@ def _flat(value: float, days: int = 90) -> list[float]:
     return [value] * days
 
 
+def _weekly(start: dt.date, weekday_value: float, weekend_value: float, days: int = 90) -> list[float]:
+    """실제 검색 추이의 모양 — 주말이 평일의 한 조각이다.
+
+    2026-08-24 실측: 삼성전자 평일 중앙값 55~64, 토 8.9, 일 7.5.
+    """
+    return [
+        weekend_value if (start + dt.timedelta(days=i)).weekday() >= 5 else weekday_value
+        for i in range(days)
+    ]
+
+
 def test_the_lane_stays_shut_without_credentials(monkeypatch, roster):
     """게이트만 켜고 키를 안 넣은 상태는 '데이터 없음'이 아니라 고장이다."""
     monkeypatch.setattr(config, "NAVER_DATALAB_ENABLED", True)
@@ -204,20 +215,20 @@ def test_an_empty_result_is_an_error_not_an_empty_chart():
 
 
 def test_the_request_goes_to_the_ncp_gateway_with_ncp_headers():
-    """경로도 헤더도 구 개발자센터와 다르다 — 실측으로 확정했다(2026-08-24).
+    """경로도 헤더도 구 개발자센터와 다르다. 여기까지 **두 번 틀렸다**.
 
-    게이트웨이는 키가 없어도 **401(경로 있음) 대 404(경로 없음)**로 답이 갈려서,
-    자격증명을 만지지 않고 확인할 수 있었다:
+        openapi.naver.com/v1/datalab/search              구 개발자센터
+        naveropenapi.apigw.ntruss.com/datalab/v1/search  구 게이트웨이의 레거시 경로
+        naverapihub.apigw.ntruss.com/search-trend/v1/search   ← 실제 (실측 200)
 
-        POST naveropenapi.apigw.ntruss.com/datalab/v1/search → 401  ← 여기 있다
-        POST naverapihub.apigw.ntruss.com/datalab/v1/search  → 404  ← 검색 API가 간 곳
+    두 번째가 함정이었다. 그 주소는 404가 아니라 **401 code=210 "A subscription to
+    the API is required"** 를 돌려준다. 권한 얘기를 하니 "경로는 맞는데 구독만
+    없다"로 읽힌다. 실제로는 API HUB 키에 그 구독이 없는 게 정상이었다 — 210은
+    "여기가 맞다"가 아니라 "여기가 아니다"였다.
 
-    헤더 이름도 같은 방법으로 갈랐다. 구 헤더를 보내면 "Authentication information
-    are missing"(못 봤다), NCP 헤더를 보내면 "Invalid authentication information"
-    (읽고 거절했다)이다.
-
-    이 갈림은 권리 판정과 겹친다 — 데이터랩은 검색 특약이 붙은 API HUB 약관이
-    아니라 `AI·Naver API 서비스 이용약관`을 따른다(등록부 §3.29·§6.7).
+    경로를 41가지 조합으로 훑고도 못 찾았다. 접두어를 /datalab·/data-lab·/insight·
+    /trend로 잡았는데 정답은 접두어 자체가 /search-trend였다. 추측으로 찾을 수 있는
+    것이 아니었고, 공식 Dev guide가 답이었다. 그래서 여기 못 박아 둔다.
     """
     captured: dict[str, object] = {}
 
@@ -236,8 +247,60 @@ def test_the_request_goes_to_the_ncp_gateway_with_ncp_headers():
     )
     provider.fetch_trend([("x", ["x"])], start=dt.date(2026, 8, 1), end=dt.date(2026, 8, 1))
 
-    assert captured["url"] == "https://naveropenapi.apigw.ntruss.com/datalab/v1/search"
+    assert captured["url"] == "https://naverapihub.apigw.ntruss.com/search-trend/v1/search"
     headers = captured["headers"]
     assert headers["X-NCP-APIGW-API-KEY-ID"] == "id"
     assert headers["X-NCP-APIGW-API-KEY"] == "secret"
     assert "X-Naver-Client-Id" not in headers, "구 개발자센터 헤더로는 게이트웨이가 못 알아본다"
+
+
+def test_a_weekend_is_not_a_collapse(open_lane, roster):
+    """요일을 섞은 기준선에 오늘을 견주면 주말마다 급락이 찍힌다.
+
+    2026-08-24 실측이 이 테스트의 근거다 — 삼성전자 평일 중앙값 55~64에 토 8.9,
+    일 7.5. 주말이 평일의 12~14%다. 요일을 섞으면 토요일에 x0.16이 나오는데
+    그건 관심이 식은 게 아니라 토요일이라서다. 같은 요일끼리 견주면 x1.00이다.
+
+    이 고장은 에러를 내지 않는다. 매주 조용히 거짓말을 할 뿐이다.
+    """
+    end = dt.date(2026, 8, 22)  # 토요일
+    start = end - dt.timedelta(days=89)
+    provider = FakeProvider({"삼성전자": _weekly(start, 60.0, 9.0)})
+    payload = kr_search_interest.build(
+        ["005930"], today=end + dt.timedelta(days=1), provider=provider
+    )
+    stock = payload["stocks"][0]
+    assert stock["compared_to"]["weekday"] == 5, "마지막 점은 토요일이다"
+    assert stock["vs_baseline"] == 1.0, (
+        f"토요일을 토요일들과 견주면 평범해야 한다 (얻은 값 {stock['vs_baseline']})"
+    )
+    assert stock["baseline"] == 9.0, "기준선은 평일이 섞인 중앙값이 아니라 토요일 중앙값이다"
+
+
+def test_a_real_spike_still_shows_through_the_weekly_cycle(open_lane, roster):
+    """주기를 지운 것이지 신호를 지운 것이 아니다 — 진짜 급등은 그대로 보여야 한다."""
+    end = dt.date(2026, 8, 22)
+    start = end - dt.timedelta(days=89)
+    series = _weekly(start, 60.0, 9.0)
+    series[-1] = 36.0  # 토요일인데 평소 토요일의 네 배
+    provider = FakeProvider({"삼성전자": series})
+    payload = kr_search_interest.build(
+        ["005930"], today=end + dt.timedelta(days=1), provider=provider
+    )
+    stock = payload["stocks"][0]
+    assert stock["vs_baseline"] == 4.0
+    assert stock["percentile"] == 100.0
+
+
+def test_too_few_samples_of_that_weekday_means_no_number(open_lane, roster):
+    """표본이 얇으면 중앙값이 흔들린다 — 흔들리는 배수를 내느니 안 낸다."""
+    end = dt.date(2026, 8, 22)
+    start = end - dt.timedelta(days=13)  # 두 주 = 토요일 표본 1개
+    provider = FakeProvider({"삼성전자": _weekly(start, 60.0, 9.0, days=14)})
+    payload = kr_search_interest.build(
+        ["005930"], today=end + dt.timedelta(days=1), provider=provider
+    )
+    stock = payload["stocks"][0]
+    assert stock["vs_baseline"] is None
+    assert stock["baseline"] is None
+    assert stock["compared_to"]["samples"] < kr_search_interest.MIN_WEEKDAY_SAMPLES
