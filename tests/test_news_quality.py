@@ -20,17 +20,18 @@ import pytest
 from app.news_feed import (
     _has_business_context,
     _is_generated,
-    _is_off_topic,
     _matches_keyword,
     _tags_for,
+    admits,
 )
 
 
 def admitted(title: str) -> bool:
-    """`refresh()`가 이 제목을 남기는가."""
-    if _is_generated(title) or _is_off_topic(title):
-        return False
-    return bool(_matches_keyword(title) or (_tags_for(title) and _has_business_context(title)))
+    """`refresh()`가 이 제목을 남기는가 — **운영 함수를 그대로** 부른다.
+
+    규칙을 테스트에서 다시 구현하면 둘이 어긋나도 아무도 모른다.
+    """
+    return admits(title, _tags_for(title))
 
 
 # --- 부분 문자열 매칭 버그 -------------------------------------------------
@@ -128,3 +129,46 @@ def test_the_filter_keeps_most_of_a_real_day():
     kept = [title for title in observed if admitted(title)]
 
     assert len(kept) == 4, kept
+
+
+# --- 이미 저장된 기사도 같은 문을 지난다 ---------------------------------
+
+def test_stored_articles_are_filtered_again_on_refresh(monkeypatch):
+    """블롭은 이전 기사를 URL로 이어받아 병합한다.
+
+    그 경로에 판정이 없으면, 필터를 켠 날 화면이 그대로다 — 이미 실려 있는
+    연예 기사는 새로 수집되는 것이 아니라 **이어받아지는** 것이기 때문이다.
+    """
+    from app import news_feed
+
+    stored = {
+        "articles": [
+            {"url": "https://a", "title": "Netflix's Outer Banks Finale Shatters An IMDb Series Record",
+             "seendate": "20260824T000000Z", "domain": "screenrant.com", "tags": [{"symbol": "NFLX"}]},
+            {"url": "https://b", "title": "Trump's new 50% tariffs on Canadian goods",
+             "seendate": "20260824T000000Z", "domain": "wcvb.com", "tags": []},
+        ]
+    }
+    monkeypatch.setattr(news_feed.config, "GDELT_ENABLED", True)
+    monkeypatch.setattr(news_feed.store, "load_report", lambda *_a, **_k: stored)
+    saved: dict = {}
+    monkeypatch.setattr(news_feed.store, "save_report", lambda _key, payload: saved.update(payload))
+
+    class _Silent:
+        def fetch_latest_gkg_titles(self):
+            return []
+
+    news_feed.refresh(_Silent())
+
+    kept = [article["url"] for article in saved["articles"]]
+    assert kept == ["https://b"], "저장돼 있던 연예 기사가 그대로 살아남았다"
+
+
+def test_the_admission_rule_has_one_definition():
+    """수집 경로와 이어받기 경로가 같은 함수를 부른다."""
+    import inspect
+
+    from app import news_feed
+
+    source = inspect.getsource(news_feed.refresh)
+    assert source.count("admits(") == 2, "두 경로 중 하나가 자기만의 판정을 쓴다"
