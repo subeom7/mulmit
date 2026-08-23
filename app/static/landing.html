@@ -25,9 +25,9 @@
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Mulmit","alternateName":["물밑","물밑 Mulmit","Mulmit 물밑","물밑 대시보드","물밑 마켓"],"url":"https://mulmit.com/"}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Mulmit","url":"https://mulmit.com/","logo":"https://mulmit.com/static/brand/favicon-512.png"}</script>
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260823-22">
-  <link rel="stylesheet" href="/static/tokens.css?v=20260823-22">
-  <link rel="stylesheet" href="/static/console.css?v=20260823-22">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-24">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260823-24">
+  <link rel="stylesheet" href="/static/console.css?v=20260823-24">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -144,9 +144,19 @@
       </header>
       <div class="panel">
         <div id="feed-filter" class="feed-filter" hidden></div>
-        <div id="feed-upcoming" class="feed-upcoming" hidden></div>
         <div id="feed-body"></div>
         <footer class="panel-footer" id="feed-footer"></footer>
+      </div>
+    </section>
+
+    <section class="console-section" id="econ-calendar" hidden aria-labelledby="cal-title">
+      <header>
+        <h2 id="cal-title" data-i18n="cal.title">경제 캘린더</h2>
+        <span class="sec-note" data-i18n="cal.shortNote">기관이 공표한 예정일 · 변경될 수 있습니다</span>
+      </header>
+      <div class="panel">
+        <div id="cal-body"></div>
+        <footer class="panel-footer" id="cal-footer"></footer>
       </div>
     </section>
 
@@ -218,8 +228,8 @@
     else if (crypto.indexOf(id) >= 0) location.replace("/crypto" + location.hash);
   })();
   </script>
-  <script src="/static/console.js?v=20260823-22" defer></script>
-  <script src="/static/monitor.js?v=20260823-22" defer></script>
-  <script src="/static/search.js?v=20260823-22" defer></script>
+  <script src="/static/console.js?v=20260823-24" defer></script>
+  <script src="/static/monitor.js?v=20260823-24" defer></script>
+  <script src="/static/search.js?v=20260823-24" defer></script>
 </body>
 </html>

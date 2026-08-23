@@ -459,6 +459,37 @@ html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
   text-align: left;
 }
 
+/* 표는 내용 폭까지만 넓힌다.
+ * `width:100%`면 남는 폭이 모든 열에 고루 퍼진다. 코스피 지수군은 내용이
+ * 566px인데 1286px로 늘어나 있었다 — 값 하나가 제 머리글에서 200px 떨어져
+ * 앉아, 눈이 한 행을 끝까지 따라가지 못했다(실측 2026-08-23).
+ * 남는 폭을 한 열에 몰아주는 방법도 써 봤지만 더 나빴다. 긴 글 열이 부풀면
+ * 그 뒤의 열(원문 링크·지역·유형)이 본문에서 700px 밀려난다. 남는 폭은
+ * 표 안이 아니라 표 밖에 둔다. */
+.accessible-table { width: auto; max-width: 100%; }
+
+/* 예외: 보드 카드는 표가 곧 카드 내용이다. 카드 폭은 격자가 정해 주므로 그
+ * 안에서는 채우는 쪽이 맞다 — 내용 폭으로 두면 카드마다 오른쪽 3분의 1이
+ * 테두리 안에서 빈 채로 남는다. */
+.cboard-card .accessible-table { width: 100%; }
+
+/* 테두리 안쪽 여백.
+ * `.panel`은 padding이 0이고 표의 셀 padding 10px에만 기대고 있었다. 그래서
+ * 패널 왼쪽 629px에 "대표 지수"가 630px — 글자가 테두리에 닿았다(실측
+ * 2026-08-23). 표 자체는 행 구분선을 끝까지 긋는 편이 나으니 full-bleed로
+ * 두고, 바깥쪽 셀의 padding으로 같은 들여쓰기를 만든다.
+ * 카드 안의 작은 표(.cboard-card)는 카드가 이미 안쪽 여백을 갖고 있어 뺀다. */
+.panel .accessible-table th:first-child, .panel .accessible-table td:first-child { padding-left: var(--sp-4); }
+.panel .accessible-table th:last-child, .panel .accessible-table td:last-child { padding-right: var(--sp-4); }
+.panel > .panel-footer { padding-left: var(--sp-4); padding-right: var(--sp-4); }
+#kridx-body .kridx-group { padding-left: var(--sp-4); }
+
+/* 지수군은 표 둘이 나란히 선다. 세로로 쌓으면 오른쪽 절반이 빈 채 길어진다.
+ * auto-fit이라 묶음이 하나뿐이거나 화면이 좁으면 저절로 한 줄이 된다. */
+#kridx-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(520px, 1fr)); gap: 0 var(--sp-6); align-items: start; }
+#kridx-body .kridx-block { min-width: 0; }
+#kridx-body .kridx-block .kridx-group { margin-top: var(--sp-4); }
+
 /* 지표 자세히 보기 — 기존 대시보드 섹션들을 통째로 담는 큰 서랍.
  * 쉬움에서는 닫혀 있고 전문가에서는 열린다(data-mode-open). 닫혀 있어도 본문은
  * DOM에 있어 검색엔진은 그대로 읽는다. */
@@ -470,7 +501,9 @@ html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
 
 /* 위험 표시는 접지 않는다 — 다만 주황 알약 세 개가 나란히 서면 그것대로
  * 소음이라, 테두리만 남긴 조용한 칩으로 바꾼다. */
-.risk-strip { gap: 6px; margin: var(--sp-3) 0 0; }
+/* 아래 여백이 0이라 카드 격자가 배지 줄 바로 아래 붙어 있었다
+ * (실측: 배지 bottom 394px = 카드 top 394px). */
+.risk-strip { gap: 6px; margin: var(--sp-3) 0 var(--sp-4); }
 .risk-strip .status-badge {
   padding: 4px 10px; border-radius: 999px; font-size: var(--fs-xs); font-weight: 600;
   color: var(--ink-3); background: transparent; border: 1px solid var(--line-strong);
@@ -664,4 +697,108 @@ html[data-lang="en"] .lang-en { display: revert; }
   .site-search-input { width: 70px; }
   .site-search-input:focus { width: 148px; }
   .mode-switch button { padding: 5px 8px; }
+}
+
+/* ===== 경제 캘린더 =========================================================
+ * 달력으로 보는 이유는 "빈 날"이 정보이기 때문이다. 표에서는 8월 26일 다음이
+ * 9월 4일이라는 사실이 두 줄로만 보이지만, 격자에서는 그 사이 여드레가
+ * 눈으로 보인다. 넓은 화면은 칸 안에 이름을, 좁은 화면은 점만 찍고 이름은
+ * 격자 아래 목록에서 읽는다 — 48px 칸에 글자를 넣으면 둘 다 못 읽는다. */
+.cal-nav {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--line);
+}
+.cal-step, .cal-jump {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 30px; height: 30px; padding: 0 var(--sp-2);
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--panel-2); color: var(--ink-2);
+  font: 500 var(--fs-sm)/1 var(--sans); cursor: pointer;
+}
+.cal-step { font-size: 1rem; }
+.cal-step:hover:not(:disabled), .cal-jump:hover { border-color: var(--accent); color: var(--ink); }
+.cal-step:disabled { opacity: .3; cursor: default; }
+.cal-month {
+  margin: 0; min-width: 8.5em; text-align: center;
+  color: var(--ink); font: 650 var(--fs-lg)/1.2 var(--sans); font-variant-numeric: tabular-nums;
+}
+.cal-legend { display: flex; gap: var(--sp-3); margin-left: auto; flex-wrap: wrap; }
+.cal-key { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-3); font-size: var(--fs-xs); }
+.cal-key::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--accent); }
+.cal-key.is-policy::before { background: var(--amber); }
+
+/* 첫 행(요일)만 내용 높이로 두고, 날짜 행은 전부 최소 74px. 명시 행을 하나만
+ * 두면 나머지는 암시 행이 되어 grid-auto-rows가 걸린다. */
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: auto; grid-auto-rows: minmax(74px, auto); }
+.cal-weekday {
+  padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--line);
+  /* 요일 이름은 --sans로. --mono 스택에는 한글이 없어 "일 월 화"가 대체 글꼴로
+   * 떨어지면서 자간과 굵기가 혼자 어긋났다. */
+  color: var(--ink-3); font: 650 var(--fs-xs)/1 var(--sans); letter-spacing: .06em;
+}
+.cal-weekday.is-sun { color: #ff8fa0; }
+.cal-weekday.is-sat { color: #8ec5ff; }
+
+.cal-cell {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 6px;
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+.cal-cell:nth-child(7n) { border-right: 0; }
+.cal-cell.is-blank { background: rgba(0, 0, 0, .16); }
+.cal-cell.is-past { opacity: .45; }
+.cal-cell.is-today { background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.cal-daynum { display: flex; align-items: center; gap: 6px; }
+.cal-n { color: var(--ink-2); font: 600 var(--fs-sm)/1 var(--mono); font-variant-numeric: tabular-nums; }
+.cal-cell.is-sun .cal-n { color: #ff8fa0; }
+.cal-cell.is-sat .cal-n { color: #8ec5ff; }
+.cal-cell.is-today .cal-n { color: var(--ink); }
+.cal-dday {
+  padding: 1px 5px; border-radius: 999px; background: var(--panel-3);
+  color: var(--ink-3); font: 650 var(--fs-xs)/1.5 var(--mono);
+}
+.cal-dday.is-now { background: var(--accent); color: var(--accent-ink); }
+
+.cal-chip {
+  display: block; padding: 4px 6px; border-radius: var(--r-sm);
+  border-left: 3px solid var(--accent); background: var(--panel-2);
+  color: var(--ink-2); font-size: var(--fs-xs); line-height: 1.35;
+  text-decoration: none; overflow-wrap: anywhere;
+}
+.cal-chip.is-policy { border-left-color: var(--amber); }
+.cal-chip:hover { background: var(--panel-3); color: var(--ink); }
+.cal-dots { display: none; gap: 3px; }
+.cal-dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.cal-dots i.is-policy { background: var(--amber); }
+
+.cal-agenda { display: none; margin: 0; padding: 0; list-style: none; }
+.cal-agenda li {
+  display: grid; grid-template-columns: auto 1fr; gap: 2px var(--sp-3);
+  padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--line);
+}
+.cal-agenda-date { color: var(--ink-3); font: 600 var(--fs-xs)/1.4 var(--mono); font-variant-numeric: tabular-nums; }
+.cal-agenda-name { grid-column: 2; border-left: 0; padding: 0; background: none; font-size: var(--fs-sm); }
+.cal-agenda-name:hover { background: none; }
+.cal-agenda-kind { grid-column: 2; color: var(--ink-3); font-size: var(--fs-xs); }
+.cal-agenda-empty { padding: var(--sp-5) var(--sp-4); color: var(--ink-3); font-size: var(--fs-sm); text-align: center; }
+
+.cal-all { border-top: 1px solid var(--line); border-bottom: 0; }
+.cal-all .table-scroll { padding: 0 0 var(--sp-3); }
+
+/* 좁은 화면: 칸은 날짜와 점만, 이름은 아래 목록에서. */
+@media (max-width: 760px) {
+  .cal-cell { min-height: 54px; gap: 3px; padding: 5px 4px; }
+  /* 격자 안의 칩만 숨긴다. 아래 목록의 이름(.cal-agenda-name)도 같은
+   * .cal-chip이라 통째로 숨기면 좁은 화면에서 일정 이름이 사라진다. */
+  .cal-cell .cal-chip { display: none; }
+  .cal-dots { display: flex; }
+  .cal-agenda { display: block; }
+  .cal-weekday { padding: var(--sp-2) 4px; text-align: center; }
+  .cal-daynum { justify-content: center; }
+  .cal-dday { display: none; }
+  .cal-dots { justify-content: center; }
+  .cal-legend { width: 100%; margin: 4px 0 0; order: 9; }
+  .cal-month { min-width: 0; flex: 1; font-size: var(--fs-md); }
+  .cal-nav { flex-wrap: wrap; }
 }

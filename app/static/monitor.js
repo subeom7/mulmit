@@ -168,6 +168,9 @@ const TEXT = {
     "cal.colDate": "날짜", "cal.colEvent": "이벤트", "cal.colRegion": "지역", "cal.colKind": "유형",
     "cal.kindRelease": "지표 발표", "cal.kindPolicy": "정책회의", "cal.regionUs": "미국", "cal.regionKr": "한국",
     "cal.dday": "D-{n}", "cal.today": "오늘",
+    "cal.prev": "이전 달", "cal.next": "다음 달", "cal.thisMonth": "이번 달",
+    "cal.shortNote": "기관이 공표한 예정일 · 변경될 수 있습니다",
+    "cal.empty": "이 달에는 예정된 발표가 없습니다.", "cal.allEvents": "전체 일정 {n}건 표로 보기",
     "sector.title": "섹터 자금 흐름", "sector.caption": "S&P 500 섹터 ETF 기간 수익률", "sector.name": "섹터", "sector.return": "수익률", "sector.interpretation": "플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.",
     "tv.title": "S&P 500 종목 히트맵", "tv.embed": "외부 위젯", "tv.notice": "이 히트맵은 TradingView가 직접 그립니다. Mulmit이 계산한 값이 아닙니다.",
     "tv.terms": "데이터·표시 조건은 제공자 정책을 따릅니다.", "corr.title": "자산군 상관관계", "corr.note": "서로 다른 시장 시간대는 동시 일간 수익률 상관을 왜곡할 수 있습니다.", "corr.scale": "+1은 같은 방향, 0은 약한 선형 관계, −1은 반대 방향입니다. 상관은 인과관계가 아닙니다.",
@@ -314,6 +317,9 @@ const TEXT = {
     "cal.colDate": "Date", "cal.colEvent": "Event", "cal.colRegion": "Region", "cal.colKind": "Type",
     "cal.kindRelease": "Data release", "cal.kindPolicy": "Policy meeting", "cal.regionUs": "US", "cal.regionKr": "Korea",
     "cal.dday": "D-{n}", "cal.today": "Today",
+    "cal.prev": "Previous month", "cal.next": "Next month", "cal.thisMonth": "This month",
+    "cal.shortNote": "As announced by the institutions · dates can change",
+    "cal.empty": "No scheduled releases this month.", "cal.allEvents": "All {n} dates as a table",
     "sector.title": "Sector flow", "sector.caption": "S&P 500 sector ETF period returns", "sector.name": "Sector", "sector.return": "Return", "sector.interpretation": "Broader positive participation can confirm a wider advance. ETF returns are not the same thing as fund-flow dollars.",
     "tv.title": "S&P 500 constituent heatmap", "tv.embed": "Third-party widget", "tv.notice": "TradingView serves this embed directly; it is not Mulmit API data.",
     "tv.terms": "Provider data and display terms apply.", "corr.title": "Cross-asset correlation", "corr.note": "Different market hours can distort same-day return correlations.", "corr.scale": "+1 moves together, 0 indicates a weak linear link, and −1 moves oppositely. Correlation is not causation.",
@@ -1229,7 +1235,7 @@ const PAGE_FETCHES = {
   krEtf: ["kr"],
   usPtr: ["us"],
   usEvents: ["us"],
-  calendar: ["us"],
+  calendar: ["landing", "us"],
   cryptoOverview: ["landing", "crypto"],
   cryptoSentiment: ["landing", "crypto"],
   cryptoVolatility: ["crypto"],
@@ -1382,10 +1388,15 @@ function renderKrIndices() {
   const signClass = (value) => value == null ? "" : value > 0 ? "up" : value < 0 ? "down" : "";
   for (const group of payload.groups) {
     if (!(group.rows || []).length) continue;
+    // 제목과 표를 한 블록으로 묶는다. 그래야 그리드가 묶음 단위로 배치한다 —
+    // 형제로 늘어놓으면 제목 둘이 한 줄, 표 둘이 다음 줄로 흩어진다.
+    const block = document.createElement("div");
+    block.className = "kridx-block";
     const heading = document.createElement("h3");
     heading.className = "kridx-group";
     heading.textContent = localValue(group.label, state.lang);
-    body.append(heading);
+    block.append(heading);
+    body.append(block);
     const scroll = document.createElement("div"); scroll.className = "table-scroll";
     const table = document.createElement("table"); table.className = "accessible-table kridx-table";
     table.innerHTML = `<thead><tr>
@@ -1412,7 +1423,7 @@ function renderKrIndices() {
       }
       tbody.append(tr);
     }
-    table.append(tbody); scroll.append(table); body.append(scroll);
+    table.append(tbody); scroll.append(table); block.append(scroll);
   }
   const source = payload.source || {};
   $("#kridx-footer").replaceChildren();
@@ -1907,10 +1918,12 @@ function renderFeed() {
   if (!items.length) { section.hidden = true; return; }
   section.hidden = false;
 
+  // 홈에는 경제 캘린더 격자가 따로 있어 이 칩 줄을 두지 않는다. 요소가 없는
+  // 페이지에서도 돌아야 하므로 존재를 먼저 확인한다.
   const upcoming = $("#feed-upcoming");
   const soon = Array.isArray(payload.upcoming) ? payload.upcoming : [];
-  upcoming.hidden = !soon.length;
-  if (soon.length) {
+  if (upcoming) upcoming.hidden = !soon.length;
+  if (upcoming && soon.length) {
     upcoming.replaceChildren(...soon.map((event) => {
       const chip = document.createElement("a");
       chip.className = "feed-soon";
@@ -2148,6 +2161,259 @@ function renderUsEvents() {
   $("#ev-footer").textContent = `${localValue(payload.basis, state.lang)} · ${payload.source?.publisher || "SEC"}`;
 }
 
+// 경제 캘린더 — 표가 아니라 달력으로 본다.
+// 스무 줄짜리 표는 "다음 발표가 며칠인가"는 알려 주지만 "그때까지 얼마나
+// 비어 있나"를 보여 주지 못한다. 달 격자는 빈 날이 빈칸으로 남아 그 간격이
+// 그대로 읽힌다. 한 번에 한 달만 그리고, 전체 목록은 아래 서랍에 표로 남긴다
+// — 선형으로 훑고 싶은 사람과, JS를 실행하지 않는 크롤러를 위해서다.
+let calendarMonth = null; // 사용자가 넘겨 둔 달. 5초 갱신에도 유지한다.
+let calendarSignature = ""; // 다시 그릴 이유가 없으면 DOM을 건드리지 않는다.
+
+// 서울 기준 오늘(YYYY-MM-DD). en-CA가 ISO 차례로 찍어 준다.
+// toISOString()에 getTimezoneOffset()을 더하던 옛 계산은 보는 사람의 시간대만큼
+// 한 번 더 밀려서, 한국에서 오전 9시 전에 열면 D-day가 하루 어긋났다.
+function seoulToday() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date());
+}
+
+function calMonthLabel(ym) {
+  const [year, month] = ym.split("-").map(Number);
+  return new Intl.DateTimeFormat(state.lang === "ko" ? "ko-KR" : "en-US", {
+    year: "numeric", month: "long", timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
+}
+
+function calDaysAway(iso, todayIso) {
+  return Math.round((Date.parse(iso + "T00:00:00Z") - Date.parse(todayIso + "T00:00:00Z")) / 86400000);
+}
+
+function calKind(event) { return event.kind === "policy" ? "policy" : "release"; }
+function calRegion(event) { return event.region === "kr" ? "kr" : "us"; }
+function calKindLabel(event) { return t(calKind(event) === "policy" ? "cal.kindPolicy" : "cal.kindRelease"); }
+function calRegionLabel(event) { return t(calRegion(event) === "kr" ? "cal.regionKr" : "cal.regionUs"); }
+
+function calGoTo(month) {
+  calendarMonth = month;
+  calendarSignature = ""; // 달을 바꿨으니 다시 그린다
+  renderCalendar();
+}
+
+function calNav(months, todayIso) {
+  const nav = document.createElement("div");
+  nav.className = "cal-nav";
+  const index = months.indexOf(calendarMonth);
+
+  const step = (target, label, aria, className) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = className;
+    button.textContent = label;
+    button.setAttribute("aria-label", aria);
+    if (target) button.addEventListener("click", () => calGoTo(target));
+    else button.disabled = true;
+    return button;
+  };
+
+  const title = document.createElement("h3");
+  title.className = "cal-month";
+  title.textContent = calMonthLabel(calendarMonth);
+
+  nav.append(
+    step(months[index - 1], "‹", t("cal.prev"), "cal-step"),
+    title,
+    step(months[index + 1], "›", t("cal.next"), "cal-step"),
+  );
+
+  const thisMonth = todayIso.slice(0, 7);
+  if (calendarMonth !== thisMonth && months.includes(thisMonth)) {
+    nav.append(step(thisMonth, t("cal.thisMonth"), t("cal.thisMonth"), "cal-jump"));
+  }
+
+  const legend = document.createElement("div");
+  legend.className = "cal-legend";
+  for (const [kind, key] of [["release", "cal.kindRelease"], ["policy", "cal.kindPolicy"]]) {
+    const item = document.createElement("span");
+    item.className = "cal-key is-" + kind;
+    item.textContent = t(key);
+    legend.append(item);
+  }
+  nav.append(legend);
+  return nav;
+}
+
+function calChip(event) {
+  const chip = document.createElement("a");
+  chip.className = `cal-chip is-${calKind(event)} is-${calRegion(event)}`;
+  chip.href = event.source_url || "#";
+  chip.target = "_blank";
+  chip.rel = "noopener noreferrer";
+  const name = localValue(event.name, state.lang);
+  chip.textContent = name;
+  chip.title = `${name} · ${calRegionLabel(event)} · ${calKindLabel(event)}`;
+  return chip;
+}
+
+function calCell(iso, day, byDay, todayIso) {
+  const cell = document.createElement("div");
+  cell.className = "cal-cell";
+  cell.setAttribute("role", "gridcell");
+  const weekday = new Date(iso + "T00:00:00Z").getUTCDay();
+  if (weekday === 0) cell.classList.add("is-sun");
+  if (weekday === 6) cell.classList.add("is-sat");
+  if (iso < todayIso) cell.classList.add("is-past");
+  if (iso === todayIso) cell.classList.add("is-today");
+
+  const head = document.createElement("div");
+  head.className = "cal-daynum";
+  const number = document.createElement("span");
+  number.className = "cal-n";
+  number.textContent = String(day);
+  head.append(number);
+
+  const list = byDay.get(iso) || [];
+  if (list.length) {
+    cell.classList.add("has-event");
+    const away = calDaysAway(iso, todayIso);
+    if (away === 0 || (away > 0 && away <= 14)) {
+      const badge = document.createElement("span");
+      badge.className = away === 0 ? "cal-dday is-now" : "cal-dday";
+      badge.textContent = away === 0 ? t("cal.today") : t("cal.dday", { n: String(away) });
+      head.append(badge);
+    }
+  }
+  cell.append(head);
+  for (const event of list) cell.append(calChip(event));
+
+  // 좁은 화면에서는 칸에 글자가 들어가지 않는다. 점으로 자리만 찍고
+  // 이름은 격자 아래 목록에서 읽는다.
+  if (list.length) {
+    const dots = document.createElement("span");
+    dots.className = "cal-dots";
+    dots.setAttribute("aria-hidden", "true");
+    for (const event of list) {
+      const dot = document.createElement("i");
+      dot.className = "is-" + calKind(event);
+      dots.append(dot);
+    }
+    cell.append(dots);
+  }
+  return cell;
+}
+
+function calGrid(byDay, todayIso) {
+  const grid = document.createElement("div");
+  grid.className = "cal-grid";
+  grid.setAttribute("role", "grid");
+  grid.setAttribute("aria-label", calMonthLabel(calendarMonth));
+
+  const weekdayName = new Intl.DateTimeFormat(state.lang === "ko" ? "ko-KR" : "en-US", {
+    weekday: "short", timeZone: "UTC",
+  });
+  for (let i = 0; i < 7; i += 1) {
+    const head = document.createElement("div");
+    head.className = "cal-weekday";
+    if (i === 0) head.classList.add("is-sun");
+    if (i === 6) head.classList.add("is-sat");
+    head.setAttribute("role", "columnheader");
+    // 2024-01-07은 일요일 — 요일 이름을 언어별로 뽑기 위한 기준일일 뿐이다.
+    head.textContent = weekdayName.format(new Date(Date.UTC(2024, 0, 7 + i)));
+    grid.append(head);
+  }
+
+  const [year, month] = calendarMonth.split("-").map(Number);
+  const lead = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const days = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const blank = () => {
+    const cell = document.createElement("div");
+    cell.className = "cal-cell is-blank";
+    cell.setAttribute("role", "gridcell");
+    return cell;
+  };
+  for (let i = 0; i < lead; i += 1) grid.append(blank());
+  for (let day = 1; day <= days; day += 1) {
+    grid.append(calCell(`${calendarMonth}-${String(day).padStart(2, "0")}`, day, byDay, todayIso));
+  }
+  const tail = (7 - ((lead + days) % 7)) % 7;
+  for (let i = 0; i < tail; i += 1) grid.append(blank());
+  return grid;
+}
+
+// 격자 아래 그 달의 일정 목록. 좁은 화면에서는 이게 본문이고, 넓은 화면에서는
+// 칸 안의 칩이 같은 내용을 보여 주므로 CSS가 숨긴다.
+function calAgenda(monthEvents, todayIso) {
+  const agenda = document.createElement("ul");
+  agenda.className = "cal-agenda";
+  if (!monthEvents.length) {
+    const empty = document.createElement("li");
+    empty.className = "cal-agenda-empty";
+    empty.textContent = t("cal.empty");
+    agenda.append(empty);
+    return agenda;
+  }
+  for (const event of monthEvents) {
+    const item = document.createElement("li");
+    const away = calDaysAway(String(event.date), todayIso);
+    const when = document.createElement("span");
+    when.className = "cal-agenda-date";
+    when.textContent = dateText(event.date);
+    if (away === 0) when.classList.add("up");
+    const link = calChip(event);
+    link.classList.add("cal-agenda-name");
+    const kind = document.createElement("span");
+    kind.className = "cal-agenda-kind";
+    kind.textContent = `${calRegionLabel(event)} · ${calKindLabel(event)}`;
+    item.append(when, link, kind);
+    agenda.append(item);
+  }
+  return agenda;
+}
+
+// 전체 일정 표. 접혀 있어도 DOM에 있으므로 크롤러는 그대로 읽는다.
+function calFullTable(events, todayIso) {
+  const drawer = document.createElement("details");
+  drawer.className = "disclose cal-all";
+  const summary = document.createElement("summary");
+  summary.textContent = t("cal.allEvents", { n: String(events.length) });
+  drawer.append(summary);
+
+  const scroll = document.createElement("div");
+  scroll.className = "table-scroll";
+  const table = document.createElement("table");
+  table.className = "accessible-table kridx-table";
+  table.innerHTML = `<thead><tr>
+    <th scope="col">${t("cal.colDate")}</th><th scope="col">${t("cal.colEvent")}</th>
+    <th scope="col">${t("cal.colRegion")}</th><th scope="col">${t("cal.colKind")}</th>
+  </tr></thead>`;
+  const tbody = document.createElement("tbody");
+  for (const event of events) {
+    const row = document.createElement("tr");
+    const dateTd = document.createElement("td");
+    const away = calDaysAway(String(event.date), todayIso);
+    const dday = away === 0 ? t("cal.today") : away > 0 && away <= 14 ? t("cal.dday", { n: String(away) }) : "";
+    dateTd.textContent = dday ? `${dateText(event.date)} · ${dday}` : dateText(event.date);
+    if (away === 0) dateTd.className = "up";
+    const nameTd = document.createElement("td");
+    nameTd.className = "krp-company";
+    const link = document.createElement("a");
+    link.href = event.source_url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = localValue(event.name, state.lang);
+    nameTd.append(link);
+    const regionTd = document.createElement("td");
+    regionTd.textContent = calRegionLabel(event);
+    const kindTd = document.createElement("td");
+    kindTd.className = "range";
+    kindTd.textContent = calKindLabel(event);
+    row.append(dateTd, nameTd, regionTd, kindTd);
+    tbody.append(row);
+  }
+  table.append(tbody);
+  scroll.append(table);
+  drawer.append(scroll);
+  return drawer;
+}
+
 function renderCalendar() {
   const section = $("#econ-calendar");
   if (!section) return;
@@ -2156,36 +2422,39 @@ function renderCalendar() {
   if (!events.length) { section.hidden = true; return; }
   section.hidden = false;
 
-  const body = $("#cal-body");
-  body.replaceChildren();
-  const scroll = document.createElement("div"); scroll.className = "table-scroll";
-  const table = document.createElement("table"); table.className = "accessible-table kridx-table";
-  table.innerHTML = `<thead><tr>
-    <th scope="col">${t("cal.colDate")}</th><th scope="col">${t("cal.colEvent")}</th>
-    <th scope="col">${t("cal.colRegion")}</th><th scope="col">${t("cal.colKind")}</th>
-  </tr></thead>`;
-  const tbody = document.createElement("tbody");
-  const todayIso = new Date(Date.now() + (new Date().getTimezoneOffset() + 540) * 60000).toISOString().slice(0, 10);
-  for (const event of events) {
-    const tr = document.createElement("tr");
-    const dateTd = document.createElement("td");
-    const days = Math.round((new Date(event.date) - new Date(todayIso)) / 86400000);
-    const dday = days === 0 ? t("cal.today") : days > 0 && days <= 14 ? t("cal.dday", { n: String(days) }) : "";
-    dateTd.textContent = dday ? `${dateText(event.date)} · ${dday}` : dateText(event.date);
-    if (days === 0) dateTd.className = "up";
-    const eventTd = document.createElement("td"); eventTd.className = "krp-company";
-    const link = document.createElement("a");
-    link.href = event.source_url; link.target = "_blank"; link.rel = "noopener noreferrer";
-    link.textContent = localValue(event.name, state.lang);
-    eventTd.append(link);
-    const regionTd = document.createElement("td");
-    regionTd.textContent = event.region === "kr" ? t("cal.regionKr") : t("cal.regionUs");
-    const kindTd = document.createElement("td"); kindTd.className = "range";
-    kindTd.textContent = event.kind === "policy" ? t("cal.kindPolicy") : t("cal.kindRelease");
-    tr.append(dateTd, eventTd, regionTd, kindTd);
-    tbody.append(tr);
+  const todayIso = seoulToday();
+  const months = [...new Set(events.map((event) => String(event.date).slice(0, 7)))].sort();
+  const thisMonth = todayIso.slice(0, 7);
+  if (!months.includes(calendarMonth)) {
+    // 처음 열면 이번 달. 이번 달에 일정이 하나도 없으면 가장 가까운 다음 달.
+    calendarMonth = months.includes(thisMonth)
+      ? thisMonth
+      : months.find((month) => month > thisMonth) || months[months.length - 1];
   }
-  table.append(tbody); scroll.append(table); body.append(scroll);
+
+  // 5초마다 통째로 다시 그리면 열어 둔 서랍이 닫히고 포커스가 튄다.
+  const signature = [state.lang, calendarMonth, todayIso, events.length,
+    events[events.length - 1]?.date].join("|");
+  if (signature === calendarSignature) return;
+  calendarSignature = signature;
+
+  const byDay = new Map();
+  const monthEvents = [];
+  for (const event of events) {
+    const iso = String(event.date);
+    if (iso.slice(0, 7) !== calendarMonth) continue;
+    if (!byDay.has(iso)) byDay.set(iso, []);
+    byDay.get(iso).push(event);
+    monthEvents.push(event);
+  }
+
+  const body = $("#cal-body");
+  body.replaceChildren(
+    calNav(months, todayIso),
+    calGrid(byDay, todayIso),
+    calAgenda(monthEvents, todayIso),
+    calFullTable(events, todayIso),
+  );
 
   const footer = $("#cal-footer");
   footer.replaceChildren();
