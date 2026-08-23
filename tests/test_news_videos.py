@@ -2,7 +2,9 @@
 
 이 lane의 조건 세 가지는 전부 기계로 확인할 수 있는 성질이다:
 
-* 누르기 전에는 유튜브로 요청이 나가지 않는다 → payload에 이미지 URL이 없다.
+* 플레이어는 누르기 전에 로드되지 않는다 → 임베드 주소는 클릭 핸들러 안에서만
+  만들어진다. (썸네일은 구글 CDN에서 오지만 쿠키를 심지 않는다 — 우리 서버로
+  복사해 두는 것은 Developer Policies III.E.1.a가 막는다.)
 * 저장은 30일을 넘기지 않는다 → 오래된 항목은 읽을 때 떨어진다.
 * 채널은 ID로 못 박는다 → 핸들이 채널을 식별하지 못한다는 실측의 귀결.
 
@@ -13,7 +15,6 @@
 from __future__ import annotations
 
 import datetime as dt
-import json
 
 import pytest
 
@@ -32,19 +33,41 @@ def _item(video_id: str, title: str, published: str, *, owner: str | None = None
             "channelTitle": "채널",
             "videoOwnerChannelTitle": owner,
             "resourceId": {"kind": "youtube#video", "videoId": video_id},
-            "thumbnails": {"high": {"url": "https://i.ytimg.com/vi/x/hqdefault.jpg"}},
+            "thumbnails": {
+                "default": {"url": "https://i.ytimg.com/vi/x/default.jpg", "width": 120},
+                "medium": {"url": "https://i.ytimg.com/vi/x/mqdefault.jpg", "width": 320},
+                "high": {"url": "https://i.ytimg.com/vi/x/hqdefault.jpg", "width": 480},
+                "standard": {"url": "https://i.ytimg.com/vi/x/sddefault.jpg", "width": 640},
+                "maxres": {"url": "https://i.ytimg.com/vi/x/maxresdefault.jpg", "width": 1280},
+            },
         }
     }
 
 
-def test_no_image_url_survives_into_the_payload():
-    """썸네일 하나가 곧 클릭 전 구글 요청이다 — 이 lane의 전제가 깨진다."""
+def test_only_the_sixteen_by_nine_thumbnails_are_carried():
+    """`high`(480x360)와 `standard`(640x480)는 4:3이라 검은 띠가 생긴다."""
     videos = parse_uploads({"items": [_item("abc", "제목", "2026-08-23T00:00:00Z")]}, KO)
 
     assert videos, "파싱이 아무것도 남기지 않았다"
-    blob = json.dumps(videos)
-    assert "ytimg" not in blob and "thumbnail" not in blob.lower()
-    assert not any("http" in str(value) for key, value in videos[0].items() if key != "watch_url")
+    urls = [size["url"] for size in videos[0]["thumbnails"]]
+    assert any("mqdefault" in url for url in urls), "16:9인 medium이 빠졌다"
+    assert not any(("hqdefault" in url or "sddefault" in url) for url in urls), urls
+    assert [size["width"] for size in videos[0]["thumbnails"]] == sorted(
+        size["width"] for size in videos[0]["thumbnails"]
+    ), "srcset은 좁은 것부터여야 한다"
+
+
+def test_we_serve_thumbnail_urls_not_thumbnail_bytes():
+    """III.E.1.a — 서면 승인 없이는 유튜브 콘텐츠를 캐시·저장할 수 없다.
+
+    그래서 이미지는 구글 호스트를 그대로 가리켜야 한다. 우리 도메인으로 바뀐
+    주소가 보이면 어딘가에서 바이트를 재호스팅하기 시작했다는 뜻이다.
+    """
+    videos = parse_uploads({"items": [_item("abc", "제목", "2026-08-23T00:00:00Z")]}, KO)
+
+    for size in videos[0]["thumbnails"]:
+        assert size["url"].startswith("https://i.ytimg.com/"), size
+        assert "mulmit" not in size["url"]
 
 
 def test_deleted_and_private_placeholders_are_dropped():
@@ -173,10 +196,10 @@ STATIC = __import__("pathlib").Path(__file__).resolve().parents[1] / "app" / "st
 
 
 def test_the_landing_page_holds_no_youtube_url_at_all():
-    """마크업에 유튜브 URL이 하나라도 있으면 그건 파사드가 아니다.
+    """마크업에 박힌 유튜브 주소는 페이지를 여는 순간 요청이 된다.
 
-    <img src="i.ytimg.com/...">나 미리 박아 둔 <iframe> 하나면 페이지를 여는
-    것만으로 구글에 요청이 나간다. 이 lane의 약속이 정확히 그 반대다.
+    썸네일은 렌더러가 payload를 받은 뒤에 붙이므로 마크업에는 하나도 없어야
+    하고, 특히 <iframe>이 미리 박혀 있으면 파사드가 아니게 된다.
     """
     markup = (STATIC / "landing.html").read_text(encoding="utf-8")
 
@@ -184,19 +207,43 @@ def test_the_landing_page_holds_no_youtube_url_at_all():
         assert host not in markup, f"landing.html이 {host}를 직접 물고 있다"
 
 
-def test_the_iframe_is_built_only_inside_the_click_handler():
-    """유튜브 주소가 등장하는 곳은 클릭 핸들러 안뿐이어야 한다."""
+def _lane_source() -> str:
     script = (STATIC / "monitor.js").read_text(encoding="utf-8")
-    start = script.index("function renderNewsVideos()")
-    end = script.index("function renderCryptoRegime()")
-    lane = script[start:end]
+    return script[script.index("function renderNewsVideos()") : script.index("function renderCryptoRegime()")]
 
-    assert "youtube-nocookie.com/embed/" in lane
-    handler = lane[lane.index('play.addEventListener("click"'):]
-    assert "youtube-nocookie.com/embed/" in handler, "임베드 주소가 핸들러 밖에서 만들어진다"
-    # 목록을 그리는 동안 이미지를 만들면 그 순간 요청이 나간다.
-    listing = lane[: lane.index('play.addEventListener("click"')]
-    assert "createElement(\"img\")" not in listing and "ytimg" not in listing
+
+def test_the_player_is_built_only_inside_the_play_handler():
+    """썸네일은 목록과 함께 와도 되지만 플레이어는 안 된다 — 쿠키가 붙는 쪽이다."""
+    lane = _lane_source()
+
+    assert lane.count("youtube-nocookie.com/embed/") == 1
+    play = lane[lane.index("const play = () =>") : lane.index("const thumbs =")]
+    assert "youtube-nocookie.com/embed/" in play, "임베드 주소가 재생 핸들러 밖에서 만들어진다"
+
+
+def test_the_thumbnail_does_not_tell_google_which_page_you_are_on():
+    lane = _lane_source()
+
+    assert 'img.referrerPolicy = "no-referrer"' in lane
+    assert 'img.loading = "lazy"' in lane, "화면에 들어오기 전에 받아 올 이유가 없다"
+    assert "img.width = 320" in lane and "img.height = 180" in lane, "자리를 미리 잡지 않으면 글이 밀린다"
+
+
+def test_a_missing_thumbnail_falls_back_instead_of_showing_a_broken_image():
+    """maxres가 없는 영상이 흔하다."""
+    lane = _lane_source()
+
+    assert 'img.addEventListener("error"' in lane
+    assert "no-shot" in lane
+
+
+def test_only_the_reading_language_is_shown():
+    """한국어로 보는 사람에게 영어 방송을 들이밀 이유가 없다."""
+    lane = _lane_source()
+
+    assert "video.lang === state.lang" in lane
+    # 한쪽이 비었을 때 섹션을 비우면 안 된다.
+    assert "matching.length ? matching : data.videos" in lane
 
 
 def test_the_embed_uses_the_privacy_enhanced_host():
@@ -234,3 +281,16 @@ def test_collecting_still_refuses_without_a_key(monkeypatch):
 
     with pytest.raises(news_videos.NewsVideosDisabled):
         news_videos.refresh()
+
+
+def test_each_language_gets_a_full_block():
+    """언어별로 걸러 내므로, 한 언어에 남는 편수가 곧 화면에 보이는 편수다."""
+    per_lang: dict[str, int] = {}
+    for channel in NEWS_CHANNELS:
+        per_lang[channel.lang] = per_lang.get(channel.lang, 0) + news_videos.PER_CHANNEL
+
+    for lang, available in per_lang.items():
+        assert available >= 8, f"{lang}에 {available}편뿐 — 걸러 내면 섹션이 허전하다"
+    # 라운드로빈이 균등하므로 총량은 언어 수로 나뉜다.
+    assert sum(per_lang.values()) >= news_videos.MAX_VIDEOS
+    assert news_videos.MAX_VIDEOS // len(per_lang) >= 8

@@ -36,7 +36,7 @@ const onPage = (...pages) => PAGE === "all" || pages.includes(PAGE);
 const TEXT = {
   ko: {
     "brand.tagline": "물밑 · 주식·암호화폐 시장 신호", "nav.analytics": "종목 분석", "nav.monitor": "시장 모니터",
-    "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌", "nav.crypto": "암호화폐", "crypto.regime.title": "시장 국면", "crypto.regime.copy": "지금 시장이 얼마나 쏠려 있고 어느 쪽으로 기울어 있는지를 요약한 상태 지표입니다. 매수·매도 신호가 아니며, 과열이 곧 하락을 뜻하지도 않습니다.", "crypto.liq.title": "청산 집계", "crypto.liq.copy": "최근 24시간 강제청산 규모를 롱·숏으로 나눠 봅니다. 응답한 거래소들의 합이며 전체 시장 합계가 아닙니다. 1시간 단위 집계이고 실시간 체결 피드가 아닙니다.", "crypto.liq.window": "24시간 청산", "crypto.liq.long": "롱 청산", "crypto.liq.short": "숏 청산", "crypto.liq.hour": "최근 1시간", "crypto.liq.oi": "미결제약정", "crypto.liq.venues": "포함 거래소", "crypto.liq.silent": "응답 없음", "crypto.liq.none": "아직 수집된 청산 집계가 없습니다.", "crypto.news.title": "암호화폐 뉴스", "crypto.news.copy": "GDELT가 수집한 글로벌 기사에서 코인 이름이 제목에 잡힌 헤드라인입니다. 제목·출처·링크까지만 전달하며 본문은 원문에서 확인하세요. 실시간 속보가 아니라 수집 주기 갱신입니다.", "crypto.news.none": "코인 태그가 붙은 헤드라인이 아직 없습니다.", "crypto.news.also": "외 {n}곳", "videos.title": "뉴스 영상", "videos.shortCopy": "누르기 전에는 유튜브로 요청이 나가지 않습니다", "videos.copy": "국내외 뉴스 채널의 최근 영상입니다. 목록에는 제목·채널·시각만 있고 썸네일은 불러오지 않습니다. 재생을 누르면 그때 유튜브가 로드되며 유튜브의 쿠키·정책이 적용됩니다. 영상 내용은 각 채널의 것이며 이 사이트의 수치와는 무관합니다.", "videos.play": "재생", "videos.playAria": "{title} 재생", "videos.none": "아직 수집된 영상이 없습니다.", "videos.openOn": "유튜브에서 열기", "crypto.regime.change24h": "24h 변화", "crypto.regime.collecting": "추이 수집 중", "crypto.regime.heat": "과열도", "crypto.regime.trend": "추세", "crypto.regime.sample": "표본", "crypto.regime.sampleValue": "유동 시장 {n}개", "crypto.heatBadge": "과열도 {n}", "nav.bio": "바이오", "landing.bioLink": "바이오", "landing.bioDesc": "임상 파이프라인 동향 · FDA 최근 승인 · 식약처 품목허가", "biopage.kicker": "BIOPHARMA", "biopage.title": "바이오, 임상과 승인을 기록으로 봅니다.", "biopage.copy": "국내·글로벌 제약바이오 워치리스트의 임상 파이프라인 갱신(ClinicalTrials.gov)과 FDA의 최근 신약·바이오의약품 승인(openFDA)을 공공 기록 그대로 봅니다. 결과의 성패나 주가 해석, 투자 권유가 아닙니다.", "biopage.h1": "바이오", "biopage.scope": "다가올 결정 · 한국 · 미국·글로벌",
+    "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌", "nav.crypto": "암호화폐", "crypto.regime.title": "시장 국면", "crypto.regime.copy": "지금 시장이 얼마나 쏠려 있고 어느 쪽으로 기울어 있는지를 요약한 상태 지표입니다. 매수·매도 신호가 아니며, 과열이 곧 하락을 뜻하지도 않습니다.", "crypto.liq.title": "청산 집계", "crypto.liq.copy": "최근 24시간 강제청산 규모를 롱·숏으로 나눠 봅니다. 응답한 거래소들의 합이며 전체 시장 합계가 아닙니다. 1시간 단위 집계이고 실시간 체결 피드가 아닙니다.", "crypto.liq.window": "24시간 청산", "crypto.liq.long": "롱 청산", "crypto.liq.short": "숏 청산", "crypto.liq.hour": "최근 1시간", "crypto.liq.oi": "미결제약정", "crypto.liq.venues": "포함 거래소", "crypto.liq.silent": "응답 없음", "crypto.liq.none": "아직 수집된 청산 집계가 없습니다.", "crypto.news.title": "암호화폐 뉴스", "crypto.news.copy": "GDELT가 수집한 글로벌 기사에서 코인 이름이 제목에 잡힌 헤드라인입니다. 제목·출처·링크까지만 전달하며 본문은 원문에서 확인하세요. 실시간 속보가 아니라 수집 주기 갱신입니다.", "crypto.news.none": "코인 태그가 붙은 헤드라인이 아직 없습니다.", "crypto.news.also": "외 {n}곳", "videos.title": "뉴스 영상", "videos.shortCopy": "재생을 누르기 전에는 플레이어가 로드되지 않습니다", "videos.copy": "읽고 계신 언어의 뉴스 채널에서 가져온 최근 영상입니다. 썸네일은 구글 이미지 서버에서 직접 불러오며 쿠키는 심지 않습니다. 재생을 누르면 그때 유튜브 플레이어가 로드되고 유튜브의 쿠키·정책이 적용됩니다. 영상 내용은 각 채널의 것이며 이 사이트의 수치와는 무관합니다.", "videos.play": "재생", "videos.playAria": "{title} 재생", "videos.none": "아직 수집된 영상이 없습니다.", "videos.openOn": "유튜브에서 열기", "crypto.regime.change24h": "24h 변화", "crypto.regime.collecting": "추이 수집 중", "crypto.regime.heat": "과열도", "crypto.regime.trend": "추세", "crypto.regime.sample": "표본", "crypto.regime.sampleValue": "유동 시장 {n}개", "crypto.heatBadge": "과열도 {n}", "nav.bio": "바이오", "landing.bioLink": "바이오", "landing.bioDesc": "임상 파이프라인 동향 · FDA 최근 승인 · 식약처 품목허가", "biopage.kicker": "BIOPHARMA", "biopage.title": "바이오, 임상과 승인을 기록으로 봅니다.", "biopage.copy": "국내·글로벌 제약바이오 워치리스트의 임상 파이프라인 갱신(ClinicalTrials.gov)과 FDA의 최근 신약·바이오의약품 승인(openFDA)을 공공 기록 그대로 봅니다. 결과의 성패나 주가 해석, 투자 권유가 아닙니다.", "biopage.h1": "바이오", "biopage.scope": "다가올 결정 · 한국 · 미국·글로벌",
     "biopage.sub": "바이오 종목은 결정 하나에 움직입니다. 그래서 날짜가 잡힌 것을 맨 앞에 두고, 이미 난 결정은 시장별로 나눠 봅니다. 전부 공공 기록 그대로이며 결과의 성패나 주가 해석이 아닙니다.",
     "bio.cat.title": "다가오는 결정", "bio.cat.note": "날짜가 잡힌 것만 · 가까운 순서",
     "bio.cat.copy": "FDA 자문위원회 회의처럼 날짜가 확정된 것과, 임상의 1차 완료 예정일을 한 줄에 놓고 가까운 순서로 봅니다. 1차 완료 예정일은 스폰서가 등록부에 적어 둔 계획값이라 자주 바뀌고, 완료가 곧 결과 발표도 아닙니다.",
@@ -207,7 +207,7 @@ const TEXT = {
   },
   en: {
     "brand.tagline": "MARKET SIGNALS · KR · US · CRYPTO", "nav.analytics": "Stock analytics", "nav.monitor": "Market monitor",
-    "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & Global", "nav.crypto": "Crypto", "crypto.regime.title": "Market regime", "crypto.regime.copy": "A summary of how crowded the market is and which way it leans. Not a buy or sell signal — overheated does not mean a fall is coming.", "crypto.liq.title": "Liquidations", "crypto.liq.copy": "Forced liquidations over the last 24 hours, split long against short. A sum across the venues that answered — not a market-wide total. Bucketed hourly, not a live trade feed.", "crypto.liq.window": "24h liquidations", "crypto.liq.long": "Longs", "crypto.liq.short": "Shorts", "crypto.liq.hour": "Last hour", "crypto.liq.oi": "Open interest", "crypto.liq.venues": "Venues included", "crypto.liq.silent": "No data", "crypto.liq.none": "No liquidation snapshot collected yet.", "crypto.news.title": "Crypto headlines", "crypto.news.copy": "Global articles collected by GDELT whose titles name a coin. Title, source and link only — read the source for substance. Refreshed on the collection cycle, not a live wire.", "crypto.news.none": "No coin-tagged headline yet.", "crypto.news.also": "+{n} more outlets", "videos.title": "News videos", "videos.shortCopy": "Nothing reaches YouTube until you press play", "videos.copy": "Recent videos from Korean and international news channels. The list carries titles, channels and times only — no thumbnails are fetched. Pressing play loads YouTube at that moment, under YouTube's own cookies and policies. The videos are their channels' content and carry none of this site's figures.", "videos.play": "Play", "videos.playAria": "Play {title}", "videos.none": "No videos collected yet.", "videos.openOn": "Open on YouTube", "crypto.regime.change24h": "24h change", "crypto.regime.collecting": "trend collecting", "crypto.regime.heat": "Heat", "crypto.regime.trend": "Trend", "crypto.regime.sample": "Sample", "crypto.regime.sampleValue": "{n} liquid markets", "crypto.heatBadge": "heat {n}", "nav.bio": "Bio", "landing.bioLink": "Bio", "landing.bioDesc": "Clinical pipeline activity · recent FDA approvals · MFDS product approvals", "biopage.kicker": "BIOPHARMA", "biopage.title": "Biopharma — trials and approvals, as recorded.", "biopage.copy": "Clinical pipeline updates for a Korean and global biopharma watchlist (ClinicalTrials.gov) and the FDA's recent new-drug and biologic approvals (openFDA), shown as the public records state them. Not trial outcomes, not price commentary, not a recommendation.", "biopage.h1": "Biopharma", "biopage.scope": "what is next · Korea · US & global",
+    "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & Global", "nav.crypto": "Crypto", "crypto.regime.title": "Market regime", "crypto.regime.copy": "A summary of how crowded the market is and which way it leans. Not a buy or sell signal — overheated does not mean a fall is coming.", "crypto.liq.title": "Liquidations", "crypto.liq.copy": "Forced liquidations over the last 24 hours, split long against short. A sum across the venues that answered — not a market-wide total. Bucketed hourly, not a live trade feed.", "crypto.liq.window": "24h liquidations", "crypto.liq.long": "Longs", "crypto.liq.short": "Shorts", "crypto.liq.hour": "Last hour", "crypto.liq.oi": "Open interest", "crypto.liq.venues": "Venues included", "crypto.liq.silent": "No data", "crypto.liq.none": "No liquidation snapshot collected yet.", "crypto.news.title": "Crypto headlines", "crypto.news.copy": "Global articles collected by GDELT whose titles name a coin. Title, source and link only — read the source for substance. Refreshed on the collection cycle, not a live wire.", "crypto.news.none": "No coin-tagged headline yet.", "crypto.news.also": "+{n} more outlets", "videos.title": "News videos", "videos.shortCopy": "The player does not load until you press play", "videos.copy": "Recent videos from news channels in the language you are reading. Thumbnails load from Google's image servers, which set no cookies. Pressing play loads the YouTube player at that moment, under YouTube's own cookies and policies. The videos are their channels' content and carry none of this site's figures.", "videos.play": "Play", "videos.playAria": "Play {title}", "videos.none": "No videos collected yet.", "videos.openOn": "Open on YouTube", "crypto.regime.change24h": "24h change", "crypto.regime.collecting": "trend collecting", "crypto.regime.heat": "Heat", "crypto.regime.trend": "Trend", "crypto.regime.sample": "Sample", "crypto.regime.sampleValue": "{n} liquid markets", "crypto.heatBadge": "heat {n}", "nav.bio": "Bio", "landing.bioLink": "Bio", "landing.bioDesc": "Clinical pipeline activity · recent FDA approvals · MFDS product approvals", "biopage.kicker": "BIOPHARMA", "biopage.title": "Biopharma — trials and approvals, as recorded.", "biopage.copy": "Clinical pipeline updates for a Korean and global biopharma watchlist (ClinicalTrials.gov) and the FDA's recent new-drug and biologic approvals (openFDA), shown as the public records state them. Not trial outcomes, not price commentary, not a recommendation.", "biopage.h1": "Biopharma", "biopage.scope": "what is next · Korea · US & global",
     "biopage.sub": "Bio names move on single decisions. So what has a date sits first, and what has already been decided is split by market. All of it is the public record as written — not an outcome, not price commentary.",
     "bio.cat.title": "What is coming", "bio.cat.note": "dated items only · soonest first",
     "bio.cat.copy": "FDA advisory committee meetings, whose dates are fixed, alongside the primary-completion dates registered for trials — one timeline, soonest first. A primary-completion date is a sponsor-entered plan that changes often, and completion is not a readout.",
@@ -4048,12 +4048,55 @@ function renderNewsVideos() {
     return;
   }
   section.hidden = false; stateNode.hidden = true; panel.hidden = false; footer.hidden = false;
+  // 읽는 언어의 영상만 남긴다. 한국어로 보는 사람에게 영어 방송을, 그 반대를
+  // 들이밀 이유가 없다. 한쪽이 비면 거르지 않는다 — 빈 섹션보다는 낫다.
+  const matching = data.videos.filter((video) => video.lang === state.lang);
+  const videos = matching.length ? matching : data.videos;
   list.replaceChildren();
-  if (!data.videos.length) {
+  if (!videos.length) {
     const empty = document.createElement("li"); empty.textContent = t("videos.none"); list.append(empty);
   }
-  data.videos.forEach((video) => {
+  videos.forEach((video) => {
     const item = document.createElement("li");
+    const play = () => {
+      // 유튜브 플레이어가 로드되는 첫 순간이다. 썸네일은 구글 CDN에서 오지만
+      // 쿠키를 심지 않고, 쿠키는 여기서부터 붙는다.
+      const frame = document.createElement("iframe"); frame.className = "nvid-frame";
+      frame.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(video.video_id)}?autoplay=1&rel=0`;
+      frame.title = video.title || t("videos.title");
+      frame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+      frame.allowFullscreen = true;
+      frame.referrerPolicy = "strict-origin-when-cross-origin";
+      item.classList.add("playing");
+      item.replaceChildren(frame);
+    };
+
+    const thumbs = Array.isArray(video.thumbnails) ? video.thumbnails : [];
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.setAttribute("aria-label", t("videos.playAria", { title: video.title || "" }));
+    trigger.addEventListener("click", play);
+    if (thumbs.length) {
+      trigger.className = "nvid-shot";
+      const img = document.createElement("img");
+      img.className = "nvid-thumb";
+      img.loading = "lazy"; img.decoding = "async";
+      // 구글에 IP는 가되 어느 페이지를 보고 있는지는 가지 않는다.
+      img.referrerPolicy = "no-referrer";
+      img.alt = "";                       // 제목이 바로 아래 있으므로 장식 이미지다
+      img.width = 320; img.height = 180;  // 로드 전에도 자리를 잡아 밀림을 막는다
+      img.src = thumbs[0].url;
+      if (thumbs.length > 1) img.srcset = thumbs.map((size) => `${size.url} ${size.width}w`).join(", ");
+      img.sizes = "(max-width: 760px) 100vw, 320px";
+      // maxres는 없는 영상이 흔하다. 깨진 이미지 아이콘 대신 글자 카드로 물러난다.
+      img.addEventListener("error", () => { trigger.classList.add("no-shot"); img.remove(); }, { once: true });
+      const badge = document.createElement("span"); badge.className = "nvid-badge"; badge.textContent = "▶";
+      trigger.append(img, badge);
+    } else {
+      trigger.className = "nvid-play";
+      trigger.textContent = `▶ ${t("videos.play")}`;
+    }
+
     const meta = document.createElement("div"); meta.className = "nvid-meta";
     const channel = document.createElement("span"); channel.className = "nvid-channel";
     channel.textContent = video.channel || ""; meta.append(channel);
@@ -4064,21 +4107,8 @@ function renderNewsVideos() {
     const title = document.createElement("a"); title.className = "nvid-title";
     title.href = video.watch_url; title.target = "_blank"; title.rel = "noopener noreferrer";
     title.textContent = video.title || "";
-    const play = document.createElement("button"); play.type = "button"; play.className = "nvid-play";
-    play.textContent = `▶ ${t("videos.play")}`;
-    play.setAttribute("aria-label", t("videos.playAria", { title: video.title || "" }));
-    play.addEventListener("click", () => {
-      // 여기가 유튜브로 요청이 나가는 첫 순간이다. 그 전까지는 없다.
-      const frame = document.createElement("iframe"); frame.className = "nvid-frame";
-      frame.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(video.video_id)}?autoplay=1&rel=0`;
-      frame.title = video.title || t("videos.title");
-      frame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-      frame.allowFullscreen = true;
-      frame.referrerPolicy = "strict-origin-when-cross-origin";
-      item.classList.add("playing");
-      item.replaceChildren(frame);
-    });
-    item.append(meta, title, play);
+
+    item.append(trigger, meta, title);
     list.append(item);
   });
   footer.replaceChildren();
