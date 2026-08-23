@@ -131,7 +131,7 @@ const TEXT = {
     "hero.copy": "가격, 위험, 유동성, 거시경제를 같은 시간축에서 확인합니다. 연결되지 않은 데이터는 추정하지 않습니다.",
     "hero.updated": "마지막 갱신", "action.refresh": "새로고침", "overview.eyebrow": "MARKET TAPE", "overview.title": "시장 요약",
     "weekend.title": "Weekend Pulse · 주말 참고 신호", "weekend.notSpot": "실제 체결가 아님", "weekend.leverage": "레버리지 파생",
-    "weekend.liquidity": "저유동성 가능", "weekend.noPromise": "월요일 방향 보장 안 됨", "weekend.syntheticPerp": "USD 환산 합성 무기한선물",
+    "weekend.liquidity": "거래 한산 · 가격 튈 수 있음", "weekend.noPromise": "월요일 방향 보장 안 됨", "weekend.syntheticPerp": "USD 환산 합성 무기한선물",
     "weekend.defaultDisclaimer": "주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.",
     "weekend.nextSession": "다음 내부 세션", "weekend.awaitingSession": "세션 대기", "weekend.proxy": "대체 신호", "weekend.direct": "직접 계약", "weekend.auxiliary": "24시간 보조", "weekend.consensus": "합성 신호", "weekend.referenceSignal": "주말 기준 신호", "weekend.funding": "시간당 펀딩", "weekend.volume": "24시간 거래대금", "weekend.openInterest": "미결제약정", "weekend.status": "상태", "weekend.confidence": "근거 품질", "weekend.session": "활성 세션", "weekend.sessionChange": "세션 기준", "weekend.change24h": "24시간 기준", "weekend.stale": "지연", "weekend.reference": "참고 품질",
     "weekend.samsungPerp": "삼성전자 USD 환산 합성 무기한선물 · 한국 현물 종가와 동일한 상품이 아닙니다.",
@@ -143,7 +143,7 @@ const TEXT = {
     "zone.kr": "한국 시장", "zone.us": "미국·글로벌 시장",
     "kro.title": "한국 주식, 장 밖에서는", "kro.copy": "장이 닫혀 있어도 합성 무기한선물은 24시간 움직입니다. 마크가격을 공식환율로 환산해 마지막 공식 종가와 비교합니다. 현물 호가나 시초가 예측이 아닙니다.",
     "kro.fxOfficial": "환율은 하루 한 번 고시값", "kro.vsClose": "{date} 마감 이후", "kro.mark": "마크", "kro.official": "공식 종가", "kro.fx": "환산 환율",
-    "kro.adrRatio": "ADR 비율", "kro.noFx": "환율 미확보 · 환산 보류", "kro.noClose": "공식 종가 미확보", "kro.noMarket": "표시할 시장 없음", "kro.session": "주말 내부 가격발견 중",
+    "kro.adrRatio": "ADR 비율", "kro.noFx": "환율 미확보 · 환산 보류", "kro.noClose": "공식 종가 미확보", "kro.noMarket": "표시할 시장 없음", "kro.session": "한국장 휴장 중",
     "kro.vsSession": "{date} 15:30 이후", "kro.vsSessionNote": "퍼프 5분봉 기준 · 공식 종가 아님",
     "kro.usEtf": "미국 상장 ETF · 종가 비교 없음", "kro.leverage": "레버리지",
     "kro.vsPremium": "원주 {date} 종가 대비 프리미엄", "kro.adrImpliedNote": "마크 × {ratio}(공시 비율) × 환율 = 원주 1주 환산가 — ADR 가격 상승률이 아니라 원주 대비 괴리입니다",
@@ -282,7 +282,7 @@ const TEXT = {
     "hero.copy": "Track prices, risk, liquidity and macro conditions on a shared timeline. Missing data is never estimated.",
     "hero.updated": "Last updated", "action.refresh": "Refresh", "overview.eyebrow": "MARKET TAPE", "overview.title": "Market overview",
     "weekend.title": "Weekend Pulse · Reference signals", "weekend.notSpot": "Not an executable price", "weekend.leverage": "Leveraged derivatives",
-    "weekend.liquidity": "May be illiquid", "weekend.noPromise": "No Monday direction guarantee", "weekend.syntheticPerp": "USD-converted synthetic perpetuals",
+    "weekend.liquidity": "Thin trading · price can jump", "weekend.noPromise": "No Monday direction guarantee", "weekend.syntheticPerp": "USD-converted synthetic perpetuals",
     "weekend.defaultDisclaimer": "Weekend derivative prices can be heavily affected by shallow liquidity and leverage. Do not treat them as Monday spot-market forecasts.",
     "weekend.nextSession": "Next internal session", "weekend.awaitingSession": "Awaiting session", "weekend.proxy": "Proxy", "weekend.direct": "Direct contract", "weekend.auxiliary": "24h auxiliary", "weekend.consensus": "Composite", "weekend.referenceSignal": "Weekend reference", "weekend.funding": "Hourly funding", "weekend.volume": "24h notional", "weekend.openInterest": "Open interest", "weekend.status": "Status", "weekend.confidence": "Evidence quality", "weekend.session": "Active session", "weekend.sessionChange": "Session change", "weekend.change24h": "24-hour change", "weekend.stale": "Stale", "weekend.reference": "Reference quality",
     "weekend.samsungPerp": "Samsung Electronics USD-converted synthetic perpetual · not the Korean spot close.",
@@ -294,7 +294,7 @@ const TEXT = {
     "zone.kr": "Korea markets", "zone.us": "US & global markets",
     "kro.title": "Korean stocks, after hours", "kro.copy": "Synthetic perpetuals keep trading around the clock. Marks are converted at the official exchange rate and compared with the last official close. Not spot quotes, not an open forecast.",
     "kro.fxOfficial": "Converted at the daily official FX rate", "kro.vsClose": "since the {date} close", "kro.mark": "Mark", "kro.official": "Official close", "kro.fx": "FX applied",
-    "kro.adrRatio": "ADR ratio", "kro.noFx": "No official FX yet · conversion withheld", "kro.noClose": "Official close unavailable", "kro.noMarket": "No live market", "kro.session": "Weekend internal price discovery",
+    "kro.adrRatio": "ADR ratio", "kro.noFx": "No official FX yet · conversion withheld", "kro.noClose": "Official close unavailable", "kro.noMarket": "No live market", "kro.session": "Korea market closed",
     "kro.vsSession": "since {date} 15:30 KST", "kro.vsSessionNote": "Perp 5-minute candle basis · not an official close",
     "kro.usEtf": "US-listed ETF · no close comparison", "kro.leverage": "leveraged",
     "kro.vsPremium": "premium vs ordinary {date} close", "kro.adrImpliedNote": "Mark × {ratio} (disclosed ratio) × FX = per-ordinary-share equivalent — a cross-listing premium, not the ADR's price change",
@@ -1384,6 +1384,20 @@ function formatKrw(value) {
   return Math.round(value).toLocaleString();
 }
 
+// Every Korean close on this page can be a session behind every other quote
+// screen, because the public dataset publishes a session only after 13:00 KST
+// on the next business day. Over a weekend that means Thursday's close while
+// the rest of the world compares against Friday's. The overnight payload
+// already works out which session is missing and when it lands; the same
+// sentence belongs everywhere a close is shown, not only on the cards.
+function krClosePublicationNote() {
+  const card = (state.krOvernight?.cards || []).find((row) => row.official?.publication_note_ko);
+  if (!card) return null;
+  return state.lang === "ko"
+    ? card.official.publication_note_ko
+    : card.official.publication_note_en;
+}
+
 function renderKrIndices() {
   const section = $("#kr-indices");
   if (!section) return;
@@ -1473,6 +1487,12 @@ function renderKrIndices() {
   const lowNote = document.createElement("span");
   lowNote.textContent = t("kridx.lowNote");
   $("#kridx-footer").append(link, note, lowNote);
+  const lag = krClosePublicationNote();
+  if (lag) {
+    const lagNote = document.createElement("span");
+    lagNote.textContent = lag;
+    $("#kridx-footer").append(lagNote);
+  }
 }
 
 // DART fields carry a closed Korean vocabulary; EN gets a fixed mapping with a
@@ -2072,7 +2092,14 @@ function renderKroOfficialStrip() {
   if (parts.length) {
     const label = document.createElement("small"); label.className = "kro-strip-label";
     label.textContent = t("kro.officialStrip");
-    strip.replaceChildren(label, ...parts);
+    const lag = krClosePublicationNote();
+    if (lag) {
+      const lagNote = document.createElement("small"); lagNote.className = "kro-strip-lag";
+      lagNote.textContent = lag;
+      strip.replaceChildren(label, ...parts, lagNote);
+    } else {
+      strip.replaceChildren(label, ...parts);
+    }
   }
 }
 

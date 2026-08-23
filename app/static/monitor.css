@@ -528,6 +528,7 @@ a.feed-text:hover { color: var(--ink); }
 
 .kro-official-strip { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 18px; margin: 14px 2px 0; color: var(--muted); font: 650 11px/1.4 var(--num); font-variant-numeric: tabular-nums; }
 .kro-official-strip .kro-strip-label { color: var(--faint); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.kro-strip-lag { color: var(--faint); font: 650 9.5px/1.4 var(--num); font-variant-numeric: tabular-nums; }
 .kro-strip-item { display: inline-flex; align-items: baseline; gap: 6px; }
 .kro-strip-item small { color: var(--faint); font-size: 10px; }
 .kro-strip-item strong { color: var(--ink); font-size: 12.5px; }
