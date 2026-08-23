@@ -18,9 +18,17 @@
       "ko": "크립토",
       "en": "Crypto"
     },
+    "macro": {
+      "ko": "매크로와 유동성",
+      "en": "Macro and liquidity"
+    },
     "risk": {
       "ko": "위험과 변동성",
       "en": "Risk and volatility"
+    },
+    "analysis": {
+      "ko": "분석 지표",
+      "en": "Analysis"
     },
     "chart": {
       "ko": "차트 지표",
@@ -178,6 +186,36 @@
         "caution": "ADR price times FX is not the domestic share price — a premium or discount is normal."
       }
     },
+    "major-holding": {
+      "group": "korea",
+      "ko": {
+        "title": "대량보유 5% 공시",
+        "def": "상장사 지분을 5% 이상 갖게 되거나, 그 뒤 1%p 넘게 바뀌면 금융당국에 신고해야 하는 제도입니다.",
+        "read": "누가 얼마를 들고 있고 목적이 '단순투자'인지 '경영참가'인지가 핵심입니다. 목적이 바뀌면 그 자체가 사건입니다.",
+        "caution": "공시는 사후 보고이고 제출 기한이 있습니다. 오늘 뜬 공시가 오늘 산 것을 뜻하지 않습니다."
+      },
+      "en": {
+        "title": "5% ownership filing",
+        "def": "Korea requires a filing when someone crosses 5% of a listed company, and again when that stake moves by more than one percentage point.",
+        "read": "Who holds how much, and whether the stated purpose is passive investment or management participation. A change of purpose is itself the news.",
+        "caution": "These are filed after the fact, within a deadline. A filing today does not mean the shares were bought today."
+      }
+    },
+    "material-disclosure": {
+      "group": "korea",
+      "ko": {
+        "title": "주요사항보고서",
+        "def": "유상증자·합병·소송처럼 회사 가치에 큰 영향을 주는 일이 생기면 상장사가 제출해야 하는 공시입니다.",
+        "read": "제목만 봐도 무슨 종류의 사건인지 알 수 있게 양식이 정해져 있습니다. 내용은 원문에서 확인합니다.",
+        "caution": "접수 목록이지 속보가 아닙니다. 사건과 접수 사이, 접수와 이 화면 사이에 각각 시차가 있습니다."
+      },
+      "en": {
+        "title": "Material event report",
+        "def": "A filing Korean listed companies must make for events that materially affect the company, such as share issues, mergers or litigation.",
+        "read": "The title alone tells you the category; the substance is in the original document.",
+        "caution": "This is a list of filings received, not a newswire. There is a lag between the event, the filing and this page."
+      }
+    },
     "kimchi-premium": {
       "group": "crypto",
       "ko": {
@@ -206,6 +244,186 @@
         "def": "A sentiment gauge from 0 (extreme fear) to 100 (extreme greed), blending volatility, volume and surveys.",
         "read": "One number for how frightened or euphoric participants currently are.",
         "caution": "It is not a buy or sell signal; extremes can persist for a long time."
+      }
+    },
+    "dominance": {
+      "group": "crypto",
+      "ko": {
+        "title": "도미넌스",
+        "def": "전체 크립토 시가총액에서 특정 코인이 차지하는 비중입니다.",
+        "read": "비트코인 도미넌스가 오르면 자금이 대형 코인 쪽으로, 내리면 알트코인 쪽으로 기울었다고 읽습니다.",
+        "caution": "집계 기관마다 대상 코인이 달라 값이 다릅니다. 비중이 오르는 것과 가격이 오르는 것은 다른 이야기입니다."
+      },
+      "en": {
+        "title": "Dominance",
+        "def": "One coin's share of total crypto market capitalisation.",
+        "read": "Rising bitcoin dominance suggests money leaning to majors; falling suggests altcoins.",
+        "caution": "Different providers count different universes, and a rising share is not the same as a rising price."
+      }
+    },
+    "heat": {
+      "group": "crypto",
+      "ko": {
+        "title": "과열도 (Mulmit 자체 지표)",
+        "def": "펀딩비·변동성·가격 위치·RSI를 합쳐 0~100으로 만든 Mulmit의 자체 상태 지표입니다.",
+        "read": "높을수록 한쪽으로 쏠린 상태라는 뜻입니다. 구성요소와 가중치는 화면에 함께 공개합니다.",
+        "caution": "과열이 곧 하락 예고가 아닙니다. 매수·매도 신호도 아니고, 다른 사이트의 같은 이름 지표와도 다른 값입니다."
+      },
+      "en": {
+        "title": "Heat (Mulmit's own gauge)",
+        "def": "Mulmit's 0 to 100 state gauge, combining funding, volatility, position in range and RSI.",
+        "read": "Higher means more crowded to one side. The components and their weights are shown alongside it.",
+        "caution": "Hot does not forecast a fall, it is not a buy or sell signal, and it is not the same number as a similarly named gauge elsewhere."
+      }
+    },
+    "liquidation": {
+      "group": "crypto",
+      "ko": {
+        "title": "청산",
+        "def": "레버리지 포지션의 증거금이 부족해져 거래소가 강제로 반대매매한 것입니다.",
+        "read": "청산이 몰리면 가격이 한 방향으로 더 밀립니다. 롱 청산이 많으면 하락이 가팔라지고, 숏 청산이 많으면 상승이 가팔라집니다.",
+        "caution": "표시되는 합계는 응답한 거래소들의 합이지 전 시장 합계가 아닙니다. 거래소마다 집계 기준도 다릅니다."
+      },
+      "en": {
+        "title": "Liquidation",
+        "def": "A leveraged position force-closed by the exchange because its margin ran out.",
+        "read": "Clusters of liquidations push price further the same way: long liquidations steepen falls, short liquidations steepen rallies.",
+        "caution": "The total shown is the sum of the venues that answered, not the whole market, and venues count them differently."
+      }
+    },
+    "stablecoin-supply": {
+      "group": "crypto",
+      "ko": {
+        "title": "스테이블코인 공급",
+        "def": "USDT·USDC처럼 달러에 고정된 코인이 시장에 얼마나 발행돼 있는지입니다.",
+        "read": "늘어나면 크립토 시장으로 들어올 대기 자금이 늘었다는 뜻으로 자주 읽습니다.",
+        "caution": "발행량이 늘었다고 그 돈이 실제로 코인을 산 것은 아닙니다. 집계 기관마다 포함하는 체인과 코인이 달라 값도 다릅니다."
+      },
+      "en": {
+        "title": "Stablecoin supply",
+        "def": "How much dollar-pegged coin such as USDT and USDC is in circulation.",
+        "read": "A rising supply is often read as more dry powder waiting to enter crypto.",
+        "caution": "Issued is not invested. Providers also count different chains and coins, so totals differ."
+      }
+    },
+    "gas-fee": {
+      "group": "crypto",
+      "ko": {
+        "title": "가스비",
+        "def": "블록체인에서 거래를 처리해 달라고 낼 때 내는 수수료입니다.",
+        "read": "비싸질수록 그 체인이 붐빈다는 뜻입니다. 체인마다 단위와 수준이 완전히 다릅니다.",
+        "caution": "표시값은 조회한 순간의 기준 가격이고, 실제로 낼 금액은 거래 종류와 우선순위 설정에 따라 달라집니다."
+      },
+      "en": {
+        "title": "Gas fee",
+        "def": "What you pay a blockchain to process your transaction.",
+        "read": "Higher means the chain is busier. Units and typical levels differ completely between chains.",
+        "caution": "The figure shown is the base price at the moment of the query; what you actually pay depends on the transaction and the priority you set."
+      }
+    },
+    "yield-curve": {
+      "group": "macro",
+      "ko": {
+        "title": "장단기 금리차 (금리 역전)",
+        "def": "긴 만기 국채 금리에서 짧은 만기 금리를 뺀 값입니다. 보통 미국 10년물에서 2년물을 뺍니다.",
+        "read": "평소에는 양수입니다. 돈을 오래 빌려줄수록 더 받기 때문입니다. 음수가 되면 '역전'이라 부르고, 시장이 앞으로 금리가 내려갈 것(=경기가 식을 것)으로 보고 있다는 뜻으로 읽습니다.",
+        "caution": "역전이 곧 침체는 아닙니다. 과거에 역전 뒤 침체가 온 적이 많았지만 시차가 1~2년으로 들쭉날쭉했고, 역전이 풀리는 속도도 함께 봐야 합니다."
+      },
+      "en": {
+        "title": "Yield curve (inversion)",
+        "def": "A long-dated government bond yield minus a short-dated one, usually the US 10-year minus the 2-year.",
+        "read": "Normally positive, because lending for longer pays more. Negative means the curve is inverted: the market expects rates to fall, which usually means it expects the economy to cool.",
+        "caution": "Inversion is not a recession. The historical lag has run one to two years and varied a lot, and the pace of re-steepening matters as much as the inversion."
+      }
+    },
+    "reverse-repo": {
+      "group": "macro",
+      "ko": {
+        "title": "역레포 (RRP)",
+        "def": "머니마켓펀드 같은 기관이 남는 현금을 연준에 하룻밤 맡기고 이자를 받는 창구입니다.",
+        "read": "잔액이 크면 시장에 갈 곳 없는 현금이 많다는 뜻이고, 줄어들면 그 돈이 국채나 다른 자산으로 옮겨갔다는 뜻으로 읽습니다.",
+        "caution": "잔액 자체가 유동성의 총량은 아닙니다. 지급준비금·재무부 잔고와 함께 봐야 방향이 보입니다."
+      },
+      "en": {
+        "title": "Reverse repo (RRP)",
+        "def": "A Federal Reserve facility where money funds and similar institutions park spare cash overnight for interest.",
+        "read": "A large balance means plenty of cash with nowhere better to go; a falling balance means that money moved into Treasuries or other assets.",
+        "caution": "The balance alone is not total liquidity. Read it next to reserves and the Treasury cash balance."
+      }
+    },
+    "tga": {
+      "group": "macro",
+      "ko": {
+        "title": "재무부 일반계정 (TGA)",
+        "def": "미국 재무부가 연준에 두고 쓰는 예금 계좌, 즉 정부의 현금 잔고입니다.",
+        "read": "세금이 들어오면 늘고 정부가 돈을 쓰면 줄어듭니다. 잔고가 늘면 그만큼 시중에서 돈이 빠지고, 줄면 시중으로 풀립니다.",
+        "caution": "정부 지출은 일정에 따라 큰 폭으로 오르내립니다. 하루치 변화로 유동성 방향을 단정하기 어렵습니다."
+      },
+      "en": {
+        "title": "Treasury General Account (TGA)",
+        "def": "The US Treasury's checking account at the Fed, which is the government's cash balance.",
+        "read": "It rises when taxes come in and falls when the government spends. A rising balance drains cash from the market; a falling one releases it.",
+        "caution": "Government flows are lumpy and calendar-driven. One day's move says little about the direction of liquidity."
+      }
+    },
+    "reserves": {
+      "group": "macro",
+      "ko": {
+        "title": "지급준비금",
+        "def": "은행들이 연준에 예치해 둔 돈입니다. 은행 시스템이 당장 쓸 수 있는 현금에 가장 가까운 값입니다.",
+        "read": "넉넉하면 자금 조달이 편안하고, 빠르게 줄면 단기 금리가 튀는 일이 생깁니다.",
+        "caution": "'많다·적다'의 절대 기준선은 없습니다. 추세와 다른 유동성 항목과의 관계로 봅니다."
+      },
+      "en": {
+        "title": "Bank reserves",
+        "def": "Money commercial banks hold at the Fed, the closest thing to ready cash in the banking system.",
+        "read": "Ample reserves make funding comfortable; a fast drain is when short-term rates start to spike.",
+        "caution": "There is no fixed level that counts as enough. Read the trend and its relationship to the other liquidity lines."
+      }
+    },
+    "sofr": {
+      "group": "macro",
+      "ko": {
+        "title": "SOFR (담보부 익일물 금리)",
+        "def": "미국 국채를 담보로 하룻밤 돈을 빌릴 때 실제로 체결된 금리입니다. 달러 단기금리의 기준선으로 쓰입니다.",
+        "read": "연준 정책금리 근처에서 움직이는 것이 정상입니다. 정책금리 위로 튀면 단기자금 시장이 빡빡해졌다는 신호입니다.",
+        "caution": "예측이 아니라 어제 실제로 거래된 값입니다. 분기말에는 회계 요인으로 일시적으로 튀는 일이 잦습니다."
+      },
+      "en": {
+        "title": "SOFR",
+        "def": "The rate actually paid on overnight loans secured by US Treasuries, the benchmark for dollar short-term funding.",
+        "read": "It normally tracks the Fed's policy rate. Printing above it means overnight funding has tightened.",
+        "caution": "It reports what traded yesterday, not what will happen. Quarter-ends often produce temporary spikes for accounting reasons."
+      }
+    },
+    "fed-balance-sheet": {
+      "group": "macro",
+      "ko": {
+        "title": "연준 총자산",
+        "def": "연방준비제도가 보유한 국채·기관채 등 자산의 합계입니다.",
+        "read": "늘어나면 연준이 시장에 돈을 넣고 있다는 뜻(양적완화), 줄어들면 거둬들이고 있다는 뜻(양적긴축)으로 읽습니다.",
+        "caution": "총자산이 곧 시중 유동성은 아닙니다. 같은 자산이라도 지급준비금·역레포·재무부 잔고 어디에 가 있느냐에 따라 시장에 미치는 영향이 다릅니다."
+      },
+      "en": {
+        "title": "Fed total assets",
+        "def": "The sum of Treasuries, agency debt and other assets held by the Federal Reserve.",
+        "read": "Growing means the Fed is adding money (quantitative easing); shrinking means it is withdrawing it (tightening).",
+        "caution": "The total is not the same as market liquidity. Where that money sits, in reserves or reverse repo or the Treasury account, changes what it does."
+      }
+    },
+    "dollar-index": {
+      "group": "macro",
+      "ko": {
+        "title": "달러지수",
+        "def": "주요 교역 상대국 통화 묶음 대비 달러의 값을 지수로 만든 것입니다.",
+        "read": "오르면 달러가 강해졌다는 뜻이고, 보통 신흥국 자산과 원자재에는 부담으로 작용합니다.",
+        "caution": "지수마다 담는 통화와 가중치가 달라 값이 다릅니다. 원·달러 환율 하나와 같은 값이 아닙니다."
+      },
+      "en": {
+        "title": "Dollar index",
+        "def": "The dollar's value against a basket of major trading partners' currencies, expressed as an index.",
+        "read": "Rising means a stronger dollar, which usually weighs on emerging-market assets and commodities.",
+        "caution": "Different indexes use different baskets and weights, so their levels differ. None of them equals the won/dollar rate."
       }
     },
     "stress-index": {
@@ -238,23 +456,38 @@
         "caution": "It is not implied volatility like the VIX — it looks backwards, not forwards."
       }
     },
-    "dominance": {
-      "group": "crypto",
+    "high-yield-spread": {
+      "group": "risk",
       "ko": {
-        "title": "도미넌스",
-        "def": "전체 크립토 시가총액에서 특정 코인이 차지하는 비중입니다.",
-        "read": "비트코인 도미넌스가 오르면 자금이 대형 코인 쪽으로, 내리면 알트코인 쪽으로 기울었다고 읽습니다.",
-        "caution": "집계 기관마다 대상 코인이 달라 값이 다릅니다. 비중이 오르는 것과 가격이 오르는 것은 다른 이야기입니다."
+        "title": "하이일드 스프레드",
+        "def": "신용등급이 낮은 회사채 금리에서 같은 만기 국채 금리를 뺀 값입니다. 위험한 곳에 돈을 빌려줄 때 더 받는 몫입니다.",
+        "read": "벌어지면 시장이 부도 위험을 더 크게 보기 시작했다는 뜻이고, 좁아지면 위험을 감수할 여유가 생겼다는 뜻으로 읽습니다.",
+        "caution": "주가보다 늦게 움직이기도 하고 먼저 움직이기도 합니다. 스프레드만으로 방향을 단정하지 않습니다."
       },
       "en": {
-        "title": "Dominance",
-        "def": "One coin's share of total crypto market capitalisation.",
-        "read": "Rising bitcoin dominance suggests money leaning to majors; falling suggests altcoins.",
-        "caution": "Different providers count different universes, and a rising share is not the same as a rising price."
+        "title": "High-yield spread",
+        "def": "The extra yield low-rated corporate bonds pay over government bonds of the same maturity, the price of lending into risk.",
+        "read": "Widening means the market is pricing more default risk; narrowing means more appetite for it.",
+        "caution": "It sometimes leads equities and sometimes lags them. The spread alone does not settle direction."
+      }
+    },
+    "recession-prob": {
+      "group": "risk",
+      "ko": {
+        "title": "침체 확률",
+        "def": "금리곡선 등 과거 자료로 추정한, 향후 12개월 안에 경기침체가 올 확률입니다.",
+        "read": "숫자 자체보다 방향이 중요합니다. 몇 달에 걸쳐 오르는지 내리는지를 봅니다.",
+        "caution": "예언이 아니라 과거 패턴을 현재에 대입한 값입니다. 모형마다 결과가 크게 다릅니다."
+      },
+      "en": {
+        "title": "Recession probability",
+        "def": "A model estimate, usually from the yield curve, of the chance a recession begins within twelve months.",
+        "read": "The direction over several months matters more than the level.",
+        "caution": "It is a historical pattern applied to today, not a forecast. Different models disagree widely."
       }
     },
     "mdd": {
-      "group": "risk",
+      "group": "analysis",
       "ko": {
         "title": "최대낙폭 (MDD)",
         "def": "전고점에서 저점까지 가장 크게 빠졌던 폭입니다.",
@@ -266,6 +499,36 @@
         "def": "The largest peak-to-trough decline over a period.",
         "read": "It answers \"how far underwater did this go at its worst?\"",
         "caution": "A past maximum is not a floor — deeper declines are always possible."
+      }
+    },
+    "beta": {
+      "group": "analysis",
+      "ko": {
+        "title": "베타",
+        "def": "시장이 1% 움직일 때 이 종목이 평균 몇 % 움직였는지를 나타내는 값입니다.",
+        "read": "1보다 크면 시장보다 크게 흔들렸다는 뜻, 1보다 작으면 덜 흔들렸다는 뜻입니다.",
+        "caution": "과거 자료로 계산한 평균이라 앞으로도 같다는 보장이 없습니다. 기간을 바꾸면 값도 바뀝니다."
+      },
+      "en": {
+        "title": "Beta",
+        "def": "How much this name moved, on average, for each 1% move in the market.",
+        "read": "Above 1 means it swung more than the market; below 1 means less.",
+        "caution": "It is an average computed from the past and it changes with the window you pick."
+      }
+    },
+    "underwater": {
+      "group": "analysis",
+      "ko": {
+        "title": "언더워터 곡선",
+        "def": "전고점 대비 지금 몇 % 아래에 있는지를 시간순으로 그린 곡선입니다. 새 고점을 쓸 때만 0이 됩니다.",
+        "read": "얼마나 깊이, 얼마나 오래 잠겨 있었는지를 봅니다. 물밑이라는 이름이 여기서 왔습니다.",
+        "caution": "가격 그래프와 다릅니다. 오르는 구간에도 전고점을 넘지 못하면 곡선은 계속 0 아래에 있습니다."
+      },
+      "en": {
+        "title": "Underwater curve",
+        "def": "How far below its prior peak a price sits, plotted over time. It touches zero only at a new high.",
+        "read": "It shows how deep the drawdown went and how long it lasted. The name Mulmit, meaning underwater, comes from this chart.",
+        "caution": "It is not a price chart. A rally that fails to exceed the old peak still leaves the curve below zero."
       }
     },
     "bollinger": {
