@@ -105,7 +105,13 @@ COIN_SPECS: tuple[CoinSpec, ...] = (
 )
 # Coins whose daily closes the history lane also stores, for realized volatility
 # and the cross-market correlations.
+# 실현 변동성과 BTC 상관에 쓰는 표본. 화면에 표를 만드는 목록이라 손으로 고른다.
 HISTORY_COINS: tuple[str, ...] = ("BTC", "ETH", "SOL")
+
+# 추이선(30일)은 카드가 있는 코인 전부에 필요하다. 위 목록과 분리한 이유는,
+# 여기에 코인을 더한다고 변동성 표에 줄이 늘어나면 안 되기 때문이다 — 둘은
+# 서로 다른 질문에 답한다.
+SPARK_DAYS = 30
 
 
 def coin_symbols() -> list[str]:
@@ -113,8 +119,18 @@ def coin_symbols() -> list[str]:
 
 
 def history_symbols() -> list[str]:
-    """Symbols the HIP-3 history lane should add while the crypto section is on."""
-    return list(HISTORY_COINS) if config.CRYPTO_SECTION_ENABLED else []
+    """Symbols the HIP-3 history lane should add while the crypto section is on.
+
+    카드가 있는 코인 전부. 추이선이 카드마다 필요하고, 같은 블롭이 실현 변동성과
+    BTC 상관에도 쓰인다 — 한 번 받아 세 곳이 나눠 쓴다.
+    """
+    if not config.CRYPTO_SECTION_ENABLED:
+        return []
+    symbols = list(HISTORY_COINS)
+    for symbol in coin_symbols():
+        if symbol not in symbols:
+            symbols.append(symbol)
+    return symbols
 
 
 class OverviewProvider(Protocol):
@@ -434,6 +450,31 @@ def _empty_overview(error: str) -> dict[str, Any]:
     }
 
 
+def _attach_sparklines(coins: list[dict[str, Any]]) -> None:
+    """카드마다 30일 일별 종가를 붙인다.
+
+    값은 저장된 블롭에서만 읽는다 — 요청 경로에서 상류를 부르면 카드 열 개에
+    호출 열 번이 붙고, 하루에 한 번 바뀌는 선 때문에 15초 캐시가 계속 깨진다.
+    블롭을 채우는 것은 hip3_history lane의 일이다.
+
+    자체 누적(crypto_regime의 일별 표본)은 쓰지 않는다. 2026-08-22에 시작해
+    오늘 기준 두 점뿐이라 30일 선이 될 수 없다. Hyperliquid 1d 봉은 365일
+    창을 주고, 코인 상세 화면이 이미 같은 원천을 쓴다.
+    """
+    if not hip3_history.enabled():
+        return
+    blob = hip3_history.load()
+    if not blob:
+        return
+    for card in coins:
+        rows, _available = hip3_history.observations_for(
+            blob, card.get("symbol") or "", days=SPARK_DAYS, limit=SPARK_DAYS + 2
+        )
+        # 없는 값은 만들지 않는다. 아직 안 모인 코인은 선 없이 카드만 선다.
+        if rows:
+            card["observations"] = rows
+
+
 def build_crypto_overview(provider: OverviewProvider | None = None) -> dict[str, Any]:
     """One Hyperliquid main-venue snapshot plus its predicted-funding table."""
     client = provider or _DEFAULT_PROVIDER
@@ -465,6 +506,7 @@ def build_crypto_overview(provider: OverviewProvider | None = None) -> dict[str,
             missing.append(spec.symbol)
             continue
         coins.append(card)
+    _attach_sparklines(coins)
     by_symbol = {card["symbol"]: card for card in coins}
 
     return {
