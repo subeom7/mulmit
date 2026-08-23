@@ -1019,6 +1019,13 @@ function renderJumpNav() {
     // A split page carries only its own sections; links must not point at ids
     // that exist on a different page.
     .filter((item) => { const el = document.getElementById(item.id); return el && !el.hidden; })
+    // 위 목록은 손으로 적은 순서다. 페이지에서 섹션을 옮기면 목록과 화면이
+    // 갈라지고, 갈라진 쪽이 화면이라 눈에 띄지도 않는다 — 그래서 순서를
+    // 여기서 정하지 않고 **문서에서 읽는다**. 옮긴 섹션이 곧 옮긴 링크다.
+    .sort((a, b) => {
+      const left = document.getElementById(a.id), right = document.getElementById(b.id);
+      return left.compareDocumentPosition(right) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    })
     .forEach((item) => { const link = document.createElement("a"); link.href = `#${item.id}`; link.textContent = item.text; nav.append(link); });
 }
 
