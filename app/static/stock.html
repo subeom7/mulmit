@@ -235,7 +235,22 @@ async function loadUs() {
   // 내부자 Form 3/4/5
   try {
     const i = await fetchJson("/api/insider/" + SYMBOL + "?limit=12");
-    const rows = (i.transactions || []).slice(0, 12).map((r) => [["", r.transaction_date || r.filing_date || "—"], ["", r.owner_name || "—"], ["", (r.transaction_meaning && r.transaction_meaning.ko) || r.transaction_code || "—"], ["num", num(r.shares)], ["num", r.price_per_share == null ? "—" : "$" + num(r.price_per_share, 2)]]);
+    // owner and transaction are objects in this payload, not flat fields. The
+    // page read owner_name and transaction_meaning and rendered em dashes over
+    // rows that carried the data.
+    const rows = (i.transactions || []).slice(0, 12).map((r) => {
+      const owner = r.owner || {};
+      const who = owner.title ? `${owner.name} · ${owner.title}` : (owner.name || "—");
+      const move = (r.transaction && r.transaction.label && r.transaction.label.ko)
+        || (r.transaction && r.transaction.code) || "—";
+      return [
+        ["", r.transaction_date || r.filing_date || "—"],
+        ["", who],
+        ["", move],
+        ["num", num(r.shares)],
+        ["num", r.price_per_share == null ? "—" : "$" + num(r.price_per_share, 2)],
+      ];
+    });
     if (rows.length) {
       $id("insider-title").textContent = "내부자 거래 (Form 3·4·5)";
       fill("insider-table", [["", "거래일"], ["", "보고자"], ["", "유형"], ["num", "수량"], ["num", "단가"]], rows);
