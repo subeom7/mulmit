@@ -136,7 +136,7 @@ const TEXT = {
     "kro.title": "한국 주식, 장 밖에서는", "kro.copy": "장이 닫혀 있어도 합성 무기한선물은 24시간 움직입니다. 마크가격을 공식환율로 환산해 마지막 공식 종가와 비교합니다. 현물 호가나 시초가 예측이 아닙니다.",
     "kro.fxOfficial": "환율은 하루 한 번 고시값", "kro.vsClose": "{date} 마감 이후", "kro.mark": "마크", "kro.official": "공식 종가", "kro.fx": "환산 환율",
     "kro.adrRatio": "ADR 비율", "kro.noFx": "환율 미확보 · 환산 보류", "kro.noClose": "공식 종가 미확보", "kro.noMarket": "표시할 시장 없음", "kro.session": "주말 내부 가격발견 중",
-    "kro.vsSession": "{date} 15:30 퍼프가 대비 · 참고", "kro.vsSessionNote": "퍼프 5분봉 기준 · 공식 종가 아님",
+    "kro.vsSession": "{date} 15:30 이후", "kro.vsSessionNote": "퍼프 5분봉 기준 · 공식 종가 아님",
     "kro.usEtf": "미국 상장 ETF · 종가 비교 없음", "kro.leverage": "레버리지",
     "kro.vsPremium": "원주 {date} 종가 대비 프리미엄", "kro.adrImpliedNote": "마크 × {ratio}(공시 비율) × 환율 = 원주 1주 환산가 — ADR 가격 상승률이 아니라 원주 대비 괴리입니다",
     "dots.title": "연준 점도표", "dots.copy": "FOMC 위원들이 분기 SEP에서 스스로 전망한 연말 기준금리입니다. 시장 내재 확률이 아니라 위원 전망의 중앙값과 중앙경향입니다.",
@@ -276,7 +276,7 @@ const TEXT = {
     "kro.title": "Korean stocks, after hours", "kro.copy": "Synthetic perpetuals keep trading around the clock. Marks are converted at the official exchange rate and compared with the last official close. Not spot quotes, not an open forecast.",
     "kro.fxOfficial": "Converted at the daily official FX rate", "kro.vsClose": "since the {date} close", "kro.mark": "Mark", "kro.official": "Official close", "kro.fx": "FX applied",
     "kro.adrRatio": "ADR ratio", "kro.noFx": "No official FX yet · conversion withheld", "kro.noClose": "Official close unavailable", "kro.noMarket": "No live market", "kro.session": "Weekend internal price discovery",
-    "kro.vsSession": "vs perp @ {date} 15:30 KST · reference", "kro.vsSessionNote": "Perp 5-minute candle basis · not an official close",
+    "kro.vsSession": "since {date} 15:30 KST", "kro.vsSessionNote": "Perp 5-minute candle basis · not an official close",
     "kro.usEtf": "US-listed ETF · no close comparison", "kro.leverage": "leveraged",
     "kro.vsPremium": "premium vs ordinary {date} close", "kro.adrImpliedNote": "Mark × {ratio} (disclosed ratio) × FX = per-ordinary-share equivalent — a cross-listing premium, not the ADR's price change",
     "dots.title": "Fed dot plot", "dots.copy": "Year-end fed funds projections FOMC participants publish themselves in the quarterly SEP — the committee's own medians and central tendency, not market-implied odds.",
@@ -2187,6 +2187,31 @@ function kroMoney(value, kind) {
 // 직전 렌더의 환산가 — 값이 움직인 카드에 틱 플래시를 준다.
 const kroPrevValues = new Map();
 
+/* 장 마감 이후의 움직임을 정직하게 말하는 기준은 둘 중 하나다.
+ *
+ * 공식 종가는 T+1로 확정되므로 아침·연휴에는 직전 세션보다 하루 늦다. 그때
+ * "종가 대비"는 이미 끝난 정규장 하루를 통째로 포함해 버린다 — 실측 2026-08-23:
+ * 삼성전자 종가 대비 −0.49% vs 15:30 퍼프 대비 −4.96%. 주말에 이 값을 보는
+ * 사람이 알고 싶은 것은 뒤쪽이다. 공식 종가가 따라잡으면 둘이 같은 구간을
+ * 가리키므로 공식 종가를 쓴다(공표된 값이 항상 낫다).
+ *
+ * 카드와 홈 보드가 서로 다른 기준을 고르면 같은 종목이 화면마다 다른 퍼센트로
+ * 나온다. 그래서 규칙은 여기 하나만 있다. */
+function overnightReference(card) {
+  const official = card?.official || {};
+  const ref = card?.session_reference || {};
+  const officialPercent = safeNumber(card?.implied?.vs_official_percent);
+  const refPercent = safeNumber(ref.vs_percent);
+  const refDate = String(ref.boundary_kst || "").slice(0, 10);
+  const officialDate = String(official.date || "");
+  if (ref.status === "ok" && refPercent !== null && refDate && (!officialDate || officialDate < refDate)) {
+    return { kind: "session", percent: refPercent, date: refDate };
+  }
+  if (officialPercent === null) return null;
+  return { kind: "official", percent: officialPercent, date: officialDate };
+}
+window.mulmitOvernightReference = overnightReference;
+
 function renderKrOvernight() {
   const section = $("#kr-overnight");
   if (!section) return;
@@ -2214,8 +2239,12 @@ function renderKrOvernight() {
     const change24h = safeNumber(card.perp?.change_24h_percent);
     const implied = safeNumber(card.implied?.value);
     const officialClose = safeNumber(card.official?.close);
+    const reference = overnightReference(card);
     const article = document.createElement("article");
     article.className = `kro-card ${changeClass(percent)}`;
+    // 규칙이 15:30 퍼프가를 고르면 두 줄의 주·보조가 뒤바뀐다. 순서와 크기는
+    // CSS가 이 클래스를 보고 정한다(마크업 순서는 그대로 둔다).
+    if (reference?.kind === "session") article.classList.add("kro-ref-primary");
 
     const header = document.createElement("header");
     const title = document.createElement("h3");

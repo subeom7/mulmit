@@ -236,6 +236,37 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
  * 5초마다 조용히 글자만 갈아 끼우면 화면이 멈춰 있는 것처럼 보인다. 방향에
  * 맞춰 짧게 물들이되, 등락률 쪽은 이미 색을 갖고 있으므로 색은 건드리지 않고
  * 번짐만 준다. 움직임을 줄여 달라고 한 사용자에게는 아무 일도 일어나지 않는다. */
+/* 계기판 — 자리마다 0~9 띠를 세워 두고 바뀐 자리만 굴린다.
+ *
+ * 자리 폭을 1ch로 고정해 굴러가는 동안에도 숫자가 좌우로 밀리지 않는다(값이
+ * 흔들리면 읽기가 더 어려워진다). 띠는 overflow로 잘라 한 자리만 보인다. */
+.is-odo { display: inline-flex; align-items: flex-end; }
+/* 진짜 값 — 눈에는 안 보이고 스크린리더·복사·검색에는 그대로 잡힌다. */
+.odo-readable {
+  position: absolute; width: 1px; height: 1px; margin: -1px;
+  padding: 0; border: 0; overflow: hidden; white-space: nowrap;
+  clip: rect(0 0 0 0); clip-path: inset(50%);
+}
+.odo-reel { display: inline-flex; align-items: flex-end; }
+.odo-d {
+  display: inline-block; overflow: hidden;
+  width: 1ch; height: 1em; line-height: 1; vertical-align: bottom;
+}
+.odo-strip {
+  display: block;
+  transition: transform .62s cubic-bezier(.19, .82, .3, 1);
+  will-change: transform;
+}
+.odo-strip i { display: block; height: 1em; line-height: 1; font-style: normal; }
+.odo-s { display: inline-block; line-height: 1; vertical-align: bottom; }
+
+/* 굴림이 붙은 값에는 깜빡임을 걸지 않는다 — 두 효과가 겹치면 산만하다. */
+.kro-price.is-odo, .tile-value.is-odo { animation: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .odo-strip { transition: none; }
+}
+
 @keyframes console-tick-up {
   0% { color: var(--up); text-shadow: 0 0 14px color-mix(in srgb, var(--up) 45%, transparent); }
   100% { color: inherit; text-shadow: none; }
@@ -244,10 +275,11 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
   0% { color: var(--down); text-shadow: 0 0 14px color-mix(in srgb, var(--down) 45%, transparent); }
   100% { color: inherit; text-shadow: none; }
 }
-.tile-value.tick-up, .tape-value.tick-up { animation: console-tick-up .7s ease-out; }
-.tile-value.tick-down, .tape-value.tick-down { animation: console-tick-down .7s ease-out; }
+/* 테이프는 이미 옆으로 흐르고 있어서 자리 굴림까지 얹으면 읽히지 않는다.
+ * 좁은 칸에서는 짧은 깜빡임이 더 낫다. */
+.tape-value.tick-up { animation: console-tick-up .7s ease-out; }
+.tape-value.tick-down { animation: console-tick-down .7s ease-out; }
 @media (prefers-reduced-motion: reduce) {
-  .tile-value.tick-up, .tile-value.tick-down,
   .tape-value.tick-up, .tape-value.tick-down { animation: none; }
 }
 
@@ -332,11 +364,28 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 .kro-meta dd { color: var(--ink-2); font: 600 var(--fs-xs)/1.5 var(--mono); }
 .kro-badges { margin-top: var(--sp-2); }
 
-/* 쉬움에서는 두 번째 퍼센트와 근거표를 접는다.
- * "−0.49%(종가 대비)"와 "−4.93%(15:30 퍼프 대비)"가 같은 카드에 같은 크기로
- * 서 있으면 어느 쪽이 오늘 이야기인지 알 수 없다. 경고 칩(지연·저유동성)은
+/* 공식 종가가 직전 세션보다 늦으면 두 줄의 주·보조가 뒤바뀐다.
+ *
+ * monitor.js의 overnightReference()가 그렇게 판정하면 카드에 .kro-ref-primary가
+ * 붙는다. 그때는 "8/21 15:30 이후"가 장 마감 이후 움직임을 말하는 값이고,
+ * "8/20 종가 대비"는 이미 끝난 정규장 하루를 포함한 값이라 뒤로 간다.
+ * 마크업 순서는 그대로 두고 flex order로만 바꾼다. */
+.kro-card.kro-ref-primary .kro-vs-ref {
+  order: 1; margin-top: 0;
+  font: 650 var(--fs-sm)/1.45 var(--sans); font-variant-numeric: tabular-nums;
+}
+.kro-card.kro-ref-primary .kro-vs {
+  order: 2; margin-top: 2px;
+  font: 600 var(--fs-xs)/1.45 var(--sans);
+}
+.kro-card.kro-ref-primary .kro-meta { order: 3; }
+.kro-card.kro-ref-primary .kro-badges { order: 4; }
+
+/* 쉬움에서는 보조 퍼센트와 근거표를 접는다. 같은 카드에 같은 크기의 퍼센트가
+ * 둘 서 있으면 어느 쪽이 지금 이야기인지 알 수 없다. 경고 칩(지연·저유동성)은
  * 위험 정보라 접지 않는다. */
-html[data-mode="easy"] .kro-vs-ref,
+html[data-mode="easy"] .kro-card:not(.kro-ref-primary) .kro-vs-ref,
+html[data-mode="easy"] .kro-card.kro-ref-primary .kro-vs,
 html[data-mode="easy"] .kro-meta { display: none; }
 
 .kro-official-strip { margin-top: var(--sp-4); font-size: var(--fs-xs); }

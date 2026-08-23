@@ -26,11 +26,11 @@
     ko: {
       sessionOpen: "한국장 진행 중", sessionClosed: "한국장 마감", sessionWeekend: "주말 · 한국장 휴장",
       sessionUs: "미국장 시간대", until: "개장까지 {t}", day: "{d}일 ", hm: "{h}시간 {m}분",
-      vsClose: "{d} 마감 이후", vs24h: "24시간 전 대비", official: "고시 {d}",
+      vsClose: "{d} 마감 이후", vsSessionClose: "{d} 15:30 이후", vs24h: "24시간 전 대비", official: "고시 {d}",
       easy: "쉬움", pro: "전문가", modeLabel: "표시 수준",
       detailMark: "마크가격", detailFx: "환산 환율", detailFunding: "펀딩 APR",
       detailOi: "미결제약정", detail24h: "24시간 변화", detailClose: "공식 종가",
-      detailSession: "15:30 퍼프 대비", detailVolume: "24시간 거래대금",
+      detailSession: "15:30 퍼프 대비", detailVsClose: "공식 종가 대비", detailVolume: "24시간 거래대금",
       detailTrend: "배경 추이선", trendBasis: "최근 {n} 종가", sparkPeriod: "{n}일", sparkMonths: "{n}개월",
       detailSource: "출처", detailAsOf: "기준일",
       boardTitle: "지금 시장", boardNote: "장이 닫힌 시간의 값은 24시간 거래되는 참고가입니다.",
@@ -39,11 +39,11 @@
     en: {
       sessionOpen: "Korean market open", sessionClosed: "Korean market closed", sessionWeekend: "Weekend · Korea closed",
       sessionUs: "US market hours", until: "opens in {t}", day: "{d}d ", hm: "{h}h {m}m",
-      vsClose: "since the {d} close", vs24h: "vs 24h ago", official: "official {d}",
+      vsClose: "since the {d} close", vsSessionClose: "since {d} 15:30 KST", vs24h: "vs 24h ago", official: "official {d}",
       easy: "Simple", pro: "Pro", modeLabel: "Detail level",
       detailMark: "Mark price", detailFx: "FX applied", detailFunding: "Funding APR",
       detailOi: "Open interest", detail24h: "24h change", detailClose: "Official close",
-      detailSession: "vs 15:30 perp", detailVolume: "24h volume",
+      detailSession: "vs 15:30 perp", detailVsClose: "vs official close", detailVolume: "24h volume",
       detailTrend: "Background line", trendBasis: "closes over the last {n}", sparkPeriod: "{n}D", sparkMonths: "{n}M",
       detailSource: "Source", detailAsOf: "As of",
       boardTitle: "Markets now", boardNote: "Out-of-hours values are 24-hour reference prices.",
@@ -215,6 +215,75 @@
     node.addEventListener("animationend", () => node.classList.remove(tone), { once: true });
   }
 
+  /* 값이 바뀌면 자리마다 숫자가 굴러간다.
+   *
+   * 깜빡임만으로는 무엇이 얼마나 바뀌었는지 보이지 않는다. 자리별로 0~9 띠를
+   * 세워 두고 바뀐 자리만 굴린다. 오른쪽 자리부터 차례로 움직여 계기판처럼
+   * 읽힌다. 자릿수가 달라지면(999,999 → 1,000,000) 굴리지 않고 새로 쓴다 —
+   * 자리 수 자체가 달라진 것을 굴림으로 흉내 내면 없던 중간값을 보여주게 된다.
+   * 움직임을 줄여 달라고 한 사용자에게는 그냥 바뀐다. */
+  const ODO_STEP_MS = 18;
+  const odoSeen = new Map();
+  const digitShape = (text) => String(text).replace(/[0-9]/g, "#");
+  const wantsMotion = () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function odoCell(character, index, total) {
+    if (!/[0-9]/.test(character)) {
+      const flat = document.createElement("span");
+      flat.className = "odo-s";
+      flat.textContent = character;
+      return flat;
+    }
+    const cell = document.createElement("span");
+    cell.className = "odo-d";
+    const strip = document.createElement("span");
+    strip.className = "odo-strip";
+    strip.style.transitionDelay = `${(total - 1 - index) * ODO_STEP_MS}ms`;
+    strip.style.transform = `translateY(${-Number(character)}em)`;
+    for (let digit = 0; digit <= 9; digit += 1) {
+      const face = document.createElement("i");
+      face.textContent = String(digit);
+      strip.append(face);
+    }
+    cell.append(strip);
+    return cell;
+  }
+
+  function odometer(host, text, key) {
+    if (!host) return;
+    const previous = odoSeen.get(key);
+    odoSeen.set(key, text);
+    // 계기판이 된 뒤에는 textContent가 띠까지 포함한다. 값을 노드에 적어 두어야
+    // 다음 번에 그것을 값으로 다시 읽지 않는다.
+    host.dataset.value = text;
+    const rollable = previous !== undefined && previous !== text
+      && digitShape(previous) === digitShape(text) && wantsMotion();
+    if (!rollable) {
+      host.textContent = text;
+      host.classList.remove("is-odo");
+      return;
+    }
+    // 이전 값으로 계기판을 세운 다음
+    host.classList.add("is-odo");
+    // 굴러가는 띠는 화면에만 있는 장치다. 그대로 두면 스크린리더가
+    // "0123456789…"를 읽는다 — 감추고 진짜 값을 따로 남긴다.
+    const readable = document.createElement("span");
+    readable.className = "odo-readable";
+    readable.textContent = text;
+    const reel = document.createElement("span");
+    reel.className = "odo-reel";
+    reel.setAttribute("aria-hidden", "true");
+    reel.append(...[...previous].map((ch, i) => odoCell(ch, i, previous.length)));
+    host.replaceChildren(readable, reel);
+    void host.offsetWidth;
+    // 새 값으로 굴린다
+    [...text].forEach((character, index) => {
+      if (!/[0-9]/.test(character)) return;
+      const strip = reel.children[index]?.firstChild;
+      if (strip) strip.style.transform = `translateY(${-Number(character)}em)`;
+    });
+  }
+
   const changeText = (spec) => spec.changeText
     ? `${arrow(spec.change)} ${spec.changeText}`.trim()
     : `${arrow(spec.change)} ${percent(spec.change)}`.trim();
@@ -223,9 +292,7 @@
   // 구성이 같으면 글자만 갈아 끼운다.
   function updateTile(node, spec) {
     if (!node) return;
-    const value = node.querySelector(".tile-value > span");
-    if (value) value.textContent = spec.value;
-    flash(node.querySelector(".tile-value"), spec.key, spec.raw);
+    odometer(node.querySelector(".tile-value > span"), spec.value, spec.key);
     const unit = node.querySelector(".tile-unit");
     if (unit) unit.textContent = spec.unit || "";
     const change = node.querySelector(".tile-change");
@@ -325,6 +392,11 @@
     // 카드가 스스로 말한 단위를 따른다.
     const isKrw = (implied.unit || "").toUpperCase() === "KRW";
     const asText = (input) => (isKrw ? group(Math.round(input), 0) : group(input, 2));
+    /* 어느 기준을 앞에 둘지는 monitor.js의 규칙 하나가 정한다. 공식 종가가
+     * 직전 세션보다 늦으면(T+1 확정 지연) "종가 대비"는 이미 끝난 정규장
+     * 하루를 포함해 버리므로, 장 마감 이후 움직임은 직전 15:30 퍼프가 대비다. */
+    const reference = window.mulmitOvernightReference?.(card);
+    const useSession = reference?.kind === "session";
     return {
       key: `kr:${id}`,
       raw: value,
@@ -332,15 +404,21 @@
       tag: card.code || "",
       value: asText(value),
       unit: isKrw ? t("won") : "",
-      change: num(implied.vs_official_percent),
-      basis: closeValue === null ? "" : t("vsClose", { d: shortDate(official.date) }),
+      change: reference ? reference.percent : num(implied.vs_official_percent),
+      basis: useSession
+        ? t("vsSessionClose", { d: shortDate(reference.date) })
+        : (closeValue === null ? "" : t("vsClose", { d: shortDate(official.date) })),
       href: card.code ? `/stock/${card.code}` : "/kr#kr-indices",
       observations: sparkId ? observationsFor(state, sparkId) : null,
       detail: [
         [t("detailMark"), money(num(perp.mark), "USD")],
         [t("detail24h"), perp.change_24h_percent === undefined ? null : percent(num(perp.change_24h_percent))],
         [t("detailClose"), closeValue === null ? null : `${asText(closeValue)} (${shortDate(official.date)})`],
-        [t("detailSession"), percent(num(card.session_reference?.vs_percent))],
+        // 앞에 세우지 않은 쪽을 근거 줄에 남긴다 — 둘 다 사라지면 안 된다.
+        useSession
+          ? [t("detailVsClose"), closeValue === null ? null
+              : `${percent(num(implied.vs_official_percent))} (${shortDate(official.date)} 종가)`]
+          : [t("detailSession"), percent(num(card.session_reference?.vs_percent))],
         [t("detailFx"), num(state.krOvernight?.fx?.rate) === null ? null
           : `${group(num(state.krOvernight.fx.rate), 1)} · ${t("official", { d: shortDate(state.krOvernight.fx.date) })}`],
       ],
@@ -598,6 +676,22 @@
     layout.tape = signature;
   }
 
+  /* /kr의 24시간 참고가 카드도 같은 계기판을 쓴다. renderKrOvernight가 5초마다
+   * 카드를 새로 만들지만 직전 값은 여기 Map에 남아 있어 이어서 굴릴 수 있다.
+   * 렌더러가 붙이는 깜빡임 클래스는 굴림과 겹치므로 떼어 낸다. */
+  function rollOvernightPrices() {
+    document.querySelectorAll(".kro-card").forEach((card) => {
+      const price = card.querySelector(".kro-price");
+      const symbol = card.querySelector(".kro-sym")?.textContent?.trim();
+      if (!price || !symbol) return;
+      price.classList.remove("tick-up", "tick-down");
+      // 렌더러가 카드를 새로 만들면 dataset이 비어 있고 textContent가 참값이다.
+      // 같은 노드를 다시 보는 경우(크립토 5초 루프처럼 renderKrOvernight 없이
+      // 렌더 이벤트만 오는 때)에는 dataset에 적어 둔 값이 참값이다.
+      odometer(price, price.dataset.value || price.textContent, `kro:${symbol}`);
+    });
+  }
+
   /* --- 쉬움 / 전문가 --------------------------------------------------- */
   const MODE_KEY = "mulmit.mode";
   function applyMode(mode) {
@@ -726,6 +820,7 @@
     const session = sessionState();
     renderTape(state);
     renderBoard(state, session);
+    rollOvernightPrices();
   });
 
   setupMode();
