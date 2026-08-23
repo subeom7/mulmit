@@ -659,3 +659,19 @@ a.feed-text:hover { color: var(--ink); }
 .crypto-card:hover { border-color: var(--accent); }
 .crypto-card:hover h3 .kro-detail { color: var(--accent); }
 @media (max-width: 900px) { .cboard-grid { grid-template-columns: 1fr; } }
+
+/* 뉴스 영상 — 클릭 전에는 유튜브로 아무 요청도 나가지 않는 파사드.
+ * 썸네일을 부르지 않으므로 목록은 순수 텍스트다. 재생을 누른 카드만
+ * iframe으로 바뀐다. 플레이어는 약관상 200x200 미만이면 안 되므로
+ * min-height로 바닥을 받쳐 둔다. */
+.news-videos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.news-videos li { border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.news-videos li.playing { padding: 0; overflow: hidden; border-color: var(--accent); }
+.news-videos .nvid-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; color: var(--faint); font: 650 10px/1.4 var(--num); font-variant-numeric: tabular-nums; }
+.news-videos .nvid-channel { padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
+.news-videos .nvid-title { color: inherit; font-size: 12.5px; font-weight: 650; line-height: 1.5; text-decoration: none; }
+.news-videos .nvid-title:hover { color: var(--accent); text-decoration: underline; }
+.news-videos .nvid-play { margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--muted); font: 650 10.5px/1 var(--num); font-variant-numeric: tabular-nums; cursor: pointer; }
+.news-videos .nvid-play:hover { color: var(--accent); border-color: var(--accent); }
+.news-videos .nvid-frame { width: 100%; min-height: 200px; aspect-ratio: 16 / 9; border: 0; display: block; }
+@media (max-width: 760px) { .news-videos { grid-template-columns: 1fr; } }

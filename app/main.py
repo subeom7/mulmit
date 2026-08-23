@@ -45,6 +45,7 @@ from . import (
     kr_press,
     kr_stocks,
     news_feed,
+    news_videos,
     search,
     service,
     signal_feed,
@@ -1361,6 +1362,29 @@ def news_headlines(request: Request, response: Response) -> dict:
         raise HTTPException(status_code=503, detail="news not collected yet") from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "GDELT"
+    return payload
+
+
+@app.get("/api/news/videos")
+@limiter.limit(config.RATE_LIMIT)
+def news_video_list(request: Request, response: Response) -> dict:
+    """뉴스 영상 목록. ingest 배치가 저장한 결과만 읽는다.
+
+    이 경로도, 이 경로가 돌려주는 payload도 유튜브로 요청을 내지 않는다.
+    재생을 누를 때 브라우저가 처음으로 유튜브에 접속한다.
+    """
+    try:
+        payload = news_videos.get_videos()
+    except news_videos.NewsVideosDisabled as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "news_videos_disabled", "message": "News video lane is disabled."},
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    except DataUnavailable as exc:
+        raise HTTPException(status_code=503, detail="news videos not collected yet") from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "YouTube"
     return payload
 
 

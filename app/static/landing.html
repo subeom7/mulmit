@@ -30,9 +30,9 @@
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Mulmit","alternateName":["물밑","물밑 Mulmit","Mulmit 물밑","물밑 대시보드","물밑 마켓"],"url":"https://mulmit.com/"}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Mulmit","url":"https://mulmit.com/","logo":"https://mulmit.com/static/brand/favicon-512.png"}</script>
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260823-45">
-  <link rel="stylesheet" href="/static/tokens.css?v=20260823-45">
-  <link rel="stylesheet" href="/static/console.css?v=20260823-45">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-46">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260823-46">
+  <link rel="stylesheet" href="/static/console.css?v=20260823-46">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -171,6 +171,19 @@
       </div>
     </section>
 
+    <section class="console-section" id="news-videos" hidden aria-labelledby="nvid-title">
+      <header>
+        <h2 id="nvid-title" data-i18n="videos.title">뉴스 영상</h2>
+        <span class="sec-note" data-i18n="videos.shortCopy">누르기 전에는 유튜브로 요청이 나가지 않습니다</span>
+      </header>
+      <p class="section-copy" data-i18n="videos.copy">국내외 뉴스 채널의 최근 영상입니다. 목록에는 제목·채널·시각만 있고 썸네일은 불러오지 않습니다. 재생을 누르면 그때 유튜브가 로드되며 유튜브의 쿠키·정책이 적용됩니다.</p>
+      <div id="nvid-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div class="panel" id="nvid-panel" hidden>
+        <ul class="news-videos" id="nvid-list"></ul>
+        <footer class="panel-footer" id="nvid-footer" hidden></footer>
+      </div>
+    </section>
+
     <section class="console-section" id="econ-calendar" hidden aria-labelledby="cal-title">
       <header>
         <h2 id="cal-title" data-i18n="cal.title">경제 캘린더</h2>
@@ -250,8 +263,8 @@
     else if (crypto.indexOf(id) >= 0) location.replace("/crypto" + location.hash);
   })();
   </script>
-  <script src="/static/console.js?v=20260823-45" defer></script>
-  <script src="/static/monitor.js?v=20260823-45" defer></script>
-  <script src="/static/search.js?v=20260823-45" defer></script>
+  <script src="/static/console.js?v=20260823-46" defer></script>
+  <script src="/static/monitor.js?v=20260823-46" defer></script>
+  <script src="/static/search.js?v=20260823-46" defer></script>
 </body>
 </html>

@@ -6,3 +6,7 @@ ruff>=0.6
 # FastAPI/Starlette versions allowed by requirements.txt.
 httpx>=0.27,<0.29
 httpx2>=2.0.0
+# docker-compose.yml을 읽어 게이트가 컨테이너까지 닿는지 확인하는 테스트가
+# 쓴다. uvicorn[standard]의 전이 의존성으로 딸려 오지만, 테스트가 기대는
+# 대상은 명시해 둔다 — 상류가 빼면 CI가 수집 단계에서 조용히 죽는다.
+PyYAML>=6.0

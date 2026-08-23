@@ -53,6 +53,9 @@ x-app: &app
     ECOS_ENABLED: ${ECOS_ENABLED:-false}
     GDELT_ENABLED: ${GDELT_ENABLED:-false}
     KR_PRESS_ENABLED: ${KR_PRESS_ENABLED:-false}
+    # 뉴스 영상. 게이트만 web에 준다 — 저장된 목록을 내보내는 데 키는
+    # 필요 없고, 키는 유튜브를 부르는 ingest에만 있으면 된다.
+    YOUTUBE_ENABLED: ${YOUTUBE_ENABLED:-false}
     # 키가 ingest에만 있으면 web의 요청 기반 국내 종목 조회(app/kr_stocks.py)가
     # 잠겨 있는 lane처럼 보인다. 게이트와 마찬가지로 양쪽에 같은 값을 준다.
     FSC_API_KEY: ${FSC_API_KEY:-}
@@ -141,6 +144,8 @@ services:
       NCBI_EMAIL: ${NCBI_EMAIL:-}
       NCBI_API_KEY: ${NCBI_API_KEY:-}
       MFDS_API_KEY: ${MFDS_API_KEY:-}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      YOUTUBE_MAX_AGE: ${YOUTUBE_MAX_AGE:-1800}
       ECOS_MAX_AGE: ${ECOS_MAX_AGE:-21600}
       BLS_API_KEY: ${BLS_API_KEY:-}
       BLS_MAX_AGE: ${BLS_MAX_AGE:-43200}
