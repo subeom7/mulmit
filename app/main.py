@@ -43,6 +43,7 @@ from . import (
     kr_insider,
     kr_pension,
     kr_press,
+    kr_search_interest,
     kr_stocks,
     news_feed,
     news_page,
@@ -1175,6 +1176,33 @@ def kr_etf_board(request: Request, response: Response) -> dict:
         raise HTTPException(status_code=503, detail="ETF snapshot unavailable") from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "Financial Services Commission (data.go.kr)"
+    return payload
+
+
+@app.get("/api/kr/search-interest")
+@limiter.limit(config.RATE_LIMIT)
+def kr_search_interest_board(request: Request, response: Response) -> dict:
+    """종목 검색 관심도: 네이버 데이터랩 통합검색어 트렌드, 저장 없이 요청 경로에서.
+
+    값은 요청 기간의 최댓값을 100으로 둔 **상대값**이라 요청이 갈라지면 100의 뜻도
+    갈라진다. 그래서 종목 간 비교는 자기 평소 대비 배수·백분위로만 하고, 원값을
+    섞지 못하도록 각 종목에 `batch` 번호를 실어 보낸다.
+    """
+    try:
+        payload = kr_search_interest.build()
+    except kr_search_interest.KrSearchInterestDisabled as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=data_rights.KR_SEARCH_INTEREST_DISABLED,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    except kr_search_interest.DatalabConfigError as exc:
+        raise HTTPException(status_code=503, detail="NAVER DataLab credentials are not configured") from exc
+    except (DataUnavailable, RateLimited) as exc:
+        raise HTTPException(status_code=503, detail="Search-interest data unavailable") from exc
+    # 상류가 하루 단위로만 바뀐다. 브라우저 캐시도 그 리듬에 맞춘다.
+    response.headers["Cache-Control"] = "public, max-age=900"
+    response.headers["X-Data-Source"] = "NAVER DataLab search trends"
     return payload
 
 

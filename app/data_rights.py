@@ -98,6 +98,15 @@ KR_INSIDER_NOT_CONFIGURED = {
     "message": "DART_API_KEY must be issued by opendart.fss.or.kr before use.",
 }
 
+KR_SEARCH_INTEREST_DISABLED = {
+    "code": "kr_search_interest_disabled",
+    "status": "disabled",
+    "message": (
+        "The NAVER DataLab search-trend lane is disabled for this deployment "
+        "(gate off or client credentials missing)."
+    ),
+}
+
 KR_PENSION_DISABLED = {
     "code": "kr_pension_data_disabled",
     "status": "disabled",
@@ -378,6 +387,19 @@ def coinalyze_ingest_enabled() -> bool:
 def upbit_serving_enabled() -> bool:
     """Upbit quotes stay withheld (`pending_rights`) until the operator opens the gate."""
     return crypto_section_enabled() and bool(config.UPBIT_ENABLED)
+
+
+def kr_search_interest_enabled() -> bool:
+    """검색 관심도는 게이트와 키가 **둘 다** 있어야 열린다.
+
+    권리는 정리됐지만(등록부 §6.7) 키 없이 켜면 매 요청이 인증 실패로 끝난다 —
+    그건 "데이터 없음"이 아니라 고장이고, 화면에 그렇게 보이면 안 된다.
+    """
+    return bool(
+        config.NAVER_DATALAB_ENABLED
+        and config.NAVER_DATALAB_CLIENT_ID
+        and config.NAVER_DATALAB_CLIENT_SECRET
+    )
 
 
 def bio_section_enabled() -> bool:

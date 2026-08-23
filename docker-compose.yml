@@ -43,6 +43,9 @@ x-app: &app
     PUBMED_ENABLED: ${PUBMED_ENABLED:-false}
     FEDERAL_REGISTER_ENABLED: ${FEDERAL_REGISTER_ENABLED:-false}
     MFDS_ENABLED: ${MFDS_ENABLED:-false}
+    # 종목 검색 관심도(네이버 데이터랩, 등록부 §6.7). 요청 경로 전용 lane이라
+    # 수집이 없지만, 게이트는 양쪽에 같은 값이어야 판정이 갈라지지 않는다.
+    NAVER_DATALAB_ENABLED: ${NAVER_DATALAB_ENABLED:-false}
     NYFED_ENABLED: ${NYFED_ENABLED:-false}
     FEDBOARD_ENABLED: ${FEDBOARD_ENABLED:-false}
     # 미 재무부 OFR 금융스트레스지수(연방 저작물). web 판정·ingest 수집 양쪽.
@@ -117,6 +120,11 @@ services:
       CHAIN_RPC_BASE_URL: ${CHAIN_RPC_BASE_URL:-}
       CHAIN_RPC_ARBITRUM_URL: ${CHAIN_RPC_ARBITRUM_URL:-}
       CHAIN_RPC_PROVIDER_NAME: ${CHAIN_RPC_PROVIDER_NAME:-}
+      # 데이터랩 클라이언트 아이디/시크릿 — 요청 경로 전용. 수집이 없어 ingest에는 주지 않는다.
+      NAVER_DATALAB_CLIENT_ID: ${NAVER_DATALAB_CLIENT_ID:-}
+      NAVER_DATALAB_CLIENT_SECRET: ${NAVER_DATALAB_CLIENT_SECRET:-}
+      NAVER_DATALAB_WATCHLIST: ${NAVER_DATALAB_WATCHLIST:-}
+      NAVER_DATALAB_MAX_AGE: ${NAVER_DATALAB_MAX_AGE:-21600}
     expose:
       - "8000"
 
