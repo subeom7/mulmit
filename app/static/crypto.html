@@ -1,17 +1,19 @@
 <!doctype html>
-<html lang="ko" data-theme="dark">
+<html lang="ko" data-theme="dark" data-mode="easy">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="물밑(Mulmit) 크립토 시장 — 비트코인·이더리움 무기한선물 참고가, 크립토 공포·탐욕 지수, 펀딩비·미결제약정, 실현 변동성, 합성자산과의 상관.">
-  <meta name="keywords" content="물밑, Mulmit, 크립토, 비트코인, 이더리움, 공포탐욕 지수, 펀딩비, 미결제약정, 실현 변동성">
+  <meta name="description" content="물밑(Mulmit) 크립토 — 비트코인·이더리움 무기한선물 참고가, 김치프리미엄과 원화 시세, 공포·탐욕 지수, 시장 국면, 펀딩비·미결제약정, 도미넌스, 가스, 실현 변동성.">
+  <meta name="keywords" content="물밑, Mulmit, 비트코인, 이더리움, 김치프리미엄, 공포탐욕, 펀딩비, 미결제약정, 도미넌스, 가스비, 크립토 시세">
   <title>크립토 시장 — 비트코인·이더리움 퍼프, 공포·탐욕, 펀딩비 | 물밑 Mulmit</title>
+  <meta name="doc-title-ko" content="크립토 시장 — 비트코인·이더리움 퍼프, 공포·탐욕, 펀딩비 | 물밑 Mulmit">
+  <meta name="doc-title-en" content="Crypto — BTC and ETH perps, Fear &amp; Greed, funding | Mulmit">
   <link rel="canonical" href="https://mulmit.com/crypto">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Mulmit">
   <meta property="og:title" content="크립토 시장 — 비트코인·이더리움 퍼프, 공포·탐욕, 펀딩비 | 물밑 Mulmit">
-  <meta property="og:description" content="물밑(Mulmit) 크립토 시장 — BTC·ETH 퍼프 참고가, 공포·탐욕 지수, 펀딩비·OI, 실현 변동성, 합성자산 상관.">
+  <meta property="og:description" content="물밑(Mulmit) 크립토 — BTC·ETH 무기한선물 참고가, 김치프리미엄, 공포·탐욕, 시장 국면, 펀딩비·미결제약정, 도미넌스와 가스.">
   <meta property="og:url" content="https://mulmit.com/crypto">
   <meta property="og:locale" content="ko_KR">
   <meta name="twitter:card" content="summary">
@@ -20,14 +22,17 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-18">
+  <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-19">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260822-19">
+  <link rel="stylesheet" href="/static/console.css?v=20260822-19">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
   <header class="masthead">
     <a class="brand" href="/" aria-label="Mulmit home">
-      <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="36" height="36">
-      <span><strong>Mulmit</strong><small data-i18n="brand.tagline">MARKET SIGNAL CONSOLE</small></span>
+      <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="30" height="30">
+      <span><strong>Mulmit</strong></span>
     </a>
     <nav class="view-switch" aria-label="View">
       <a class="view-tab" href="/" data-i18n="nav.home">홈</a>
@@ -37,36 +42,108 @@
       <a class="view-tab" href="/bio" data-i18n="nav.bio">바이오</a>
       <a class="view-tab" href="/analytics" data-i18n="nav.analytics">종목 분석</a>
     </nav>
-    <nav class="mast-nav" aria-label="Secondary">
-      <a class="nav-chip" href="/docs">API</a>
-    </nav>
     <div class="mast-actions">
-      <span class="session-badge" id="session-badge" hidden title=""><i></i><span></span></span>
-      <span class="mast-ticker" id="mast-ticker" hidden title=""></span>
-      <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
+      <div class="mode-switch" id="mode-switch" role="group" data-i18n-aria="mode.label" aria-label="표시 수준">
+        <button type="button" data-mode="easy" aria-pressed="true" data-i18n="mode.easy">쉬움</button>
+        <button type="button" data-mode="pro" aria-pressed="false" data-i18n="mode.pro">전문가</button>
+      </div>
       <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
     </div>
   </header>
 
+  <div class="tape" id="tape" role="region" data-i18n-aria="tape.label" aria-label="시세 요약" hidden>
+    <span class="session-badge" id="session-badge" hidden title=""><i></i><span></span></span>
+    <span class="presence-badge" id="presence-badge" title=""></span>
+  </div>
+
   <main id="main" class="shell">
-    <section class="hero" aria-labelledby="hero-title">
+    <div class="console-head">
       <div>
-        <p class="kicker" data-i18n="cryptopage.kicker">CRYPTO MARKETS</p>
-        <h1 id="hero-title" data-i18n="cryptopage.title">크립토, 가격·심리·파생을 한눈에.</h1>
-        <p class="hero-copy" data-i18n="cryptopage.copy">Hyperliquid 무기한선물 참고가, 공포·탐욕 지수, 펀딩비·미결제약정, 실현 변동성과 합성자산 상관을 한 페이지에서 봅니다. 현물 거래소 호가나 투자 권유가 아닙니다.</p>
+        <h1><span data-i18n="cryptopage.h1">크립토</span> <span class="console-h1-sub" data-i18n="cryptopage.scope">가격 · 김프 · 심리 · 파생</span></h1>
+        <p class="console-sub" data-i18n="cryptopage.sub">크립토 시장은 쉬지 않습니다. Hyperliquid 무기한선물 참고가와 업비트 원화 시세를 나란히 놓고, 지금 시장이 어느 쪽으로 얼마나 쏠려 있는지까지 봅니다.</p>
       </div>
-      <aside class="hero-meta" aria-live="polite">
-        <span data-i18n="hero.updated">마지막 갱신</span>
-        <strong id="updated-at">—</strong>
+      <div class="console-meta">
+        <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
+        <span><span data-i18n="hero.updated">마지막 갱신</span> <strong id="updated-at">—</strong></span>
         <button class="refresh-button" id="refresh-button" type="button"><span aria-hidden="true">↻</span> <span data-i18n="action.refresh">새로고침</span></button>
-      </aside>
+      </div>
+    </div>
+
+    <section class="console-section" id="crypto-tape" aria-labelledby="ctape-title">
+      <header>
+        <h2 id="ctape-title" data-i18n="crypto.tape.title">크립토 24시간 참고가</h2>
+        <span class="sec-note" data-i18n="cryptopage.tapeNote">Hyperliquid 무기한선물 · 현물 거래소 시세 아님</span>
+      </header>
+      <p class="section-copy" data-i18n="crypto.tape.copy">Hyperliquid 자체 DEX 무기한선물의 마크가격과 24시간 변화입니다. 현물 거래소 가격·원화 시세가 아니며 유동성이 낮은 시장은 왜곡될 수 있습니다.</p>
+      <div class="risk-strip" role="note">
+        <span class="status-badge warn" data-i18n="weekend.notSpot">현물가격 아님</span>
+        <span class="status-badge warn" data-i18n="badge.perpetual">무기한선물</span>
+        <span class="status-badge warn" data-i18n="crypto.usdOnly">USD 기준 · 원화 아님</span>
+        <span class="status-badge warn" data-i18n="weekend.leverage">레버리지 파생</span>
+      </div>
+      <div id="ctape-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="ctape-grid" class="kro-grid crypto-grid" hidden></div>
+      <div id="ctape-strip" class="crypto-strip" hidden></div>
+      <footer class="kro-footer" id="ctape-footer" hidden></footer>
     </section>
 
-    <section class="dashboard-section" id="crypto-regime" aria-labelledby="creg-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">MARKET REGIME · HEAT × TREND</p><h2 id="creg-title" data-i18n="crypto.regime.title">시장 국면</h2></div>
-        <span class="source-pill">HYPERLIQUID · ALTERNATIVE.ME</span>
+    <details class="disclose" data-mode-open>
+      <summary data-i18n="cryptopage.disclose">이 가격은 어디서 온 값인가요?</summary>
+      <div class="disclose-body">
+        <div class="lang-ko">
+          <p>코인 가격은 Hyperliquid 자체 DEX에 상장된
+            <button class="term" type="button" data-term="perp" aria-expanded="false">무기한선물</button>의
+            <button class="term" type="button" data-term="mark-price" aria-expanded="false">마크가격</button>입니다.
+            업비트·빗썸 같은 <strong>현물 거래소 시세가 아닙니다</strong> — 같은 코인이라도 값이 다릅니다.
+            원화 시세와 <button class="term" type="button" data-term="kimchi-premium" aria-expanded="false">김치프리미엄</button>은
+            업비트 최근 체결가를 따로 받아 계산합니다.</p>
+          <p><strong>거래소별로 값이 갈리는 것은 오류가 아닙니다.</strong>
+            <button class="term" type="button" data-term="funding" aria-expanded="false">펀딩비</button>는 거래소마다
+            기본 이자 성분이 달라 0% 기준선 자체가 다르고, 유동성이 얕은 시장은 마크가격이 쉽게 흔들립니다.
+            <button class="term" type="button" data-term="fear-greed" aria-expanded="false">공포·탐욕 지수</button>와
+            시장 국면은 상태를 요약한 값이지 매수·매도 신호가 아닙니다.</p>
+          <p>위 <strong>전문가</strong>를 누르면 각 지표의 계산 방법과 파생·구조 지표 섹션이 함께 펼쳐집니다.</p>
+        </div>
+        <div class="lang-en">
+          <p>Coin prices are the
+            <button class="term" type="button" data-term="mark-price" aria-expanded="false">mark price</button> of
+            <button class="term" type="button" data-term="perp" aria-expanded="false">perpetual futures</button>
+            listed on Hyperliquid's own DEX. They are <strong>not spot-exchange quotes</strong> — the same coin trades
+            at a different price on Upbit or Binance. Won prices and the
+            <button class="term" type="button" data-term="kimchi-premium" aria-expanded="false">kimchi premium</button>
+            come from Upbit's last trade, fetched separately.</p>
+          <p><strong>Venues disagreeing is not an error.</strong> Each venue's
+            <button class="term" type="button" data-term="funding" aria-expanded="false">funding rate</button> carries a
+            different baseline, and thin markets move their mark price easily. The
+            <button class="term" type="button" data-term="fear-greed" aria-expanded="false">Fear &amp; Greed index</button>
+            and the market-regime gauges describe a state; they are not buy or sell signals.</p>
+          <p>Switch to <strong>Pro</strong> above to see how each figure is computed and to open the derivatives and
+            structure sections.</p>
+        </div>
       </div>
+    </details>
+
+    <section class="console-section" id="crypto-kimchi" aria-labelledby="ckim-title">
+      <header>
+        <h2 id="ckim-title" data-i18n="crypto.kimchi.title">김치프리미엄 · 원화 시세</h2>
+        <span class="sec-note" data-i18n="cryptopage.kimchiNote">국내가 해외보다 얼마나 비싼가</span>
+      </header>
+      <p class="section-copy" data-i18n="crypto.kimchi.copy">업비트 원화 최근 체결가를 Hyperliquid 오라클 참고가와 비교합니다. 헤드라인 프리미엄은 업비트 KRW-USDT로 나눠 환율을 소거한 'USDT 기준'이고, 공식환율 기준은 한국은행 일별 고시값(날짜 표시)입니다. 호가·수수료·출금 조건은 반영하지 않습니다.</p>
+      <div class="risk-strip" role="note">
+        <span class="status-badge warn" data-i18n="crypto.kimchi.lastTrade">업비트 최근 체결가</span>
+        <span class="status-badge warn" data-i18n="crypto.kimchi.usdtBasis">USDT 기준 · 환율 소거</span>
+        <span class="status-badge warn" data-i18n="kro.fxOfficial">공식환율 환산 · 실시간 환율 아님</span>
+      </div>
+      <div id="ckim-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="ckim-strip" class="crypto-strip" hidden></div>
+      <div id="ckim-grid" class="kro-grid crypto-grid" hidden></div>
+      <footer class="kro-footer" id="ckim-footer" hidden></footer>
+    </section>
+
+    <section class="console-section" id="crypto-regime" aria-labelledby="creg-title">
+      <header>
+        <h2 id="creg-title" data-i18n="crypto.regime.title">시장 국면</h2>
+      </header>
       <p class="section-copy" data-i18n="crypto.regime.copy">지금 시장이 얼마나 쏠려 있고 어느 쪽으로 기울어 있는지를 요약한 상태 지표입니다. 매수·매도 신호가 아니며, 과열이 곧 하락을 뜻하지도 않습니다.</p>
       <div id="creg-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
       <div id="creg-top" class="sig-top" hidden>
@@ -90,46 +167,10 @@
       <footer class="kro-footer" id="creg-footer" hidden></footer>
     </section>
 
-    <section class="dashboard-section" id="crypto-tape" aria-labelledby="ctape-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">CRYPTO · HYPERLIQUID PERPS · 24H</p><h2 id="ctape-title" data-i18n="crypto.tape.title">크립토 24시간 참고가</h2></div>
-        <span class="source-pill">HYPERLIQUID</span>
-      </div>
-      <p class="section-copy" data-i18n="crypto.tape.copy">Hyperliquid 자체 DEX 무기한선물의 마크가격과 24시간 변화입니다. 현물 거래소 가격·원화 시세가 아니며 유동성이 낮은 시장은 왜곡될 수 있습니다.</p>
-      <div class="risk-strip" role="note">
-        <span class="status-badge warn" data-i18n="weekend.notSpot">현물가격 아님</span>
-        <span class="status-badge warn" data-i18n="badge.perpetual">무기한선물</span>
-        <span class="status-badge warn" data-i18n="crypto.usdOnly">USD 기준 · 원화 아님</span>
-        <span class="status-badge warn" data-i18n="weekend.leverage">레버리지 파생</span>
-      </div>
-      <div id="ctape-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
-      <div id="ctape-grid" class="kro-grid crypto-grid" hidden></div>
-      <div id="ctape-strip" class="crypto-strip" hidden></div>
-      <footer class="kro-footer" id="ctape-footer" hidden></footer>
-    </section>
-
-    <section class="dashboard-section" id="crypto-kimchi" aria-labelledby="ckim-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">KOREA · UPBIT KRW × HYPERLIQUID ORACLE</p><h2 id="ckim-title" data-i18n="crypto.kimchi.title">김치프리미엄 · 원화 시세</h2></div>
-        <span class="source-pill">UPBIT × HYPERLIQUID × ECOS</span>
-      </div>
-      <p class="section-copy" data-i18n="crypto.kimchi.copy">업비트 원화 최근 체결가를 Hyperliquid 오라클 참고가와 비교합니다. 헤드라인 프리미엄은 업비트 KRW-USDT로 나눠 환율을 소거한 'USDT 기준'이고, 공식환율 기준은 한국은행 일별 고시값(날짜 표시)입니다. 호가·수수료·출금 조건은 반영하지 않습니다.</p>
-      <div class="risk-strip" role="note">
-        <span class="status-badge warn" data-i18n="crypto.kimchi.lastTrade">업비트 최근 체결가</span>
-        <span class="status-badge warn" data-i18n="crypto.kimchi.usdtBasis">USDT 기준 · 환율 소거</span>
-        <span class="status-badge warn" data-i18n="kro.fxOfficial">공식환율 환산 · 실시간 환율 아님</span>
-      </div>
-      <div id="ckim-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
-      <div id="ckim-strip" class="crypto-strip" hidden></div>
-      <div id="ckim-grid" class="kro-grid crypto-grid" hidden></div>
-      <footer class="kro-footer" id="ckim-footer" hidden></footer>
-    </section>
-
-    <section class="dashboard-section" id="crypto-sentiment" aria-labelledby="cfng-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">SENTIMENT · ALTERNATIVE.ME · DAILY</p><h2 id="cfng-title" data-i18n="crypto.fng.title">크립토 공포·탐욕 지수</h2></div>
-        <span class="source-pill">ALTERNATIVE.ME</span>
-      </div>
+    <section class="console-section" id="crypto-sentiment" aria-labelledby="cfng-title">
+      <header>
+        <h2 id="cfng-title" data-i18n="crypto.fng.title">크립토 공포·탐욕 지수</h2>
+      </header>
       <p class="section-copy" data-i18n="crypto.fng.copy">alternative.me가 매일 00:00 UTC에 발표하는 지수를 그대로 전달합니다. 비트코인 중심 지표이며 Mulmit 시장 심리 게이지와 정의가 달라 수치를 직접 비교할 수 없습니다.</p>
       <div class="panel stress-panel">
         <div id="cfng-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
@@ -151,43 +192,10 @@
       </div>
     </section>
 
-    <section class="dashboard-section" id="crypto-structure" aria-labelledby="cstr-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">MARKET STRUCTURE · DOMINANCE · COINMARKETCAP</p><h2 id="cstr-title" data-i18n="crypto.structure.title">도미넌스 · 시장 구조</h2></div>
-        <span class="source-pill">COINMARKETCAP</span>
-      </div>
-      <p class="section-copy" data-i18n="crypto.structure.copy">비트코인·이더리움이 전체 크립토 시가총액에서 차지하는 비중과 총시총·스테이블코인 시총, USDT·USDC 유통 공급입니다. CoinMarketCap 집계 유니버스 기준이며 산출 기관마다 값이 다릅니다.</p>
-      <div id="cstr-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
-      <div id="cstr-grid" class="cvol-grid" hidden></div>
-      <div id="cstr-bar" class="crypto-dominance-bar" hidden aria-hidden="true"></div>
-      <div id="cstr-stable" class="cstr-stable" hidden>
-        <h3 class="cstr-sub" data-i18n="crypto.structure.stable.title">스테이블코인 공급 · 유동성</h3>
-        <div id="cstr-stable-grid" class="cvol-grid"></div>
-        <p id="cstr-stable-note" class="kro-method" hidden></p>
-      </div>
-      <footer class="kro-footer" id="cstr-footer" hidden></footer>
-    </section>
-
-    <section class="dashboard-section" id="crypto-derivatives" aria-labelledby="cderiv-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">DERIVATIVES · FUNDING × OPEN INTEREST</p><h2 id="cderiv-title" data-i18n="crypto.deriv.title">펀딩비·미결제약정</h2></div>
-        <span class="source-pill">HYPERLIQUID</span>
-      </div>
-      <p class="section-copy" data-i18n="crypto.deriv.copy">Hyperliquid 시간당 펀딩(연율 환산), 미결제약정, 거래대금과 거래소별 예상 펀딩입니다. 양수는 롱이 숏에 지불 — 롱 쏠림, 음수는 그 반대입니다.</p>
-      <div class="panel">
-        <div id="cderiv-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
-        <div class="table-scroll" id="cderiv-wrap" hidden>
-          <table id="cderiv-table" class="accessible-table crypto-table"><caption data-i18n="crypto.deriv.caption">코인별 파생 지표</caption><thead></thead><tbody></tbody></table>
-        </div>
-        <footer class="panel-footer" id="cderiv-footer" hidden></footer>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="crypto-board" aria-labelledby="cboard-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">HYPERLIQUID · ALL PERPS · MOVERS × LEADERS × FUNDING</p><h2 id="cboard-title" data-i18n="crypto.board.title">HL 전체 시장 보드</h2></div>
-        <span class="source-pill">HYPERLIQUID</span>
-      </div>
+    <section class="console-section" id="crypto-board" aria-labelledby="cboard-title">
+      <header>
+        <h2 id="cboard-title" data-i18n="crypto.board.title">HL 전체 시장 보드</h2>
+      </header>
       <p class="section-copy" data-i18n="crypto.board.copy">Hyperliquid에 상장된 모든 무기한선물 한 스냅샷을 정렬한 보드입니다. 24h 상위·하위와 펀딩 극단값은 24h 거래대금 $1M 이상 시장만, OI·거래대금 상위는 전체가 대상입니다. 현물 가격·투자 권유가 아닙니다.</p>
       <div id="cboard-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
       <div id="cboard-strip" class="crypto-strip" hidden></div>
@@ -195,53 +203,10 @@
       <footer class="kro-footer" id="cboard-footer" hidden></footer>
     </section>
 
-    <section class="dashboard-section" id="crypto-gas" aria-labelledby="cgas-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">ON-CHAIN · GAS × TRANSFER COST</p><h2 id="cgas-title" data-i18n="crypto.gas.title">가스·전송 수수료</h2></div>
-        <span class="source-pill">EVM RPC</span>
-      </div>
-      <p class="section-copy" data-i18n="crypto.gas.copy">이더리움 메인넷과 주요 L2의 다음 블록 기본 수수료·우선 수수료(50분위)와 단순 전송(21,000 gas) 비용입니다. 운영자 RPC 계정으로 읽는 공개 체인 상태이며, L2 행은 L1 데이터 수수료를 포함하지 않습니다.</p>
-      <div id="cgas-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
-      <div id="cgas-grid" class="cvol-grid" hidden></div>
-      <footer class="kro-footer" id="cgas-footer" hidden></footer>
-    </section>
-
-    <section class="dashboard-section" id="crypto-volatility" aria-labelledby="cvol-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">DERIVED · REALIZED VOLATILITY × CORRELATION</p><h2 id="cvol-title" data-i18n="crypto.vol.title">실현 변동성 · 합성자산 상관</h2></div>
-        <span class="source-pill">HYPERLIQUID · DERIVED</span>
-      </div>
-      <p class="section-copy" data-i18n="crypto.vol.copy">저장된 일봉 종가만으로 계산한 값입니다. 실현 변동성은 이미 일어난 변동의 크기(연율 √365)이며 옵션 내재변동성(DVOL)이 아닙니다. 상관은 같은 날짜 일간 로그수익률의 피어슨 상관이며 인과관계가 아닙니다.</p>
-      <div class="panel">
-        <div id="cvol-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
-        <div id="cvol-body" hidden>
-          <div id="cvol-realized" class="cvol-grid"></div>
-          <div class="table-scroll">
-            <table id="cvol-corr" class="accessible-table crypto-table"><caption data-i18n="crypto.vol.caption">BTC 일간 수익률과의 상관</caption><thead></thead><tbody></tbody></table>
-          </div>
-          <footer class="panel-footer" id="cvol-footer"></footer>
-        </div>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="crypto-liq" aria-labelledby="cliq-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">LIQUIDATIONS · OPEN INTEREST · COINALYZE</p><h2 id="cliq-title" data-i18n="crypto.liq.title">청산 집계</h2></div>
-        <span class="source-pill">COINALYZE</span>
-      </div>
-      <p class="section-copy" data-i18n="crypto.liq.copy">최근 24시간 강제청산 규모를 롱·숏으로 나눠 봅니다. 응답한 거래소들의 합이며 전체 시장 합계가 아닙니다. 1시간 단위 집계이고 실시간 체결 피드가 아닙니다.</p>
-      <div id="cliq-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
-      <div class="panel" id="cliq-panel" hidden>
-        <div class="cliq-grid" id="cliq-grid"></div>
-        <footer class="panel-footer" id="cliq-footer" hidden></footer>
-      </div>
-    </section>
-
-    <section class="dashboard-section" id="crypto-news" aria-labelledby="cnews-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">HEADLINES · COIN TAGS · GDELT</p><h2 id="cnews-title" data-i18n="crypto.news.title">크립토 뉴스</h2></div>
-        <span class="source-pill">GDELT</span>
-      </div>
+    <section class="console-section" id="crypto-news" aria-labelledby="cnews-title">
+      <header>
+        <h2 id="cnews-title" data-i18n="crypto.news.title">크립토 뉴스</h2>
+      </header>
       <p class="section-copy" data-i18n="crypto.news.copy">GDELT가 수집한 글로벌 기사에서 코인 이름이 제목에 잡힌 헤드라인입니다. 제목·출처·링크까지만 전달하며 본문은 원문에서 확인하세요. 실시간 속보가 아니라 수집 주기 갱신입니다.</p>
       <div id="cnews-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
       <div class="panel" id="cnews-panel" hidden>
@@ -250,15 +215,88 @@
       </div>
     </section>
 
-    <nav class="jump-nav" id="jump-nav" aria-label="Dashboard sections"></nav>
+
+    <details class="disclose disclose-deep" data-mode-open>
+      <summary data-i18n="cryptopage.deep">파생·구조 자세히 보기 — 펀딩·미결제약정 · 청산 · 변동성 · 도미넌스 · 가스</summary>
+      <div class="disclose-body deep-body">
+        <section class="console-section" id="crypto-derivatives" aria-labelledby="cderiv-title">
+          <header>
+            <h2 id="cderiv-title" data-i18n="crypto.deriv.title">펀딩비·미결제약정</h2>
+          </header>
+          <p class="section-copy" data-i18n="crypto.deriv.copy">Hyperliquid 시간당 펀딩(연율 환산), 미결제약정, 거래대금과 거래소별 예상 펀딩입니다. 양수는 롱이 숏에 지불 — 롱 쏠림, 음수는 그 반대입니다.</p>
+          <div class="panel">
+            <div id="cderiv-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
+            <div class="table-scroll" id="cderiv-wrap" hidden>
+              <table id="cderiv-table" class="accessible-table crypto-table"><caption data-i18n="crypto.deriv.caption">코인별 파생 지표</caption><thead></thead><tbody></tbody></table>
+            </div>
+            <footer class="panel-footer" id="cderiv-footer" hidden></footer>
+          </div>
+        </section>
+
+        <section class="console-section" id="crypto-liq" aria-labelledby="cliq-title">
+          <header>
+            <h2 id="cliq-title" data-i18n="crypto.liq.title">청산 집계</h2>
+          </header>
+          <p class="section-copy" data-i18n="crypto.liq.copy">최근 24시간 강제청산 규모를 롱·숏으로 나눠 봅니다. 응답한 거래소들의 합이며 전체 시장 합계가 아닙니다. 1시간 단위 집계이고 실시간 체결 피드가 아닙니다.</p>
+          <div id="cliq-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+          <div class="panel" id="cliq-panel" hidden>
+            <div class="cliq-grid" id="cliq-grid"></div>
+            <footer class="panel-footer" id="cliq-footer" hidden></footer>
+          </div>
+        </section>
+
+        <section class="console-section" id="crypto-volatility" aria-labelledby="cvol-title">
+          <header>
+            <h2 id="cvol-title" data-i18n="crypto.vol.title">실현 변동성 · 합성자산 상관</h2>
+          </header>
+          <p class="section-copy" data-i18n="crypto.vol.copy">저장된 일봉 종가만으로 계산한 값입니다. 실현 변동성은 이미 일어난 변동의 크기(연율 √365)이며 옵션 내재변동성(DVOL)이 아닙니다. 상관은 같은 날짜 일간 로그수익률의 피어슨 상관이며 인과관계가 아닙니다.</p>
+          <div class="panel">
+            <div id="cvol-state" class="state-block" role="status" data-i18n="status.loading">불러오는 중</div>
+            <div id="cvol-body" hidden>
+              <div id="cvol-realized" class="cvol-grid"></div>
+              <div class="table-scroll">
+                <table id="cvol-corr" class="accessible-table crypto-table"><caption data-i18n="crypto.vol.caption">BTC 일간 수익률과의 상관</caption><thead></thead><tbody></tbody></table>
+              </div>
+              <footer class="panel-footer" id="cvol-footer"></footer>
+            </div>
+          </div>
+        </section>
+
+        <section class="console-section" id="crypto-structure" aria-labelledby="cstr-title">
+          <header>
+            <h2 id="cstr-title" data-i18n="crypto.structure.title">도미넌스 · 시장 구조</h2>
+          </header>
+          <p class="section-copy" data-i18n="crypto.structure.copy">비트코인·이더리움이 전체 크립토 시가총액에서 차지하는 비중과 총시총·스테이블코인 시총, USDT·USDC 유통 공급입니다. CoinMarketCap 집계 유니버스 기준이며 산출 기관마다 값이 다릅니다.</p>
+          <div id="cstr-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+          <div id="cstr-grid" class="cvol-grid" hidden></div>
+          <div id="cstr-bar" class="crypto-dominance-bar" hidden aria-hidden="true"></div>
+          <div id="cstr-stable" class="cstr-stable" hidden>
+            <h3 class="cstr-sub" data-i18n="crypto.structure.stable.title">스테이블코인 공급 · 유동성</h3>
+            <div id="cstr-stable-grid" class="cvol-grid"></div>
+            <p id="cstr-stable-note" class="kro-method" hidden></p>
+          </div>
+          <footer class="kro-footer" id="cstr-footer" hidden></footer>
+        </section>
+
+        <section class="console-section" id="crypto-gas" aria-labelledby="cgas-title">
+          <header>
+            <h2 id="cgas-title" data-i18n="crypto.gas.title">가스·전송 수수료</h2>
+          </header>
+          <p class="section-copy" data-i18n="crypto.gas.copy">이더리움 메인넷과 주요 L2의 다음 블록 기본 수수료·우선 수수료(50분위)와 단순 전송(21,000 gas) 비용입니다. 운영자 RPC 계정으로 읽는 공개 체인 상태이며, L2 행은 L1 데이터 수수료를 포함하지 않습니다.</p>
+          <div id="cgas-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+          <div id="cgas-grid" class="cvol-grid" hidden></div>
+          <footer class="kro-footer" id="cgas-footer" hidden></footer>
+        </section>
+      </div>
+    </details>
 
     <section class="methodology" aria-labelledby="method-title">
       <p class="eyebrow">DATA POLICY</p>
       <h2 id="method-title" data-i18n="method.title">숫자를 다루는 원칙</h2>
       <div class="method-grid">
-        <article><strong data-i18n="method.one.title">출처를 함께 표시</strong><p data-i18n="method.one.copy">각 수치는 공급자, 기준일, 신선도를 함께 보여줍니다.</p></article>
-        <article><strong data-i18n="method.two.title">단위를 추측하지 않음</strong><p data-i18n="method.two.copy">API가 제공한 단위와 배율만 사용합니다.</p></article>
-        <article><strong data-i18n="method.three.title">미연결은 미연결로</strong><p data-i18n="method.three.copy">라이선스나 API가 없는 지표는 숫자 대신 상태를 표시합니다.</p></article>
+        <article><strong data-i18n="method.one.title">숫자마다 출처가 붙습니다</strong><p data-i18n="method.one.copy">어디서 받은 값인지, 언제 기준인지, 얼마나 오래된 값인지 함께 보여줍니다.</p></article>
+        <article><strong data-i18n="method.two.title">단위를 바꾸지 않습니다</strong><p data-i18n="method.two.copy">받은 그대로의 단위로 보여줍니다. 보기 좋으라고 배율을 손대지 않습니다.</p></article>
+        <article><strong data-i18n="method.three.title">없는 값은 만들지 않습니다</strong><p data-i18n="method.three.copy">가져올 수 없는 지표는 비슷한 다른 값으로 대신하지 않습니다. 값이 없으면 왜 없는지 적습니다.</p></article>
       </div>
       <div id="attribution" class="attribution"></div>
     </section>
@@ -268,6 +306,7 @@
         <a href="/privacy" data-i18n="legal.privacy">개인정보처리방침</a>
         <a href="/terms" data-i18n="legal.terms">이용약관</a>
         <a href="/disclaimer" data-i18n="legal.disclaimer">면책 고지</a>
+        <a href="/docs">API</a>
       </nav>
       <p data-i18n="legal.notAdvice">Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.</p>
     </footer>
@@ -284,8 +323,10 @@
       <footer></footer>
     </article>
   </template>
+
   <script>window.MULMIT_PAGE = "crypto";</script>
-  <script src="/static/monitor.js?v=20260822-18" defer></script>
-  <script src="/static/search.js?v=20260822-18" defer></script>
+  <script src="/static/console.js?v=20260822-19" defer></script>
+  <script src="/static/monitor.js?v=20260822-19" defer></script>
+  <script src="/static/search.js?v=20260822-19" defer></script>
 </body>
 </html>

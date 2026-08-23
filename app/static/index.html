@@ -18,7 +18,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
 <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260822-18">
+  <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260822-19">
 <style>
 /* ---------------------------------------------------------------------------
    디자인 토큰은 monitor.css가 단일 원본이다. 이 페이지의 예전 변수명은 아래
@@ -352,21 +353,28 @@ details[open] summary { margin-bottom: 8px; }
 footer { font-size: 12px; color: var(--text-muted); margin-top: 30px; line-height: 1.7; }
 footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
 </style>
+  <link rel="stylesheet" href="/static/tokens.css?v=20260822-19">
+  <link rel="stylesheet" href="/static/console.css?v=20260822-19">
 </head>
 <body>
 <header class="masthead">
   <a class="brand" href="/" aria-label="Mulmit home">
-    <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="36" height="36">
-    <span><strong>Mulmit</strong><small data-i18n="app.tagline">MARKET SIGNAL CONSOLE</small></span>
+    <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="30" height="30">
+    <span><strong>Mulmit</strong></span>
   </a>
   <nav class="view-switch" aria-label="View">
-    <a class="view-tab" href="/" data-i18n="nav.monitor">시장 모니터</a>
+    <a class="view-tab" href="/" data-i18n="nav.home">홈</a>
+    <a class="view-tab" href="/kr" data-i18n="nav.kr">한국</a>
+    <a class="view-tab" href="/us" data-i18n="nav.us">미국·글로벌</a>
+    <a class="view-tab" href="/crypto" data-i18n="nav.crypto">크립토</a>
+    <a class="view-tab" href="/bio" data-i18n="nav.bio">바이오</a>
     <a class="view-tab active" href="/analytics" aria-current="page" data-i18n="nav.analytics">종목 분석</a>
   </nav>
-  <nav class="mast-nav" aria-label="Secondary">
-    <a class="nav-chip" href="/docs">API</a>
-  </nav>
   <div class="mast-actions">
+    <div class="mode-switch" id="mode-switch" role="group" data-i18n-aria="mode.label" aria-label="표시 수준">
+      <button type="button" data-mode="easy" aria-pressed="true" data-i18n="mode.easy">쉬움</button>
+      <button type="button" data-mode="pro" aria-pressed="false" data-i18n="mode.pro">전문가</button>
+    </div>
     <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
   </div>
 </header>
@@ -374,13 +382,12 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
 <div class="wrap">
 
 <main>
-<section class="intro" aria-labelledby="intro-title">
+<div class="console-head">
   <div>
-    <p class="eyebrow" data-i18n="intro.eyebrow">MULMIT MARKET MONITOR</p>
-    <h1 id="intro-title" data-i18n="intro.title">시장의 흐름과 종목의 위험을 한 화면에서.</h1>
+    <h1 id="intro-title"><span data-i18n="anpage.h1">종목 분석</span> <span class="console-h1-sub" data-i18n="anpage.scope">낙폭 · 위험 · 공시 · 재무제표</span></h1>
+    <p class="console-sub" data-i18n="anpage.sub">종목 하나를 골라 얼마나 잠겼었고 앞으로 얼마나 잠길 수 있는지 봅니다. 국내는 금융위원회 공식 종가, 미국은 SEC EDGAR 공시를 그대로 씁니다.</p>
   </div>
-  <p class="intro-copy" data-i18n="intro.copy">S&amp;P 500 섹터 강약을 먼저 읽고, 원하는 종목의 수익률·낙폭·CAPM·미래 MDD 분포까지 같은 맥락에서 분석하세요.</p>
-</section>
+</div>
 
 <section class="dashboard-section" aria-labelledby="market-section-title">
   <div class="section-heading">
@@ -440,14 +447,12 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
   </div>
 </section>
 
-<section class="dashboard-section" id="kr-section" hidden aria-labelledby="kr-section-title">
-  <div class="section-heading">
-    <span class="section-index" aria-hidden="true" id="kr-section-num">01</span>
-    <div>
-      <p class="eyebrow" data-i18n="kr.tag">금융위원회 공공데이터 · T+1 종가</p>
-      <h2 id="kr-section-title" data-i18n="kr.title">국내 종목 분석</h2>
-    </div>
-  </div>
+<section class="console-section" id="kr-section" hidden aria-labelledby="kr-section-title">
+  <header>
+    <h2 id="kr-section-title" data-i18n="kr.title">국내 종목 분석</h2>
+    <span class="sec-note" data-i18n="kr.tag">금융위원회 공공데이터 · T+1 종가</span>
+    <span class="section-index" aria-hidden="true" id="kr-section-num" hidden>01</span>
+  </header>
   <p class="section-copy" data-i18n="kr.lede">회사명이나 종목코드로 검색하면 공식 종가 5년치로 수익률·낙폭·변동성을 계산합니다. 장 마감 기준값이며 실시간 시세가 아닙니다.</p>
 
   <form class="filters" id="kr-form" autocomplete="off">
@@ -527,14 +532,11 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
   </div>
 </section>
 
-<section class="dashboard-section analysis-block" aria-labelledby="analysis-section-title">
-  <div class="section-heading">
-    <span class="section-index" aria-hidden="true">02</span>
-    <div>
-      <p class="eyebrow" data-i18n="analysis.tag">CAPM · DRAWDOWN · MONTE CARLO</p>
-      <h2 id="analysis-section-title" data-i18n="analysis.title">종목 위험 분석</h2>
-    </div>
-  </div>
+<section class="console-section analysis-block" aria-labelledby="analysis-section-title">
+  <header>
+    <h2 id="analysis-section-title" data-i18n="analysis.title">종목 위험 분석</h2>
+    <span class="sec-note" data-i18n="analysis.tag">CAPM · DRAWDOWN · MONTE CARLO</span>
+  </header>
   <p class="section-copy" data-i18n="analysis.lede">티커 하나로 과거 위험과 미래 낙폭의 확률 범위를 함께 읽습니다.</p>
 
 <form class="filters" id="filters">
@@ -722,8 +724,12 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
    ========================================================================= */
 const I18N = {
   ko: {
-    "doc.title": "Stock Analytics · Mulmit", "doc.description": "S&P 500 섹터 흐름과 개별 종목의 수익·위험 지표를 한 화면에서 읽는 시장 인텔리전스 대시보드입니다.",
+    "doc.title": "종목 분석 — 낙폭·변동성·내부자 공시·재무제표 | 물밑 Mulmit", "doc.description": "물밑(Mulmit) 종목 분석 — 국내 종목의 낙폭·변동성과 임원·주요주주 공시, 미국 티커의 내부자 거래와 EDGAR 재무제표를 한 화면에서.",
     "app.tagline": "MARKET SIGNAL CONSOLE", "app.live": "LIVE DATA",
+    "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌", "nav.crypto": "크립토", "nav.bio": "바이오",
+    "mode.easy": "쉬움", "mode.pro": "전문가", "mode.label": "표시 수준",
+    "anpage.h1": "종목 분석", "anpage.scope": "낙폭 · 위험 · 공시 · 재무제표",
+    "anpage.sub": "종목 하나를 골라 얼마나 잠겼었고 앞으로 얼마나 잠길 수 있는지 봅니다. 국내는 금융위원회 공식 종가, 미국은 SEC EDGAR 공시를 그대로 씁니다.",
     "intro.eyebrow": "MULMIT MARKET MONITOR", "intro.title": "시장의 흐름과 종목의 위험을 한 화면에서.",
     "intro.copy": "S&P 500 섹터 강약을 먼저 읽고, 원하는 종목의 수익률·낙폭·CAPM·미래 MDD 분포까지 같은 맥락에서 분석하세요.",
     "mode.insiderTitle": "내부자거래 공시 조회", "mode.insiderTag": "미국 상장사 전용 · SEC EDGAR · FORM 3·4·5",
@@ -857,6 +863,10 @@ const I18N = {
   en: {
     "doc.title": "Stock Analytics · Mulmit", "doc.description": "A market intelligence dashboard for S&P 500 sector trends, stock returns and risk analytics.",
     "app.tagline": "MARKET SIGNAL CONSOLE", "app.live": "LIVE DATA",
+    "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & global", "nav.crypto": "Crypto", "nav.bio": "Bio",
+    "mode.easy": "Simple", "mode.pro": "Pro", "mode.label": "Detail level",
+    "anpage.h1": "Stock analytics", "anpage.scope": "drawdown · risk · filings · financials",
+    "anpage.sub": "Pick one name and see how far underwater it went, and how far it could go. Korean closes come from the FSC's public data; US filings come straight from SEC EDGAR.",
     "intro.eyebrow": "MULMIT MARKET MONITOR", "intro.title": "Market leadership and stock risk, in one view.",
     "intro.copy": "Read S&P 500 sector strength first, then analyze returns, drawdowns, CAPM and the forward MDD distribution for any ticker in the same context.",
     "mode.insiderTitle": "Insider filings lookup", "mode.insiderTag": "US-LISTED ONLY · SEC EDGAR · FORM 3·4·5",
@@ -2659,12 +2669,13 @@ let insiderOnly = false;
 function applyInsiderMode(fscOn = false) {
   document.querySelector('[aria-labelledby="market-section-title"]').hidden = true;
   const analysis = document.querySelector(".analysis-block");
-  analysis.querySelector(".section-index").textContent = "01";
-  analysis.querySelector(".section-heading h2").dataset.i18n = "mode.insiderTitle";
-  analysis.querySelector(".section-heading .eyebrow").dataset.i18n = "mode.insiderTag";
+  analysis.querySelector("header h2").dataset.i18n = "mode.insiderTitle";
+  analysis.querySelector("header .sec-note").dataset.i18n = "mode.insiderTag";
   analysis.querySelector(".section-copy").dataset.i18n = "mode.insiderLede";
-  document.getElementById("intro-title").dataset.i18n = fscOn ? "mode.introTitleKr" : "mode.introTitle";
-  document.querySelector(".intro-copy").dataset.i18n = fscOn ? "mode.introCopyKr" : "mode.introCopy";
+  // 제목은 페이지 정체성이라 고정이고, lane 상태에 따라 달라지는 것은 설명 줄이다.
+  // 예전에는 h1까지 갈아 끼웠는데, 새 헤드는 h1 안에 부제 span이 따로 있어서
+  // textContent를 통째로 바꾸면 그 span이 사라진다.
+  document.querySelector(".console-sub").dataset.i18n = fscOn ? "mode.introCopyKr" : "mode.introCopy";
   document.getElementById("go").dataset.i18n = "form.lookup";
   for (const id of ["horizon", "drift", "lookback"]) {
     document.getElementById(id).closest(".field").hidden = true;
@@ -2744,6 +2755,7 @@ try {
   fetch("/api/pageview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: location.pathname, ref: document.referrer || "", id: presenceId() }), keepalive: true }).catch(() => {});
 } catch (error) { /* 최선노력 */ }
 </script>
-  <script src="/static/search.js?v=20260822-18" defer></script>
+  <script src="/static/console.js?v=20260822-19" defer></script>
+  <script src="/static/search.js?v=20260822-19" defer></script>
 </body>
 </html>

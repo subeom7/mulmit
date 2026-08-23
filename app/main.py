@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import logging
+import mimetypes
 import re
 from contextlib import asynccontextmanager
 
@@ -157,6 +158,14 @@ async def _rate_limit_handler(_request: Request, exc: RateLimitExceeded) -> JSON
         content={"detail": f"요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요. ({exc.detail})"},
     )
 
+
+# 웹폰트 MIME을 못 박는다. StaticFiles는 mimetypes.guess_type에 기대는데 그
+# 표는 OS마다 다르고, woff2를 모르는 환경에서는 바이너리가
+# `text/plain; charset=utf-8`로 나간다(윈도우 실측). 브라우저가 스니핑해서
+# 대개는 그려지지만, charset이 붙은 바이너리는 중간에 낀 프록시 하나가
+# 변환을 시도하면 그대로 깨진다. 서버마다 다르게 동작할 이유가 없다.
+mimetypes.add_type("font/woff2", ".woff2")
+mimetypes.add_type("font/woff", ".woff")
 
 if config.STATIC_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=config.STATIC_DIR), name="static")

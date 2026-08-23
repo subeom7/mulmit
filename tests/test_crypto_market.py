@@ -503,13 +503,21 @@ def test_volatility_with_too_little_history_says_so(history_lane):
 
 
 def test_history_symbols_follow_the_section_switch(db, monkeypatch):
+    """크립토 섹션 전용 코인만 섹션 스위치를 따른다.
+
+    BTC와 ETH는 홈 보드가 상시로 쓰는 자산이라 ASSETS에 있고, 그래서 섹션이
+    꺼져 있어도 이력을 모은다(같은 lane·같은 게이트·같은 공급자). 섹션에만
+    쓰이는 SOL은 스위치를 그대로 따른다.
+    """
     monkeypatch.setattr(config, "CRYPTO_SECTION_ENABLED", False)
     symbols = hip3_history._symbols()
-    assert "BTC" in symbols and "ETH" not in symbols
+    assert "BTC" in symbols and "ETH" in symbols
+    assert "SOL" not in symbols
     monkeypatch.setattr(config, "CRYPTO_SECTION_ENABLED", True)
     symbols = hip3_history._symbols()
     assert symbols.count("BTC") == 1
-    assert "ETH" in symbols and "SOL" in symbols
+    assert symbols.count("ETH") == 1
+    assert "SOL" in symbols
 
 
 # --- page, sitemap, lane report --------------------------------------------
