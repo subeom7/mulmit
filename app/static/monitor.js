@@ -142,7 +142,7 @@ const TEXT = {
     "theme.toggle": "테마 전환", "hero.kicker": "GLOBAL MARKET INTELLIGENCE", "hero.title": "한눈에 읽는 시장의 온도.",
     "hero.copy": "가격, 위험, 유동성, 거시경제를 같은 시간축에서 확인합니다. 연결되지 않은 데이터는 추정하지 않습니다.",
     "hero.updated": "마지막 갱신", "action.refresh": "새로고침", "overview.eyebrow": "MARKET TAPE", "overview.title": "시장 요약",
-    "weekend.title": "Weekend Pulse · 주말 참고 신호", "weekend.notSpot": "실제 체결가 아님", "weekend.leverage": "레버리지 파생",
+    "weekend.title": "Weekend Pulse · 주말 참고 신호", "weekend.usTitle": "미국 기술주, 장 밖에서는", "weekend.usNote": "금요일 마감 이후 24시간 시장에서 얼마나 움직였나", "weekend.usCopy": "미국장이 닫혀 있어도 기술주 지수를 추종하는 합성 무기한선물은 24시간 거래됩니다. 나스닥 지수 자체가 아니라 그것을 따라가는 파생상품의 가격이며, 월요일 시초가를 예측하지 않습니다.", "weekend.notSpot": "실제 체결가 아님", "weekend.leverage": "레버리지 파생",
     "weekend.liquidity": "거래 한산 · 가격 튈 수 있음", "weekend.noPromise": "월요일 방향 보장 안 됨", "weekend.syntheticPerp": "USD 환산 합성 무기한선물",
     "weekend.defaultDisclaimer": "주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.",
     "weekend.nextSession": "다음 내부 세션", "weekend.awaitingSession": "세션 대기", "weekend.proxy": "대체 신호", "weekend.direct": "직접 계약", "weekend.auxiliary": "24시간 보조", "weekend.consensus": "합성 신호", "weekend.referenceSignal": "주말 기준 신호", "weekend.funding": "시간당 펀딩", "weekend.volume": "24시간 거래대금", "weekend.openInterest": "미결제약정", "weekend.status": "상태", "weekend.confidence": "근거 품질", "weekend.session": "활성 세션", "weekend.sessionChange": "세션 기준", "weekend.change24h": "24시간 기준", "weekend.stale": "지연", "weekend.reference": "참고 품질",
@@ -308,7 +308,7 @@ const TEXT = {
     "theme.toggle": "Toggle theme", "hero.kicker": "GLOBAL MARKET INTELLIGENCE", "hero.title": "Read the market in one view.",
     "hero.copy": "Track prices, risk, liquidity and macro conditions on a shared timeline. Missing data is never estimated.",
     "hero.updated": "Last updated", "action.refresh": "Refresh", "overview.eyebrow": "MARKET TAPE", "overview.title": "Market overview",
-    "weekend.title": "Weekend Pulse · Reference signals", "weekend.notSpot": "Not an executable price", "weekend.leverage": "Leveraged derivatives",
+    "weekend.title": "Weekend Pulse · Reference signals", "weekend.usTitle": "US tech, while the market is shut", "weekend.usNote": "How far it has moved since Friday's close", "weekend.usCopy": "Synthetic perpetuals tracking a US technology index keep trading around the clock while the US market is closed. This is the derivative's price, not the Nasdaq index itself, and it does not predict Monday's open.", "weekend.notSpot": "Not an executable price", "weekend.leverage": "Leveraged derivatives",
     "weekend.liquidity": "Thin trading · price can jump", "weekend.noPromise": "No Monday direction guarantee", "weekend.syntheticPerp": "USD-converted synthetic perpetuals",
     "weekend.defaultDisclaimer": "Weekend derivative prices can be heavily affected by shallow liquidity and leverage. Do not treat them as Monday spot-market forecasts.",
     "weekend.nextSession": "Next internal session", "weekend.awaitingSession": "Awaiting session", "weekend.proxy": "Proxy", "weekend.direct": "Direct contract", "weekend.auxiliary": "24h auxiliary", "weekend.consensus": "Composite", "weekend.referenceSignal": "Weekend reference", "weekend.funding": "Hourly funding", "weekend.volume": "24h notional", "weekend.openInterest": "Open interest", "weekend.status": "Status", "weekend.confidence": "Evidence quality", "weekend.session": "Active session", "weekend.sessionChange": "Session change", "weekend.change24h": "24-hour change", "weekend.stale": "Stale", "weekend.reference": "Reference quality",
@@ -1264,7 +1264,7 @@ const PAGE_FETCHES = {
   macro: ["landing", "kr", "us"],
   assets: ["landing", "us"],
   sectors: ["us"],
-  weekend: ["kr"],
+  weekend: ["kr", "us"],
   stress: ["landing", "us"],
   sentiment: ["landing", "us", "crypto"],
   krIndices: ["kr"],
@@ -4011,16 +4011,16 @@ function renderSectors() {
 }
 
 const WEEKEND_CARDS = [
-  { id: "skhx", symbols: ["xyz:skhx"], label: LABEL("SK하이닉스", "SK Hynix"), kind: "direct" },
-  { id: "smsn", symbols: ["xyz:smsn"], label: LABEL("삼성전자 합성선물", "Samsung synthetic perpetual"), kind: "direct", note: LABEL("USD 환산 무기한 합성선물", "USD-converted synthetic perpetual") },
-  { id: "kr200", symbols: ["xyz:kr200"], label: LABEL("Korea 200", "Korea 200"), kind: "direct" },
-  { id: "hyundai", symbols: ["xyz:hyundai"], label: LABEL("현대차", "Hyundai"), kind: "direct" },
-  { id: "ewy", symbols: ["xyz:ewy"], label: LABEL("EWY 24시간 보조", "EWY 24h auxiliary"), kind: "auxiliary" },
-  { id: "koru", symbols: ["xyz:koru"], label: LABEL("KORU 24시간 보조", "KORU 24h auxiliary"), kind: "auxiliary" },
-  { id: "xyz100", symbols: ["xyz:xyz100"], label: LABEL("XYZ100", "XYZ100"), kind: "direct" },
-  { id: "ustech", symbols: ["mkts:ustech"], label: LABEL("USTECH 24시간 보조", "USTECH 24h auxiliary"), kind: "auxiliary" },
-  { id: "korea_weekend", symbols: ["xyz:kr200", "xyz:smsn", "xyz:skhx", "xyz:hyundai"], symbolText: LABEL("KR200 · 삼성 · SK하이닉스 · 현대차", "KR200 · Samsung · SK Hynix · Hyundai"), label: LABEL("한국 주말 기준 신호", "Korea weekend reference"), kind: "referenceSignal", composite: "korea_weekend" },
-  { id: "nasdaq_weekend", symbols: ["xyz:xyz100", "mkts:ustech"], symbolText: LABEL("xyz:XYZ100 · USTECH 24시간 보조", "xyz:XYZ100 · USTECH 24h auxiliary"), label: LABEL("나스닥 주말 기준 신호", "Nasdaq weekend reference"), kind: "referenceSignal", composite: "nasdaq_weekend" },
+  { id: "skhx", market: "kr", symbols: ["xyz:skhx"], label: LABEL("SK하이닉스", "SK Hynix"), kind: "direct" },
+  { id: "smsn", market: "kr", symbols: ["xyz:smsn"], label: LABEL("삼성전자 합성선물", "Samsung synthetic perpetual"), kind: "direct", note: LABEL("USD 환산 무기한 합성선물", "USD-converted synthetic perpetual") },
+  { id: "kr200", market: "kr", symbols: ["xyz:kr200"], label: LABEL("Korea 200", "Korea 200"), kind: "direct" },
+  { id: "hyundai", market: "kr", symbols: ["xyz:hyundai"], label: LABEL("현대차", "Hyundai"), kind: "direct" },
+  { id: "ewy", market: "kr", symbols: ["xyz:ewy"], label: LABEL("EWY 24시간 보조", "EWY 24h auxiliary"), kind: "auxiliary" },
+  { id: "koru", market: "kr", symbols: ["xyz:koru"], label: LABEL("KORU 24시간 보조", "KORU 24h auxiliary"), kind: "auxiliary" },
+  { id: "xyz100", market: "us", symbols: ["xyz:xyz100"], label: LABEL("XYZ100", "XYZ100"), kind: "direct" },
+  { id: "ustech", market: "us", symbols: ["mkts:ustech"], label: LABEL("USTECH 24시간 보조", "USTECH 24h auxiliary"), kind: "auxiliary" },
+  { id: "korea_weekend", market: "kr", symbols: ["xyz:kr200", "xyz:smsn", "xyz:skhx", "xyz:hyundai"], symbolText: LABEL("KR200 · 삼성 · SK하이닉스 · 현대차", "KR200 · Samsung · SK Hynix · Hyundai"), label: LABEL("한국 주말 기준 신호", "Korea weekend reference"), kind: "referenceSignal", composite: "korea_weekend" },
+  { id: "nasdaq_weekend", market: "us", symbols: ["xyz:xyz100", "mkts:ustech"], symbolText: LABEL("xyz:XYZ100 · USTECH 24시간 보조", "xyz:XYZ100 · USTECH 24h auxiliary"), label: LABEL("나스닥 주말 기준 신호", "Nasdaq weekend reference"), kind: "referenceSignal", composite: "nasdaq_weekend" },
 ];
 
 const ENUM_LABELS = {
@@ -4084,7 +4084,10 @@ function renderWeekend() {
   }
   status.classList.remove("disabled"); status.hidden = true; host.hidden = false; host.replaceChildren(); const signals = Array.isArray(payload.signals) ? payload.signals : [];
   const bySymbol = new Map(signals.map((signal) => [String(signal.symbol || signal.id).toLowerCase(), signal]));
-  WEEKEND_CARDS.forEach((definition) => {
+  // The Korea page and the US page read the same payload; each shows its own
+  // market. The reference implementation at /monitor still shows everything.
+  const wanted = PAGE === "us" ? "us" : PAGE === "kr" ? "kr" : null;
+  WEEKEND_CARDS.filter((definition) => !wanted || definition.market === wanted).forEach((definition) => {
     const composite = definition.composite ? payload.composites?.[definition.composite] : null; const signal = definition.composite ? null : definition.symbols.map((symbol) => bySymbol.get(symbol)).find(Boolean); const record = composite || signal;
     const mark = safeNumber(signal?.mark ?? signal?.oracle ?? record?.value); const usable = definition.composite ? Boolean(record && record.status !== "unavailable") : mark !== null;
     const role = signal?.session_role === "auxiliary_24h_only" ? "auxiliary" : signal ? "direct" : definition.kind;
@@ -4116,6 +4119,14 @@ function renderWeekend() {
     host.append(card);
   });
   const baseDisclaimer = localValue(payload.disclaimer, state.lang) || t("weekend.defaultDisclaimer"); $("#weekend-disclaimer").textContent = `${baseDisclaimer} ${t("weekend.samsungPerp")}`;
+  // Open while the internal session is actually running, collapsed otherwise.
+  // Asking the payload beats asking the clock: the window is Friday 17:00 to
+  // Sunday 18:00 ET, not "is it Saturday".
+  const wrapper = $("#weekend-details");
+  if (wrapper) {
+    const composite = payload.composites?.[wanted === "us" ? "nasdaq_weekend" : "korea_weekend"];
+    wrapper.open = Boolean(composite?.session?.active) || payload.calendar_day_type === "weekend";
+  }
 }
 
 function renderStressIndex() {

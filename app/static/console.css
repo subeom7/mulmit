@@ -183,6 +183,23 @@ html[data-mode="pro"] .easy-only { display: none !important; }
 .console-section > header .sec-link { margin-left: auto; color: var(--accent); font-size: var(--fs-sm); font-weight: 600; text-decoration: none; }
 .console-section > header .sec-link:hover { text-decoration: underline; }
 
+/* 주말 섹션은 평일에 접혀 있어야 해서 <details>다. <summary>가 header 자리를
+   대신하므로 같은 배치를 주고, 기본 삼각형 대신 방향 표시를 오른쪽에 둔다. */
+.weekend-details > summary {
+  display: flex; align-items: baseline; gap: var(--sp-3);
+  margin-bottom: var(--sp-4); padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--line);
+  cursor: pointer; list-style: none;
+}
+.weekend-details > summary::-webkit-details-marker { display: none; }
+.weekend-details > summary::after {
+  content: "BE"; margin-left: auto; color: var(--ink-3); font-size: var(--fs-sm);
+  transition: transform .15s;
+}
+.weekend-details[open] > summary::after { transform: rotate(180deg); }
+.weekend-details > summary h2 { margin: 0; font-size: var(--fs-xl); font-weight: 700; }
+.weekend-details > summary .sec-note { color: var(--ink-3); font-size: var(--fs-sm); }
+
 /* ======================================================================
  * 4. 보드 — 첫 화면의 대표 숫자들
  * ================================================================== */

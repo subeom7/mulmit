@@ -23,9 +23,9 @@
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260823-40">
-  <link rel="stylesheet" href="/static/tokens.css?v=20260823-40">
-  <link rel="stylesheet" href="/static/console.css?v=20260823-40">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-42">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260823-42">
+  <link rel="stylesheet" href="/static/console.css?v=20260823-42">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -103,6 +103,23 @@
       <span class="status-badge warn" data-i18n="weekend.notSpot">실제 체결가 아님</span>
       <span class="status-badge warn pro-only" data-i18n="console.hip3">HIP-3 합성 무기한선물 · trade.xyz</span>
     </div>
+
+    <details class="console-section weekend-details" id="weekend-details">
+      <summary>
+        <h2 id="weekend-title" data-i18n="weekend.usTitle">미국 기술주, 장 밖에서는</h2>
+        <span class="sec-note" data-i18n="weekend.usNote">금요일 마감 이후 24시간 시장에서 얼마나 움직였나</span>
+      </summary>
+      <p class="section-copy" data-i18n="weekend.usCopy">미국장이 닫혀 있어도 기술주 지수를 추종하는 합성 무기한선물은 24시간 거래됩니다. 나스닥 지수 자체가 아니라 그것을 따라가는 파생상품의 가격이며, 월요일 시초가를 예측하지 않습니다.</p>
+      <div class="risk-strip" role="note">
+        <span class="status-badge warn" data-i18n="weekend.notSpot">실제 체결가 아님</span>
+        <span class="status-badge warn" data-i18n="weekend.syntheticPerp">USD 환산 합성 무기한선물</span>
+        <span class="status-badge warn" data-i18n="weekend.liquidity">거래 한산 · 가격 튈 수 있음</span>
+        <span class="status-badge warn" data-i18n="weekend.noPromise">월요일 방향 보장 안 됨</span>
+      </div>
+      <div id="weekend-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="weekend-grid" class="weekend-grid" hidden></div>
+      <p class="weekend-disclaimer" id="weekend-disclaimer" data-i18n="weekend.defaultDisclaimer">주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.</p>
+    </details>
 
     <section class="console-section" id="constituent-heatmap" aria-labelledby="tv-title">
       <header>
@@ -281,8 +298,8 @@
   </template>
 
   <script>window.MULMIT_PAGE = "us";</script>
-  <script src="/static/console.js?v=20260823-40" defer></script>
-  <script src="/static/monitor.js?v=20260823-40" defer></script>
-  <script src="/static/search.js?v=20260823-40" defer></script>
+  <script src="/static/console.js?v=20260823-42" defer></script>
+  <script src="/static/monitor.js?v=20260823-42" defer></script>
+  <script src="/static/search.js?v=20260823-42" defer></script>
 </body>
 </html>
