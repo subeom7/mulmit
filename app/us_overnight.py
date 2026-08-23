@@ -78,6 +78,14 @@ TARGETS = (
     UsOvernightTarget("msft", "xyz:MSFT", "MSFT", "마이크로소프트", "Microsoft"),
 )
 
+SPARK_DAYS = 30
+
+
+def history_symbols() -> list[str]:
+    """이력 lane이 함께 모을 심볼. 게이트가 닫혀 있으면 비운다."""
+    return [target.symbol for target in TARGETS] if enabled() else []
+
+
 _DEFAULT_PROVIDER = HyperliquidProvider(
     timeout=2.5, retries=0, max_request_seconds=3.0, ttl=5, stale_ttl=120
 )
@@ -312,4 +320,27 @@ def build_us_overnight(
         _card(target, markets.get(target.symbol), refs.get(target.symbol), boundary)
         for target in TARGETS
     ]
+    _attach_sparklines(payload["cards"])
     return payload
+
+
+def _attach_sparklines(cards: list[dict[str, Any]]) -> None:
+    """카드마다 30일 일별 종가를 붙인다.
+
+    값은 저장된 블롭에서만 읽는다 — 이 경로는 5초마다 도는 화면이 부른다.
+    블롭을 채우는 것은 hip3_history lane의 일이다. 아직 안 모인 종목은 선 없이
+    카드만 선다.
+    """
+    from . import hip3_history
+
+    if not hip3_history.enabled():
+        return
+    blob = hip3_history.load()
+    if not blob:
+        return
+    for card in cards:
+        rows, _available = hip3_history.observations_for(
+            blob, card.get("symbol") or "", days=SPARK_DAYS, limit=SPARK_DAYS + 2
+        )
+        if rows:
+            card["observations"] = rows

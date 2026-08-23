@@ -85,11 +85,16 @@ def _symbols() -> list[str]:
     # Imported here: market_assets imports this module for the request path.
     from .crypto_market import history_symbols
     from .market_assets import ASSETS
+    from .us_overnight import history_symbols as us_history_symbols
 
     symbols = [spec.provider_symbol for spec in ASSETS if spec.provider_symbol]
     # The crypto section adds Hyperliquid's own coins while it is switched on;
     # the same blob serves their realized volatility and the BTC correlations.
     for symbol in history_symbols():
+        if symbol not in symbols:
+            symbols.append(symbol)
+    # 미국 야간 카드의 추이선도 같은 블롭에서 온다.
+    for symbol in us_history_symbols():
         if symbol not in symbols:
             symbols.append(symbol)
     return symbols

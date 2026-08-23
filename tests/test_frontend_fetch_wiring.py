@@ -88,3 +88,14 @@ def test_the_crypto_page_fetches_the_crypto_lanes():
         match = re.search(rf"^\s*{key}\s*:\s*\[([^\]]*)\]", block, re.M)
         assert match, f"{key} has no PAGE_FETCHES entry"
         assert '"crypto"' in match.group(1), f"{key} is not fetched on the crypto page"
+
+
+def test_the_live_card_lanes_all_have_a_five_second_loop():
+    """마크가격은 실시간 소스다. 5초 루프가 없으면 15분 주기에만 값이 바뀐다.
+
+    그러면 계기판도 깜빡임도 돌 일이 없어서 화면이 정지 화면처럼 보인다 —
+    에러가 아니라 "안 움직인다"로만 나타난다(실측: 미국 야간 카드가 그랬다).
+    """
+    source = _source()
+    for lane in ("krOvernight", "cryptoOverview", "usOvernight"):
+        assert f"onPage(...PAGE_FETCHES.{lane})" in source, f"{lane}에 5초 루프가 없다"

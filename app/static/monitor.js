@@ -2710,6 +2710,18 @@ function renderUsOvernight() {
       ? t("uso.noClose")
       : `${formatSigned(sinceClose)} · ${t("uso.sinceClose", { date: usoCloseDate(card.session_reference?.boundary_et) })}`;
 
+    // 30일 추이선. 홈 타일·암호화폐 카드와 같은 함수(console.js)를 부른다.
+    const spark = window.mulmitSparkline?.(card.observations);
+    let sparkNode = null;
+    if (spark) {
+      sparkNode = document.createElement("div");
+      sparkNode.className = `tile-spark card-spark ${spark.tone}`;
+      const period = document.createElement("span");
+      period.className = "spark-period";
+      period.textContent = spark.label;
+      sparkNode.append(period, spark.node);
+    }
+
     const meta = document.createElement("dl");
     meta.className = "kro-meta";
     const row = (labelText, valueText) => {
@@ -2732,7 +2744,9 @@ function renderUsOvernight() {
       badges.append(chip);
     }
 
-    article.append(header, priceNode, vs, meta);
+    article.append(header, priceNode, vs);
+    if (sparkNode) article.append(sparkNode);
+    article.append(meta);
     if (badges.childElementCount) article.append(badges);
     return article;
   }));
@@ -4524,6 +4538,18 @@ if (onPage(...PAGE_FETCHES.krOvernight)) {
     if (!document.getElementById("kr-overnight") && !document.getElementById("board")) return;
     const payload = await fetchJson("/api/kr/overnight", "krOvernight");
     if (payload) { state.krOvernight = payload; renderKrOvernight(); renderZonePreviews(); notifyConsole(); }
+  }, 5 * 1000);
+}
+// 미국 야간 카드도 같은 이유로 5초 갱신. 이게 없으면 15분 주기(loadCore)에만
+// 값이 바뀌어서, 계기판도 깜빡임도 돌 일이 없고 화면이 정지 화면처럼 보인다
+// (실측: 라이브 /us에서 계기판 0개·추이선 0개였다).
+// 정규장 중에는 서버가 카드를 만들지 않으므로 이 폴링도 곧 빈 응답을 받는다.
+if (onPage(...PAGE_FETCHES.usOvernight)) {
+  setInterval(async () => {
+    if (document.hidden) return;
+    if (!document.getElementById("us-overnight")) return;
+    const payload = await fetchJson("/api/us/overnight", "usOvernight");
+    if (payload) { state.usOvernight = payload; renderUsOvernight(); notifyConsole(); }
   }, 5 * 1000);
 }
 // 크립토 카드도 같은 이유로 5초 갱신 — 서버 TTL(15초)이 상류 호출에 캡을 씌운다.
