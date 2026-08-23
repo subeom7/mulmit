@@ -89,10 +89,20 @@ SUCCESS_CODE = "00"
 _RATE_LIMIT_CODES = frozenset({"22", "336"})
 _KEY_ERROR_CODES = frozenset({"30", "31", "20", "23"})
 
-MAX_ROWS_PER_PAGE = 1000
+# Sized so the common request fits in one round trip. Five years of daily closes
+# is about 1,270 rows, and at 1,000 that was two pages — two round trips of
+# roughly three seconds each, which is the whole of the 5.8s a cold
+# `/api/kr/stock/{code}` took. Fetching the second page concurrently does not
+# help when there are only two: page one has to come back before its count is
+# known. Asking for more rows at once does.
+#
+# This is a bet on what the server allows, and a safe one: if data.go.kr caps
+# the page below what is asked, it returns fewer rows and `_paged_rows` walks
+# the rest exactly as before.
+MAX_ROWS_PER_PAGE = 2000
 MAX_PAGES = 40
-# How many pages may go out at once after the first. Five years of daily
-# closes is two pages, so this is headroom, not a target.
+# How many pages may go out at once after the first. Only matters from three
+# pages up — with two, the second still waits for the first either way.
 PARALLEL_PAGES = 8
 
 
