@@ -23,6 +23,13 @@
 이 함정은 상류의 성질이라 여기서 고칠 수 없고, 부르는 쪽(`kr_search_interest`)이
 같은 요청 안에서만 비교하도록 설계돼 있다.
 
+경로(2026-08-24 무자격 프로브로 확정): 데이터랩은 **`naveropenapi.apigw.ntruss.com`**
+(AI·NAVER API 게이트웨이)에 있고, 검색 API가 옮겨 간 `naverapihub.apigw.ntruss.com`에는
+**없다**(404). 이 갈림은 권리 판정과 정확히 겹친다 — 데이터랩을 지배하는 문서가 검색 특약이
+붙은 API HUB 약관이 아니라 `AI·Naver API 서비스 이용약관`이라는 것을 라우팅이 다시 확인해
+준다. 게이트웨이는 키 없이도 **401(경로 있음) 대 404(경로 없음)**로 답이 갈려서, 자격증명을
+만지지 않고 경로를 확인할 수 있었다.
+
 쿼터: NCP API HUB 구독 실측 **월 50,000회 · 일 한도 없음**(구 개발자센터는 일 1,000회).
 게이트 `NAVER_DATALAB_ENABLED` + 클라이언트 아이디/시크릿.
 """
@@ -44,7 +51,7 @@ DATALAB_PROVIDER_ID = "naver_datalab"
 DATALAB_PUBLISHER = "네이버 데이터랩"
 DATALAB_PUBLISHER_EN = "NAVER DataLab"
 DATALAB_PUBLISHER_URL = "https://datalab.naver.com/"
-DATALAB_TREND_URL = "https://openapi.naver.com/v1/datalab/search"
+DATALAB_TREND_URL = "https://naveropenapi.apigw.ntruss.com/datalab/v1/search"
 DATALAB_DOCS_URL = "https://developers.naver.com/docs/serviceapi/datalab/search/search.md"
 DATALAB_TERMS_URL = "https://www.ncloud.com/policy/terms/opapi"
 DATALAB_ATTRIBUTION = "네이버 데이터랩 검색어 트렌드"
@@ -234,8 +241,12 @@ class DatalabProvider:
 
     def _request(self, body: bytes) -> Any:
         headers = {
-            "X-Naver-Client-Id": self.client_id,
-            "X-Naver-Client-Secret": self.client_secret,
+            # NCP 게이트웨이 헤더다. 구 개발자센터의 X-Naver-Client-Id/Secret이 아니다.
+            # 실측(2026-08-24): 같은 URL에 구 헤더를 보내면 "Authentication information
+            # are missing"(못 봤다), NCP 헤더를 보내면 "Invalid authentication
+            # information"(읽고 거절했다)으로 답이 갈린다. 이관 가이드도 같은 말을 한다.
+            "X-NCP-APIGW-API-KEY-ID": self.client_id,
+            "X-NCP-APIGW-API-KEY": self.client_secret,
             "Content-Type": "application/json",
             "Accept": "application/json",
             "User-Agent": USER_AGENT,
