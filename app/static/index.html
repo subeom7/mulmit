@@ -19,7 +19,7 @@
 <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260823-24">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-28">
 <style>
 /* ---------------------------------------------------------------------------
    디자인 토큰은 monitor.css가 단일 원본이다. 이 페이지의 예전 변수명은 아래
@@ -68,7 +68,7 @@ html[lang="en"] .monitor-link .label-ko { display: none; }
 html[lang="en"] .monitor-link .label-en { display: inline; }
 
 .intro { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(260px, .55fr); gap: 32px; align-items: end; margin: 0 0 38px; }
-.eyebrow { margin: 0 0 10px; color: var(--series-1); font: 650 11px/1.4 var(--mono); letter-spacing: .11em; text-transform: uppercase; }
+.eyebrow { margin: 0 0 10px; color: var(--series-1); font: 650 11px/1.4 var(--num); font-variant-numeric: tabular-nums; letter-spacing: .11em; text-transform: uppercase; }
 .intro h1 { max-width: 780px; margin: 0; font-size: clamp(32px, 5.5vw, 68px); line-height: 1.02; letter-spacing: -.055em; font-weight: 720; }
 .intro-copy { margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.75; }
 
@@ -76,8 +76,8 @@ html[lang="en"] .monitor-link .label-en { display: inline; }
 
 .market-pulse { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
 .pulse-card { min-height: 116px; padding: 16px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; }
-.pulse-label { color: var(--text-muted); font: 10px/1.35 var(--mono); letter-spacing: .07em; text-transform: uppercase; }
-.pulse-value { margin-top: 12px; font: 720 23px/1.05 var(--mono); letter-spacing: -.04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pulse-label { color: var(--text-muted); font: 10px/1.35 var(--num); font-variant-numeric: tabular-nums; letter-spacing: .07em; text-transform: uppercase; }
+.pulse-value { margin-top: 12px; font: 720 23px/1.05 var(--num); font-variant-numeric: tabular-nums; letter-spacing: -.04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pulse-note { margin-top: 8px; color: var(--text-muted); font-size: 11px; }
 .pulse-value.up { color: var(--positive); }
 .pulse-value.down { color: var(--negative); }
@@ -87,7 +87,7 @@ html[lang="en"] .monitor-link .label-en { display: inline; }
 .heatmap-title { font-size: 15px; font-weight: 700; }
 .heatmap-subtitle { margin-top: 2px; color: var(--text-muted); font-size: 11.5px; }
 .period-switch { margin-left: auto; display: flex; align-items: center; gap: 4px; padding: 3px; background: var(--page); border: 1px solid var(--border); border-radius: 9px; }
-.period-button { min-height: 32px; min-width: 50px; padding: 4px 9px; color: var(--text-muted); border: 0; border-radius: 6px; background: transparent; cursor: pointer; font: 650 11px/1 var(--mono); }
+.period-button { min-height: 32px; min-width: 50px; padding: 4px 9px; color: var(--text-muted); border: 0; border-radius: 6px; background: transparent; cursor: pointer; font: 650 11px/1 var(--num); font-variant-numeric: tabular-nums; }
 .period-button:hover { color: var(--text-primary); }
 .period-button.active { color: #fff; background: var(--series-1); box-shadow: 0 3px 9px rgba(42, 120, 214, .28); }
 .heatmap-body { min-height: 330px; padding: 10px; }
@@ -100,9 +100,9 @@ html[lang="en"] .monitor-link .label-en { display: inline; }
 }
 .heat-cell:hover, .heat-cell:focus-visible { transform: translateY(-2px); filter: saturate(1.08) brightness(1.04); }
 .heat-cell-name { color: rgba(255,255,255,.82); font-size: 12px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.heat-cell-ticker { margin-top: 3px; color: rgba(255,255,255,.54); font: 10px/1.2 var(--mono); }
-.heat-cell-return { margin-top: 18px; font: 750 clamp(20px, 2.8vw, 30px)/1 var(--mono); letter-spacing: -.045em; }
-.heat-cell-base { margin-top: 7px; color: rgba(255,255,255,.54); font: 9px/1.25 var(--mono); }
+.heat-cell-ticker { margin-top: 3px; color: rgba(255,255,255,.54); font: 10px/1.2 var(--num); font-variant-numeric: tabular-nums; }
+.heat-cell-return { margin-top: 18px; font: 750 clamp(20px, 2.8vw, 30px)/1 var(--num); font-variant-numeric: tabular-nums; letter-spacing: -.045em; }
+.heat-cell-base { margin-top: 7px; color: rgba(255,255,255,.54); font: 9px/1.25 var(--num); font-variant-numeric: tabular-nums; }
 .heatmap-state { min-height: 310px; display: grid; place-items: center; text-align: center; color: var(--text-muted); font-size: 13px; }
 .heatmap-state-inner { max-width: 420px; }
 .loading-bar { width: 180px; height: 3px; margin: 14px auto 0; border-radius: 99px; overflow: hidden; background: var(--border); }
@@ -248,7 +248,7 @@ ul.notes li::before { content: ""; position: absolute; left: 0; top: 9px; width:
 .kr-suggest [role="option"] { display: flex; gap: 10px; align-items: baseline; padding: 9px 12px; cursor: pointer; font-size: 13px; }
 .kr-suggest [role="option"].active, .kr-suggest [role="option"]:hover { background: var(--wash); }
 .kr-suggest .nm { font-weight: 650; }
-.kr-suggest .cd { color: var(--text-muted); font: 11px/1 var(--mono); }
+.kr-suggest .cd { color: var(--text-muted); font: 11px/1 var(--num); font-variant-numeric: tabular-nums; }
 .kr-suggest .px { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
 .kr-two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 @media (max-width: 900px) { .kr-two { grid-template-columns: 1fr; } }
@@ -265,7 +265,7 @@ ul.notes li::before { content: ""; position: absolute; left: 0; top: 9px; width:
 .usfund-toggle button { padding: 6px 14px; border: 0; background: transparent; color: inherit; opacity: .55; cursor: pointer; font: inherit; font-size: 12px; }
 .usfund-toggle button.active { opacity: 1; background: rgba(128,128,128,.16); font-weight: 700; }
 .table-wrap { overflow-x: auto; }
-.hub-badge { margin-left: 10px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 700 10px/1.2 var(--mono); text-decoration: none; vertical-align: middle; }
+.hub-badge { margin-left: 10px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 700 10px/1.2 var(--num); font-variant-numeric: tabular-nums; text-decoration: none; vertical-align: middle; }
 .hub-badge:hover { color: var(--ink); border-color: var(--line-strong); }
 
 /* --- 차트 ----------------------------------------------------------------- */
@@ -353,8 +353,8 @@ details[open] summary { margin-bottom: 8px; }
 footer { font-size: 12px; color: var(--text-muted); margin-top: 30px; line-height: 1.7; }
 footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
 </style>
-  <link rel="stylesheet" href="/static/tokens.css?v=20260823-24">
-  <link rel="stylesheet" href="/static/console.css?v=20260823-24">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260823-28">
+  <link rel="stylesheet" href="/static/console.css?v=20260823-28">
 </head>
 <body>
 <header class="masthead">
@@ -2756,7 +2756,7 @@ try {
   fetch("/api/pageview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: location.pathname, ref: document.referrer || "", id: presenceId() }), keepalive: true }).catch(() => {});
 } catch (error) { /* 최선노력 */ }
 </script>
-  <script src="/static/console.js?v=20260823-24" defer></script>
-  <script src="/static/search.js?v=20260823-24" defer></script>
+  <script src="/static/console.js?v=20260823-28" defer></script>
+  <script src="/static/search.js?v=20260823-28" defer></script>
 </body>
 </html>

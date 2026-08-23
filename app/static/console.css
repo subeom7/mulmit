@@ -135,8 +135,8 @@ html[data-mode="pro"] .easy-only { display: none !important; }
 .tape-item:hover { background: var(--panel); color: inherit; }
 .tape-item > * { line-height: 1; }
 .tape-name { color: var(--ink-2); font-size: var(--fs-xs); font-weight: 600; }
-.tape-value { color: var(--ink); font: 650 var(--fs-sm)/1 var(--mono); }
-.tape-delta { font: 650 var(--fs-xs)/1 var(--mono); }
+.tape-value { color: var(--ink); font: 650 var(--fs-sm)/1 var(--num); font-variant-numeric: tabular-nums; }
+.tape-delta { font: 650 var(--fs-xs)/1 var(--num); font-variant-numeric: tabular-nums; }
 .tape-delta.up { color: var(--up); }
 .tape-delta.down { color: var(--down); }
 .tape-delta.flat { color: var(--ink-3); }
@@ -162,7 +162,7 @@ html[data-mode="pro"] .easy-only { display: none !important; }
   display: flex; align-items: center; gap: var(--sp-3);
   color: var(--ink-3); font-size: var(--fs-xs);
 }
-.console-meta strong { color: var(--ink-2); font-family: var(--mono); font-weight: 650; }
+.console-meta strong { color: var(--ink-2); font-family: var(--num); font-weight: 650; }
 .refresh-button { padding: 6px 11px; border-radius: var(--r-sm); font-size: var(--fs-xs); }
 
 .console-section { margin: var(--sp-7) 0 0; }
@@ -195,16 +195,16 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 
 .tile-head { display: flex; align-items: baseline; gap: var(--sp-2); }
 .tile-name { font-size: var(--fs-md); font-weight: 650; letter-spacing: -.015em; }
-.tile-tag { margin-left: auto; color: var(--ink-3); font: 600 var(--fs-xs)/1.2 var(--mono); }
+.tile-tag { margin-left: auto; color: var(--ink-3); font: 600 var(--fs-xs)/1.2 var(--num); font-variant-numeric: tabular-nums; }
 
 .tile-value {
   display: flex; align-items: baseline; gap: 5px;
-  font: 680 var(--fs-display)/1.05 var(--mono); letter-spacing: -.035em;
+  font: 680 var(--fs-display)/1.05 var(--num); font-variant-numeric: tabular-nums; letter-spacing: -.035em;
 }
 .tile-unit { color: var(--ink-3); font-size: var(--fs-md); font-weight: 600; letter-spacing: 0; }
 
 .tile-delta { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; }
-.tile-change { font: 680 var(--fs-lg)/1.2 var(--mono); letter-spacing: -.02em; }
+.tile-change { font: 680 var(--fs-lg)/1.2 var(--num); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
 .tile-change.up { color: var(--up); }
 .tile-change.down { color: var(--down); }
 .tile-change.flat { color: var(--ink-3); }
@@ -220,7 +220,7 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 /* 기간 라벨은 선의 색을 따라가지 않는다 — 색은 방향의 신호이고 이건 축 이름이다. */
 .spark-period {
   flex: none; padding-bottom: 9px;
-  color: var(--ink-3); font: 650 var(--fs-xs)/1 var(--mono);
+  color: var(--ink-3); font: 650 var(--fs-xs)/1 var(--num); font-variant-numeric: tabular-nums;
 }
 .tile-spark path.fill { fill: currentColor; opacity: .12; }
 .tile-spark path.line { fill: none; stroke: currentColor; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
@@ -292,7 +292,7 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 .tile-detail { padding: var(--sp-2) var(--sp-4) var(--sp-3); border-top: 1px solid var(--line); background: var(--panel-2); }
 .tile-detail dl { display: grid; grid-template-columns: auto 1fr; gap: 3px var(--sp-3); margin: 0; }
 .tile-detail dt { color: var(--ink-3); font-size: var(--fs-xs); }
-.tile-detail dd { margin: 0; text-align: right; font: 600 var(--fs-xs)/1.5 var(--mono); color: var(--ink-2); }
+.tile-detail dd { margin: 0; text-align: right; font: 600 var(--fs-xs)/1.5 var(--num); font-variant-numeric: tabular-nums; color: var(--ink-2); }
 
 @media (max-width: 560px) {
   /* 2열을 유지하되 값 크기를 폭에 맡긴다. 원화 7자리(1,739,718 KRW)가 한 칸에
@@ -350,10 +350,11 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 .kro-card h3 { font-size: var(--fs-md); font-weight: 650; letter-spacing: -.015em; }
 .kro-card h3 a { text-decoration: none; }
 .kro-card h3 a:hover { color: var(--accent); text-decoration: underline; }
-.kro-sym { font: 600 var(--fs-xs)/1.2 var(--mono); }
+/* 티커는 글이 아니라 식별자다. 여기는 진짜 등폭이 맞다. */
+.kro-sym { font: 600 var(--fs-xs)/1.2 var(--mono); letter-spacing: .02em; }
 .kro-price {
   margin: var(--sp-2) 0 0;
-  font: 680 var(--fs-display)/1.05 var(--mono); letter-spacing: -.035em;
+  font: 680 var(--fs-display)/1.05 var(--num); font-variant-numeric: tabular-nums; letter-spacing: -.035em;
 }
 /* 숫자와 문장이 한 줄에 섞여 있다 — 모노로 두면 한글이 대체 글꼴로 빠져 줄이
  * 들쭉날쭉해진다. 본문 글꼴에 자리폭 숫자만 켠다. */
@@ -361,7 +362,7 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 .kro-vs-ref { margin-top: 2px; font: 600 var(--fs-xs)/1.45 var(--sans); font-variant-numeric: tabular-nums; }
 .kro-meta { margin-top: auto; padding-top: var(--sp-2); gap: 3px; }
 .kro-meta dt { color: var(--ink-3); font: 500 var(--fs-xs)/1.5 var(--sans); }
-.kro-meta dd { color: var(--ink-2); font: 600 var(--fs-xs)/1.5 var(--mono); }
+.kro-meta dd { color: var(--ink-2); font: 600 var(--fs-xs)/1.5 var(--num); font-variant-numeric: tabular-nums; }
 .kro-badges { margin-top: var(--sp-2); }
 
 /* 공식 종가가 직전 세션보다 늦으면 두 줄의 주·보조가 뒤바뀐다.
@@ -504,10 +505,51 @@ html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
 /* 아래 여백이 0이라 카드 격자가 배지 줄 바로 아래 붙어 있었다
  * (실측: 배지 bottom 394px = 카드 top 394px). */
 .risk-strip { gap: 6px; margin: var(--sp-3) 0 var(--sp-4); }
-.risk-strip .status-badge {
-  padding: 4px 10px; border-radius: 999px; font-size: var(--fs-xs); font-weight: 600;
-  color: var(--ink-3); background: transparent; border: 1px solid var(--line-strong);
+
+/* 배지.
+ * 예전에는 8.5px 등폭 + `text-transform: uppercase`였다. 한글에 대문자 변환은
+ * 아무 일도 하지 않으면서 자간만 늘리고, 등폭 스택의 한글은 대체 글꼴로
+ * 빠진다 — "저유동성 가능"이 제 카드 안에서 혼자 다른 글꼴이었다.
+ * 심각도는 테두리 색이 아니라 **옅은 바탕**으로 말한다. 어두운 배경에서
+ * 1px 색 테두리는 거의 보이지 않는데, 그렇다고 진하게 하면 배지가 카드보다
+ * 크게 소리친다. */
+.status-badge {
+  min-height: 22px; padding: 3px 9px;
+  border: 1px solid transparent; border-radius: 999px;
+  background: var(--panel-3); color: var(--ink-2);
+  font: 550 var(--fs-xs)/1.4 var(--sans); letter-spacing: 0; text-transform: none;
+  white-space: nowrap;
 }
+.status-badge.fresh { color: var(--up); background: color-mix(in srgb, var(--up) 14%, transparent); }
+.status-badge.stale, .status-badge.warn {
+  color: var(--amber); background: color-mix(in srgb, var(--amber) 14%, transparent);
+}
+.status-badge.error { color: var(--down); background: color-mix(in srgb, var(--down) 14%, transparent); }
+.status-badge.info { color: var(--accent); background: var(--accent-soft); }
+
+/* 섹션 머리의 고지 칩은 사건이 아니라 **상시** 표시다. 심각도 배경을 그대로
+ * 받으면 호박색 알약 셋이 늘 켜져 있어, 정작 카드 안의 경고가 묻힌다.
+ * 여기서는 조용한 윤곽선으로 되돌린다. */
+.risk-strip .status-badge {
+  padding: 4px 10px;
+  color: var(--ink-3); background: transparent; border-color: var(--line-strong);
+}
+
+/* "지금 몇 명이 보고 있다"는 살아 있다는 신호다. 숫자만 있으면 화면에 박힌
+ * 글자로 읽혀서, 맥박 하나를 붙인다. 움직임을 원치 않는 사람에게는 켜진 점만
+ * 남는다. */
+.presence-badge { gap: 6px; padding: 4px 10px; font: 600 var(--fs-xs)/1.4 var(--sans); }
+.presence-badge::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--up); box-shadow: 0 0 0 0 color-mix(in srgb, var(--up) 60%, transparent);
+  animation: presence-pulse 2.4s ease-out infinite;
+}
+@keyframes presence-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--up) 55%, transparent); }
+  70% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--up) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--up) 0%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .presence-badge::before { animation: none; } }
 
 /* KO/EN을 DOM에 함께 담고 골라 보여준다. legal.css와 같은 규칙이며, 같은
  * 이유로 [lang="en"]이 아니라 클래스를 쓴다 — lang 속성으로 셀렉트하면
@@ -591,7 +633,7 @@ html[data-lang="en"] .lang-en { display: revert; }
 .term-entry dd { margin: 2px 0 0; color: var(--ink-2); font-size: var(--fs-sm); line-height: 1.65; }
 .term-anchor {
   position: absolute; top: var(--sp-3); right: var(--sp-3);
-  color: var(--ink-3); font: 700 var(--fs-sm)/1 var(--mono); text-decoration: none; opacity: 0;
+  color: var(--ink-3); font: 700 var(--fs-sm)/1 var(--num); font-variant-numeric: tabular-nums; text-decoration: none; opacity: 0;
 }
 .term-entry:hover .term-anchor, .term-anchor:focus-visible { opacity: 1; }
 .term-anchor:hover { color: var(--accent); }
@@ -615,7 +657,7 @@ html[data-lang="en"] .lang-en { display: revert; }
 .zone-link-card span { color: var(--ink-3); font-size: var(--fs-sm); line-height: 1.55; }
 .zone-link-card .zone-mini {
   margin-top: auto; padding-top: var(--sp-2);
-  color: var(--ink-2); font: 600 var(--fs-xs)/1.6 var(--mono);
+  color: var(--ink-2); font: 600 var(--fs-xs)/1.6 var(--num); font-variant-numeric: tabular-nums;
 }
 .zone-link-card .zone-mini small { font-size: var(--fs-xs); color: var(--ink-3); }
 
@@ -750,13 +792,13 @@ html[data-lang="en"] .lang-en { display: revert; }
 .cal-cell.is-past { opacity: .45; }
 .cal-cell.is-today { background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
 .cal-daynum { display: flex; align-items: center; gap: 6px; }
-.cal-n { color: var(--ink-2); font: 600 var(--fs-sm)/1 var(--mono); font-variant-numeric: tabular-nums; }
+.cal-n { color: var(--ink-2); font: 600 var(--fs-sm)/1 var(--num); font-variant-numeric: tabular-nums; }
 .cal-cell.is-sun .cal-n { color: #ff8fa0; }
 .cal-cell.is-sat .cal-n { color: #8ec5ff; }
 .cal-cell.is-today .cal-n { color: var(--ink); }
 .cal-dday {
   padding: 1px 5px; border-radius: 999px; background: var(--panel-3);
-  color: var(--ink-3); font: 650 var(--fs-xs)/1.5 var(--mono);
+  color: var(--ink-3); font: 650 var(--fs-xs)/1.5 var(--num); font-variant-numeric: tabular-nums;
 }
 .cal-dday.is-now { background: var(--accent); color: var(--accent-ink); }
 
@@ -777,7 +819,7 @@ html[data-lang="en"] .lang-en { display: revert; }
   display: grid; grid-template-columns: auto 1fr; gap: 2px var(--sp-3);
   padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--line);
 }
-.cal-agenda-date { color: var(--ink-3); font: 600 var(--fs-xs)/1.4 var(--mono); font-variant-numeric: tabular-nums; }
+.cal-agenda-date { color: var(--ink-3); font: 600 var(--fs-xs)/1.4 var(--num); font-variant-numeric: tabular-nums; }
 .cal-agenda-name { grid-column: 2; border-left: 0; padding: 0; background: none; font-size: var(--fs-sm); }
 .cal-agenda-name:hover { background: none; }
 .cal-agenda-kind { grid-column: 2; color: var(--ink-3); font-size: var(--fs-xs); }
