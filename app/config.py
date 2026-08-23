@@ -190,6 +190,23 @@ CHAIN_GAS_ENABLED = _bool("CHAIN_GAS_ENABLED", False)
 # Coinalyze liquidation/open-interest lane. Written permission is on file
 # (register §3.27); the key is generated on the operator's Coinalyze account
 # and lives in the ingest process only.
+# 네이버 데이터랩 통합검색어 트렌드 — 종목 검색 관심도(등록부 §6.7). 판정 요지:
+# 데이터랩에는 개별 API 특약이 **없다**. 뉴스 검색을 기각시킨 특약(독립 노출·삽입
+# 금지·무조건 저장 금지·검색결과 페이지 광고 금지)은 검색 API 특약 안에만 있고,
+# 현행 AI·Naver API 약관 v6.0의 개별 특약은 지도·파파고·CLOVA 셋뿐이다.
+# 요청 경로에서만 돌고 **저장하지 않는다** — 창 전체가 요청마다 오므로 이력이 필요 없다.
+# 쿼터는 NCP 구독 실측 월 50,000회. 키는 콘솔의 애플리케이션에서 발급한다.
+NAVER_DATALAB_ENABLED = _bool("NAVER_DATALAB_ENABLED", False)
+NAVER_DATALAB_CLIENT_ID = os.environ.get("NAVER_DATALAB_CLIENT_ID", "").strip()
+NAVER_DATALAB_CLIENT_SECRET = os.environ.get("NAVER_DATALAB_CLIENT_SECRET", "").strip()
+NAVER_DATALAB_TIMEOUT = _float("NAVER_DATALAB_TIMEOUT", 8.0)
+NAVER_DATALAB_RETRIES = _int("NAVER_DATALAB_RETRIES", 1)
+# 값은 하루 단위로만 바뀐다. 6시간이면 워치리스트 한 벌이 하루 4번 × 묶음 수다.
+NAVER_DATALAB_MAX_AGE = _int("NAVER_DATALAB_MAX_AGE", 6 * 60 * 60)
+# 볼 종목. 비어 있으면 lane은 데이터 없음으로 닫힌다 — 로스터 전체를 도는 것은
+# 쿼터가 아니라 뜻에서 틀린다(거래 없는 종목의 검색 추이는 잡음이다).
+NAVER_DATALAB_WATCHLIST = os.environ.get("NAVER_DATALAB_WATCHLIST", "").strip()
+
 COINALYZE_ENABLED = _bool("COINALYZE_ENABLED", False)
 COINALYZE_API_KEY = os.environ.get("COINALYZE_API_KEY", "").strip()
 CHAIN_RPC_ETHEREUM_URL = os.environ.get("CHAIN_RPC_ETHEREUM_URL", "").strip()
