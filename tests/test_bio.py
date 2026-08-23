@@ -245,7 +245,11 @@ def test_lanes_off_make_no_calls_and_routes_follow_the_gate_contracts(db, monkey
     monkeypatch.setattr(config, "BIO_SECTION_ENABLED", True)
     assert client.get("/api/bio/trials").json()["detail"]["code"] == "bio_trials_disabled"
     assert client.get("/api/bio/fda").json()["detail"]["code"] == "bio_fda_disabled"
-    assert 'id="bio-trials"' in client.get("/bio").text
+    # 임상은 한 표가 아니라 **시장별 두 섹션**이다. 한 표에 한국과 글로벌이
+    # 섞여 있으면 국내 종목을 보는 사람이 매번 자기 것을 눈으로 골라야 한다.
+    page = client.get("/bio").text
+    assert 'id="bio-trials-kr"' in page and 'id="bio-trials-global"' in page
+    assert 'id="bio-trials"' not in page, "지역 구분 없는 옛 단일 섹션이 돌아왔다"
 
     monkeypatch.setattr(config, "CLINICALTRIALS_ENABLED", True)
     monkeypatch.setattr(config, "OPENFDA_ENABLED", True)
@@ -296,3 +300,28 @@ def test_bio_is_not_in_the_tab_row():
         markup = page.read_text(encoding="utf-8")
         assert 'class="view-tab" href="/bio"' not in markup, f"{page.name}에 바이오 탭이 돌아왔다"
         assert 'class="view-tab active" href="/bio"' not in markup, f"{page.name}에 바이오 탭이 돌아왔다"
+
+
+def test_the_page_leads_with_what_has_a_date():
+    """화면 맨 앞은 '다가오는 결정'이다.
+
+    나머지 섹션은 전부 이미 일어난 일의 목록이다 — 승인됐다, 허가됐다,
+    갱신됐다. 바이오 종목을 움직이는 것은 아직 나지 않은 결정이므로, 날짜가
+    잡힌 것이 맨 앞에 서야 한다. 순서가 뒤집히면 이 화면은 다시 기록 보관소가
+    된다.
+    """
+    page = TestClient(app).get("/bio").text
+    order = [page.index(f'id="{section}"') for section in
+             ("bio-catalysts", "bio-korea", "bio-global")]
+    assert order == sorted(order), "다가오는 결정 → 한국 → 미국·글로벌 순서가 아니다"
+
+
+def test_the_two_markets_do_not_interleave():
+    """한국 구역의 섹션이 글로벌 구역보다 모두 앞에 있어야 한다."""
+    page = TestClient(app).get("/bio").text
+    korea = page.index('id="bio-korea"')
+    glob = page.index('id="bio-global"')
+    for section in ("bio-mfds", "bio-trials-kr"):
+        assert korea < page.index(f'id="{section}"') < glob, f"{section}이 한국 구역 밖에 있다"
+    for section in ("bio-fda", "bio-trials-global", "bio-adcomm"):
+        assert page.index(f'id="{section}"') > glob, f"{section}이 글로벌 구역 밖에 있다"
