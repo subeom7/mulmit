@@ -170,7 +170,25 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 #
 # 라우트가 직접 정한 값이 있으면 건드리지 않는다 — `/glossary`·`/stock`처럼
 # 서버 렌더 페이지는 짧은 공개 캐시를 일부러 걸어 둔 것이다.
-STATIC_IMMUTABLE = "public, max-age=31536000, immutable"
+# 폰트만 영구 고정한다. 서브셋 92개는 파일 이름이 곧 내용이라 같은 URL이 다른
+# 바이트를 줄 일이 없다.
+FONT_IMMUTABLE = "public, max-age=31536000, immutable"
+
+# `?v=` 붙은 자산은 **자가 치유가 되는 만큼만** 잡는다.
+#
+# 예전에는 여기도 `immutable` 1년이었다. 그런데 `?v=`는 쿼리일 뿐이고 서버는 늘
+# 같은 파일 하나를 준다 — URL과 내용이 1:1로 묶여 있지 않다. 배포 도중 HTML은
+# 새 버전인데 파일이 아직 옛것인 찰나에 요청이 들어오면, 브라우저는 **옛 내용을
+# 새 키로** 받아 1년 동안 고정한다. immutable이라 재검증도 하지 않으니 스스로
+# 낫지 않는다.
+#
+# 실측 2026-08-23: 배포 직후 `monitor.js?v=20260823-31`을 실행 중인 코드에 새
+# 함수가 없었다. 같은 URL을 `cache:"reload"`로 받으면 있었다. 캐시를 비우니
+# 즉시 정상이 됐다. 사용자는 캐시를 비우지 않는다.
+#
+# 하루면 ETag 재검증으로 스스로 낫는다. 이 규모(14일 32PV)에서 잃는 것은 없고,
+# 잃을 뻔한 것은 사용자 브라우저에 1년 박히는 깨진 화면이다.
+STATIC_VERSIONED = "public, max-age=86400"
 # 304에 실어 보내도 되는 헤더(RFC 9110 §15.4.5). 본문은 없다.
 _REVALIDATED_HEADERS = ("cache-control", "etag", "last-modified", "vary", "content-location")
 
@@ -196,10 +214,13 @@ async def _cache_headers(request: Request, call_next):
     if not response.headers.get("cache-control"):
         path = request.url.path
         if path.startswith("/static/"):
-            pinned = "v" in request.query_params or path.startswith("/static/fonts/")
-            response.headers["Cache-Control"] = (
-                STATIC_IMMUTABLE if pinned else "public, max-age=3600"
-            )
+            if path.startswith("/static/fonts/"):
+                policy = FONT_IMMUTABLE
+            elif "v" in request.query_params:
+                policy = STATIC_VERSIONED
+            else:
+                policy = "public, max-age=3600"
+            response.headers["Cache-Control"] = policy
         elif (response.headers.get("content-type") or "").startswith("text/html"):
             response.headers["Cache-Control"] = "no-cache"
 
