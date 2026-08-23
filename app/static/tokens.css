@@ -51,6 +51,23 @@
 
   /* --- 타이포 --------------------------------------------------------- */
   --sans: "Pretendard Variable", Pretendard, system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+
+  /* 수치·라벨 면. 본문과 같은 글꼴이고, 자리폭 숫자로 정렬을 얻는다.
+   *
+   * 예전에는 이 자리가 시스템 등폭(윈도우에서는 Cascadia Mono)이었다. 문제는
+   * 그 줄에 한글이 섞인다는 것이었다 — "저유동성 가능", "확정 종가 코스피
+   * 6,852.58", "마지막 갱신 2026년 8월 23일"처럼. 등폭 스택에 없는 한글은
+   * 대체 글꼴로 빠지고, 그러면 한 줄 안에 서로 다른 두 글꼴이 선다. 그게
+   * 화면 곳곳에서 느껴지던 부조화의 정체다.
+   *
+   * ₩도 등폭에서는 다른 글자와 같은 폭에 욱여넣느라 짓눌린다(40px 실측:
+   * Cascadia 23.4px vs Pretendard 36.5px). 큰 가격에서 특히 티가 난다.
+   *
+   * 정렬은 잃지 않는다 — Pretendard에 tabular-nums를 켜면 열 자리 숫자 폭이
+   * 완전히 균일하다(40px 실측 전부 25.58px). */
+  --num: "Pretendard Variable", Pretendard, system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+
+  /* 진짜 등폭. 글이 아니라 식별자에만 쓴다 — 티커, 코드. */
   --mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
 
   --fs-display: 2.375rem; /* 38 — 보드 타일 대표 숫자 */
@@ -85,7 +102,15 @@ body {
   letter-spacing: -0.005em;
 }
 
-/* 모든 숫자는 자리폭이 같아야 값이 흔들리지 않는다. */
+/* 숫자는 자리폭이 같아야 값이 흔들리지 않는다.
+ * 화면 전체에 켜고, **글**에서만 끈다 — 문장 속 숫자는 비례폭이 더 잘 읽힌다.
+ * 이렇게 두면 새로 만든 컴포넌트가 기본으로 정렬된 숫자를 갖는다. */
+body { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+h1, h2, p, .console-sub, .section-copy, .sec-note, .intro-copy,
+.disclose-body, .method-grid, .term-def, .cal-agenda-kind {
+  font-variant-numeric: normal;
+  font-feature-settings: normal;
+}
 .num, .tnum, table td.num, table th.num,
 .tile-value, .tape-value, .metric-value {
   font-variant-numeric: tabular-nums;

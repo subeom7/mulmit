@@ -2630,8 +2630,19 @@ function renderKrOvernight() {
       ? card.official?.publication_note_ko
       : card.official?.publication_note_en;
 
-    article.append(header, price, vs);
+    // 기준선은 하나만 보여 준다.
+    //
+    // 공식 종가가 늦으면 vsRef("8/21 15:30 이후")가 지금 이야기이고, vs는 이미
+    // 끝난 정규장 하루를 포함한 전전날 마감 대비다. 같은 카드에 크기가 비슷한
+    // 퍼센트가 둘 서면 어느 쪽이 오늘 이야기인지 읽는 사람이 판단해야 한다.
+    // 값이 사라지는 것은 아니다 — 공식 종가는 근거표에 날짜와 함께 남는다.
+    //
+    // ADR만 예외다. 그 %는 가격 변화가 아니라 원주 대비 프리미엄이라 둘이 서로
+    // 다른 것을 재고 있어서 하나로 합칠 수 없다.
+    const dropCloseCompare = vsRef && card.kind !== "adr" && percent !== null;
+    article.append(header, price);
     if (vsRef) article.append(vsRef);
+    if (!dropCloseCompare) article.append(vs);
     article.append(meta);
     if (lagNote) {
       const note = document.createElement("p"); note.className = "kro-lag";
