@@ -148,8 +148,11 @@ html[data-mode="pro"] .easy-only { display: none !important; }
 .shell { width: min(1320px, 100%); padding: var(--sp-6) var(--sp-4) var(--sp-8); }
 
 /* 히어로 카피는 걷어냈다. 첫 화면은 값이 차지한다. */
+/* 상태줄은 제목 줄에 맞춰 선다.
+ * flex-end였을 때는 왼쪽 블록의 **바닥**, 즉 설명 문단에 맞춰 내려와 있었다.
+ * 제목과 나란히 서는 편이 "이 화면의 상태"라는 뜻에 맞다. */
 .console-head {
-  display: flex; align-items: flex-end; justify-content: space-between;
+  display: flex; align-items: flex-start; justify-content: space-between;
   gap: var(--sp-4); flex-wrap: wrap;
   padding-bottom: var(--sp-4); margin-bottom: var(--sp-4);
 }
@@ -161,6 +164,10 @@ html[data-mode="pro"] .easy-only { display: none !important; }
 .console-meta {
   display: flex; align-items: center; gap: var(--sp-3);
   color: var(--ink-3); font-size: var(--fs-xs);
+  /* h1 한 줄과 같은 높이를 차지하게 해서 세로 가운데를 맞춘다. 5px 같은 숫자를
+   * 박지 않고 타이포 토큰을 따라가므로 글자 크기가 바뀌어도 어긋나지 않는다
+   * (실측: h1 line-height 44.8px = --fs-xxl 28px × 1.6). */
+  min-height: calc(var(--fs-xxl) * 1.6);
 }
 .console-meta strong { color: var(--ink-2); font-family: var(--num); font-weight: 650; }
 .refresh-button { padding: 6px 11px; border-radius: var(--r-sm); font-size: var(--fs-xs); }
@@ -715,7 +722,7 @@ html[data-lang="en"] .lang-en { display: revert; }
   .tape { top: 0; position: static; }
   .console-head { padding-bottom: var(--sp-3); }
   .console-head h1 { font-size: var(--fs-xl); }
-  .console-meta { flex-wrap: wrap; gap: var(--sp-2); }
+  .console-meta { flex-wrap: wrap; gap: var(--sp-2); min-height: 0; }
   .refresh-button { white-space: nowrap; }
 }
 

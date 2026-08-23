@@ -18,24 +18,24 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260823-29">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-30">
   <style>
     .stock-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 26px 0 18px; border-bottom: 1px solid var(--line); }
     .stock-head h1 { margin: 0; font-size: clamp(26px, 4vw, 40px); letter-spacing: -.04em; }
-    .stock-head code { color: var(--faint); font: 700 13px/1 var(--mono); }
-    .stock-head .market-tag { padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 650 10px/1 var(--mono); }
+    .stock-head code { color: var(--faint); font: 700 13px/1 var(--num); font-variant-numeric: tabular-nums; }
+    .stock-head .market-tag { padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 650 10px/1 var(--num); font-variant-numeric: tabular-nums; }
     .stock-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 18px 0 6px; }
     .stock-kpi { padding: 13px 14px; border: 1px solid var(--line); border-radius: 9px; background: linear-gradient(145deg, var(--panel), var(--panel-2)); }
-    .stock-kpi small { display: block; color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .06em; }
-    .stock-kpi strong { display: block; margin-top: 5px; font: 750 18px/1.15 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
-    .stock-kpi span { display: block; margin-top: 3px; color: var(--muted); font: 650 10px/1.3 var(--mono); }
+    .stock-kpi small { display: block; color: var(--faint); font: 650 9.5px/1.4 var(--num); font-variant-numeric: tabular-nums; text-transform: uppercase; letter-spacing: .06em; }
+    .stock-kpi strong { display: block; margin-top: 5px; font: 750 18px/1.15 var(--num); font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+    .stock-kpi span { display: block; margin-top: 3px; color: var(--muted); font: 650 10px/1.3 var(--num); font-variant-numeric: tabular-nums; }
     .stock-section { margin: 34px 0; }
     .stock-section h2 { margin: 0 0 4px; font-size: 16px; letter-spacing: -.02em; }
     .stock-section .sub { margin: 0 0 12px; color: var(--muted); font-size: 11.5px; }
     .stock-note { color: var(--faint); font-size: 10.5px; }
     .stock-table { width: 100%; border-collapse: collapse; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
     .stock-table th, .stock-table td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
-    .stock-table th { color: var(--faint); font: 650 9.5px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+    .stock-table th { color: var(--faint); font: 650 9.5px/1.4 var(--num); font-variant-numeric: tabular-nums; text-transform: uppercase; letter-spacing: .05em; }
     .stock-table td.num, .stock-table th.num { text-align: right; }
     .stock-table td.down { color: var(--red); } .stock-table td.up { color: var(--green); }
     .state-line { padding: 14px; border: 1px dashed var(--line); border-radius: 9px; color: var(--faint); font-size: 11.5px; }
@@ -44,19 +44,22 @@
     .stock-links a:hover { color: var(--ink); border-color: var(--line-strong); }
     @media (max-width: 560px) { .stock-table { min-width: 620px; } }
   </style>
+  <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260823-30">
+  <link rel="stylesheet" href="/static/console.css?v=20260823-30">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="masthead">
     <a class="brand" href="/" aria-label="Mulmit home">
       <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="36" height="36">
-      <span><strong>Mulmit</strong><small>MARKET SIGNAL CONSOLE</small></span>
+      <span><strong>Mulmit</strong></span>
     </a>
     <nav class="view-switch" aria-label="View">
       <a class="view-tab" href="/">홈</a>
       <a class="view-tab" href="/kr">한국</a>
       <a class="view-tab" href="/us">미국·글로벌</a>
-      <a class="view-tab" href="/crypto">크립토</a>
+      <a class="view-tab" href="/crypto">암호화폐</a>
       <a class="view-tab" href="/analytics">종목 분석</a>
     </nav>
     <div class="mast-actions"></div>
@@ -141,7 +144,9 @@ const kpi = (label, value, note) => { const div = document.createElement("div");
   if (note) div.querySelector("span").textContent = note; return div; };
 
 async function loadKr() {
-  $id("link-analytics").href = "/analytics?ticker=" + SYMBOL;
+  // 국내 종목은 `?kr=`로 넘긴다. `?ticker=`는 저쪽에서 미국 EDGAR 티커
+  // 입력란으로 들어가서, 005380을 미국 상장사로 조회하고 있었다.
+  $id("link-analytics").href = "/analytics?kr=" + SYMBOL + "#kr-section";
   // 시세·통계
   try {
     const a = await fetchJson("/api/kr/stock/" + SYMBOL);
@@ -283,6 +288,6 @@ try {
   fetch("/api/pageview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: "/stock", ref: document.referrer || "", id }), keepalive: true }).catch(() => {});
 } catch (e) { console.warn('[stock] beacon failed', e); }
 </script>
-  <script src="/static/search.js?v=20260823-29" defer></script>
+  <script src="/static/search.js?v=20260823-30" defer></script>
 </body>
 </html>

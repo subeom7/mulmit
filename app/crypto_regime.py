@@ -334,7 +334,7 @@ _METHOD = {
 _DISCLAIMER = {
     "ko": (
         "시장 상태를 요약한 지표이며 매수·매도 신호나 투자 자문이 아닙니다. 과열이 곧 하락을, 냉각이 곧 상승을 뜻하지 않습니다. "
-        "표본은 Hyperliquid 자체 DEX에 상장된 무기한선물이며 크립토 시장 전체의 대표 표본이 아닙니다."
+        "표본은 Hyperliquid 자체 DEX에 상장된 무기한선물이며 암호화폐 시장 전체의 대표 표본이 아닙니다."
     ),
     "en": (
         "A summary of market conditions — not a buy or sell signal and not investment advice. Overheated does not imply a fall, nor cool a "

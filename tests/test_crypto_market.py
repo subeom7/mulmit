@@ -528,7 +528,11 @@ def test_crypto_page_nav_and_sitemap(db):
     page = client.get("/crypto")
     assert page.status_code == 200
     assert 'window.MULMIT_PAGE = "crypto";' in page.text
-    assert "크립토" in page.text and "Hyperliquid" in page.text
+    # 한국어 화면은 "크립토"가 아니라 "암호화폐"로 부른다. 흔히 쓰이는 말이고,
+    # 검색량도 그쪽이 훨씬 많다. 코드의 식별자(/crypto, nav.crypto, .crypto-card)는
+    # 그대로 두고 눈에 보이는 글만 바꾼 것이라, 여기서 지켜야 하는 것도 글이다.
+    assert "암호화폐" in page.text and "Hyperliquid" in page.text
+    assert "크립토" not in page.text, "옛 워딩이 화면에 남았다"
     for path in ("/", "/kr", "/us", "/crypto"):
         assert 'href="/crypto"' in client.get(path).text, path
     assert "https://mulmit.com/crypto" in client.get("/sitemap-pages.xml").text
