@@ -173,6 +173,8 @@ const TEXT = {
     "kre.colName": "종목", "kre.colClose": "종가", "kre.colDay": "등락", "kre.colNav": "NAV", "kre.colPremium": "괴리율", "kre.colIndex": "기초지수", "kre.colValue": "거래대금",
     "kre.window": "상장 {total}종목 중 거래대금 상위 {count}", "kre.asof": "기준 {date}",
     "ptr.title": "미 하원 의원 주식 거래", "ptr.copy": "STOCK Act에 따른 주기거래보고(PTR)를 그대로 옮깁니다. 금액은 구간으로만 공시되며, 수기 제출분은 원문 링크로 안내합니다. 상원은 수집 경로가 막혀 있어 포함되지 않습니다.",
+    "ev.colTicker": "티커",
+    "ptr.colDistrict": "지역구", "ptr.colTicker": "티커", "ptr.colOwner": "보유자",
     "ptr.colDate": "거래일", "ptr.colMember": "의원", "ptr.colAsset": "자산", "ptr.colType": "유형", "ptr.colAmount": "금액 구간", "ptr.colFiled": "신고일",
     "ptr.typeP": "매수", "ptr.typeS": "매도", "ptr.typeSP": "일부 매도", "ptr.typeE": "교환",
     "ptr.ownerSP": "배우자", "ptr.ownerJT": "공동", "ptr.ownerDC": "자녀",
@@ -337,6 +339,8 @@ const TEXT = {
     "kre.colName": "Fund", "kre.colClose": "Close", "kre.colDay": "Day", "kre.colNav": "NAV", "kre.colPremium": "Premium", "kre.colIndex": "Underlying index", "kre.colValue": "Value traded",
     "kre.window": "Top {count} of {total} listed, by traded value", "kre.asof": "As of {date}",
     "ptr.title": "US House stock trades", "ptr.copy": "Periodic transaction reports under the STOCK Act, relayed verbatim. Amounts are disclosed only as ranges; scanned paper filings link to the original. The Senate is not included because its portal blocks server collection.",
+    "ev.colTicker": "Ticker",
+    "ptr.colDistrict": "District", "ptr.colTicker": "Ticker", "ptr.colOwner": "Owner",
     "ptr.colDate": "Traded", "ptr.colMember": "Member", "ptr.colAsset": "Asset", "ptr.colType": "Type", "ptr.colAmount": "Amount range", "ptr.colFiled": "Filed",
     "ptr.typeP": "Purchase", "ptr.typeS": "Sale", "ptr.typeSP": "Partial sale", "ptr.typeE": "Exchange",
     "ptr.ownerSP": "Spouse", "ptr.ownerJT": "Joint", "ptr.ownerDC": "Dep. child",
@@ -1623,7 +1627,7 @@ function renderKrEtf() {
   const scroll = document.createElement("div"); scroll.className = "table-scroll";
   const table = document.createElement("table"); table.className = "accessible-table kridx-table";
   table.innerHTML = `<thead><tr>
-    <th scope="col">${t("kre.colName")}</th><th scope="col" class="num">${t("kre.colClose")}</th>
+    <th scope="col">${t("krev.colCode")}</th><th scope="col">${t("kre.colName")}</th><th scope="col" class="num">${t("kre.colClose")}</th>
     <th scope="col" class="num">${t("kre.colDay")}</th><th scope="col" class="num">${t("kre.colNav")}</th>
     <th scope="col" class="num">${t("kre.colPremium")}</th><th scope="col">${t("kre.colIndex")}</th>
     <th scope="col" class="num">${t("kre.colValue")}</th>
@@ -1635,10 +1639,10 @@ function renderKrEtf() {
     const tr = document.createElement("tr");
     const close = safeNumber(fund.close), nav = safeNumber(fund.nav);
     const dayPercent = safeNumber(fund.change_percent), premium = safeNumber(fund.premium_percent);
+    const codeTd = document.createElement("td"); codeTd.className = "krp-code";
+    codeTd.textContent = fund.code || "—";
     const nameTd = document.createElement("td"); nameTd.className = "krp-company";
-    const name = document.createElement("span"); name.textContent = fund.name || "—";
-    const code = document.createElement("small"); code.className = "krp-market"; code.textContent = fund.code || "";
-    nameTd.append(name, code);
+    nameTd.textContent = fund.name || "—";
     const cells = [
       ["num", close === null ? "—" : Math.round(close).toLocaleString("en-US")],
       [`num ${signClass(dayPercent)}`, signed(dayPercent)],
@@ -1647,7 +1651,7 @@ function renderKrEtf() {
       ["range", fund.index_name || "—"],
       ["num", formatKrw(safeNumber(fund.value))],
     ];
-    tr.append(nameTd);
+    tr.append(codeTd, nameTd);
     for (const [cls, text] of cells) {
       const td = document.createElement("td");
       if (cls) td.className = cls;
@@ -1854,26 +1858,31 @@ function renderUsPtr() {
   const scroll = document.createElement("div"); scroll.className = "table-scroll";
   const table = document.createElement("table"); table.className = "accessible-table kridx-table";
   table.innerHTML = `<thead><tr>
-    <th scope="col">${t("ptr.colDate")}</th><th scope="col">${t("ptr.colMember")}</th>
-    <th scope="col">${t("ptr.colAsset")}</th><th scope="col">${t("ptr.colType")}</th>
+    <th scope="col">${t("ptr.colDate")}</th><th scope="col">${t("ptr.colMember")}</th><th scope="col">${t("ptr.colDistrict")}</th>
+    <th scope="col">${t("ptr.colTicker")}</th><th scope="col">${t("ptr.colAsset")}</th>
+    <th scope="col">${t("ptr.colOwner")}</th><th scope="col">${t("ptr.colType")}</th>
     <th scope="col" class="num">${t("ptr.colAmount")}</th><th scope="col">${t("ptr.colFiled")}</th>
   </tr></thead>`;
   const tbody = document.createElement("tbody");
   for (const { filing, tx } of shown) {
     const tr = document.createElement("tr");
     const dateTd = document.createElement("td"); dateTd.textContent = dateText(tx.date);
+    // 의원 칸에 이름과 지역구가, 종목 칸에 종목명·티커·보유자 셋이 들어 있었다.
+    // 전부 다른 것이라 열로 나눈다 — 특히 보유자(본인/배우자/공동)는 같은 거래를
+    // 다르게 읽게 만드는 값이라 작은 칩으로 붙어 있을 자리가 아니다.
     const memberTd = document.createElement("td"); memberTd.className = "krp-company";
     const link = document.createElement("a");
     link.href = filing.pdf_url; link.target = "_blank"; link.rel = "noopener noreferrer";
     link.textContent = filing.name || "—";
-    const district = document.createElement("small"); district.className = "krp-market";
-    district.textContent = filing.state_district || "";
-    memberTd.append(link, district);
+    memberTd.append(link);
+    const districtTd = document.createElement("td"); districtTd.className = "krp-code";
+    districtTd.textContent = filing.state_district || "—";
+    const tickerTd = document.createElement("td"); tickerTd.className = "krp-code";
+    tickerTd.textContent = tx.ticker || "—";
     const assetTd = document.createElement("td");
-    const assetName = document.createElement("span"); assetName.textContent = tx.asset || "—";
-    assetTd.append(assetName);
-    if (tx.ticker) { const chip = document.createElement("small"); chip.className = "krp-market"; chip.textContent = tx.ticker; assetTd.append(chip); }
-    if (tx.owner && PTR_OWNER_KEYS[tx.owner]) { const owner = document.createElement("small"); owner.className = "krp-market"; owner.textContent = t(PTR_OWNER_KEYS[tx.owner]); assetTd.append(owner); }
+    assetTd.textContent = tx.asset || "—";
+    const ownerTd = document.createElement("td");
+    ownerTd.textContent = tx.owner && PTR_OWNER_KEYS[tx.owner] ? t(PTR_OWNER_KEYS[tx.owner]) : "—";
     const typeTd = document.createElement("td");
     const typeClass = tx.type === "P" ? "up" : tx.type === "E" ? "" : "down";
     if (typeClass) typeTd.className = typeClass;
@@ -1881,7 +1890,7 @@ function renderUsPtr() {
     const amountTd = document.createElement("td"); amountTd.className = "num";
     amountTd.textContent = tx.amount || "—";
     const filedTd = document.createElement("td"); filedTd.textContent = dateText(tx.notification_date || filing.filed_date);
-    tr.append(dateTd, memberTd, assetTd, typeTd, amountTd, filedTd);
+    tr.append(dateTd, memberTd, districtTd, tickerTd, assetTd, ownerTd, typeTd, amountTd, filedTd);
     tbody.append(tr);
   }
   table.append(tbody); scroll.append(table); body.append(scroll);
@@ -2238,21 +2247,22 @@ function renderUsEvents() {
   section.hidden = false;
 
   const table = document.createElement("table"); table.className = "accessible-table";
-  table.innerHTML = `<thead><tr><th>${t("ev.colDate")}</th><th>${t("ev.colCompany")}</th><th>${t("ev.colItems")}</th><th>${t("ev.colLink")}</th></tr></thead>`;
+  table.innerHTML = `<thead><tr><th>${t("ev.colDate")}</th><th>${t("ev.colTicker")}</th><th>${t("ev.colCompany")}</th><th>${t("ev.colItems")}</th><th>${t("ev.colLink")}</th></tr></thead>`;
   const tbody = document.createElement("tbody");
   for (const event of events) {
     const tr = document.createElement("tr");
     const date = document.createElement("td"); date.textContent = dateText(event.filed_at);
+    const tickerTd = document.createElement("td"); tickerTd.className = "krp-code";
+    tickerTd.textContent = event.ticker || "—";
     const company = document.createElement("td");
-    const code = document.createElement("code"); code.textContent = event.ticker;
-    company.append(code, document.createTextNode(" "), hubLink(event.company || "", event.ticker, { us: true }));
+    company.append(hubLink(event.company || "", event.ticker, { us: true }));
     const items = document.createElement("td");
     items.textContent = (event.items || []).map((item) => localValue(item.label, state.lang) || item.code).join(" · ") || "—";
     const linkTd = document.createElement("td");
     const link = document.createElement("a"); link.href = event.url; link.target = "_blank"; link.rel = "noopener noreferrer";
     link.textContent = t("ev.view");
     linkTd.append(link);
-    tr.append(date, company, items, linkTd); tbody.append(tr);
+    tr.append(date, tickerTd, company, items, linkTd); tbody.append(tr);
   }
   table.append(tbody);
   const scroll = document.createElement("div"); scroll.className = "table-scroll"; scroll.append(table);
