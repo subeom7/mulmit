@@ -30,9 +30,9 @@
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Mulmit","alternateName":["물밑","물밑 Mulmit","Mulmit 물밑","물밑 대시보드","물밑 마켓"],"url":"https://mulmit.com/"}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Mulmit","url":"https://mulmit.com/","logo":"https://mulmit.com/static/brand/favicon-512.png"}</script>
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260823-44">
-  <link rel="stylesheet" href="/static/tokens.css?v=20260823-44">
-  <link rel="stylesheet" href="/static/console.css?v=20260823-44">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-45">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260823-45">
+  <link rel="stylesheet" href="/static/console.css?v=20260823-45">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -142,6 +142,23 @@
       </div>
     </section>
 
+    <!-- 미국 정규장이 닫혔을 때만 선다. 홈은 훑는 자리라 지수 하나와 가장
+         두꺼운 종목 둘, 한 줄이면 충분하다. 나머지는 /us에 있다. -->
+    <section class="console-section" id="us-overnight" hidden aria-labelledby="uso-title">
+      <header>
+        <h2 id="uso-title" data-i18n="uso.title">미국 대형주, 장 밖에서는</h2>
+        <span class="sec-note" data-i18n="uso.note">마지막 정규장 마감 이후 얼마나 움직였나</span>
+      </header>
+      <div class="risk-strip" role="note">
+        <span class="status-badge warn" data-i18n="weekend.notSpot">실제 체결가 아님</span>
+        <span class="status-badge warn" data-i18n="uso.badgePerp">USD 합성 무기한선물</span>
+      </div>
+      <div id="uso-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="uso-grid" class="kro-grid" hidden></div>
+      <footer class="kro-footer" id="uso-footer" hidden></footer>
+      <p class="kro-more"><a href="/us#us-overnight" data-i18n="uso.more">종목 더 보기 →</a></p>
+    </section>
+
     <section class="console-section" id="signal-feed" hidden aria-labelledby="feed-title">
       <header>
         <h2 id="feed-title" data-i18n="feed.title">지금 일어나는 일</h2>
@@ -233,8 +250,8 @@
     else if (crypto.indexOf(id) >= 0) location.replace("/crypto" + location.hash);
   })();
   </script>
-  <script src="/static/console.js?v=20260823-44" defer></script>
-  <script src="/static/monitor.js?v=20260823-44" defer></script>
-  <script src="/static/search.js?v=20260823-44" defer></script>
+  <script src="/static/console.js?v=20260823-45" defer></script>
+  <script src="/static/monitor.js?v=20260823-45" defer></script>
+  <script src="/static/search.js?v=20260823-45" defer></script>
 </body>
 </html>

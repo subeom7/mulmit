@@ -57,11 +57,19 @@ class UsOvernightTarget:
     ticker: str
     label_ko: str
     label_en: str
+    # "equity"는 달러, "index"는 포인트다. 지수를 달러로 찍으면 29,324가
+    # $29,324가 되어 없는 통화를 만든다.
+    kind: str = "equity"
 
 
 # 두꺼운 것만 고른다. 얇은 마켓은 주말에 한 번의 체결로 몇 퍼센트가 튀고,
 # 그걸 카드로 세우면 신호가 아니라 잡음을 크게 보여 주는 셈이 된다.
 TARGETS = (
+    # 나스닥 장외 지수. 종목이 각자 얼마나 움직였는지 옆에 "시장 전체는
+    # 어느 쪽인지"가 없으면, 한 종목의 움직임이 시장 움직임인지 그 종목의
+    # 이야기인지 구분할 수 없다.
+    UsOvernightTarget("nasdaq", "xyz:XYZ100", "XYZ100", "나스닥 장외 지수",
+                      "Nasdaq proxy (after hours)", kind="index"),
     UsOvernightTarget("nvda", "xyz:NVDA", "NVDA", "엔비디아", "NVIDIA"),
     UsOvernightTarget("googl", "xyz:GOOGL", "GOOGL", "알파벳", "Alphabet"),
     UsOvernightTarget("meta", "xyz:META", "META", "메타", "Meta"),
@@ -188,9 +196,16 @@ def _card(
         "id": target.id,
         "symbol": target.symbol,
         "ticker": target.ticker,
+        "kind": target.kind,
         "label": {"ko": target.label_ko, "en": target.label_en},
         "status": "ok" if mark is not None else "unavailable",
-        "price": {"value": mark, "currency": "USD", "field": "markPx"},
+        # 지수는 USDC로 호가되는 지수 참조 포인트다 — 통화가 아니다.
+        "price": {
+            "value": mark,
+            "currency": None if target.kind == "index" else "USD",
+            "units_short": "pt" if target.kind == "index" else None,
+            "field": "markPx",
+        },
         "change_24h": {"percent": change_24h, "reference": previous},
         # 마지막 정규장 마감 이후 얼마나 움직였나. 이 섹션의 존재 이유다.
         "session_reference": {

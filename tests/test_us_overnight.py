@@ -106,9 +106,22 @@ def test_a_thin_market_is_flagged_not_hidden():
     assert all(card["liquidity_status"] == "low" for card in payload["cards"])
 
 
-def test_prices_are_dollars_with_no_conversion():
+def test_equities_are_dollars_and_the_index_is_points():
+    """지수는 통화가 아니다.
+
+    XYZ100은 USDC로 호가되는 **지수 참조 포인트**다. 통화를 USD로 달면 화면이
+    29,321을 $29,321로 찍고, 종목 카드와 나란히 서면 "나스닥이 2만 9천 달러"로
+    읽힌다. 없는 통화를 만들지 않는다.
+    """
     payload = us_overnight.build_us_overnight(_Dex(), now=_at(2026, 8, 23, 12, 0))
-    assert all(card["price"]["currency"] == "USD" for card in payload["cards"])
+    by_kind = {card["kind"] for card in payload["cards"]}
+    assert by_kind == {"equity", "index"}, "지수 카드가 사라졌다"
+    for card in payload["cards"]:
+        price = card["price"]
+        if card["kind"] == "index":
+            assert price["currency"] is None and price["units_short"] == "pt", card["ticker"]
+        else:
+            assert price["currency"] == "USD" and price["units_short"] is None, card["ticker"]
     assert "fx" not in payload, "미국 종목에 환율이 끼어들 이유가 없다"
 
 
