@@ -486,6 +486,27 @@ html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
  * 테두리 안에서 빈 채로 남는다. */
 .cboard-card .accessible-table { width: 100%; }
 
+/* 게이지 패널(스트레스·심리·공포탐욕)과 뉴스 목록의 안쪽 여백.
+ *
+ * 이 둘만 패널 테두리에서 1~3px 떨어져 있었다 — 나머지 화면이 17px로 정렬된
+ * 뒤라 이 패널만 왼쪽으로 쏠려 보였다. 표에 준 여백(바깥쪽 셀 padding)은
+ * 여기서 이중이 되므로 되돌린다.
+ *
+ * 게이지 막대와 차트도 함께 들여쓴다. 글은 17px인데 막대만 0px이면 그건
+ * "full-bleed 의도"가 아니라 어긋난 것으로 읽힌다. */
+.stress-panel > div:not(.state-block) { padding: 0 var(--sp-4) var(--sp-3); }
+.stress-panel .accessible-table th:first-child,
+.stress-panel .accessible-table td:first-child { padding-left: 0; }
+.stress-panel .accessible-table th:last-child,
+.stress-panel .accessible-table td:last-child { padding-right: 0; }
+.panel > .crypto-news { padding: 0 var(--sp-4); }
+/* 출처·방법 표기는 패널 바닥에 그냥 놓여 있어 테두리에 닿았다(실측 /bio 4곳).
+ * 약관상 표시 의무가 있는 줄이라 더더욱 제대로 앉아야 한다. */
+.panel > .kro-method, .panel > .kro-disclaimer,
+.panel > div > .kro-method, .panel > div > .kro-disclaimer {
+  padding-left: var(--sp-4); padding-right: var(--sp-4);
+}
+
 /* 테두리 안쪽 여백.
  * `.panel`은 padding이 0이고 표의 셀 padding 10px에만 기대고 있었다. 그래서
  * 패널 왼쪽 629px에 "대표 지수"가 630px — 글자가 테두리에 닿았다(실측
@@ -494,7 +515,9 @@ html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
  * 카드 안의 작은 표(.cboard-card)는 카드가 이미 안쪽 여백을 갖고 있어 뺀다. */
 .panel .accessible-table th:first-child, .panel .accessible-table td:first-child { padding-left: var(--sp-4); }
 .panel .accessible-table th:last-child, .panel .accessible-table td:last-child { padding-right: var(--sp-4); }
-.panel > .panel-footer { padding-left: var(--sp-4); padding-right: var(--sp-4); }
+/* 직계 자식만 잡으면 한 겹 더 들어간 푸터를 놓친다(실측: crypto-volatility의
+ * `.panel > div > footer`). 자손 선택으로 바꾼다. */
+.panel .panel-footer { padding-left: var(--sp-4); padding-right: var(--sp-4); }
 #kridx-body .kridx-group { padding-left: var(--sp-4); }
 
 /* 지수군은 표 둘이 나란히 선다. 세로로 쌓으면 오른쪽 절반이 빈 채 길어진다.
@@ -686,6 +709,9 @@ html[data-lang="en"] .lang-en { display: revert; }
 .feed-domain { font-size: var(--fs-xs); color: var(--ink-3); }
 .feed-move { padding: 2px 8px; font-size: var(--fs-xs); }
 .feed-hub { font-size: var(--fs-xs); color: var(--ink-3); }
+/* 필터 줄도 패널 안쪽 여백에 맞춘다 — 칩 자체의 좌우 padding에 기대면
+ * 14px에 서서 아래 목록(17px)과 어긋난다. */
+.panel > .feed-filter { padding: var(--sp-3) var(--sp-4) 0; margin-bottom: 0; }
 .feed-filter button, .feed-upcoming a, .feed-upcoming span { font-size: var(--fs-xs); }
 @media (max-width: 560px) {
   .feed-date { flex-basis: 46px; }
@@ -788,9 +814,12 @@ html[data-lang="en"] .lang-en { display: revert; }
 /* 첫 행(요일)만 내용 높이로 두고, 날짜 행은 전부 최소 74px. 명시 행을 하나만
  * 두면 나머지는 암시 행이 되어 grid-auto-rows가 걸린다. */
 .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: auto; grid-auto-rows: minmax(74px, auto); }
+  grid-template-rows: auto; grid-auto-rows: minmax(74px, auto);
+  /* 칸 안쪽 padding(6px)과 합쳐 글자가 테두리+17px에 서게 한다 — 위의 달 이름과
+   * 같은 줄에 맞추기 위해서다. 예전에는 달 이름 17px, 날짜 7px로 어긋났다. */
+  padding: 0 10px; }
 .cal-weekday {
-  padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--line);
+  padding: var(--sp-2) 6px; border-bottom: 1px solid var(--line);
   /* 요일 이름은 --sans로. --mono 스택에는 한글이 없어 "일 월 화"가 대체 글꼴로
    * 떨어지면서 자간과 굵기가 혼자 어긋났다. */
   color: var(--ink-3); font: 650 var(--fs-xs)/1 var(--sans); letter-spacing: .06em;
