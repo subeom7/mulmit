@@ -916,6 +916,45 @@ html[data-lang="en"] .lang-en { display: revert; }
 .kro-more a { color: var(--accent); text-decoration: none; font-weight: 550; }
 .kro-more a:hover { text-decoration: underline; }
 
+/* ===== 전용 신호 피드 /news ================================================
+ * 본문은 서버가 렌더한다. 여기서는 배치만 한다 — JS가 꺼져 있어도(크롤러가
+ * 읽는 상태가 그렇다) 목록이 그대로 읽혀야 한다. */
+.news-filter { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 var(--sp-4); }
+.news-filter button {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border: 1px solid var(--line-strong); border-radius: 999px;
+  background: transparent; color: var(--ink-3);
+  font: 550 var(--fs-xs)/1.5 var(--sans); cursor: pointer;
+}
+.news-filter button b { color: var(--ink-2); font-weight: 650; font-variant-numeric: tabular-nums; }
+.news-filter button:hover { border-color: var(--accent); color: var(--ink); }
+.news-filter button.active { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+
+.news-list { list-style: none; margin: 0; padding: 0; }
+.news-row {
+  display: grid; grid-template-columns: 84px 1fr; gap: var(--sp-3);
+  align-items: start; padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.news-row:last-child { border-bottom: 0; }
+.news-row[hidden] { display: none; }
+.news-body { min-width: 0; }
+.news-title { margin: 0; font-size: var(--fs-sm); line-height: 1.5; }
+.news-title a { color: var(--ink); text-decoration: none; font-weight: 550; }
+.news-title a:hover { color: var(--accent); text-decoration: underline; }
+.news-meta {
+  display: flex; gap: var(--sp-3); flex-wrap: wrap; margin: 4px 0 0;
+  color: var(--ink-3); font-size: var(--fs-xs);
+}
+.news-meta time { font-variant-numeric: tabular-nums; }
+.news-hub { color: var(--accent); text-decoration: none; }
+.news-hub:hover { text-decoration: underline; }
+.news-empty { padding: var(--sp-6) var(--sp-4); color: var(--ink-3); font-size: var(--fs-sm); text-align: center; }
+
+@media (max-width: 560px) {
+  .news-row { grid-template-columns: 1fr; gap: var(--sp-2); }
+}
+
 /* ===== 바이오 =============================================================
  * 시장을 구역으로 나눈다. 한 화면에서 한국과 글로벌이 번갈아 나오면, 국내
  * 종목을 보는 사람은 매번 자기 것을 눈으로 골라내야 한다. */

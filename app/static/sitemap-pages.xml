@@ -6,6 +6,7 @@
   <url><loc>https://mulmit.com/crypto</loc><changefreq>hourly</changefreq><priority>0.9</priority></url>
   <url><loc>https://mulmit.com/bio</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://mulmit.com/analytics</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://mulmit.com/news</loc><changefreq>hourly</changefreq><priority>0.8</priority></url>
   <url><loc>https://mulmit.com/glossary</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://mulmit.com/disclaimer</loc><changefreq>monthly</changefreq><priority>0.2</priority></url>
   <url><loc>https://mulmit.com/terms</loc><changefreq>monthly</changefreq><priority>0.2</priority></url>

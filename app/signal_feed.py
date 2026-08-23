@@ -364,8 +364,14 @@ def _upcoming_items(today: dt.date) -> list[dict[str, Any]]:
     return items
 
 
-def build_feed(*, today: dt.date | None = None) -> dict[str, Any]:
+def build_feed(*, today: dt.date | None = None, limit: int | None = None) -> dict[str, Any]:
+    """신호 피드. `limit`은 화면이 정한다.
+
+    홈 위젯은 30건이면 충분하지만 전용 `/news` 페이지는 더 길게 보여 준다.
+    한도를 모듈 상수에 묶어 두면 한쪽을 늘릴 때 다른 쪽이 같이 늘어난다.
+    """
     today = today or dt.datetime.now(_KST).date()
+    cap = MAX_ITEMS if limit is None else max(1, int(limit))
     items: list[dict[str, Any]] = []
     for source in (_us_8k_items, _kr_material_items, _us_ptr_items, _kr_pension_items, _kr_holdings_items, _index_move_items, _news_items, _kr_press_items):
         try:
@@ -376,7 +382,7 @@ def build_feed(*, today: dt.date | None = None) -> dict[str, Any]:
     # 날짜뿐인 항목보다 뒤가 아니라 앞에 오도록 문자열 비교가 그대로 맞는다.
     items = [item for item in items if item["at"]]
     items.sort(key=lambda item: item["at"], reverse=True)
-    kept = items[:MAX_ITEMS]
+    kept = items[:cap]
     attribution = None
     if any(item["kind"] == "news" for item in kept):
         from .providers.gdelt import GDELT_ATTRIBUTION, GDELT_ATTRIBUTION_KO, GDELT_PUBLISHER_URL
@@ -391,7 +397,7 @@ def build_feed(*, today: dt.date | None = None) -> dict[str, Any]:
         "items": kept,
         "attribution": attribution,
         "upcoming": _upcoming_items(today),
-        "count": min(len(items), MAX_ITEMS),
+        "count": min(len(items), cap),
         "basis_ko": (
             "기존 공시·일정 lane의 재조립입니다 — 8-K와 주요사항보고는 원문 제목, "
             "PTR 금액은 공시 구간 그대로. 지수 급변은 퍼프 참고가의 3% 계단 통과 기록입니다. "

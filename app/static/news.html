@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko" data-theme="dark" data-mode="easy">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="물밑(Mulmit) 신호 피드 — 한국 주요사항보고·보도자료·5% 대량보유, 미국 8-K와 의원 주식거래, 코인 태그 뉴스를 한 줄씩 시간순으로. 각 항목은 원문 링크와 출처를 함께 보여줍니다.">
+  <meta name="keywords" content="펀딩비 뜻, 미결제약정 뜻, 김치프리미엄, 무기한선물, 마크가격, 공포탐욕지수, 볼린저 밴드, RSI, 최대낙폭, MDD, 도미넌스, ADR, 코스피200, 주식 용어, 암호화폐 용어">
+  <title>지금 일어나는 일 — 공시·일정·뉴스 한 줄 피드 | 물밑 Mulmit</title>
+  <meta name="doc-title-ko" content="지금 일어나는 일 — 공시·일정·뉴스 한 줄 피드 | 물밑 Mulmit">
+  <meta name="doc-title-en" content="Signal feed — filings, schedule and news | Mulmit">
+  <link rel="canonical" href="https://mulmit.com/news">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mulmit">
+  <meta property="og:title" content="지금 일어나는 일 — 공시·일정·뉴스 한 줄 피드 | 물밑 Mulmit">
+  <meta property="og:description" content="한국 공시와 미국 8-K·의원 거래, 시장 뉴스를 시간순 한 줄로. 각 줄에 원문 링크와 출처가 붙습니다.">
+  <meta property="og:url" content="https://mulmit.com/news">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="icon" type="image/png" sizes="96x96" href="/static/brand/favicon-96.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
+  <script type="application/ld+json">{{JSONLD}}</script>
+  <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-48">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260823-48">
+  <link rel="stylesheet" href="/static/console.css?v=20260823-48">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the feed</a>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Mulmit home">
+      <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="30" height="30">
+      <span><strong>Mulmit</strong></span>
+    </a>
+    <nav class="view-switch" aria-label="View">
+      <a class="view-tab" href="/"><span class="lang-ko">홈</span><span class="lang-en">Home</span></a>
+      <a class="view-tab" href="/kr"><span class="lang-ko">한국</span><span class="lang-en">Korea</span></a>
+      <a class="view-tab" href="/us"><span class="lang-ko">미국·글로벌</span><span class="lang-en">US &amp; Global</span></a>
+      <a class="view-tab" href="/crypto"><span class="lang-ko">암호화폐</span><span class="lang-en">Crypto</span></a>
+      <a class="view-tab" href="/analytics"><span class="lang-ko">종목 분석</span><span class="lang-en">Stock analytics</span></a>
+    </nav>
+    <div class="mast-actions">
+      <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
+    </div>
+  </header>
+
+  <main id="main" class="shell news-page">
+    <div class="console-head">
+      <div>
+        <h1>
+          <span class="lang-ko">지금 일어나는 일</span><span class="lang-en">What is happening</span>
+          <span class="console-h1-sub">
+            <span class="lang-ko">공시 · 일정 · 뉴스</span><span class="lang-en">filings · schedule · news</span>
+          </span>
+        </h1>
+        <p class="console-sub">
+          <span class="lang-ko">한국 공시와 미국 8-K·의원 거래, 시장 뉴스를 시간순 한 줄로 놓았습니다. 각 줄은 원문으로 바로 가며, 어디서 왔는지를 함께 적습니다. 실시간 속보가 아니라 수집 주기 갱신입니다.</span>
+          <span class="lang-en">Korean filings, US 8-K and congressional trades, and market news on one timeline. Every line links to the record it came from and says where it came from. Refreshed on a collection cycle, not a live wire.</span>
+        </p>
+      </div>
+    </div>
+
+    <nav class="news-filter" id="news-filter" aria-label="분류">{{FILTERS}}</nav>
+
+    <div class="panel news-panel">
+      <ol class="news-list" id="news-list">{{ITEMS}}</ol>
+      <footer class="panel-footer">
+        <p class="kro-method">{{BASIS}}</p>
+        <p class="kro-method">{{SOURCE}}</p>
+      </footer>
+    </div>
+
+    <footer class="site-footer">
+      <nav aria-label="Legal">
+        <a href="/privacy"><span class="lang-ko">개인정보처리방침</span><span class="lang-en">Privacy policy</span></a>
+        <a href="/terms"><span class="lang-ko">이용약관</span><span class="lang-en">Terms of use</span></a>
+        <a href="/disclaimer"><span class="lang-ko">면책 고지</span><span class="lang-en">Disclaimer</span></a>
+        <a href="/news"><span class="lang-ko">신호 피드</span><span class="lang-en">Signal feed</span></a>
+        <a href="/glossary"><span class="lang-ko">용어 사전</span><span class="lang-en">Glossary</span></a>
+        <a href="/bio"><span class="lang-ko">바이오</span><span class="lang-en">Bio</span></a>
+        <a href="/docs">API</a>
+      </nav>
+      <p>
+        <span class="lang-ko">Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.</span>
+        <span class="lang-en">Mulmit is an information service, not investment advice or a solicitation to trade.</span>
+      </p>
+    </footer>
+  </main>
+
+  <script>
+  // 본문은 이미 서버가 렌더했다. 이 스크립트는 걸러 보여 주는 일만 한다 —
+  // JS가 없어도 목록은 그대로 읽힌다(크롤러가 읽는 것도 그 상태다).
+  (function () {
+    var root = document.documentElement;
+    function applyLang(lang) {
+      root.lang = lang; root.dataset.lang = lang;
+      var button = document.getElementById("locale-toggle");
+      if (!button) return;
+      button.textContent = lang === "ko" ? "EN" : "KO";
+      var meta = document.querySelector('meta[name="doc-title-' + lang + '"]');
+      if (meta && meta.content) document.title = meta.content;
+    }
+    applyLang(localStorage.getItem("monitor.locale") === "en" ? "en" : "ko");
+    document.getElementById("locale-toggle").addEventListener("click", function () {
+      var next = root.lang === "ko" ? "en" : "ko";
+      localStorage.setItem("monitor.locale", next);
+      applyLang(next);
+    });
+
+    var filter = document.getElementById("news-filter");
+    if (!filter) return;
+    filter.addEventListener("click", function (event) {
+      var button = event.target.closest("[data-news-kind]");
+      if (!button) return;
+      var wanted = button.dataset.newsKind;
+      filter.querySelectorAll("[data-news-kind]").forEach(function (other) {
+        other.classList.toggle("active", other === button);
+      });
+      document.querySelectorAll("#news-list .news-row").forEach(function (row) {
+        row.hidden = wanted !== "all" && row.dataset.kind !== wanted;
+      });
+    });
+  })();
+  </script>
+  <script src="/static/search.js?v=20260823-48" defer></script>
+</body>
+</html>
