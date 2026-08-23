@@ -1824,6 +1824,42 @@ Papago·CLOVA 5종뿐 — 데이터랩 특약은 없다.** 뉴스 검색을 죽�
 1. **저장·캐싱 금지**가 무조건인가(검색 특약 2.3처럼) — 그렇다면 우리 설계가 무저장이라 통과
 2. **광고 금지**가 "결과화면과 함께"인가 "결과가 표시되는 페이지"인가 — 후자면 향후 광고와 충돌 범위가 넓어진다
 
+**2026-08-23 (2차) — NCP 약관 원문 확보. 판정이 뒤집혔다**
+
+운영자가 API Hub 구독 완료(앱 `mulmitdotcom`, Data Lab/검색어트렌드, **월 50,000회**, 일 한도 없음,
+등록 2026-08-23 23:10 KST) 후 "특약을 못 찾겠다"고 회신. **찾지 못한 이유가 답이었다 — 데이터랩
+특약은 존재하지 않는다.**
+
+공개된 NCP 약관 원문을 받아 확인했다(공개 정책 페이지의 PDF는 SPA 안 iframe이라 브라우저로
+경로를 읽고 CDN에서 직접 내려받음):
+
+| 문서 | `AI·Naver API 서비스 이용약관 v6.0` (국문 원본) |
+|---|---|
+| 경로 | `www.ncloud.com/api/provisions/OPAPI-TERMS-KR-5` → `xv-ncloud.pstatic.net/images/provision/AI·NaverAPI서비스이용약관_개정안_250320_v.6.0(Clean)_….pdf` |
+| 시행 | 2025-03-20, `nextVersion: 0` = **현행** |
+| 개별 API 특약 | **지도(Maps) · 파파고 · CLOVA 셋뿐** |
+| 실측 | `데이터랩` 0회 · `검색` 0회 · **`광고` 0회** · `캐싱` 0회 |
+
+일반조건의 결과 데이터 조항은 개발자센터 7.3③과 같은 구조다(영문판): "The Customer shall not
+reproduce, store, process, distribute, or provide resulting data … **exceeding the scope permitted
+by these terms** … without prior consent". 무조건 금지가 아니다.
+
+그리고 **2026-08-20 개정 공지(시행 2026-09-20)는 적용 범위가 좁다**. 공지 원문:
+"Amendment to the **\"2. NAVER Search API Service\" clause** under \"B. Special Terms for Each
+Individual API\"". 바뀌는 것은 **검색 API 특약 하나**이고, 공지 어디에도 데이터랩·검색어트렌드가
+없다.
+
+**뒤집힌 지점**: 뉴스 검색을 죽인 두 조항(저장·캐싱 무조건 금지, 검색결과 페이지 광고 금지)은
+**검색 API 특약 안에만** 있다. 데이터랩에는 그 특약이 없으므로 두 조항이 따라오지 않는다.
+개발자센터 일반조건 7.3④(결과화면과 함께 광고 금지)는 여전히 유효하나, NCP 경로에서는
+AI·Naver API 약관에 광고 조항 자체가 없다.
+
+**남은 불확실성 하나** — 공지가 말하는 `NAVER API HUB 서비스 이용약관`은 공개 정책 목록
+(`/policy/terms/svc`, 52건)에 **없다**. 목록의 네이버 API 관련 문서는 `opapi` 하나뿐이고 그것이
+위 v6.0이다. Hub 전용 문서가 콘솔 구독 화면에만 있을 가능성이 남는다. 확인 방법은 콘솔의
+약관 링크뿐 — **"나. 개별 API별 특약조건"에 데이터랩 항목이 있는지 한 줄만 보면 된다.**
+없으면 위 판정이 그대로 확정이다.
+
 **대안 — Google Trends API는 아직 못 쓴다**
 
 2025-07 발표, **2026-08-23 현재 alpha·신청 승인제**이며 약관·쿼터가 공개되지 않았다. 다만 성질이
