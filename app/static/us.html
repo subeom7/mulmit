@@ -23,9 +23,9 @@
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260823-42">
-  <link rel="stylesheet" href="/static/tokens.css?v=20260823-42">
-  <link rel="stylesheet" href="/static/console.css?v=20260823-42">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-44">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260823-44">
+  <link rel="stylesheet" href="/static/console.css?v=20260823-44">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -103,6 +103,24 @@
       <span class="status-badge warn" data-i18n="weekend.notSpot">실제 체결가 아님</span>
       <span class="status-badge warn pro-only" data-i18n="console.hip3">HIP-3 합성 무기한선물 · trade.xyz</span>
     </div>
+
+    <!-- 미국 정규장이 닫혀 있을 때만 선다. 열려 있으면 서버가 카드를 만들지
+         않고, 클라이언트는 섹션을 숨긴다 — 그때는 진짜 호가가 있다. -->
+    <section class="console-section" id="us-overnight" hidden aria-labelledby="uso-title">
+      <header>
+        <h2 id="uso-title" data-i18n="uso.title">미국 대형주, 장 밖에서는</h2>
+        <span class="sec-note" data-i18n="uso.note">마지막 정규장 마감 이후 얼마나 움직였나</span>
+      </header>
+      <p class="section-copy" data-i18n="uso.copy">미국장이 닫혀 있어도 대형주를 추종하는 합성 무기한선물은 24시간 거래됩니다. 마지막 정규장 마감(16:00 ET) 시점의 퍼프 가격과 지금을 견줍니다. 현물 호가가 아니고 다음 시초가를 예측하지도 않습니다.</p>
+      <div class="risk-strip" role="note">
+        <span class="status-badge warn" data-i18n="weekend.notSpot">실제 체결가 아님</span>
+        <span class="status-badge warn" data-i18n="uso.badgePerp">USD 합성 무기한선물</span>
+        <span class="status-badge warn" data-i18n="weekend.noPromise">다음 시초가 보장 안 됨</span>
+      </div>
+      <div id="uso-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div id="uso-grid" class="kro-grid" hidden></div>
+      <footer class="kro-footer" id="uso-footer" hidden></footer>
+    </section>
 
     <details class="console-section weekend-details" id="weekend-details">
       <summary>
@@ -298,8 +316,8 @@
   </template>
 
   <script>window.MULMIT_PAGE = "us";</script>
-  <script src="/static/console.js?v=20260823-42" defer></script>
-  <script src="/static/monitor.js?v=20260823-42" defer></script>
-  <script src="/static/search.js?v=20260823-42" defer></script>
+  <script src="/static/console.js?v=20260823-44" defer></script>
+  <script src="/static/monitor.js?v=20260823-44" defer></script>
+  <script src="/static/search.js?v=20260823-44" defer></script>
 </body>
 </html>

@@ -51,6 +51,7 @@ from . import (
     store,
     us_events,
     us_fundamentals,
+    us_overnight,
     us_ptr,
 )
 from .data import DataUnavailable, RateLimited
@@ -1171,6 +1172,21 @@ def kr_overnight(request: Request, response: Response) -> dict:
     response.headers["Cache-Control"] = "private, max-age=3, stale-while-revalidate=300"
     response.headers["X-Data-Source"] = "Hyperliquid HIP-3 + FSC + BOK ECOS"
     return build_kr_overnight()
+
+
+@app.get("/api/us/overnight")
+@limiter.limit(config.RATE_LIMIT)
+def us_overnight_route(request: Request, response: Response) -> dict:
+    """미국 대형주 24시간 참고가: HIP-3 마크 대 마지막 정규장 마감(16:00 ET).
+
+    정규장이 열려 있으면 카드를 만들지 않고 `status: "market_open"`만 답한다 —
+    그때는 진짜 호가가 있고, 합성 퍼프를 나란히 두면 나은 게 없으면서
+    "실시간 주가"로 오해만 부른다.
+    """
+    require_hip3_public_display()
+    response.headers["Cache-Control"] = "private, max-age=3, stale-while-revalidate=300"
+    response.headers["X-Data-Source"] = "Hyperliquid HIP-3"
+    return us_overnight.build_us_overnight()
 
 
 @app.get("/api/kr/stock/{code}")
