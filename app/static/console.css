@@ -530,6 +530,10 @@ html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
 /* 섹션 머리의 고지 칩은 사건이 아니라 **상시** 표시다. 심각도 배경을 그대로
  * 받으면 호박색 알약 셋이 늘 켜져 있어, 정작 카드 안의 경고가 묻힌다.
  * 여기서는 조용한 윤곽선으로 되돌린다. */
+/* 연중 최고 대비는 정의상 0 이하다. 등락색(빨강)을 쓰면 "오늘 떨어졌다"로
+ * 읽힌다 — 그날의 움직임이 아니라 고점에서의 거리다. 조용한 잉크로 둔다. */
+.kridx-table td.peak { color: var(--ink-3); }
+
 .risk-strip .status-badge {
   padding: 4px 10px;
   color: var(--ink-3); background: transparent; border-color: var(--line-strong);

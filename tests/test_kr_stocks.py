@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import threading
 import time
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -481,3 +483,35 @@ def test_an_unfinalised_52_week_low_of_zero_is_null_not_a_record():
 
     assert rows[0]["yr_lwst"] is None
     assert rows[0]["yr_hgst"] == 6813.34
+
+
+def test_the_index_table_does_not_promise_a_52_week_range_it_cannot_show():
+    """열 이름이 없는 데이터를 약속하고 있었다.
+
+    `52주 범위`라는 이름으로 스물한 행 모두 "—"였다. 두 가지가 틀렸다.
+
+    1. 범위가 아니다. 금융위는 연중 **최저**를 확정 전까지 0(그리고 미래
+       날짜)으로 내보내고 `_positive_or_none`이 그걸 올바르게 걷어낸다
+       (`test_an_unfinalised_52_week_low_of_zero_is_null_not_a_record`).
+       그래서 한쪽 끝만 있다.
+    2. 52주가 아니다. 원천 필드 `yrWRcrdHgst`는 "지수의 연중최고치"이고,
+       형제 필드가 전년말 대비(`lsYrEdVsFltRt`)인 것도 이 데이터셋이 역년
+       기준이라는 뜻이다.
+
+    이름이 되돌아가면 화면이 다시 거짓을 말한다.
+    """
+    monitor = (Path(config.STATIC_DIR) / "monitor.js").read_text(encoding="utf-8")
+    labels = re.findall(r'"kridx\.colRange":\s*"([^"]+)"', monitor)
+    assert len(labels) == 2, f"한국어/영어 라벨 둘을 찾지 못했다: {labels}"
+    for label in labels:
+        assert "52" not in label, f"52주라고 부르고 있다(연중 기준이다): {label!r}"
+        assert "범위" not in label and "range" not in label.lower(), (
+            f"범위라고 부르는데 한쪽 끝만 있다: {label!r}"
+        )
+
+
+def test_the_missing_year_low_is_explained_on_screen():
+    """값을 비우는 것으로 끝내지 않는다 — 왜 없는지가 화면에 남아야 한다."""
+    monitor = (Path(config.STATIC_DIR) / "monitor.js").read_text(encoding="utf-8")
+    assert monitor.count('"kridx.lowNote":') == 2, "근거 문구가 두 언어에 다 있어야 한다"
+    assert 'lowNote.textContent = t("kridx.lowNote")' in monitor, "근거 문구를 푸터에 붙이지 않았다"
