@@ -120,9 +120,9 @@ TARGETS = (
     # 미국 상장 한국 노출 ETF 퍼프 (2026-08-18 xyz 신규 상장 확인). USD 자산이라
     # 원화 환산·공식 종가 비교가 없다 — 15:30 세션 참고선(퍼프 자기 비교)만 성립.
     OvernightTarget("ewy", "xyz:EWY", "us_etf", None, "EWY (한국 ETF)", "EWY (Korea ETF)"),
-    OvernightTarget(
-        "koru", "xyz:KORU", "us_etf", None, "KORU (3×)", "KORU (3×)", leverage=3,
-    ),
+    # KORU(3×)는 카드로 두지 않는다. EWY의 3배 상품이라 방향과 재료가 같고,
+    # 카드 하나가 더 붙어 3열 그리드에 홀로 남는 줄이 생겼다. 주말 신호의
+    # 24시간 보조지표로는 그대로 남는다(app/weekend_signals.py).
 )
 
 
