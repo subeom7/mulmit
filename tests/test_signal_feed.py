@@ -28,26 +28,34 @@ def quiet_index_move(monkeypatch):
     )
 
 
-def _seed(db):
+def _seed(db, base: dt.date = TODAY):
+    """씨앗은 기준일에 **상대적**으로 심는다.
+
+    `/api/feed`는 인자를 받지 않으므로 벽시계의 오늘을 쓴다. 씨앗을 달력에 못
+    박아 두면 `MAX_AGE_DAYS`(7일) 창이 하루씩 밀리면서 가장 오래된 항목부터
+    조용히 빠지고, 어느 날 자정에 아무도 아무것도 안 바꿨는데 CI가 빨개진다
+    (2026-08-24 실제로 그랬다). 그래서 오프셋으로 심는다.
+    """
+    day = lambda back: (base - dt.timedelta(days=back)).isoformat()  # noqa: E731
     store.save_insider_filings("AAPL", cik="1", name="Apple Inc.", exchange="Nasdaq",
                                filings_seen=0, transactions=[])
     store.save_company_events("AAPL", [{
         "accession_number": "a-1", "cik": "1", "form_type": "8-K",
-        "filed_at": dt.date(2026, 8, 18), "accepted_at": "2026-08-18T16:31:02.000Z",
+        "filed_at": base - dt.timedelta(days=1), "accepted_at": f"{day(1)}T16:31:02.000Z",
         "items": "2.02", "url": "https://sec.example/a-1",
     }])
     store.save_report(kr_events.CACHE_KEY, {"events": [{
-        "rcept_no": "r1", "filed_at": "2026-08-18", "company": "삼성전자",
+        "rcept_no": "r1", "filed_at": day(1), "company": "삼성전자",
         "stock_code": "005930", "report_name": "주요사항보고서(자기주식취득결정)",
         "url": "https://dart.example/r1",
     }]})
     store.save_report(us_ptr.CACHE_KEY, {"filings": [{
-        "doc_id": "d1", "name": "Doe, Jane", "filed_date": "2026-08-17",
+        "doc_id": "d1", "name": "Doe, Jane", "filed_date": day(2),
         "pdf_url": "https://clerk.example/d1", "transaction_count": 2,
         "transactions": [{"ticker": "NVDA"}, {"ticker": "NVDA"}],
     }]})
     store.save_report(kr_pension.CACHE_KEY, {"filings": [{
-        "rcept_no": "p1", "report_date": "2026-08-16", "company": "카카오",
+        "rcept_no": "p1", "report_date": day(3), "company": "카카오",
         "stock_code": "035720", "ratio_change": -0.5,
         "report_url": "https://dart.example/p1",
     }]})
@@ -81,7 +89,8 @@ def test_missing_sources_simply_do_not_appear(db):
 
 
 def test_route_serves_and_upcoming_stays_separate(db):
-    _seed(db)
+    # 이 하나만 라우트를 탄다 — 라우트는 `today`를 안 받으니 벽시계를 쓴다.
+    _seed(db, base=dt.date.today())
     response = TestClient(app).get("/api/feed")
 
     assert response.status_code == 200
