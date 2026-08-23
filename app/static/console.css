@@ -517,6 +517,10 @@ html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
 .stress-panel .accessible-table th:last-child,
 .stress-panel .accessible-table td:last-child { padding-right: 0; }
 .panel > .crypto-news { padding: 0 var(--sp-4); }
+/* 영상 격자도 같은 여백을 받아야 한다. 이 줄이 없어서 카드가 패널 테두리에
+ * 그대로 붙어 있었다(실측: 좌우 여백 1px — 테두리 두께가 전부였다).
+ * 목록과 달리 격자는 위아래로도 카드가 닿으므로 네 방향 모두 준다. */
+.panel > .news-videos { padding: var(--sp-4); }
 /* 출처·방법 표기는 패널 바닥에 그냥 놓여 있어 테두리에 닿았다(실측 /bio 4곳).
  * 약관상 표시 의무가 있는 줄이라 더더욱 제대로 앉아야 한다. */
 .panel > .kro-method, .panel > .kro-disclaimer,
@@ -719,7 +723,9 @@ html[data-lang="en"] .lang-en { display: revert; }
 
 /* 피드 — 9~10px로 깔려 있던 메타를 전부 12px 바닥 위로 올린다. 날짜·출처·태그가
  * 본문보다 작아야 할 이유는 있지만, 읽히지 않을 만큼 작아야 할 이유는 없다. */
-.feed-row { padding: 10px 14px; gap: 11px; }
+/* 같은 패널 안의 푸터가 var(--sp-4)라 14px이면 행 글자가 푸터 글자보다
+ * 2px 안쪽에 선다. 눈에 잘 안 띄지만 줄이 두 개 있으면 보인다. */
+.feed-row { padding: 10px var(--sp-4); gap: 11px; }
 .feed-row, .feed-item, .feed-text { font-size: var(--fs-sm); }
 .feed-date { flex-basis: 52px; font-size: var(--fs-xs); color: var(--ink-3); }
 .feed-tag { padding: 3px 8px; font-size: var(--fs-xs); }
