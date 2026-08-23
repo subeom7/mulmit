@@ -370,3 +370,30 @@ def test_the_not_a_ranking_badge_shows_in_beginner_mode_too():
     )
     line = next(row for row in html.splitlines() if "ksi.badgeNotRank" in row)
     assert "pro-only" not in line, "이 배지는 두 모드 모두에서 보여야 한다"
+
+
+def test_an_ambiguous_company_name_can_be_given_a_narrower_keyword(open_lane, roster, monkeypatch):
+    """`NAVER`를 검색한 사람 대부분은 주식을 보러 온 게 아니다.
+
+    회사 이름이 회사만 가리키지 않는 종목이 있다. 그런 종목은 검색어를 좁혀야
+    측정하는 것이 실제로 "이 주식에 대한 관심"이 된다. 화면에 서는 이름은 그대로
+    로스터의 회사명이다 — 검색어를 좁혔다고 표에 `NAVER 주가`라고 쓰면 안 된다.
+    """
+    monkeypatch.setattr(config, "NAVER_DATALAB_WATCHLIST", "005930,035420=NAVER 주가")
+    assert kr_search_interest.watchlist() == [("005930", None), ("035420", "NAVER 주가")]
+
+    provider = FakeProvider({"삼성전자": _flat(50.0), "NAVER 주가": _flat(20.0)})
+    payload = kr_search_interest.build(today=dt.date(2026, 8, 23), provider=provider)
+
+    assert provider.calls == [["삼성전자", "NAVER 주가"]], "상류에는 좁힌 검색어로 물어본다"
+    names = {stock["code"]: stock["name"] for stock in payload["stocks"]}
+    assert names["035420"] == "NAVER", "화면에는 회사명이 선다"
+
+
+def test_a_watchlist_entry_without_an_override_still_uses_the_company_name(open_lane, roster, monkeypatch):
+    monkeypatch.setattr(config, "NAVER_DATALAB_WATCHLIST", "005930")
+    assert kr_search_interest.watchlist() == [("005930", None)]
+    provider = FakeProvider({"삼성전자": _flat(50.0)})
+    payload = kr_search_interest.build(today=dt.date(2026, 8, 23), provider=provider)
+    assert provider.calls == [["삼성전자"]]
+    assert payload["stocks"][0]["name"] == "삼성전자"

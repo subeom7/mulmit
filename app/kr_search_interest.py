@@ -106,27 +106,47 @@ def seoul_today(now: dt.datetime | None = None) -> dt.date:
     return moment.astimezone(_KST).date()
 
 
-def watchlist() -> list[str]:
-    """관심도를 볼 종목 코드. 운영자가 env로 정하고, 없으면 비어 있다.
+def watchlist() -> list[tuple[str, str | None]]:
+    """(종목코드, 검색어 덮어쓰기) 목록. 운영자가 env로 정하고, 없으면 비어 있다.
+
+    기본 검색어는 회사 이름이다. 그런데 이름이 회사만 가리키지 않는 종목이 있다 —
+    `NAVER`로 검색한 사람 대부분은 주식을 보러 온 것이 아니고, `카카오`도 마찬가지다.
+    그런 종목은 `035420=NAVER 주가`처럼 검색어를 따로 준다.
 
     로스터 전체(3,000여 종목)를 도는 설계는 쿼터가 아니라 **뜻**에서 틀린다 —
     거래가 거의 없는 종목의 검색 추이는 잡음이고, 그것을 급등이라 부르면 화면이
     거짓말을 한다.
     """
-    raw = config.NAVER_DATALAB_WATCHLIST
-    return [code.strip().upper() for code in raw.split(",") if code.strip()]
+    entries: list[tuple[str, str | None]] = []
+    for chunk in config.NAVER_DATALAB_WATCHLIST.split(","):
+        item = chunk.strip()
+        if not item:
+            continue
+        code, sep, keyword = item.partition("=")
+        code = code.strip().upper()
+        if not code:
+            continue
+        entries.append((code, keyword.strip() if sep and keyword.strip() else None))
+    return entries
 
+def _label_for(code: str, keyword: str | None = None) -> dict[str, str] | None:
+    """검색어는 기본이 회사 이름이고, 모호한 종목만 덮어쓴다.
 
-def _label_for(code: str) -> dict[str, str] | None:
-    """검색어는 회사 이름이다. 로스터에 없는 코드는 만들어 내지 않고 버린다."""
+    로스터에 없는 코드는 만들어 내지 않고 버린다. 화면에 쓰는 이름은 언제나
+    로스터의 회사명이다 — 검색어가 `NAVER 주가`여도 표에는 `NAVER`로 선다.
+    """
     listing = store.get_kr_listing(code)
     if not listing:
         return None
     name = str(listing.get("itms_nm") or "").strip()
     if not name:
         return None
-    return {"code": code, "name": name, "market": str(listing.get("mrkt_ctg") or "").strip()}
-
+    return {
+        "code": code,
+        "name": name,
+        "market": str(listing.get("mrkt_ctg") or "").strip(),
+        "keyword": keyword or name,
+    }
 
 def _describe(series: list[dict[str, Any]]) -> dict[str, Any]:
     """한 계열 안에서 끝나는 계산만 한다 — 요청이 갈라져도 뜻이 변하지 않도록.
@@ -184,21 +204,24 @@ def build(
 ) -> dict[str, Any]:
     """워치리스트의 검색 관심도. 한 요청당 최대 5종목, 요청 사이 값은 섞지 않는다."""
     _require_lane()
-    wanted = [code.strip().upper() for code in (codes or watchlist()) if code.strip()]
+    if codes is None:
+        wanted = watchlist()
+    else:
+        wanted = [(str(code).strip().upper(), None) for code in codes if str(code).strip()]
     if not wanted:
         raise DataUnavailable("검색 관심도를 볼 종목이 지정되지 않았다")
 
-    entries = [entry for entry in (_label_for(code) for code in wanted) if entry]
+    entries = [entry for entry in (_label_for(code, keyword) for code, keyword in wanted) if entry]
     if not entries:
         raise DataUnavailable("워치리스트의 종목이 국내 로스터에 없다")
-
     end = (today or seoul_today()) - dt.timedelta(days=LAG_DAYS)
     start = end - dt.timedelta(days=WINDOW_DAYS - 1)
     client = provider or _provider()
 
     stocks: list[dict[str, Any]] = []
     for index, batch in enumerate(_batches(entries)):
-        groups = [(entry["name"], [entry["name"]]) for entry in batch]
+        # groupName이 응답의 title로 돌아오므로 그것이 매칭 열쇠다.
+        groups = [(entry["keyword"], [entry["keyword"]]) for entry in batch]
         try:
             payload = client.fetch_trend(groups, start=start, end=end, time_unit="date")
         except (DataUnavailable, RateLimited):
@@ -207,7 +230,7 @@ def build(
             continue
         by_title = {group["title"]: group for group in payload.get("groups") or []}
         for entry in batch:
-            group = by_title.get(entry["name"])
+            group = by_title.get(entry["keyword"])
             if not group or not group.get("series"):
                 continue
             stocks.append(
