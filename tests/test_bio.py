@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import urllib.error
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -261,3 +262,37 @@ def test_lanes_off_make_no_calls_and_routes_follow_the_gate_contracts(db, monkey
     assert approvals.status_code == 200 and approvals.headers["x-data-source"] == "openFDA"
     report = data_rights.lane_report()
     assert report["bio"]["status"] == "enabled" and report["clinicaltrials"]["status"] == "enabled" and report["openfda"]["status"] == "enabled"
+
+
+# --- 도달 가능성 -------------------------------------------------------------
+
+
+def test_bio_is_reachable_even_though_it_left_the_tab_row():
+    """탭에서 내렸지 페이지를 버린 게 아니다.
+
+    2026-08-23 판단: /bio는 기록 열람이라 값이 움직이지 않고(테이프·보드·타일
+    어휘가 하나도 맞지 않는다) 신호 피드에도 합류하지 않아, 시장 화면들과
+    나란히 탭을 차지할 자리가 아니다. 대신 랜딩 존 카드와 전 페이지 푸터로
+    간다 — 링크가 끊기면 고아 페이지가 되므로 여기서 못을 박는다.
+    """
+    static = Path(config.STATIC_DIR)
+    landing = (static / "landing.html").read_text(encoding="utf-8")
+    assert 'class="zone-link-card" href="/bio"' in landing, "랜딩 존 카드에서 사라졌다"
+
+    consoles = ["landing.html", "kr.html", "us.html", "crypto.html", "index.html", "glossary.html"]
+    for name in consoles:
+        page = (static / name).read_text(encoding="utf-8")
+        assert '<a href="/bio"' in page, f"{name} 푸터에 /bio 링크가 없다"
+
+    client = TestClient(app)
+    assert client.get("/bio").status_code == 200
+    assert "https://mulmit.com/bio" in client.get("/sitemap-pages.xml").text
+
+
+def test_bio_is_not_in_the_tab_row():
+    """탭 줄은 '지금 얼마'에 답하는 화면들의 자리다."""
+    static = Path(config.STATIC_DIR)
+    for page in static.glob("*.html"):
+        markup = page.read_text(encoding="utf-8")
+        assert 'class="view-tab" href="/bio"' not in markup, f"{page.name}에 바이오 탭이 돌아왔다"
+        assert 'class="view-tab active" href="/bio"' not in markup, f"{page.name}에 바이오 탭이 돌아왔다"
