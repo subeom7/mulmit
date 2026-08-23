@@ -25,8 +25,10 @@ from typing import Any, Protocol
 from urllib.parse import quote
 
 from . import data_rights, market_calendar, store
+from .macro_dashboard import PROVIDER_NAMES
 from .providers.base import DataUnavailable, RateLimited
-from .providers.fedboard import FEDBOARD_PROVIDER_ID, FEDBOARD_PUBLISHER
+from .providers.ecos import ECOS_PROVIDER_ID
+from .providers.fedboard import FEDBOARD_PROVIDER_ID
 from .providers.fsc import (
     FSC_INDEX_DATASET_URL,
     FSC_PROVIDER_ID,
@@ -272,27 +274,66 @@ def _fsc_servable() -> bool:
     )
 
 
+# What the rate is depends on which lane stored it, so the description follows
+# the row instead of being asserted here. This block used to name the Federal
+# Reserve as publisher while the text described the Bank of Korea — the lane had
+# moved to ECOS and the constant had not, and nothing checked.
+_FX_BASIS: dict[str, dict[str, str]] = {
+    ECOS_PROVIDER_ID: {
+        "ko": (
+            "한국은행 ECOS 원/달러 매매기준율(일별 공식 고시) — 실시간 환율이 아닙니다. "
+            "매매기준율은 정의상 직전 영업일 거래의 거래량가중평균이라, 표기된 날짜의 "
+            "시장 환율보다 하루 늦게 움직입니다."
+        ),
+        "en": (
+            "Daily official won/dollar trading-reference rate from the Bank of Korea's "
+            "ECOS; not a live exchange rate. By definition it is the volume-weighted "
+            "average of the previous business day's trades, so it trails the market rate "
+            "of the date shown by about a day."
+        ),
+    },
+    FEDBOARD_PROVIDER_ID: {
+        "ko": (
+            "미 연방준비제도 H.10 원/달러 환율(일별) — 실시간 환율이 아니며, "
+            "뉴욕 시각 정오 매수호가 기준으로 주간 단위로 공표됩니다."
+        ),
+        "en": (
+            "Daily won/dollar rate from the Federal Reserve's H.10 release; not a live "
+            "exchange rate. It is a noon buying rate in New York, published weekly."
+        ),
+    },
+}
+_FX_BASIS_UNKNOWN = {
+    "ko": "일별 공식 고시 환율 — 실시간 환율이 아닙니다.",
+    "en": "An official daily quotation, not a live exchange rate.",
+}
+
+
+def _fx_source(record: dict[str, Any] | None) -> tuple[str, str, str, str]:
+    """Provider id, publisher name and the basis text that belongs to that lane."""
+    provider = str((record or {}).get("provider_id") or "") or ECOS_PROVIDER_ID
+    basis = _FX_BASIS.get(provider, _FX_BASIS_UNKNOWN)
+    return provider, PROVIDER_NAMES.get(provider) or provider, basis["ko"], basis["en"]
+
+
 def _load_fx() -> dict[str, Any]:
     """Latest stored official won/dollar rate, or an honest unavailable block.
 
     Same double gate as the stress composite: the stored series row names its
     provider and rights status, and both must pass before the value ships.
     """
-    basis_ko = "한국은행 ECOS 원/달러 매매기준율(일별 공식 고시) — 실시간 환율이 아닙니다."
-    basis_en = (
-        "Daily official won/dollar trading-reference rate from the Bank of Korea's ECOS; "
-        "not a live exchange rate."
-    )
+    record = store.get_economic_series(FX_SERIES_KEY)
+    provider_id, publisher, basis_ko, basis_en = _fx_source(record)
     unavailable = {
         "status": "unavailable",
         "rate": None,
         "date": None,
         "series_key": FX_SERIES_KEY,
-        "publisher": FEDBOARD_PUBLISHER,
+        "provider": provider_id,
+        "publisher": publisher,
         "basis_ko": basis_ko,
         "basis_en": basis_en,
     }
-    record = store.get_economic_series(FX_SERIES_KEY)
     if record is None:
         return unavailable
     if not data_rights.series_values_servable(
@@ -311,10 +352,50 @@ def _load_fx() -> dict[str, Any]:
         "rate": float(rate),
         "date": date.isoformat(),
         "series_key": FX_SERIES_KEY,
-        "publisher": FEDBOARD_PUBLISHER,
+        "provider": provider_id,
+        "publisher": publisher,
         "basis_ko": basis_ko,
         "basis_en": basis_en,
     }
+
+
+def _next_trading_day(day: dt.date) -> dt.date:
+    following = day + dt.timedelta(days=1)
+    while following.weekday() >= 5 or market_calendar.krx_closed(following):
+        following += dt.timedelta(days=1)
+    return following
+
+
+def _mark_close_lag(official: dict[str, Any], boundary: dt.datetime) -> None:
+    """Say so when the close on the card is older than the last session that traded.
+
+    The public dataset publishes a session's close after 13:00 KST on the next
+    business day, so from Friday's close until Monday lunchtime the newest close
+    we may serve is Thursday's — while every other quote screen is already
+    comparing against Friday. The card already carries dates, but a reader
+    comparing platforms needs to know the gap is a publication schedule and not
+    a disagreement about the price.
+    """
+    if official.get("status") != "ok" or not official.get("date"):
+        return
+    try:
+        stored = dt.date.fromisoformat(str(official["date"]))
+    except ValueError:
+        return
+    last_session = boundary.date()
+    official["last_session_date"] = last_session.isoformat()
+    official["behind_last_session"] = stored < last_session
+    if stored >= last_session:
+        return
+    publish = _next_trading_day(last_session)
+    official["publication_note_ko"] = (
+        f"{last_session.month}/{last_session.day} 종가는 "
+        f"{publish.month}/{publish.day} 13시(KST) 이후 공개됩니다"
+    )
+    official["publication_note_en"] = (
+        f"The {last_session.isoformat()} close is published after 13:00 KST on "
+        f"{publish.isoformat()}"
+    )
 
 
 def _official_close(target: OvernightTarget, fsc_ok: bool) -> dict[str, Any]:
@@ -402,6 +483,7 @@ def _card(
 ) -> dict[str, Any]:
     perp = _perp_block(market, snapshot, target.symbol)
     official = _official_close(target, fsc_ok)
+    _mark_close_lag(official, boundary)
 
     implied: dict[str, Any] = {
         "status": "unavailable",
@@ -620,8 +702,8 @@ def build_kr_overnight(
                 ),
             },
             "fx": {
-                "provider": FEDBOARD_PROVIDER_ID,
-                "publisher": FEDBOARD_PUBLISHER,
+                "provider": fx.get("provider") or ECOS_PROVIDER_ID,
+                "publisher": fx.get("publisher"),
                 "series_key": FX_SERIES_KEY,
                 "status": fx["status"],
             },
