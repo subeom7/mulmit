@@ -110,6 +110,12 @@ _BUSINESS_CONTEXT = (
     "semiconductor", "cash flow", "valuation", "market cap", "investor", "funding",
     "antitrust", "regulator", "fine", "probe", "investigation", "outage", "strike",
     "contract", "launch", "price cut", "buyback", "bankruptcy", "downgrade", "upgrade",
+    # 실적·주가 움직임을 말하는 표현. 처음에 빠뜨렸다가 기존 테스트에 잡혔다 —
+    # "Samsung Electronics beats estimates"와 "Nvidia and Microsoft rally"가
+    # 걸러지고 있었다. 둘 다 명백한 시장 뉴스다.
+    "beat", "miss", "estimate", "rally", "surge", "plunge", "slump", "soar",
+    "tumble", "outlook", "target", "analyst", "quarterly", "quarter", "margin",
+    "order", "backlog", "export", "import", "output", "shipment", "yield",
 )
 _BUSINESS_PATTERNS = tuple(
     re.compile(rf"\b{re.escape(word)}(?:s|es|ed|ing)?\b", re.I) for word in _BUSINESS_CONTEXT
