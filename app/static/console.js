@@ -293,6 +293,7 @@
   function updateTile(node, spec) {
     if (!node) return;
     odometer(node.querySelector(".tile-value > span"), spec.value, spec.key);
+    flash(node.querySelector(".tile-value"), spec.key, spec.raw);
     const unit = node.querySelector(".tile-unit");
     if (unit) unit.textContent = spec.unit || "";
     const change = node.querySelector(".tile-change");
@@ -684,7 +685,8 @@
       const price = card.querySelector(".kro-price");
       const symbol = card.querySelector(".kro-sym")?.textContent?.trim();
       if (!price || !symbol) return;
-      price.classList.remove("tick-up", "tick-down");
+      // 렌더러가 붙인 깜빡임은 그대로 둔다 — 굴림과 겹쳐도 서로 다른 속성을
+      // 건드리고(색 vs 위치), 굴림이 못 도는 경우의 유일한 신호이기도 하다.
       // 렌더러가 카드를 새로 만들면 dataset이 비어 있고 textContent가 참값이다.
       // 같은 노드를 다시 보는 경우(크립토 5초 루프처럼 renderKrOvernight 없이
       // 렌더 이벤트만 오는 때)에는 dataset에 적어 둔 값이 참값이다.

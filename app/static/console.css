@@ -260,8 +260,6 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 .odo-strip i { display: block; height: 1em; line-height: 1; font-style: normal; }
 .odo-s { display: inline-block; line-height: 1; vertical-align: bottom; }
 
-/* 굴림이 붙은 값에는 깜빡임을 걸지 않는다 — 두 효과가 겹치면 산만하다. */
-.kro-price.is-odo, .tile-value.is-odo { animation: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
   .odo-strip { transition: none; }
@@ -275,11 +273,13 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
   0% { color: var(--down); text-shadow: 0 0 14px color-mix(in srgb, var(--down) 45%, transparent); }
   100% { color: inherit; text-shadow: none; }
 }
-/* 테이프는 이미 옆으로 흐르고 있어서 자리 굴림까지 얹으면 읽히지 않는다.
- * 좁은 칸에서는 짧은 깜빡임이 더 낫다. */
-.tape-value.tick-up { animation: console-tick-up .7s ease-out; }
-.tape-value.tick-down { animation: console-tick-down .7s ease-out; }
+/* 깜빡임은 굴림과 함께 간다. 굴림은 위치를, 깜빡임은 색을 건드리므로 겹쳐도
+ * 서로를 지우지 않고, 자릿수가 바뀌어 굴리지 못할 때는 이쪽만 남는다.
+ * 테이프는 이미 옆으로 흐르고 있어 자리 굴림 없이 깜빡임만 쓴다. */
+.tile-value.tick-up, .tape-value.tick-up { animation: console-tick-up .7s ease-out; }
+.tile-value.tick-down, .tape-value.tick-down { animation: console-tick-down .7s ease-out; }
 @media (prefers-reduced-motion: reduce) {
+  .tile-value.tick-up, .tile-value.tick-down,
   .tape-value.tick-up, .tape-value.tick-down { animation: none; }
 }
 
