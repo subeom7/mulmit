@@ -163,6 +163,7 @@ const TEXT = {
     "dots.target": "전망 대상", "dots.median": "중앙값", "dots.band": "중앙경향", "dots.year": "{year}년 말", "dots.longerRun": "장기 (중립)",
     "dots.asof": "SEP {date} 기준 · 분기 FOMC(3·6·9·12월)마다 갱신 · 중앙경향은 상·하위 3명 제외 범위",
     "krp.title": "국민연금 5% 공시", "krp.copy": "주식등의 대량보유 상황보고(5% 룰) 중 국민연금공단 제출분입니다. 보고서 단위의 보유비율 변동이며, 통상 한 달치가 월초에 일괄 공시됩니다. 일별 매매가 아닙니다.",
+    "krev.colCode": "종목코드", "krp.colMarket": "시장",
     "krp.colDate": "보고일", "krp.colCompany": "회사", "krp.colRatio": "보유비율", "krp.colChange": "증감", "krp.colShares": "보유주식수", "krp.colReason": "보고사유",
     "krp.detailPending": "상세 미확보", "krp.window": "최근 {days}일 공시 {total}건 중 {count}건",
     "krh.title": "대량보유 5% 공시 — 전체 보고자", "krh.copy": "자본시장법 5% 룰에 따른 주식등의 대량보유 상황보고 전체입니다 — 운용사·펀드·대주주 모두. 보고 기한이 5영업일이라 보고일은 변동일과 다를 수 있습니다. 일별 매매가 아닙니다.",
@@ -329,6 +330,7 @@ const TEXT = {
     "krh.title": "5% filings — all filers", "krh.copy": "Every large-holding (5% rule) report: asset managers, funds, major shareholders. The filing deadline is five business days, so the report date can trail the change — not daily trades.",
     "krh.colReporter": "Filer", "krh.colType": "Type",
     "krh.window": "{count} of {total} filings in the last {days} days",
+    "krev.colCode": "Code", "krp.colMarket": "Market",
     "krp.colDate": "Filed", "krp.colCompany": "Company", "krp.colRatio": "Stake", "krp.colChange": "Change", "krp.colShares": "Shares held", "krp.colReason": "Reason",
     "krp.detailPending": "Detail pending", "krp.window": "{count} of {total} filings in the last {days} days",
     "kre.title": "ETF board", "kre.copy": "Top ETFs by traded value with close, NAV and the premium/discount. Confirmed end-of-day values, not live quotes.",
@@ -1549,8 +1551,10 @@ function renderKrPension() {
   const table = document.createElement("table"); table.className = "accessible-table kridx-table";
   table.innerHTML = `<thead><tr>
     <th scope="col">${t("krp.colDate")}</th><th scope="col">${t("krp.colCompany")}</th>
+    <th scope="col">${t("krp.colMarket")}</th>
     <th scope="col" class="num">${t("krp.colRatio")}</th><th scope="col" class="num">${t("krp.colChange")}</th>
     <th scope="col" class="num">${t("krp.colShares")}</th><th scope="col">${t("krp.colReason")}</th>
+    <th scope="col">${t("krev.colLink")}</th>
   </tr></thead>`;
   const tbody = document.createElement("tbody");
   const signClass = (value) => value == null ? "" : value > 0 ? "up" : value < 0 ? "down" : "";
@@ -1558,19 +1562,19 @@ function renderKrPension() {
     const tr = document.createElement("tr");
     const dateTd = document.createElement("td");
     dateTd.textContent = kroDate(filing.report_date);
+    // 한 칸에 회사명·원문 링크·시장이 함께 있었다. 셋 다 다른 것이고 글꼴도
+    // 굵기도 달라서, 읽는 사람이 매번 경계를 다시 찾아야 했다. 열로 나눈다.
     const companyTd = document.createElement("td"); companyTd.className = "krp-company";
     companyTd.append(hubLink(filing.company || "—", filing.stock_code));
+    const marketTd = document.createElement("td");
+    marketTd.textContent = filing.market ? localValue(filing.market, state.lang) : "—";
+    const sourceTd = document.createElement("td");
     if (filing.report_url) {
       const source = document.createElement("a");
       source.href = filing.report_url; source.target = "_blank"; source.rel = "noopener noreferrer";
-      source.className = "krp-source"; source.textContent = "원문";
-      companyTd.append(source);
-    }
-    if (filing.market) {
-      const chip = document.createElement("small"); chip.className = "krp-market";
-      chip.textContent = localValue(filing.market, state.lang);
-      companyTd.append(chip);
-    }
+      source.textContent = t("krev.view");
+      sourceTd.append(source);
+    } else sourceTd.textContent = "—";
     const ratio = safeNumber(filing.ratio); const ratioChange = safeNumber(filing.ratio_change);
     const shares = safeNumber(filing.shares);
     const ratioTd = document.createElement("td"); ratioTd.className = "num";
@@ -1584,7 +1588,7 @@ function renderKrPension() {
     reasonTd.textContent = reason
       ? (state.lang === "en" ? (KRP_REASON_EN[reason] || reason) : reason)
       : (filing.detail_status === "unavailable" ? t("krp.detailPending") : "—");
-    tr.append(dateTd, companyTd, ratioTd, changeTd, sharesTd, reasonTd);
+    tr.append(dateTd, companyTd, marketTd, ratioTd, changeTd, sharesTd, reasonTd, sourceTd);
     tbody.append(tr);
   }
   table.append(tbody); scroll.append(table); body.append(scroll);
@@ -2143,7 +2147,7 @@ function renderKrHoldings() {
     <th scope="col">${t("krp.colDate")}</th><th scope="col">${t("krp.colCompany")}</th>
     <th scope="col">${t("krh.colReporter")}</th><th scope="col">${t("krh.colType")}</th>
     <th scope="col" class="num">${t("krp.colRatio")}</th><th scope="col" class="num">${t("krp.colChange")}</th>
-    <th scope="col">${t("krp.colReason")}</th>
+    <th scope="col">${t("krp.colReason")}</th><th scope="col">${t("krev.colLink")}</th>
   </tr></thead>`;
   const tbody = document.createElement("tbody");
   const signClass = (value) => value == null ? "" : value > 0 ? "up" : value < 0 ? "down" : "";
@@ -2153,12 +2157,13 @@ function renderKrHoldings() {
     dateTd.textContent = kroDate(filing.report_date);
     const companyTd = document.createElement("td"); companyTd.className = "krp-company";
     companyTd.append(hubLink(filing.company || "—", filing.stock_code));
+    const sourceTd = document.createElement("td");
     if (filing.report_url) {
       const source = document.createElement("a");
       source.href = filing.report_url; source.target = "_blank"; source.rel = "noopener noreferrer";
-      source.className = "krp-source"; source.textContent = "원문";
-      companyTd.append(source);
-    }
+      source.textContent = t("krev.view");
+      sourceTd.append(source);
+    } else sourceTd.textContent = "—";
     const reporterTd = document.createElement("td");
     reporterTd.textContent = filing.reporter || "—";
     const typeTd = document.createElement("td");
@@ -2173,7 +2178,7 @@ function renderKrHoldings() {
     reasonTd.textContent = reason
       ? (state.lang === "en" ? (KRP_REASON_EN[reason] || reason) : reason)
       : "—";
-    tr.append(dateTd, companyTd, reporterTd, typeTd, ratioTd, changeTd, reasonTd);
+    tr.append(dateTd, companyTd, reporterTd, typeTd, ratioTd, changeTd, reasonTd, sourceTd);
     tbody.append(tr);
   }
   table.append(tbody); scroll.append(table); body.append(scroll);
@@ -2199,20 +2204,23 @@ function renderKrEvents() {
   section.hidden = false;
 
   const table = document.createElement("table"); table.className = "accessible-table";
-  table.innerHTML = `<thead><tr><th>${t("krev.colDate")}</th><th>${t("krev.colCompany")}</th><th>${t("krev.colName")}</th><th>${t("krev.colLink")}</th></tr></thead>`;
+  // 한 칸에 두 가지를 넣지 않는다. 종목코드와 회사명은 서로 다른 글꼴로
+  // 붙어 있어서 눈이 어디까지가 코드인지 매번 다시 재고 있었다.
+  table.innerHTML = `<thead><tr><th>${t("krev.colDate")}</th><th>${t("krev.colCode")}</th><th>${t("krev.colCompany")}</th><th>${t("krev.colName")}</th><th>${t("krev.colLink")}</th></tr></thead>`;
   const tbody = document.createElement("tbody");
   for (const event of events) {
     const tr = document.createElement("tr");
     const date = document.createElement("td"); date.textContent = dateText(event.filed_at);
+    const codeTd = document.createElement("td"); codeTd.className = "krp-code";
+    codeTd.textContent = event.stock_code || "—";
     const company = document.createElement("td");
-    const code = document.createElement("code"); code.textContent = event.stock_code || "";
-    company.append(code, document.createTextNode(" "), hubLink(event.company || "", event.stock_code));
+    company.append(hubLink(event.company || "", event.stock_code));
     const name = document.createElement("td"); name.textContent = event.report_name || "—";
     const linkTd = document.createElement("td");
     const link = document.createElement("a"); link.href = event.url; link.target = "_blank"; link.rel = "noopener noreferrer";
     link.textContent = t("krev.view");
     linkTd.append(link);
-    tr.append(date, company, name, linkTd); tbody.append(tr);
+    tr.append(date, codeTd, company, name, linkTd); tbody.append(tr);
   }
   table.append(tbody);
   const scroll = document.createElement("div"); scroll.className = "table-scroll"; scroll.append(table);
