@@ -9,6 +9,7 @@ Pillow is only a dev dependency of scripts/make_favicons.py.
 
 from __future__ import annotations
 
+import re
 import struct
 from pathlib import Path
 
@@ -67,3 +68,37 @@ def test_every_public_page_declares_ico_png_svg_and_apple_touch_icons():
         assert 'sizes="96x96" href="/static/brand/favicon-96.png"' in head, page.name
         assert 'type="image/svg+xml" href="/static/brand/mulmit-favicon.svg"' in head, page.name
         assert 'rel="apple-touch-icon"' in head, page.name
+
+
+# --- 웹폰트 -----------------------------------------------------------------
+
+FONT_DIR = Path(config.STATIC_DIR) / "fonts" / "pretendard"
+WOFF2_SIGNATURE = b"wOF2"
+
+
+def test_pretendard_is_self_hosted_and_complete():
+    """폰트는 저장소가 들고 있어야 한다 — 제3자 CDN 요청을 만들지 않는다.
+
+    구간 분할본이라 CSS가 참조하는 파일이 하나라도 빠지면 그 유니코드 대역만
+    조용히 시스템 글꼴로 떨어진다. 눈에 잘 안 띄는 실패라 개수를 못 박는다.
+    """
+    stylesheet = (FONT_DIR / "PretendardVariable-dynamic-subset.css").read_text(encoding="utf-8")
+    referenced = re.findall(r"url\((\./woff2-dynamic-subset/[^)]+)\)", stylesheet)
+    assert referenced, "분할본 CSS가 woff2를 하나도 참조하지 않는다"
+    for relative in referenced:
+        assert (FONT_DIR / relative[2:]).is_file(), f"참조된 폰트가 없다: {relative}"
+    assert (FONT_DIR / "OFL.txt").is_file(), "OFL 라이선스 원문이 함께 있어야 한다"
+
+
+def test_woff2_is_served_as_a_font_not_as_text():
+    """StaticFiles는 mimetypes 표에 기대고, 그 표는 OS마다 다르다.
+
+    woff2를 모르는 환경에서는 바이너리가 `text/plain; charset=utf-8`로 나갔다
+    (윈도우 실측). 브라우저가 스니핑해서 대개는 그려지지만, charset이 붙은
+    바이너리는 중간의 프록시가 변환을 시도하면 그대로 깨진다.
+    """
+    client = TestClient(app)
+    response = client.get("/static/fonts/pretendard/woff2-dynamic-subset/PretendardVariable.subset.0.woff2")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "font/woff2"
+    assert response.content[:4] == WOFF2_SIGNATURE
