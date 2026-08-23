@@ -213,3 +213,24 @@ def test_the_player_is_not_shrunk_below_the_size_the_terms_require():
 
     assert "min-height: 200px" in rule
     assert "width: 100%" in rule
+
+
+def test_serving_does_not_need_the_api_key(monkeypatch):
+    """키는 ingest 컨테이너에만 있다. 서빙이 키를 요구하면 화면에서 lane이 사라진다."""
+    monkeypatch.setattr(news_videos.config, "YOUTUBE_ENABLED", True)
+    monkeypatch.setattr(news_videos.config, "YOUTUBE_API_KEY", "")   # web 컨테이너의 상태
+    fresh = news_videos._now().isoformat().replace("+00:00", "Z")
+    monkeypatch.setattr(
+        news_videos.store, "load_report",
+        lambda *_a, **_k: {"videos": [{"video_id": "v", "stored_at": fresh}], "count": 1},
+    )
+
+    assert news_videos.get_videos()["count"] == 1
+
+
+def test_collecting_still_refuses_without_a_key(monkeypatch):
+    monkeypatch.setattr(news_videos.config, "YOUTUBE_ENABLED", True)
+    monkeypatch.setattr(news_videos.config, "YOUTUBE_API_KEY", "")
+
+    with pytest.raises(news_videos.NewsVideosDisabled):
+        news_videos.refresh()

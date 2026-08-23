@@ -62,8 +62,19 @@ class NewsVideosDisabled(RuntimeError):
 
 
 def _require_lane() -> None:
+    """서빙 게이트. 저장된 목록을 내보내는 데 키는 필요 없다.
+
+    키까지 요구하면 web 컨테이너에서 lane이 통째로 잠긴다 — 키는 ingest에만
+    주기 때문이다(docker-compose.yml의 x-app 대 ingest 블록). 그러면 수집은
+    멀쩡히 되는데 화면에서는 섹션이 조용히 사라진다.
+    """
     if not config.YOUTUBE_ENABLED:
         raise NewsVideosDisabled("disabled")
+
+
+def _require_key() -> None:
+    """수집 게이트. 유튜브를 부르는 쪽에만 키가 있으면 된다."""
+    _require_lane()
     if not config.YOUTUBE_API_KEY:
         raise NewsVideosDisabled("no api key")
 
@@ -136,7 +147,7 @@ def refresh(provider: YouTubeProvider | None = None) -> dict:
     `channels.list`도 `playlistItems.list`도 각 1유닛이라 하루 10,000 예산에서
     한 사이클이 5유닛이다. 100회/일짜리 `search.list` 버킷은 건드리지 않는다.
     """
-    _require_lane()
+    _require_key()
     provider = provider or YouTubeProvider(
         config.YOUTUBE_API_KEY, timeout=config.YOUTUBE_TIMEOUT
     )
