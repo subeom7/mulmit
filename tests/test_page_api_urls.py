@@ -83,6 +83,23 @@ def test_the_stock_hub_asks_for_the_ticker_rather_than_filtering_a_global_feed()
         )
 
 
+def test_the_hub_does_not_read_field_names_the_payloads_never_had():
+    """Four columns rendered em dashes over rows that carried the data.
+
+    Each was a guessed field name: the insider payload nests `owner` and
+    `transaction` objects, and the congressional payload calls them `name` and
+    `date`. A blocklist is shallow, but these four are what actually shipped.
+    """
+    text = (STATIC / "stock.html").read_text(encoding="utf-8")
+    for wrong, right in (
+        ("r.owner_name", "r.owner.name"),
+        ("r.transaction_meaning", "r.transaction.label"),
+        ("filing.member", "filing.name"),
+        ("tr.transaction_date", "tr.date"),
+    ):
+        assert wrong not in text, f"{wrong} is not in the payload; it is {right}"
+
+
 def test_page_sections_report_a_failure_instead_of_swallowing_it():
     """Three broken sections survived because every catch was empty."""
     text = (STATIC / "stock.html").read_text(encoding="utf-8")

@@ -18,7 +18,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260823-29">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-30">
   <style>
     .stock-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 26px 0 18px; border-bottom: 1px solid var(--line); }
     .stock-head h1 { margin: 0; font-size: clamp(26px, 4vw, 40px); letter-spacing: -.04em; }
@@ -230,7 +230,22 @@ async function loadUs() {
   // 내부자 Form 3/4/5
   try {
     const i = await fetchJson("/api/insider/" + SYMBOL + "?limit=12");
-    const rows = (i.transactions || []).slice(0, 12).map((r) => [["", r.transaction_date || r.filing_date || "—"], ["", r.owner_name || "—"], ["", (r.transaction_meaning && r.transaction_meaning.ko) || r.transaction_code || "—"], ["num", num(r.shares)], ["num", r.price_per_share == null ? "—" : "$" + num(r.price_per_share, 2)]]);
+    // owner and transaction are objects in this payload, not flat fields. The
+    // page read owner_name and transaction_meaning and rendered em dashes over
+    // rows that carried the data.
+    const rows = (i.transactions || []).slice(0, 12).map((r) => {
+      const owner = r.owner || {};
+      const who = owner.title ? `${owner.name} · ${owner.title}` : (owner.name || "—");
+      const move = (r.transaction && r.transaction.label && r.transaction.label.ko)
+        || (r.transaction && r.transaction.code) || "—";
+      return [
+        ["", r.transaction_date || r.filing_date || "—"],
+        ["", who],
+        ["", move],
+        ["num", num(r.shares)],
+        ["num", r.price_per_share == null ? "—" : "$" + num(r.price_per_share, 2)],
+      ];
+    });
     if (rows.length) {
       $id("insider-title").textContent = "내부자 거래 (Form 3·4·5)";
       fill("insider-table", [["", "거래일"], ["", "보고자"], ["", "유형"], ["num", "수량"], ["num", "단가"]], rows);
@@ -283,6 +298,6 @@ try {
   fetch("/api/pageview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: "/stock", ref: document.referrer || "", id }), keepalive: true }).catch(() => {});
 } catch (e) { console.warn('[stock] beacon failed', e); }
 </script>
-  <script src="/static/search.js?v=20260823-29" defer></script>
+  <script src="/static/search.js?v=20260823-30" defer></script>
 </body>
 </html>
