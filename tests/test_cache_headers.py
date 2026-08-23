@@ -52,11 +52,25 @@ def test_no_cache_still_answers_304_so_it_costs_one_request(client):
     assert not again.content
 
 
-def test_a_versioned_asset_is_pinned_forever(client):
-    """판이 바뀌면 `?v=`가 바뀌므로 같은 URL의 내용은 영원히 같다."""
-    response = client.get("/static/monitor.js?v=20260823-24")
+def test_a_versioned_asset_is_never_immutable(client):
+    """`?v=`가 붙어도 영구 고정하지 않는다 — 스스로 나을 수 있어야 한다.
+
+    `?v=`는 쿼리일 뿐이고 서버는 늘 같은 파일 하나를 준다. URL과 내용이 1:1로
+    묶여 있지 않다는 뜻이다. 배포 도중 HTML은 새 버전인데 파일이 아직 옛것인
+    찰나에 요청이 들어오면, 브라우저는 **옛 내용을 새 키로** 받는다.
+    `immutable`이면 재검증조차 하지 않으므로 1년 동안 그대로 박힌다.
+
+    실측 2026-08-23: 배포 직후 `monitor.js?v=20260823-31`을 실행 중인 코드에 새
+    함수가 없었다. 같은 URL을 `cache:"reload"`로 받으면 있었고, 캐시를 비우니
+    즉시 정상이 됐다. 사용자는 캐시를 비우지 않는다.
+    """
+    response = client.get("/static/monitor.js?v=20260823-31")
     assert response.status_code == 200
-    assert response.headers["cache-control"] == "public, max-age=31536000, immutable"
+    policy = response.headers["cache-control"]
+    assert "immutable" not in policy, (
+        "배포 경합으로 옛 파일이 새 키에 박히면 영영 낫지 않는다"
+    )
+    assert policy == "public, max-age=86400"
 
 
 def test_an_unversioned_asset_is_not_pinned(client):
@@ -67,8 +81,12 @@ def test_an_unversioned_asset_is_not_pinned(client):
     assert response.headers["cache-control"] == "public, max-age=3600"
 
 
-def test_fonts_are_pinned_even_without_a_version():
-    """서브셋 92개는 CSS 안에서 버전 없이 불린다. 이름이 곧 내용이라 안 바뀐다."""
+def test_fonts_are_the_one_thing_pinned_forever():
+    """폰트만 영구 고정이다.
+
+    서브셋 92개는 파일 이름이 곧 내용이라 같은 URL이 다른 바이트를 줄 일이
+    없다 — 위의 배포 경합이 성립하지 않는 유일한 경우다.
+    """
     client = TestClient(app)
     response = client.get("/static/fonts/pretendard/PretendardVariable-dynamic-subset.css")
     assert response.status_code == 200
