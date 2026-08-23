@@ -85,6 +85,27 @@ def test_the_number_face_is_not_actually_monospace():
     assert "monospace" not in value, f"--num이 등폭으로 되돌아갔다: {value}"
 
 
+def test_every_dashboard_page_loads_the_design_system():
+    """monitor.css를 부르는 페이지는 토큰·콘솔 시트도 그 뒤에 불러야 한다.
+
+    앞선 테스트는 **인라인 `<style>`이 있는** 페이지만 봤다. `bio.html`은 인라인
+    스타일이 없어서 목록에 걸리지 않았고, 그래서 `/bio`는 리디자인을 통째로
+    놓친 채 남아 있었다 — 글꼴도, 패널 여백도, 배지도.
+
+    법적 고지 3종(privacy·terms·disclaimer)은 `legal.css`로 따로 디자인한
+    산문 페이지라 여기 해당하지 않는다.
+    """
+    for page in sorted(STATIC.glob("*.html")):
+        source = page.read_text(encoding="utf-8")
+        if "monitor.css" not in source:
+            continue
+        for sheet in ("tokens.css", "console.css"):
+            assert sheet in source, f"{page.name}이 {sheet}를 부르지 않는다"
+            assert source.index("monitor.css") < source.index(sheet), (
+                f"{page.name}: {sheet}가 monitor.css보다 앞에 있어 토큰이 덮이지 않는다"
+            )
+
+
 def test_every_page_that_ships_its_own_styles_loads_the_design_system():
     """인라인 <style>을 가진 페이지도 토큰과 콘솔 시트를 불러야 한다.
 
