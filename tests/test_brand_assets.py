@@ -102,3 +102,18 @@ def test_woff2_is_served_as_a_font_not_as_text():
     assert response.status_code == 200
     assert response.headers["content-type"] == "font/woff2"
     assert response.content[:4] == WOFF2_SIGNATURE
+
+def test_the_root_carries_both_naver_ownership_proofs():
+    """네이버는 http와 https를 **다른 사이트**로 본다.
+
+    그래서 소유확인이 둘 필요하다. http:// 쪽은 루트에 놓인 파일
+    (naverf28e…html)로, https:// 쪽은 루트 문서의 메타 태그로 확인한다.
+    메타가 사라지면 https:// 사이트의 소유확인이 풀리고, 거기 붙여 둔
+    사이트맵 제출이 통째로 무의미해진다 — 그런데 화면은 멀쩡해 보인다.
+    """
+    static = Path(config.STATIC_DIR)
+    files = [p.name for p in static.glob("naver*.html")]
+    assert files, "http:// 소유확인 파일이 사라졌다"
+
+    head = (static / "landing.html").read_text(encoding="utf-8").split("</head>", 1)[0]
+    assert 'name="naver-site-verification"' in head, "https:// 소유확인 메타가 루트에 없다"
