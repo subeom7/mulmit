@@ -49,6 +49,89 @@ TITLE_KEYWORDS = (
     "bitcoin", "ethereum", "crypto", "stablecoin", "altcoin", "digital asset",
 )
 
+# 키워드는 **단어 경계**로 본다. 부분 문자열이던 시절 "iran"이 인도 정치인
+# 이름 "Smriti Irani"를 잡아 국내 정치 기사를 시장 화면에 올렸다(실측
+# 2026-08-24). 진짜 이란 기사는 그대로 통과한다.
+#
+# 경계만 두면 이번엔 복수형을 놓친다 — "tariff"가 "tariffs"를 못 잡아 관세
+# 기사가 통째로 빠졌다. 그래서 흔한 어미만 허용한다. "Irani"는 여전히
+# 걸리지 않는다("i"는 이 어미 목록에 없다).
+_KEYWORD_PATTERNS = tuple(
+    re.compile(rf"\b{re.escape(keyword)}(?:s|es|ed|ing|al|als)?\b", re.I)
+    for keyword in TITLE_KEYWORDS
+)
+
+# 템플릿으로 찍어 내는 종목 기사. MarketBeat 계열 도메인이 수십 개라 도메인
+# 목록보다 **제목 틀**이 오래간다. 실측 2026-08-24: 저장된 40건 중 7건이
+# 이것이었고, 같은 배당 공시가 동사만 바꿔 세 번 실려 있었다("Declares" /
+# "to Issue" / "Plans").
+_GENERATED_TITLE = tuple(re.compile(pattern, re.I) for pattern in (
+    r"^(critical\s+(review|contrast|comparison)|financial\s+(analysis|review|survey|comparison)|reviewing|comparing|contrasting|head[- ]to[- ]head)\b",
+    r"\b(declares|to issue|plans|announces)\s+(a\s+)?(quarterly\s+)?dividend\s+of\s+\$",
+    r"\bshort interest (update|down|up)\b",
+    r"\b(shares|stake|position)\s+(sold|bought|acquired|purchased|raised|lowered|boosted|trimmed)\s+by\b",
+    r"\bvs\.\s",
+    r"\bhead to head (survey|contrast|review)\b",
+))
+
+# 회사 이름이 제목에 있다는 이유로 붙은 태그가, 시장과 무관한 기사를 시장
+# 화면에 올린다. 실측: "Netflix's Outer Banks Finale Shatters An IMDb Series
+# Record"[NFLX], "Disney Plus Fall 2026 Schedule"[DIS], "Amazon early Labor Day
+# deals"[AMZN]. 태그를 느슨하게 두는 대신 여기서 명백한 것만 걷어 낸다 —
+# 무태깅이 오태깅보다 낫다는 이 lane의 원칙과 같은 방향이다.
+_OFF_TOPIC = tuple(re.compile(pattern, re.I) for pattern in (
+    r"\b(season|episode|finale|cast|trailer|spoilers?|streaming guide)\b",
+    r"\b(tv shows?|movies?|series)\s+(coming|premiere|release|schedule)",
+    r"\bimdb\b",
+    r"\b(labor day|black friday|prime day|cyber monday)\s+deals?\b",
+    r"\bdeals on\b",
+    r"\bbox office\b",
+    r"\b(esports|worlds \d{4}|league of legends)\b",
+))
+
+
+# 태그 하나로는 기사를 들여보내지 않는다.
+#
+# 회사 이름이 제목에 있으면 태그가 붙는데, 그것만으로 통과시키면 연예·잡학
+# 기사가 종목 뉴스로 둔갑한다(실측 2026-08-24: "Alfonso Herrera leads Netflix
+# Action Thriller"[NFLX], "An ultra-rare piece of Microsoft history could be
+# hiding on your shelf"[MSFT]).
+#
+# 그렇다고 거시 키워드를 요구하면 정작 필요한 것이 빠진다 — "Tesla recalls
+# nearly 3M vehicles"에는 거시 키워드가 하나도 없다. 그래서 **업무 맥락**을
+# 따로 둔다: 태그가 붙은 기사는 실적·리콜·소송·인수처럼 회사에 일어난 일을
+# 가리키는 말이 하나는 있어야 한다. 연예 금지어를 끝없이 늘리는 것보다,
+# 통과 조건을 말하는 편이 오래간다.
+_BUSINESS_CONTEXT = (
+    "earnings", "revenue", "profit", "loss", "shares", "stock", "stake", "dividend",
+    "recall", "lawsuit", "sue", "settlement", "ceo", "cfo", "layoff", "job cut",
+    "acquisition", "acquire", "merger", "buyout", "ipo", "guidance", "results",
+    "forecast", "sales", "demand", "supply", "factory", "plant", "chip",
+    "semiconductor", "cash flow", "valuation", "market cap", "investor", "funding",
+    "antitrust", "regulator", "fine", "probe", "investigation", "outage", "strike",
+    "contract", "launch", "price cut", "buyback", "bankruptcy", "downgrade", "upgrade",
+)
+_BUSINESS_PATTERNS = tuple(
+    re.compile(rf"\b{re.escape(word)}(?:s|es|ed|ing)?\b", re.I) for word in _BUSINESS_CONTEXT
+)
+
+
+def _has_business_context(title: str) -> bool:
+    return any(pattern.search(title) for pattern in _BUSINESS_PATTERNS)
+
+
+def _is_generated(title: str) -> bool:
+    return any(pattern.search(title) for pattern in _GENERATED_TITLE)
+
+
+def _is_off_topic(title: str) -> bool:
+    return any(pattern.search(title) for pattern in _OFF_TOPIC)
+
+
+def _matches_keyword(title: str) -> bool:
+    return any(pattern.search(title) for pattern in _KEYWORD_PATTERNS)
+
+
 # 닫힌 이름 사전 — 제목의 단어 경계 매칭으로만 태깅한다. 여기 없는 회사는
 # 태그가 없을 뿐이다(오태깅보다 무태깅이 낫다). KR 값은 종목코드, US는 티커.
 TICKER_NAMES: tuple[tuple[str, str, bool], ...] = (
@@ -163,9 +246,13 @@ def refresh(provider: GdeltProvider | None = None) -> dict:
     # (DOC API는 AWS IP에서 지속 차단 — 등록부 §6.1, GDELT의 벌크 전환 권고 준수)
     fetched = 0
     for article in provider.fetch_latest_gkg_titles():
-        title_lower = article["title"].lower()
-        tags = _tags_for(article["title"])
-        if not tags and not any(keyword in title_lower for keyword in TITLE_KEYWORDS):
+        title = article["title"]
+        # 템플릿 종목 기사와 연예·쇼핑 기사는 태그가 붙었든 말든 버린다.
+        if _is_generated(title) or _is_off_topic(title):
+            continue
+        tags = _tags_for(title)
+        # 거시 키워드가 있으면 그것으로 충분하고, 태그뿐이면 업무 맥락이 필요하다.
+        if not _matches_keyword(title) and not (tags and _has_business_context(title)):
             continue
         fetched += 1
         by_url[article["url"]] = {**article, "tags": tags}
