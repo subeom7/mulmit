@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import io
 import threading
 import urllib.error
@@ -780,3 +781,30 @@ def test_weekend_endpoint_exposes_cache_and_source_headers(monkeypatch, hip3_pub
     assert response.json() == payload
     assert response.headers["x-data-source"] == "Hyperliquid HIP-3"
     assert "stale-while-revalidate" in response.headers["cache-control"]
+
+
+def test_two_injected_transports_never_share_a_cache_namespace():
+    """격리 약속이 실제로 지켜지는지.
+
+    캐시는 클래스에 붙어 있어 인스턴스가 사라져도 남는다. 그래서 이름표가
+    재사용되면 새 provider가 죽은 인스턴스의 캐시를 물려받는다. 예전 이름표는
+    `id(self)`였는데, CPython의 id()는 메모리 주소라 객체가 수거되면 곧바로
+    다시 쓰인다 — 만들고 버리기를 200번 하면 198번 겹쳤다(실측).
+
+    증상이 조용한 것이 이 결함의 성질이다. 상류를 부르지 않고도 값이 나오니
+    실패가 아니라 "호출 수가 예상과 다름"으로만 드러난다.
+    """
+    seen: set[str] = set()
+    for _ in range(200):
+        provider = HyperliquidProvider(transport=lambda _payload, _timeout: {}, retries=0)
+        assert provider._cache_namespace not in seen, "이름표가 재사용됐다"
+        seen.add(provider._cache_namespace)
+        del provider
+        gc.collect()
+
+
+def test_the_default_client_still_shares_one_cache():
+    """transport를 주지 않은 기본 클라이언트끼리는 캐시를 함께 써야 한다."""
+    first = HyperliquidProvider()
+    second = HyperliquidProvider()
+    assert first._cache_namespace == second._cache_namespace == "default"
