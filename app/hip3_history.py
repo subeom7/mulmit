@@ -67,6 +67,20 @@ def clear_cache() -> None:
         _cache = None
 
 
+# 신규 심볼 backfill 시도 시각(모노토닉 아님 — 프로세스 재시작 시 한 번 더
+# 시도해도 무해하다). 블롭에 적지 않는 이유는 refresh() 주석에 있다.
+_backfill_attempts: dict[str, float] = {}
+
+
+def _needs_backfill(symbol: str, stored: dict[str, Any]) -> bool:
+    """저장된 시리즈가 없고, 같은 주기 안에 이미 시도하지도 않았는가."""
+    series = stored.get("series")
+    if isinstance(series, dict) and symbol in series:
+        return False
+    attempted = _backfill_attempts.get(symbol)
+    return attempted is None or (time.time() - attempted) >= config.HIP3_HISTORY_MAX_AGE
+
+
 def _symbols() -> list[str]:
     # Imported here: market_assets imports this module for the request path.
     from .crypto_market import history_symbols
@@ -114,8 +128,23 @@ def refresh(
     """
     if not enabled():
         return {"skipped": "disabled", "attempted": 0, "updated": 0, "failed": 0}
-    if not force and store.load_report(CACHE_KEY, config.HIP3_HISTORY_MAX_AGE) is not None:
-        return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
+    stored = store.load_report(CACHE_KEY, SERVE_TTL_SECONDS) or {}
+    fresh = not force and store.load_report(CACHE_KEY, config.HIP3_HISTORY_MAX_AGE) is not None
+    targets = _symbols()
+    if fresh:
+        # 블롭은 아직 신선해도, 목록에 **새로 들어온** 마켓은 시리즈가 아예 없다.
+        # 그때까지 그 카드의 추이선은 비어 있는데, 전체 주기(6시간)를 기다릴
+        # 이유가 없다 — 없는 것만 따로 채운다(실측: xyz:SKHX를 자산에 추가한
+        # 날 하이닉스 추이선이 몇 시간 비었다).
+        #
+        # 계속 실패하는 심볼이 매 틱마다 상류를 두드리지 않도록, 시도한 시각을
+        # 기억해 두고 같은 주기 안에서는 다시 시도하지 않는다. 이 기억은
+        # 프로세스 메모리에만 둔다 — 블롭에 적으면 실패만 한 패스가 저장을
+        # 일으켜 "성공한 심볼이 없으면 아무것도 쓰지 않는다"는 규칙이 깨진다.
+        targets = [symbol for symbol in targets if _needs_backfill(symbol, stored)]
+        if not targets:
+            return {"skipped": "fresh", "attempted": 0, "updated": 0, "failed": 0}
+        log.info("HIP-3 이력 신규 심볼 backfill: %s", ", ".join(targets))
 
     client = provider or HyperliquidProvider(
         timeout=config.HIP3_HISTORY_TIMEOUT,
@@ -124,14 +153,14 @@ def refresh(
     )
     moment = now or dt.datetime.now(dt.UTC)
     start = moment - dt.timedelta(days=config.HIP3_HISTORY_DAYS)
-    previous = store.load_report(CACHE_KEY, SERVE_TTL_SECONDS) or {}
     series: dict[str, Any] = (
-        dict(previous["series"]) if isinstance(previous.get("series"), dict) else {}
+        dict(stored["series"]) if isinstance(stored.get("series"), dict) else {}
     )
     result = {"attempted": 0, "updated": 0, "failed": 0, "rate_limited": 0, "observations": 0}
 
-    symbols = _symbols()
+    symbols = targets
     for index, symbol in enumerate(symbols):
+        _backfill_attempts[symbol] = time.time()
         result["attempted"] += 1
         try:
             snapshot = client.fetch_candles(symbol, interval=INTERVAL, start=start, end=moment)

@@ -152,3 +152,74 @@ def test_load_closes_with_the_display_gate(history_lane, monkeypatch):
     monkeypatch.setattr(config, "HIP3_PUBLIC_DISPLAY_ENABLED", False)
     assert hip3_history.enabled() is False
     assert hip3_history.load() is None
+
+
+# --- 새로 추가된 마켓 backfill ------------------------------------------------
+
+
+def test_a_newly_listed_symbol_is_backfilled_without_waiting_for_the_cycle(history_lane, monkeypatch):
+    """자산 목록에 마켓을 더한 날 그 카드의 추이선이 6시간 비어 있으면 안 된다.
+
+    블롭이 아직 신선하면 refresh()는 통째로 건너뛴다. 그런데 새 심볼은 시리즈가
+    아예 없어서, 다음 전체 주기까지 화면이 비어 있었다(실측: xyz:SKHX). 신선한
+    블롭이어도 **없는 심볼만** 따로 채운다.
+    """
+    monkeypatch.setattr(hip3_history, "_backfill_attempts", {})
+    monkeypatch.setattr(hip3_history, "_symbols", lambda: ["OLD", "NEW"])
+
+    asked: list[str] = []
+
+    class _Client:
+        def fetch_candles(self, symbol, *, interval, start, end):
+            asked.append(symbol)
+            return {
+                "fetched_at": "2026-08-23T00:00:00Z",
+                "as_of": "2026-08-23",
+                "candles": [{"t": 1787000000000, "c": "10.0"}, {"t": 1787086400000, "c": "11.0"}],
+            }
+
+    # 첫 패스: 둘 다 없으므로 둘 다 받는다.
+    hip3_history.refresh(provider=_Client())
+    assert set(asked) == {"OLD", "NEW"}
+
+    # 블롭이 신선한 상태에서 심볼이 하나 더 늘면 그것만 받는다.
+    asked.clear()
+    monkeypatch.setattr(hip3_history, "_symbols", lambda: ["OLD", "NEW", "LATER"])
+    hip3_history.refresh(provider=_Client())
+    assert asked == ["LATER"], "새 심볼만 채워야 하는데 전체를 다시 받았다"
+
+    # 이미 있는 것뿐이면 아무것도 부르지 않는다.
+    asked.clear()
+    outcome = hip3_history.refresh(provider=_Client())
+    assert asked == [] and outcome["skipped"] == "fresh"
+
+
+def test_a_failing_new_symbol_does_not_hammer_the_upstream(history_lane, monkeypatch):
+    """계속 실패하는 심볼이 매 틱마다 상류를 두드리면 안 된다.
+
+    한 번 시도했으면 같은 주기가 지나기 전에는 다시 시도하지 않는다.
+    """
+    monkeypatch.setattr(hip3_history, "_backfill_attempts", {})
+    monkeypatch.setattr(hip3_history, "_symbols", lambda: ["GOOD", "BROKEN"])
+
+    calls: list[str] = []
+
+    class _Client:
+        def fetch_candles(self, symbol, *, interval, start, end):
+            calls.append(symbol)
+            if symbol == "BROKEN":
+                raise RuntimeError("상장 폐지")
+            return {
+                "fetched_at": "2026-08-23T00:00:00Z",
+                "as_of": "2026-08-23",
+                "candles": [{"t": 1787000000000, "c": "10.0"}, {"t": 1787086400000, "c": "11.0"}],
+            }
+
+    hip3_history.refresh(provider=_Client())
+    assert "BROKEN" in calls
+    calls.clear()
+
+    # 바로 다음 틱에서는 다시 부르지 않는다.
+    for _ in range(3):
+        hip3_history.refresh(provider=_Client())
+    assert calls == [], "실패한 심볼을 매 틱마다 다시 불렀다"

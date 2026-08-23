@@ -347,9 +347,9 @@ const METRICS = {
   // USD synthetic perpetual, so letting both match one record would merge two
   // different measurements into one series.
   samsung: { aliases: ["samsung", "005930.ks"], label: LABEL("삼성전자", "Samsung Electronics"), group: "korea", format: "currency", currency: "KRW", accent: "#2dd4a3", description: LABEL("한국 증시 비중이 큰 반도체 대표 종목", "A major semiconductor constituent of Korea's equity market") },
-  dollar_index_broad: { aliases: ["dollar_index_broad", "jrxwtfb_n.b"], label: LABEL("광의 달러지수", "Broad dollar index"), group: "macro", format: "number", accent: "#a78bfa", description: LABEL("연준이 교역량으로 가중한 달러 강세 지표. ICE 달러지수(DXY)와 값을 비교할 수 없습니다", "The Fed's trade-weighted dollar index — its level is not comparable with ICE's DXY") },
-  dollar_index_afe: { aliases: ["dollar_index_afe", "jrxwtfn_n.b"], label: LABEL("선진국 달러지수", "AFE dollar index"), group: "macro", format: "number", accent: "#a78bfa", description: LABEL("선진 교역상대국 통화 대비 달러", "The dollar against advanced foreign economies") },
-  dollar_index_eme: { aliases: ["dollar_index_eme", "jrxwtfo_n.b"], label: LABEL("신흥국 달러지수", "EME dollar index"), group: "macro", format: "number", accent: "#a78bfa", description: LABEL("신흥 교역상대국 통화 대비 달러", "The dollar against emerging market economies") },
+  dollar_index_broad: { aliases: ["dollar_index_broad", "jrxwtfb_n.b"], label: LABEL("광의 달러지수", "Broad dollar index"), group: "macro", format: "number", accent: "#a78bfa", description: LABEL("연준이 교역량으로 가중한 달러 강세 지표. ICE 달러지수(DXY)와 값을 비교할 수 없습니다", "The Fed's trade-weighted dollar index — its level is not comparable with ICE's DXY") , term: "dollar-index"},
+  dollar_index_afe: { aliases: ["dollar_index_afe", "jrxwtfn_n.b"], label: LABEL("선진국 달러지수", "AFE dollar index"), group: "macro", format: "number", accent: "#a78bfa", description: LABEL("선진 교역상대국 통화 대비 달러", "The dollar against advanced foreign economies") , term: "dollar-index"},
+  dollar_index_eme: { aliases: ["dollar_index_eme", "jrxwtfo_n.b"], label: LABEL("신흥국 달러지수", "EME dollar index"), group: "macro", format: "number", accent: "#a78bfa", description: LABEL("신흥 교역상대국 통화 대비 달러", "The dollar against emerging market economies") , term: "dollar-index"},
   kr_base_rate: { aliases: ["kr_base_rate", "ecos_722y001"], label: LABEL("한국은행 기준금리", "BOK base rate"), group: "korea", format: "number", accent: "#2dd4a3", description: LABEL("한국은행 금융통화위원회가 결정하는 정책금리", "The Bank of Korea's policy rate, set by the Monetary Policy Board") },
   kr_unemployment: { aliases: ["kr_unemployment", "ecos_901y027"], label: LABEL("실업률 (한국)", "Korea unemployment"), group: "korea", format: "number", accent: "#f5b942", description: LABEL("경제활동인구조사 실업률 — 한국은행 ECOS 제공", "Unemployment rate from the economically active population survey, via ECOS") },
   kr_cpi: { aliases: ["kr_cpi", "ecos_901y009"], label: LABEL("소비자물가지수 (한국)", "Korea CPI"), group: "korea", format: "number", accent: "#42a5ff", description: LABEL("소비자물가지수 총지수(2020=100) — 한국은행 ECOS 제공", "Korean CPI, all items (2020=100), via the Bank of Korea's ECOS") },
@@ -365,26 +365,26 @@ const METRICS = {
   vix: { aliases: ["vix", "vixcls"], label: LABEL("VIX 변동성", "VIX volatility"), group: "risk", format: "number", accent: "#fb7185" },
   // reserved: no source can fill this yet by design (own index, not built).
   sentiment: { aliases: ["sentiment", "market_sentiment", "mulmit_sentiment"], label: LABEL("시장 심리 게이지 (실험)", "Market sentiment gauge (experimental)"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185", description: LABEL("Mulmit 자체 산출 0–100 게이지. OFR 변동성·신용 스트레스와 HIP-3 퍼프 모멘텀·실현 변동성·주식 대 금을 자기 이력 백분위로 점수화해 동일 가중 평균합니다. CNN Fear & Greed가 아닙니다.", "Mulmit's own 0–100 gauge: OFR volatility and credit stress plus HIP-3 perp momentum, realized volatility and equity-vs-gold, each scored as an own-history percentile and equally weighted. Not CNN's Fear & Greed.") },
-  yield_curve: { aliases: ["yield_curve", "t10y2y", "yield_spread"], label: LABEL("장단기 금리차", "10Y–2Y curve"), group: "risk", format: "percentPoints", accent: "#fb7185" },
-  ofr_fsi: { aliases: ["ofr_fsi"], label: LABEL("OFR 금융스트레스 (종합)", "OFR financial stress"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185" },
+  yield_curve: { aliases: ["yield_curve", "t10y2y", "yield_spread"], label: LABEL("장단기 금리차", "10Y–2Y curve"), group: "risk", format: "percentPoints", accent: "#fb7185", term: "yield-curve"},
+  ofr_fsi: { aliases: ["ofr_fsi"], label: LABEL("OFR 금융스트레스 (종합)", "OFR financial stress"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185", term: "stress-index"},
   ofr_fsi_volatility: { aliases: ["ofr_fsi_volatility"], label: LABEL("변동성 스트레스 (OFR)", "Volatility stress (OFR)"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185" },
   ofr_fsi_credit: { aliases: ["ofr_fsi_credit"], label: LABEL("신용 스트레스 (OFR)", "Credit stress (OFR)"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185" },
-  sp500_realized_vol: { aliases: ["sp500_realized_vol"], label: LABEL("S&P 500 퍼프 실현 변동성 (20일)", "S&P 500 perp realized vol (20d)"), group: "risk", format: "percentPoints", changeMode: "points", accent: "#fb7185" },
-  kr200_realized_vol: { aliases: ["kr200_realized_vol"], label: LABEL("KR200 퍼프 실현 변동성 (20일)", "KR200 perp realized vol (20d)"), group: "risk", format: "percentPoints", changeMode: "points", accent: "#fb7185" },
-  high_yield_spread: { aliases: ["high_yield_spread", "bamlh0a0hym2"], label: LABEL("하이일드 스프레드", "High-yield spread"), group: "risk", format: "percentPoints", accent: "#fb7185" },
-  financial_stress: { aliases: ["financial_stress", "stlfsi4"], label: LABEL("금융스트레스", "Financial stress"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185" },
-  recession_prob: { aliases: ["recession_prob", "rec_prob_12m"], label: LABEL("미국 침체 확률 (12개월 선행)", "US recession odds (12M ahead)"), group: "risk", format: "number", accent: "#fb7185", description: LABEL("뉴욕 연은이 국채 10년–3개월 스프레드로 추정한 12개월 뒤 침체 확률 — 날짜는 예측 대상 월", "NY Fed treasury-spread model: probability of a U.S. recession twelve months ahead — dates mark the predicted month") },
-  dxy: { aliases: ["dxy", "dollar_index"], label: LABEL("달러인덱스", "Dollar index"), group: "macro", format: "number", accent: "#a78bfa" },
+  sp500_realized_vol: { aliases: ["sp500_realized_vol"], label: LABEL("S&P 500 퍼프 실현 변동성 (20일)", "S&P 500 perp realized vol (20d)"), group: "risk", format: "percentPoints", changeMode: "points", accent: "#fb7185", term: "realized-vol"},
+  kr200_realized_vol: { aliases: ["kr200_realized_vol"], label: LABEL("KR200 퍼프 실현 변동성 (20일)", "KR200 perp realized vol (20d)"), group: "risk", format: "percentPoints", changeMode: "points", accent: "#fb7185", term: "realized-vol"},
+  high_yield_spread: { aliases: ["high_yield_spread", "bamlh0a0hym2"], label: LABEL("하이일드 스프레드", "High-yield spread"), group: "risk", format: "percentPoints", accent: "#fb7185", term: "high-yield-spread"},
+  financial_stress: { aliases: ["financial_stress", "stlfsi4"], label: LABEL("금융스트레스", "Financial stress"), group: "risk", format: "number", changeMode: "points", accent: "#fb7185", term: "stress-index"},
+  recession_prob: { aliases: ["recession_prob", "rec_prob_12m"], label: LABEL("미국 침체 확률 (12개월 선행)", "US recession odds (12M ahead)"), group: "risk", format: "number", accent: "#fb7185", description: LABEL("뉴욕 연은이 국채 10년–3개월 스프레드로 추정한 12개월 뒤 침체 확률 — 날짜는 예측 대상 월", "NY Fed treasury-spread model: probability of a U.S. recession twelve months ahead — dates mark the predicted month") , term: "recession-prob"},
+  dxy: { aliases: ["dxy", "dollar_index"], label: LABEL("달러인덱스", "Dollar index"), group: "macro", format: "number", accent: "#a78bfa", term: "dollar-index"},
   usdjpy: { aliases: ["usdjpy", "jpy=x", "usd/jpy"], label: LABEL("달러·엔", "USD/JPY"), group: "macro", format: "currency", currency: "JPY", accent: "#a78bfa" },
   treasury_10y: { aliases: ["treasury_10y", "dgs10", "us10y"], label: LABEL("미국 10년물", "US 10-year yield"), group: "macro", format: "percentPoints", changeMode: "points", accent: "#a78bfa" },
   wti: { aliases: ["wti", "dcoilwtico", "cl=f"], label: LABEL("WTI 원유", "WTI crude"), group: "macro", format: "currency", currency: "USD", accent: "#a78bfa" },
   copper: { aliases: ["copper", "pcoppusdm", "hg=f"], label: LABEL("구리", "Copper"), group: "macro", format: "number", accent: "#a78bfa" },
   unemployment: { aliases: ["unemployment", "unrate"], label: LABEL("미국 실업률", "US unemployment"), group: "macro", format: "percentPoints", accent: "#a78bfa" },
   initial_claims: { aliases: ["initial_claims", "icsa"], label: LABEL("신규 실업수당", "Initial claims"), group: "macro", format: "compact", accent: "#a78bfa" },
-  fed_assets: { aliases: ["fed_assets", "walcl"], label: LABEL("연준 총자산", "Fed total assets"), group: "liquidity", format: "compact", accent: "#38bdf8" },
-  reserve_balances: { aliases: ["reserve_balances", "wresbal", "reserves"], label: LABEL("지급준비금", "Reserve balances"), group: "liquidity", format: "compact", accent: "#38bdf8" },
-  reverse_repo: { aliases: ["reverse_repo", "rrp", "rrpontsyd"], label: LABEL("역레포 RRP", "Reverse repo (RRP)"), group: "liquidity", format: "compact", accent: "#38bdf8" },
-  treasury_general_account: { aliases: ["treasury_general_account", "tga", "wtregen"], label: LABEL("재무부 TGA", "Treasury General Account"), group: "liquidity", format: "compact", accent: "#38bdf8" },
+  fed_assets: { aliases: ["fed_assets", "walcl"], label: LABEL("연준 총자산", "Fed total assets"), group: "liquidity", format: "compact", accent: "#38bdf8", term: "fed-balance-sheet"},
+  reserve_balances: { aliases: ["reserve_balances", "wresbal", "reserves"], label: LABEL("지급준비금", "Reserve balances"), group: "liquidity", format: "compact", accent: "#38bdf8", term: "reserves"},
+  reverse_repo: { aliases: ["reverse_repo", "rrp", "rrpontsyd"], label: LABEL("역레포 RRP", "Reverse repo (RRP)"), group: "liquidity", format: "compact", accent: "#38bdf8", term: "reverse-repo"},
+  treasury_general_account: { aliases: ["treasury_general_account", "tga", "wtregen"], label: LABEL("재무부 TGA", "Treasury General Account"), group: "liquidity", format: "compact", accent: "#38bdf8", term: "tga"},
   m2: { aliases: ["m2", "m2sl"], label: LABEL("미국 M2", "US M2"), group: "liquidity", format: "compact", accent: "#38bdf8" },
   retail_money_market_funds: { aliases: ["retail_money_market_funds", "wrmfns", "mmf"], label: LABEL("리테일 MMF", "Retail money market funds"), group: "liquidity", format: "compact", accent: "#38bdf8" },
   fx_usdkrw: { aliases: ["fx_usdkrw", "rxi_n.b.ko"], label: LABEL("원·달러", "USD/KRW"), group: "fx", format: "rate", accent: "#2dd4a3", description: LABEL("달러 한 단위당 원화. 한국은행 ECOS 매매기준율입니다.", "Korean won per US dollar — the Bank of Korea's official ECOS trading-reference rate.") },
@@ -392,7 +392,7 @@ const METRICS = {
   fx_usdcny: { aliases: ["fx_usdcny", "rxi_n.b.ch"], label: LABEL("위안·달러", "USD/CNY"), group: "fx", format: "rate", accent: "#f5b942", description: LABEL("달러 한 단위당 위안화", "Chinese yuan per US dollar") },
   fx_eurusd: { aliases: ["fx_eurusd", "rxi$us_n.b.eu"], label: LABEL("유로·달러", "EUR/USD"), group: "fx", format: "rate", accent: "#38bdf8", description: LABEL("유로 한 단위당 달러. 위 세 개와 방향이 반대입니다.", "US dollars per euro — quoted the opposite way round to the three above.") },
   fx_gbpusd: { aliases: ["fx_gbpusd", "rxi$us_n.b.uk"], label: LABEL("파운드·달러", "GBP/USD"), group: "fx", format: "rate", accent: "#fb7185", description: LABEL("파운드 한 단위당 달러. 위 세 개와 방향이 반대입니다.", "US dollars per British pound — quoted the opposite way round to the three above.") },
-  sofr: { aliases: ["sofr"], label: LABEL("SOFR", "SOFR"), group: "funding", format: "percentPoints", changeMode: "points", accent: "#2dd4a3" },
+  sofr: { aliases: ["sofr"], label: LABEL("SOFR", "SOFR"), group: "funding", format: "percentPoints", changeMode: "points", accent: "#2dd4a3", term: "sofr"},
   effective_fed_funds: { aliases: ["effective_fed_funds", "effr"], label: LABEL("실효 연방기금금리", "Effective fed funds"), group: "funding", format: "percentPoints", accent: "#2dd4a3" },
   reserve_interest: { aliases: ["reserve_interest", "iorb"], label: LABEL("지급준비금 이자율", "IORB"), group: "funding", format: "percentPoints", changeMode: "points", accent: "#2dd4a3" },
   skew: { aliases: ["skew", "^skew"], label: LABEL("CBOE SKEW", "CBOE SKEW"), group: "options", format: "number", licensed: true, accent: "#a78bfa" },
@@ -989,7 +989,21 @@ function renderMetricCards() {
   $$(".metric-card").forEach((card) => {
     const key = card.dataset.metric; const definition = METRICS[key]; const record = state.records.get(key); const recent = latest(record); const delta = change(record);
     card.classList.toggle("unavailable", !record || recent.value === null);
-    $("h3", card).textContent = recordLabel(record, definition);
+    // 사전에 항목이 있는 지표는 제목 자체가 설명으로 가는 문이 된다. 팝오버는
+    // console.js가 [data-term] 하나만 보고 붙으므로, 여기서는 표시만 만든다.
+    const heading = $("h3", card);
+    if (definition.term) {
+      heading.replaceChildren();
+      const opener = document.createElement("button");
+      opener.type = "button";
+      opener.className = "term";
+      opener.dataset.term = definition.term;
+      opener.setAttribute("aria-expanded", "false");
+      opener.textContent = recordLabel(record, definition);
+      heading.append(opener);
+    } else {
+      heading.textContent = recordLabel(record, definition);
+    }
     $(".metric-kicker", card).textContent = String(record?.display_symbol || record?.symbol || record?.id || definition.aliases[0]).toUpperCase();
     const badges = $(".badge-row", card); badges.replaceChildren();
     const badge = document.createElement("span");
