@@ -169,7 +169,7 @@ async function loadKr() {
       $id("fund-note").textContent = f.basis_ko || "";
       $id("sec-fund").hidden = false;
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[stock] section failed', e); }
   // 내부자(임원·주요주주)
   try {
     const i = await fetchJson("/api/kr/insider/" + SYMBOL);
@@ -180,7 +180,7 @@ async function loadKr() {
       $id("insider-note").textContent = i.basis_ko || "";
       $id("sec-insider").hidden = false;
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[stock] section failed', e); }
   // 이 종목의 주요사항보고 (피드에서 필터)
   try {
     const ev = await fetchJson("/api/kr/events");
@@ -191,7 +191,7 @@ async function loadKr() {
       $id("events-sub").textContent = "DART 접수 목록 원문 제목 그대로 · 수집 주기 갱신";
       $id("sec-events").hidden = false;
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[stock] section failed', e); }
   // 국민연금 보유 언급
   try {
     const p = await fetchJson("/api/kr/pension");
@@ -201,7 +201,7 @@ async function loadKr() {
       fill("extra-table", [["", "보고일"], ["num", "보유비율"], ["num", "증감"], ["", "보고사유"]], mine.map((x) => [["", x.report_date], ["num", x.ratio == null ? "—" : x.ratio + "%"], ["num", x.ratio_change == null ? "—" : x.ratio_change + "%p"], ["", x.reason || "—"]]));
       $id("sec-extra").hidden = false;
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[stock] section failed', e); }
 }
 
 async function loadUs() {
@@ -226,10 +226,10 @@ async function loadUs() {
         kpi("영업이익률", pct(latest.operating_margin), ""),
       );
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[stock] section failed', e); }
   // 내부자 Form 3/4/5
   try {
-    const i = await fetchJson("/api/us/insider/" + SYMBOL + "?limit=12");
+    const i = await fetchJson("/api/insider/" + SYMBOL + "?limit=12");
     const rows = (i.transactions || []).slice(0, 12).map((r) => [["", r.transaction_date || r.filing_date || "—"], ["", r.owner_name || "—"], ["", (r.transaction_meaning && r.transaction_meaning.ko) || r.transaction_code || "—"], ["num", num(r.shares)], ["num", r.price_per_share == null ? "—" : "$" + num(r.price_per_share, 2)]]);
     if (rows.length) {
       $id("insider-title").textContent = "내부자 거래 (Form 3·4·5)";
@@ -238,31 +238,38 @@ async function loadUs() {
       $id("sec-insider").hidden = false;
       $id("head-state").hidden = true;
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[stock] section failed', e); }
   // 8-K
   try {
-    const ev = await fetchJson("/api/us/events");
-    const mine = (ev.events || []).filter((x) => x.ticker === SYMBOL).slice(0, 8);
+    const ev = await fetchJson("/api/us/events?ticker=" + encodeURIComponent(SYMBOL));
+    const mine = (ev.events || []).slice(0, 8);
     if (mine.length) {
       $id("events-title").textContent = "8-K 이벤트 공시 (최근)";
       fill("events-table", [["", "제출일"], ["", "내용 (Item)"]], mine.map((x) => [["", x.filed_at], ["", (x.items || []).map((it) => it.label.ko).join(" · ") || "—"]]));
       $id("events-sub").textContent = "표준 Item 제목 · 수집 주기 갱신";
       $id("sec-events").hidden = false;
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[stock] section failed', e); }
   // 의원 거래 언급 (PTR)
   try {
-    const p = await fetchJson("/api/us/ptr");
+    const p = await fetchJson("/api/us/ptr?ticker=" + encodeURIComponent(SYMBOL));
     const mine = [];
     for (const filing of (p.filings || [])) for (const tr of (filing.transactions || [])) {
-      if ((tr.ticker || "").toUpperCase() === SYMBOL) mine.push({ member: filing.member, date: tr.transaction_date, type: (tr.type_meaning && tr.type_meaning.ko) || tr.type, amount: tr.amount });
+      if ((tr.ticker || "").toUpperCase() !== SYMBOL) continue;
+      mine.push({
+        member: filing.name,                 // the payload says name, not member
+        district: filing.state_district,
+        date: tr.date,                       // and date, not transaction_date
+        type: (tr.type_meaning && tr.type_meaning.ko) || tr.type,
+        amount: tr.amount,
+      });
     }
     if (mine.length) {
       $id("extra-title").textContent = "미 하원 의원 거래 (STOCK Act)";
-      fill("extra-table", [["", "의원"], ["", "거래일"], ["", "유형"], ["", "금액 구간"]], mine.slice(0, 8).map((x) => [["", x.member || "—"], ["", x.date || "—"], ["", x.type || "—"], ["", x.amount || "—"]]));
+      fill("extra-table", [["", "의원"], ["", "거래일"], ["", "유형"], ["", "금액 구간"]], mine.slice(0, 8).map((x) => [["", x.member ? (x.district ? `${x.member} (${x.district})` : x.member) : "—"], ["", x.date || "—"], ["", x.type || "—"], ["", x.amount || "—"]]));
       $id("sec-extra").hidden = false;
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[stock] section failed', e); }
 }
 
 (IS_KR ? loadKr() : loadUs()).finally(() => {
@@ -274,7 +281,7 @@ try {
   let id = localStorage.getItem("mulmit.presence");
   if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${String(Math.random()).slice(2, 12)}`; localStorage.setItem("mulmit.presence", id); }
   fetch("/api/pageview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: "/stock", ref: document.referrer || "", id }), keepalive: true }).catch(() => {});
-} catch (e) {}
+} catch (e) { console.warn('[stock] beacon failed', e); }
 </script>
   <script src="/static/search.js?v=20260823-29" defer></script>
 </body>
