@@ -126,6 +126,18 @@ def _has_business_context(title: str) -> bool:
     return any(pattern.search(title) for pattern in _BUSINESS_PATTERNS)
 
 
+def admits(title: str, tags: object) -> bool:
+    """이 기사를 남기는가 — 수집할 때와 이어받을 때가 같은 규칙을 쓰도록.
+
+    이 판정이 수집 경로에만 있으면, 이미 저장된 기사는 필터를 통과한 적 없이
+    계속 실려 온다(블롭은 이전 기사를 URL로 이어받아 병합한다). 필터를 켠 날
+    화면이 그대로인 이유가 그것이다.
+    """
+    if _is_generated(title) or _is_off_topic(title):
+        return False
+    return bool(_matches_keyword(title) or (tags and _has_business_context(title)))
+
+
 def _is_generated(title: str) -> bool:
     return any(pattern.search(title) for pattern in _GENERATED_TITLE)
 
@@ -246,19 +258,19 @@ def refresh(provider: GdeltProvider | None = None) -> dict:
 
     previous = store.load_report(CACHE_KEY, config.REPORT_TTL * 2) or {}
     by_url: dict[str, dict[str, Any]] = {
-        article["url"]: article for article in previous.get("articles", [])
+        article["url"]: article
+        for article in previous.get("articles", [])
+        # 저장된 기사도 같은 문을 통과해야 한다 — 규칙이 바뀌면 이미 실린 것도
+        # 다음 갱신에서 걸러진다.
+        if admits(article.get("title") or "", article.get("tags"))
     }
     # 벌크 채널: 15분 GKG 파일 하나에서 제목을 뽑아 키워드·종목 사전으로 거른다.
     # (DOC API는 AWS IP에서 지속 차단 — 등록부 §6.1, GDELT의 벌크 전환 권고 준수)
     fetched = 0
     for article in provider.fetch_latest_gkg_titles():
         title = article["title"]
-        # 템플릿 종목 기사와 연예·쇼핑 기사는 태그가 붙었든 말든 버린다.
-        if _is_generated(title) or _is_off_topic(title):
-            continue
         tags = _tags_for(title)
-        # 거시 키워드가 있으면 그것으로 충분하고, 태그뿐이면 업무 맥락이 필요하다.
-        if not _matches_keyword(title) and not (tags and _has_business_context(title)):
+        if not admits(title, tags):
             continue
         fetched += 1
         by_url[article["url"]] = {**article, "tags": tags}
