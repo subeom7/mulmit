@@ -1678,9 +1678,11 @@ function renderKrSearchInterest() {
   table.innerHTML = `<thead><tr>
     <th scope="col">${t("krev.colCode")}</th><th scope="col">${t("kre.colName")}</th>
     <th scope="col" class="num">${t("ksi.colVs")}</th><th scope="col" class="num">${t("ksi.colPercentile")}</th>
-    <th scope="col">${t("ksi.colTrend")}</th>
+    <th scope="col" id="ksi-trend-head">${t("ksi.colTrend")}</th>
   </tr></thead>`;
   const tbody = document.createElement("tbody");
+  // 열 이름에 붙일 기간. 첫 줄에서 정해지고, 다른 줄이 다르면 그 줄에만 적는다.
+  let spanLabel = null;
 
   for (const stock of stocks) {
     const tr = document.createElement("tr");
@@ -1712,9 +1714,17 @@ function renderKrSearchInterest() {
     if (spark) {
       const wrap = document.createElement("div");
       wrap.className = `tile-spark card-spark ${spark.tone}`;
-      const period = document.createElement("span");
-      period.className = "spark-period"; period.textContent = spark.label;
-      wrap.append(period, spark.node);
+      // 기간은 열 이름에 한 번만 적는다 — 여덟 줄에 "30일"을 여덟 번 쓰면 그건
+      // 정보가 아니라 소음이다. 다만 어느 한 줄의 창이 짧으면(계열이 덜 모인
+      // 종목) 그 줄에만 적는다 — 같은 열의 선들이 다른 기간이면 모양을 나란히
+      // 읽을 수 없기 때문이다.
+      if (spanLabel === null) spanLabel = spark.label;
+      else if (spark.label !== spanLabel) {
+        const period = document.createElement("span");
+        period.className = "spark-period"; period.textContent = spark.label;
+        wrap.append(period);
+      }
+      wrap.append(spark.node);
       trendTd.append(wrap);
     } else {
       trendTd.textContent = "—";
@@ -1724,6 +1734,10 @@ function renderKrSearchInterest() {
     tbody.append(tr);
   }
   table.append(tbody); scroll.append(table); body.append(scroll);
+  if (spanLabel) {
+    const head = table.querySelector("#ksi-trend-head");
+    if (head) head.textContent = `${t("ksi.colTrend")} · ${spanLabel}`;
+  }
 
   const footer = $("#ksi-footer"); footer.replaceChildren();
   const basis = document.createElement("span");
