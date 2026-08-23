@@ -152,6 +152,76 @@ app.state.limiter = limiter
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
+# 캐시 지시를 명시한다.
+#
+# 안 붙이면 브라우저가 **휴리스틱 캐싱**을 쓴다 — 보통 (지금 − Last-Modified)의
+# 10%. 배포 직후에는 창이 짧지만 열흘 손대지 않은 파일은 하루치가 되고, 그러면
+# 재방문자는 하루 지난 HTML을 받는다. 그 HTML이 가리키는 `?v=`도 옛 버전이라
+# 에셋까지 통째로 옛 판이 된다. 깨지지는 않지만(둘이 같은 판이라 정합은 맞다)
+# 모든 수정이 사용자에게 늦게 도착한다. 실측 2026-08-23: 배포 1시간 뒤에 연
+# 브라우저가 `v=20260823-22`를 그리고 있었고, 같은 순간 `fetch(cache:"reload")`는
+# 새 HTML을 받았다.
+#
+#   HTML          no-cache — 금지가 아니라 "쓰기 전에 물어봐"다. ETag가 있어
+#                 안 바뀌었으면 304로 끝나고 본문은 다시 오지 않는다.
+#   `?v=` 있는 정적 파일  판이 바뀌면 URL이 바뀌므로 영구 캐시.
+#   폰트           92개 서브셋은 이름이 곧 내용이고 바뀌지 않는다. 영구 캐시.
+#   그 밖의 정적    버전 없는 링크가 사용자를 1년 묶어 두면 안 되니 짧게.
+#
+# 라우트가 직접 정한 값이 있으면 건드리지 않는다 — `/glossary`·`/stock`처럼
+# 서버 렌더 페이지는 짧은 공개 캐시를 일부러 걸어 둔 것이다.
+STATIC_IMMUTABLE = "public, max-age=31536000, immutable"
+# 304에 실어 보내도 되는 헤더(RFC 9110 §15.4.5). 본문은 없다.
+_REVALIDATED_HEADERS = ("cache-control", "etag", "last-modified", "vary", "content-location")
+
+
+def _etag_matches(if_none_match: str | None, etag: str | None) -> bool:
+    """`If-None-Match`가 이 응답의 ETag를 가리키는가.
+
+    쉼표로 여러 개가 올 수 있고, 약한 검증자는 `W/` 접두가 붙는다. 304 판정에는
+    약한 비교를 쓴다(RFC 9110 §13.1.2) — 접두를 떼고 견준다.
+    """
+    if not if_none_match or not etag:
+        return False
+    if if_none_match.strip() == "*":
+        return True
+    candidates = {value.strip().removeprefix("W/") for value in if_none_match.split(",")}
+    return etag.strip().removeprefix("W/") in candidates
+
+
+@app.middleware("http")
+async def _cache_headers(request: Request, call_next):
+    response = await call_next(request)
+
+    if not response.headers.get("cache-control"):
+        path = request.url.path
+        if path.startswith("/static/"):
+            pinned = "v" in request.query_params or path.startswith("/static/fonts/")
+            response.headers["Cache-Control"] = (
+                STATIC_IMMUTABLE if pinned else "public, max-age=3600"
+            )
+        elif (response.headers.get("content-type") or "").startswith("text/html"):
+            response.headers["Cache-Control"] = "no-cache"
+
+    # 조건부 요청에 304로 답한다.
+    #
+    # `StaticFiles`는 스스로 If-None-Match를 보지만, 라우트가 그냥 돌려주는
+    # `FileResponse`는 보지 않는다(starlette 0.46 실측). 그래서 위의 no-cache가
+    # "물어보기"가 아니라 "매번 전체 다시 받기"가 되고 있었다. 여기서 마저 한다.
+    if (
+        request.method in ("GET", "HEAD")
+        and response.status_code == 200
+        and _etag_matches(request.headers.get("if-none-match"), response.headers.get("etag"))
+    ):
+        kept = {
+            name: response.headers[name]
+            for name in _REVALIDATED_HEADERS
+            if name in response.headers
+        }
+        return Response(status_code=304, headers=kept)
+    return response
+
+
 @app.exception_handler(RateLimitExceeded)
 async def _rate_limit_handler(_request: Request, exc: RateLimitExceeded) -> JSONResponse:
     return JSONResponse(
@@ -270,7 +340,10 @@ def naver_site_verification() -> FileResponse:
 
 @app.get("/robots.txt", include_in_schema=False)
 def robots() -> FileResponse:
-    return FileResponse(config.STATIC_DIR / "robots.txt", media_type="text/plain")
+    return FileResponse(
+        config.STATIC_DIR / "robots.txt", media_type="text/plain",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 
@@ -350,7 +423,10 @@ def stock_hub(symbol: str) -> HTMLResponse:
 
 @app.get("/sitemap-pages.xml", include_in_schema=False)
 def sitemap_pages() -> FileResponse:
-    return FileResponse(config.STATIC_DIR / "sitemap-pages.xml", media_type="application/xml")
+    return FileResponse(
+        config.STATIC_DIR / "sitemap-pages.xml", media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 @app.get("/sitemap-stocks.xml", include_in_schema=False)
@@ -400,7 +476,10 @@ def sitemap_coins() -> PlainResponse:
 
 @app.get("/sitemap.xml", include_in_schema=False)
 def sitemap() -> FileResponse:
-    return FileResponse(config.STATIC_DIR / "sitemap.xml", media_type="application/xml")
+    return FileResponse(
+        config.STATIC_DIR / "sitemap.xml", media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 @app.get("/privacy", include_in_schema=False)
