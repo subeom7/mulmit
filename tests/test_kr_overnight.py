@@ -139,6 +139,80 @@ def _card(payload: dict[str, Any], card_id: str) -> dict[str, Any]:
 # --- arithmetic ---------------------------------------------------------------
 
 
+def test_a_close_older_than_the_last_session_says_when_the_newer_one_lands():
+    """Time-independent: the helper is handed both dates, so no clock is involved.
+
+    Between Friday's close and Monday lunchtime the newest close this dataset
+    publishes is Thursday's, while every other quote screen already compares
+    against Friday. The card carries both dates; without this the reader has no
+    way to tell a publication schedule from a disagreement about the price.
+    """
+    friday_1530 = dt.datetime(2026, 8, 21, 15, 30, tzinfo=kr_overnight.KST)
+
+    behind = {"status": "ok", "close": 1691000.0, "date": "2026-08-20"}
+    kr_overnight._mark_close_lag(behind, friday_1530)
+    assert behind["behind_last_session"] is True
+    assert behind["last_session_date"] == "2026-08-21"
+    assert "8/21" in behind["publication_note_ko"] and "13시" in behind["publication_note_ko"]
+    assert "2026-08-21" in behind["publication_note_en"]
+    # The next publication lands on a day KRX actually trades, never a weekend.
+    published_on = dt.date.fromisoformat(behind["publication_note_en"].split()[-1])
+    assert published_on > dt.date(2026, 8, 21) and published_on.weekday() < 5
+
+    current = {"status": "ok", "close": 1730000.0, "date": "2026-08-21"}
+    kr_overnight._mark_close_lag(current, friday_1530)
+    assert current["behind_last_session"] is False
+    assert "publication_note_ko" not in current
+
+    # Nothing to say when there is no close to date in the first place.
+    missing = {"status": "unavailable", "close": None, "date": None}
+    kr_overnight._mark_close_lag(missing, friday_1530)
+    assert "behind_last_session" not in missing
+
+
+def test_the_fx_block_credits_the_lane_that_actually_stored_the_rate(full_lanes):
+    """This block named the Federal Reserve while the rate came from the Bank of Korea.
+
+    The lane moved to ECOS in production and the hardcoded publisher constant did
+    not follow, so the card credited the wrong central bank. Nothing asserted the
+    publisher, which is why it survived. Both the publisher and the description
+    now come from the stored row.
+    """
+    payload = build_kr_overnight(FixtureProvider(ALL_MARKETS))
+    fx = payload["fx"]
+    # The shared fixture seeds the Federal Reserve's H.10 series.
+    assert fx["provider"] == "federal_reserve"
+    assert fx["publisher"] == "Federal Reserve Board"
+    assert "H.10" in fx["basis_ko"] and "ECOS" not in fx["basis_ko"]
+    assert payload["source"]["fx"]["publisher"] == fx["publisher"]
+
+
+def test_an_ecos_rate_is_described_as_the_trading_reference_rate_it_is(db, monkeypatch):
+    monkeypatch.setattr(config, "FSC_ENABLED", True)
+    monkeypatch.setattr(config, "ECOS_ENABLED", True)
+    _seed_roster(db)
+    db.save_economic_series(
+        "fx_usdkrw",
+        provider_id="ecos",
+        provider_series_id="731Y001/0000001",
+        metadata_fields={"title": "원/달러 환율(매매기준율)", "units": "원",
+                         "units_short": "원", "frequency": "Daily", "frequency_short": "D"},
+        observations=[(dt.date(2026, 8, 13), 1418.0), (dt.date(2026, 8, 14), 1414.29)],
+        publisher="한국은행",
+        publisher_url="https://ecos.bok.or.kr/",
+        series_url="https://ecos.bok.or.kr/",
+        rights_status="approved",
+    )
+
+    fx = build_kr_overnight(FixtureProvider(ALL_MARKETS))["fx"]
+    assert fx["status"] == "ok" and fx["provider"] == "ecos"
+    assert fx["publisher"] == "한국은행 (ECOS)"
+    # The lag is definitional, so the card says it instead of only saying "not
+    # live": the rate is the previous business day's volume-weighted average.
+    assert "매매기준율" in fx["basis_ko"] and "하루 늦게" in fx["basis_ko"]
+    assert "previous business day" in fx["basis_en"]
+
+
 def test_equity_card_converts_mark_through_official_fx(full_lanes):
     payload = build_kr_overnight(FixtureProvider(ALL_MARKETS))
     samsung = _card(payload, "samsung_electronics")

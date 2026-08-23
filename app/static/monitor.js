@@ -2340,9 +2340,21 @@ function renderKrOvernight() {
     if (card.leverage && card.leverage !== 1) badge(`${card.leverage}× ${t("kro.leverage")}`);
     if (payload.session?.active) badge(t("kro.session"), "info");
 
+    // The close on this card can be a session behind every other quote screen,
+    // because the public dataset publishes a session only after 13:00 KST on the
+    // next business day. The dates are already shown; this says why they differ.
+    const lagNote = state.lang === "ko"
+      ? card.official?.publication_note_ko
+      : card.official?.publication_note_en;
+
     article.append(header, price, vs);
     if (vsRef) article.append(vsRef);
     article.append(meta);
+    if (lagNote) {
+      const note = document.createElement("p"); note.className = "kro-lag";
+      note.textContent = lagNote;
+      article.append(note);
+    }
     if (badges.childElementCount) article.append(badges);
     return article;
   }));

@@ -473,6 +473,8 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 .kro-meta div { display: flex; justify-content: space-between; gap: 8px; }
 .kro-meta dt { color: var(--faint); font: 650 9px/1.4 var(--mono); }
 .kro-meta dd { margin: 0; color: var(--muted); font: 650 9.5px/1.4 var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+/* 종가가 마지막 거래일보다 늦을 때, 그게 의견 차이가 아니라 공개 일정임을 밝힌다. */
+.kro-lag { margin: 7px 0 0; color: var(--faint); font: 650 9px/1.45 var(--mono); }
 .kro-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
 .kro-footer { margin: 12px 0 0; }
 .kro-footer .kro-method { margin: 0 0 4px; color: var(--muted); font-size: 10.5px; }
