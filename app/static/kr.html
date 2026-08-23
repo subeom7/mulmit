@@ -182,6 +182,27 @@
       </div>
     </section>
 
+    <!-- 검색 관심도. 값이 절댓값이 아니라 요청 기간의 최댓값을 100으로 둔 상대값이라,
+         종목끼리는 원값이 아니라 "자기 평소 대비"로만 견준다. 화면 문구가 이 차이를
+         흐리면 검색량 순위처럼 읽힌다 — 그건 이 API로 만들 수 없는 것이다. -->
+    <section class="console-section" id="kr-search-interest" hidden aria-labelledby="ksi-title">
+      <header>
+        <h2 id="ksi-title" data-i18n="ksi.title">종목 검색 관심도</h2>
+        <span class="sec-note" data-i18n="ksi.note">네이버에서 평소보다 많이 찾아본 종목</span>
+      </header>
+      <p class="section-copy" data-i18n="ksi.copy" style="margin:0 0 12px">네이버 통합검색의 90일 검색 추이입니다. 주식 검색은 주말에 평일의 10~20%로 떨어지므로 <strong>같은 요일끼리</strong> 견줍니다. 검색량 순위가 아니라 각 종목이 자기 평소와 얼마나 다른지입니다.</p>
+      <div class="risk-strip" role="note">
+        <span class="status-badge warn" data-i18n="ksi.badgeRelative">상대값 · 절댓값 아님</span>
+        <span class="status-badge warn" data-i18n="ksi.badgeWeekday">같은 요일끼리 비교</span>
+        <span class="status-badge warn pro-only" data-i18n="ksi.badgeNotRank">검색량 순위 아님</span>
+      </div>
+      <div id="ksi-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+      <div class="panel" id="ksi-panel" hidden>
+        <div id="ksi-body"></div>
+        <footer class="panel-footer" id="ksi-footer"></footer>
+      </div>
+    </section>
+
     <section class="console-section" id="weekend-pulse" aria-labelledby="weekend-title">
       <header>
         <h2 id="weekend-title" data-i18n="weekend.title">Weekend Pulse · 주말 참고 신호</h2>
@@ -241,7 +262,7 @@
 
   <script>window.MULMIT_PAGE = "kr";</script>
   <script src="/static/console.js?v=fafc741bcd" defer></script>
-  <script src="/static/monitor.js?v=328f90b97e" defer></script>
+  <script src="/static/monitor.js?v=0fb118adc1" defer></script>
   <script src="/static/search.js?v=e2093e0d4d" defer></script>
 </body>
 </html>
