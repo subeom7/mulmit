@@ -36,7 +36,19 @@ const onPage = (...pages) => PAGE === "all" || pages.includes(PAGE);
 const TEXT = {
   ko: {
     "brand.tagline": "물밑 · 주식·암호화폐 시장 신호", "nav.analytics": "종목 분석", "nav.monitor": "시장 모니터",
-    "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌", "nav.crypto": "암호화폐", "crypto.regime.title": "시장 국면", "crypto.regime.copy": "지금 시장이 얼마나 쏠려 있고 어느 쪽으로 기울어 있는지를 요약한 상태 지표입니다. 매수·매도 신호가 아니며, 과열이 곧 하락을 뜻하지도 않습니다.", "crypto.liq.title": "청산 집계", "crypto.liq.copy": "최근 24시간 강제청산 규모를 롱·숏으로 나눠 봅니다. 응답한 거래소들의 합이며 전체 시장 합계가 아닙니다. 1시간 단위 집계이고 실시간 체결 피드가 아닙니다.", "crypto.liq.window": "24시간 청산", "crypto.liq.long": "롱 청산", "crypto.liq.short": "숏 청산", "crypto.liq.hour": "최근 1시간", "crypto.liq.oi": "미결제약정", "crypto.liq.venues": "포함 거래소", "crypto.liq.silent": "응답 없음", "crypto.liq.none": "아직 수집된 청산 집계가 없습니다.", "crypto.news.title": "암호화폐 뉴스", "crypto.news.copy": "GDELT가 수집한 글로벌 기사에서 코인 이름이 제목에 잡힌 헤드라인입니다. 제목·출처·링크까지만 전달하며 본문은 원문에서 확인하세요. 실시간 속보가 아니라 수집 주기 갱신입니다.", "crypto.news.none": "코인 태그가 붙은 헤드라인이 아직 없습니다.", "crypto.news.also": "외 {n}곳", "crypto.regime.change24h": "24h 변화", "crypto.regime.collecting": "추이 수집 중", "crypto.regime.heat": "과열도", "crypto.regime.trend": "추세", "crypto.regime.sample": "표본", "crypto.regime.sampleValue": "유동 시장 {n}개", "crypto.heatBadge": "과열도 {n}", "nav.bio": "바이오", "landing.bioLink": "바이오", "landing.bioDesc": "임상 파이프라인 동향 · FDA 최근 승인 · 식약처 품목허가", "biopage.kicker": "BIOPHARMA", "biopage.title": "바이오, 임상과 승인을 기록으로 봅니다.", "biopage.copy": "국내·글로벌 제약바이오 워치리스트의 임상 파이프라인 갱신(ClinicalTrials.gov)과 FDA의 최근 신약·바이오의약품 승인(openFDA)을 공공 기록 그대로 봅니다. 결과의 성패나 주가 해석, 투자 권유가 아닙니다.", "bio.trials.title": "임상 파이프라인 동향", "bio.filter.all": "전체", "bio.filter.kr": "한국", "bio.filter.global": "글로벌", "bio.pub.link": "논문 {n}건", "bio.pub.linkOne": "논문 1건", "bio.pub.source": "PubMed", "bio.pub.notice": "PubMed 서지(제목·저널·일자·PMID)만, 초록 비표시 · 등록번호(NCT) 기준 검색", "bio.adcomm.title": "FDA 자문위원회 회의 공고", "bio.adcomm.copy": "Federal Register에 게재된 FDA 자문위원회 회의 공고입니다(예정 회의와 최근 30일 종료 회의). 회의일은 공고의 DATES 단락에서 추출한 값이며 최종 일정은 링크된 공고를 따릅니다. 자문위 결론이나 승인 여부가 아닙니다.", "bio.adcomm.caption": "자문위원회 회의 공고 (예정 · 최근 종료)", "bio.adcomm.upcoming": "예정 회의", "bio.adcomm.next": "다음 회의", "bio.adcomm.recentPast": "최근 30일 종료", "bio.adcomm.undated": "날짜 미기재 공고", "bio.adcomm.none": "예정된 회의 공고가 없습니다.", "bio.col.meeting": "회의일", "bio.col.committee": "위원회", "bio.col.notice": "공고", "bio.col.published": "공고일", "bio.col.state": "상태", "bio.adcomm.state.upcoming": "예정", "bio.adcomm.state.past": "종료", "bio.adcomm.state.undated": "날짜 미기재", "bio.adcomm.amendment": "정정 공고", "bio.adcomm.daysUntil": "D-{n}", "bio.adcomm.today": "오늘", "bio.mfds.title": "식약처 최근 품목허가", "bio.mfds.copy": "식품의약품안전처 의약품 제품 허가정보(공공데이터포털)를 허가일자별로 최근 30일 모은 목록입니다. 기본 보기는 '주목'(허가된 전문의약품·신약·희귀의약품)이며 신고·일반의약품까지 전체를 볼 수 있습니다. 규제 기록일 뿐 매출·주가 해석이 아닙니다.", "bio.mfds.caption": "식약처 품목허가 (최근 30일)", "bio.mfds.filter.notable": "주목", "bio.mfds.filter.permit": "허가만", "bio.mfds.filter.all": "전체", "bio.mfds.total": "30일 품목", "bio.mfds.permit": "허가", "bio.mfds.report": "신고", "bio.mfds.rx": "전문의약품", "bio.mfds.newDrug": "신약", "bio.mfds.rare": "희귀의약품", "bio.mfds.none": "창 안에 해당하는 품목이 없습니다.", "bio.mfds.failedDays": "일부 날짜 조회 실패 {n}일", "bio.col.permitDate": "허가일", "bio.col.item": "품목명", "bio.col.company": "업체", "bio.col.rxOtc": "구분", "bio.col.kind": "허가/신고", "bio.col.ingredients": "주성분", "bio.mfds.flag.newDrug": "신약", "bio.mfds.flag.rare": "희귀", "bio.mfds.flag.cancelled": "취하·취소", "bio.trials.copy": "워치리스트 34개 스폰서(주 스폰서 기준)의 임상 중 최근 14일 내 갱신된 중재 2·3상입니다(스폰서당 최대 8건). 상태·단계·일자는 ClinicalTrials.gov 등록값 그대로이며, 한국어 이름과 상장 라벨은 Mulmit이 붙인 참고 라벨입니다.", "bio.trials.caption": "최근 갱신 임상 (중재 2·3상, 14일)", "bio.badge.registry": "등록 정보 · 결과 아님", "bio.badge.sponsorEntered": "스폰서 직접 등록", "bio.badge.notAdvice": "투자 권유 아님", "bio.trials.sponsors": "워치리스트 스폰서", "bio.trials.recent": "최근 갱신(14일)", "bio.trials.registered": "등록 임상", "bio.trials.processed": "ClinicalTrials.gov 처리일", "bio.trials.none": "최근 14일 내 갱신된 중재 2·3상이 없습니다.", "bio.col.sponsor": "스폰서", "bio.col.study": "임상", "bio.col.phase": "단계", "bio.col.status": "상태", "bio.col.updated": "갱신일", "bio.col.primary": "1차 완료(예정)", "bio.col.conditions": "적응증", "bio.col.intervention": "중재", "bio.status.RECRUITING": "모집 중", "bio.status.NOT_YET_RECRUITING": "모집 예정", "bio.status.ENROLLING_BY_INVITATION": "초청 등록", "bio.status.ACTIVE_NOT_RECRUITING": "진행 중(모집 종료)", "bio.status.COMPLETED": "완료", "bio.status.TERMINATED": "조기 종료", "bio.status.WITHDRAWN": "철회", "bio.status.SUSPENDED": "보류", "bio.status.UNKNOWN": "미확인", "bio.status.AVAILABLE": "이용 가능", "bio.status.NO_LONGER_AVAILABLE": "이용 종료", "bio.flag.results": "결과 게시", "bio.flag.stopped": "중단", "bio.flag.completed": "완료", "bio.flag.new": "신규", "bio.flag.why": "사유", "bio.phaseSuffix": "상", "bio.enrollment": "등록 {n}명", "bio.fda.title": "FDA 최근 승인", "bio.fda.copy": "최근 60일 안에 원 신청(ORIG)이 승인된 NDA(신약)·BLA(바이오의약품) 목록입니다. 제네릭(ANDA)은 건수만 표시합니다. openFDA 공개 도메인 데이터이며 규제 기록일 뿐 매출·주가 해석이 아닙니다.", "bio.fda.caption": "최근 원 신청 승인 (NDA·BLA)", "bio.fda.window": "창 {s} ~ {e}", "bio.fda.nda": "NDA 신약", "bio.fda.bla": "BLA 바이오", "bio.fda.anda": "ANDA 제네릭(건수)", "bio.fda.priority": "우선심사", "bio.fda.nme": "신규 분자(NME)", "bio.fda.none": "창 안에 승인된 NDA·BLA가 없습니다.", "bio.fda.publisherUpdated": "openFDA 데이터 갱신", "bio.col.approved": "승인일", "bio.col.application": "신청", "bio.col.product": "제품(성분)", "bio.col.class": "분류", "bio.col.review": "심사", "bio.review.PRIORITY": "우선", "bio.review.STANDARD": "표준", "bio.listingNote": "상장 라벨은 Mulmit 참고 표기", "bio.modifications": "수정 내용", "bio.processedLabel": "ClinicalTrials.gov 처리일",
+    "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌", "nav.crypto": "암호화폐", "crypto.regime.title": "시장 국면", "crypto.regime.copy": "지금 시장이 얼마나 쏠려 있고 어느 쪽으로 기울어 있는지를 요약한 상태 지표입니다. 매수·매도 신호가 아니며, 과열이 곧 하락을 뜻하지도 않습니다.", "crypto.liq.title": "청산 집계", "crypto.liq.copy": "최근 24시간 강제청산 규모를 롱·숏으로 나눠 봅니다. 응답한 거래소들의 합이며 전체 시장 합계가 아닙니다. 1시간 단위 집계이고 실시간 체결 피드가 아닙니다.", "crypto.liq.window": "24시간 청산", "crypto.liq.long": "롱 청산", "crypto.liq.short": "숏 청산", "crypto.liq.hour": "최근 1시간", "crypto.liq.oi": "미결제약정", "crypto.liq.venues": "포함 거래소", "crypto.liq.silent": "응답 없음", "crypto.liq.none": "아직 수집된 청산 집계가 없습니다.", "crypto.news.title": "암호화폐 뉴스", "crypto.news.copy": "GDELT가 수집한 글로벌 기사에서 코인 이름이 제목에 잡힌 헤드라인입니다. 제목·출처·링크까지만 전달하며 본문은 원문에서 확인하세요. 실시간 속보가 아니라 수집 주기 갱신입니다.", "crypto.news.none": "코인 태그가 붙은 헤드라인이 아직 없습니다.", "crypto.news.also": "외 {n}곳", "crypto.regime.change24h": "24h 변화", "crypto.regime.collecting": "추이 수집 중", "crypto.regime.heat": "과열도", "crypto.regime.trend": "추세", "crypto.regime.sample": "표본", "crypto.regime.sampleValue": "유동 시장 {n}개", "crypto.heatBadge": "과열도 {n}", "nav.bio": "바이오", "landing.bioLink": "바이오", "landing.bioDesc": "임상 파이프라인 동향 · FDA 최근 승인 · 식약처 품목허가", "biopage.kicker": "BIOPHARMA", "biopage.title": "바이오, 임상과 승인을 기록으로 봅니다.", "biopage.copy": "국내·글로벌 제약바이오 워치리스트의 임상 파이프라인 갱신(ClinicalTrials.gov)과 FDA의 최근 신약·바이오의약품 승인(openFDA)을 공공 기록 그대로 봅니다. 결과의 성패나 주가 해석, 투자 권유가 아닙니다.", "biopage.h1": "바이오", "biopage.scope": "다가올 결정 · 한국 · 미국·글로벌",
+    "biopage.sub": "바이오 종목은 결정 하나에 움직입니다. 그래서 날짜가 잡힌 것을 맨 앞에 두고, 이미 난 결정은 시장별로 나눠 봅니다. 전부 공공 기록 그대로이며 결과의 성패나 주가 해석이 아닙니다.",
+    "bio.cat.title": "다가오는 결정", "bio.cat.note": "날짜가 잡힌 것만 · 가까운 순서",
+    "bio.cat.copy": "FDA 자문위원회 회의처럼 날짜가 확정된 것과, 임상의 1차 완료 예정일을 한 줄에 놓고 가까운 순서로 봅니다. 1차 완료 예정일은 스폰서가 등록부에 적어 둔 계획값이라 자주 바뀌고, 완료가 곧 결과 발표도 아닙니다.",
+    "bio.cat.badgePlan": "계획일 포함 · 확정 아님", "bio.cat.kindMeeting": "자문위 회의", "bio.cat.kindReadout": "1차 완료 예정",
+    "bio.cat.meetings": "예정 자문위", "bio.cat.readouts90": "90일 내 1차 완료", "bio.cat.window": "보는 창",
+    "bio.cat.windowValue": "{n}일", "bio.cat.monthOnly": "중", "bio.cat.none": "창 안에 날짜가 잡힌 항목이 없습니다.",
+    "bio.cat.basis": "자문위 회의일은 Federal Register 공고에서, 1차 완료 예정일은 ClinicalTrials.gov 등록값에서 왔습니다. 예정일은 스폰서가 수시로 고치는 계획값이며, 1차 완료는 결과 발표일이 아닙니다. 날짜가 없는 공고는 여기 오지 않습니다.",
+    "bio.zone.kr": "한국", "bio.zone.krNote": "식약처 허가 · 국내 스폰서 임상",
+    "bio.zone.global": "미국 · 글로벌", "bio.zone.globalNote": "FDA 승인 · 글로벌 스폰서 임상 · 자문위",
+    "bio.trials.krTitle": "국내 스폰서 임상", "bio.trials.globalTitle": "글로벌 스폰서 임상",
+    "bio.trials.note": "최근 14일 갱신 · 중재 2·3상",
+    "bio.trials.title": "임상 파이프라인 동향", "bio.filter.all": "전체", "bio.filter.kr": "한국", "bio.filter.global": "글로벌", "bio.pub.link": "논문 {n}건", "bio.pub.linkOne": "논문 1건", "bio.pub.source": "PubMed", "bio.pub.notice": "PubMed 서지(제목·저널·일자·PMID)만, 초록 비표시 · 등록번호(NCT) 기준 검색", "bio.adcomm.title": "FDA 자문위원회 회의 공고", "bio.adcomm.copy": "Federal Register에 게재된 FDA 자문위원회 회의 공고입니다(예정 회의와 최근 30일 종료 회의). 회의일은 공고의 DATES 단락에서 추출한 값이며 최종 일정은 링크된 공고를 따릅니다. 자문위 결론이나 승인 여부가 아닙니다.", "bio.adcomm.caption": "자문위원회 회의 공고 (예정 · 최근 종료)", "bio.adcomm.upcoming": "예정 회의", "bio.adcomm.next": "다음 회의", "bio.adcomm.recentPast": "최근 30일 종료", "bio.adcomm.undated": "날짜 미기재 공고", "bio.adcomm.none": "예정된 회의 공고가 없습니다.", "bio.col.meeting": "회의일", "bio.col.committee": "위원회", "bio.col.notice": "공고", "bio.col.published": "공고일", "bio.col.state": "상태", "bio.adcomm.state.upcoming": "예정", "bio.adcomm.state.past": "종료", "bio.adcomm.state.undated": "날짜 미기재", "bio.adcomm.amendment": "정정 공고", "bio.adcomm.daysUntil": "D-{n}", "bio.adcomm.today": "오늘", "bio.mfds.title": "식약처 최근 품목허가", "bio.mfds.copy": "식품의약품안전처 의약품 제품 허가정보(공공데이터포털)를 허가일자별로 최근 30일 모은 목록입니다. 기본 보기는 '주목'(허가된 전문의약품·신약·희귀의약품)이며 신고·일반의약품까지 전체를 볼 수 있습니다. 규제 기록일 뿐 매출·주가 해석이 아닙니다.", "bio.mfds.caption": "식약처 품목허가 (최근 30일)", "bio.mfds.filter.notable": "주목", "bio.mfds.filter.permit": "허가만", "bio.mfds.filter.all": "전체", "bio.mfds.total": "30일 품목", "bio.mfds.permit": "허가", "bio.mfds.report": "신고", "bio.mfds.rx": "전문의약품", "bio.mfds.newDrug": "신약", "bio.mfds.rare": "희귀의약품", "bio.mfds.none": "창 안에 해당하는 품목이 없습니다.", "bio.mfds.failedDays": "일부 날짜 조회 실패 {n}일", "bio.col.permitDate": "허가일", "bio.col.item": "품목명", "bio.col.company": "업체", "bio.col.rxOtc": "구분", "bio.col.kind": "허가/신고", "bio.col.ingredients": "주성분", "bio.mfds.flag.newDrug": "신약", "bio.mfds.flag.rare": "희귀", "bio.mfds.flag.cancelled": "취하·취소", "bio.trials.copy": "워치리스트 34개 스폰서(주 스폰서 기준)의 임상 중 최근 14일 내 갱신된 중재 2·3상입니다(스폰서당 최대 8건). 상태·단계·일자는 ClinicalTrials.gov 등록값 그대로이며, 한국어 이름과 상장 라벨은 Mulmit이 붙인 참고 라벨입니다.", "bio.trials.caption": "최근 갱신 임상 (중재 2·3상, 14일)", "bio.badge.registry": "등록 정보 · 결과 아님", "bio.badge.sponsorEntered": "스폰서 직접 등록", "bio.badge.notAdvice": "투자 권유 아님", "bio.trials.sponsors": "워치리스트 스폰서", "bio.trials.recent": "최근 갱신(14일)", "bio.trials.registered": "등록 임상", "bio.trials.processed": "ClinicalTrials.gov 처리일", "bio.trials.none": "최근 14일 내 갱신된 중재 2·3상이 없습니다.", "bio.col.sponsor": "스폰서", "bio.col.study": "임상", "bio.col.phase": "단계", "bio.col.status": "상태", "bio.col.updated": "갱신일", "bio.col.primary": "1차 완료(예정)", "bio.col.conditions": "적응증", "bio.col.intervention": "중재", "bio.status.RECRUITING": "모집 중", "bio.status.NOT_YET_RECRUITING": "모집 예정", "bio.status.ENROLLING_BY_INVITATION": "초청 등록", "bio.status.ACTIVE_NOT_RECRUITING": "진행 중(모집 종료)", "bio.status.COMPLETED": "완료", "bio.status.TERMINATED": "조기 종료", "bio.status.WITHDRAWN": "철회", "bio.status.SUSPENDED": "보류", "bio.status.UNKNOWN": "미확인", "bio.status.AVAILABLE": "이용 가능", "bio.status.NO_LONGER_AVAILABLE": "이용 종료", "bio.flag.results": "결과 게시", "bio.flag.stopped": "중단", "bio.flag.completed": "완료", "bio.flag.new": "신규", "bio.flag.why": "사유", "bio.phaseSuffix": "상", "bio.enrollment": "등록 {n}명", "bio.fda.title": "FDA 최근 승인", "bio.fda.copy": "최근 60일 안에 원 신청(ORIG)이 승인된 NDA(신약)·BLA(바이오의약품) 목록입니다. 제네릭(ANDA)은 건수만 표시합니다. openFDA 공개 도메인 데이터이며 규제 기록일 뿐 매출·주가 해석이 아닙니다.", "bio.fda.caption": "최근 원 신청 승인 (NDA·BLA)", "bio.fda.window": "창 {s} ~ {e}", "bio.fda.nda": "NDA 신약", "bio.fda.bla": "BLA 바이오", "bio.fda.anda": "ANDA 제네릭(건수)", "bio.fda.priority": "우선심사", "bio.fda.nme": "신규 분자(NME)", "bio.fda.none": "창 안에 승인된 NDA·BLA가 없습니다.", "bio.fda.publisherUpdated": "openFDA 데이터 갱신", "bio.col.approved": "승인일", "bio.col.application": "신청", "bio.col.product": "제품(성분)", "bio.col.class": "분류", "bio.col.review": "심사", "bio.review.PRIORITY": "우선", "bio.review.STANDARD": "표준", "bio.listingNote": "상장 라벨은 Mulmit 참고 표기", "bio.modifications": "수정 내용", "bio.processedLabel": "ClinicalTrials.gov 처리일",
     "console.title": "지금 시장", "console.scope": "한국 · 미국 · 암호화폐", "console.hip3": "HIP-3 합성 무기한선물 · trade.xyz",
     "console.sub": "한국장이 닫혀 있어도 삼성전자·SK하이닉스·코스피200은 해외 시장에서 24시간 거래됩니다. 마지막 종가 이후 지금까지 얼마나 움직였는지를 원화로 환산해 보여줍니다.",
     "console.disclose": "이 가격은 어떻게 계산한 값인가요?",
@@ -187,7 +199,19 @@ const TEXT = {
   },
   en: {
     "brand.tagline": "MARKET SIGNALS · KR · US · CRYPTO", "nav.analytics": "Stock analytics", "nav.monitor": "Market monitor",
-    "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & Global", "nav.crypto": "Crypto", "crypto.regime.title": "Market regime", "crypto.regime.copy": "A summary of how crowded the market is and which way it leans. Not a buy or sell signal — overheated does not mean a fall is coming.", "crypto.liq.title": "Liquidations", "crypto.liq.copy": "Forced liquidations over the last 24 hours, split long against short. A sum across the venues that answered — not a market-wide total. Bucketed hourly, not a live trade feed.", "crypto.liq.window": "24h liquidations", "crypto.liq.long": "Longs", "crypto.liq.short": "Shorts", "crypto.liq.hour": "Last hour", "crypto.liq.oi": "Open interest", "crypto.liq.venues": "Venues included", "crypto.liq.silent": "No data", "crypto.liq.none": "No liquidation snapshot collected yet.", "crypto.news.title": "Crypto headlines", "crypto.news.copy": "Global articles collected by GDELT whose titles name a coin. Title, source and link only — read the source for substance. Refreshed on the collection cycle, not a live wire.", "crypto.news.none": "No coin-tagged headline yet.", "crypto.news.also": "+{n} more outlets", "crypto.regime.change24h": "24h change", "crypto.regime.collecting": "trend collecting", "crypto.regime.heat": "Heat", "crypto.regime.trend": "Trend", "crypto.regime.sample": "Sample", "crypto.regime.sampleValue": "{n} liquid markets", "crypto.heatBadge": "heat {n}", "nav.bio": "Bio", "landing.bioLink": "Bio", "landing.bioDesc": "Clinical pipeline activity · recent FDA approvals · MFDS product approvals", "biopage.kicker": "BIOPHARMA", "biopage.title": "Biopharma — trials and approvals, as recorded.", "biopage.copy": "Clinical pipeline updates for a Korean and global biopharma watchlist (ClinicalTrials.gov) and the FDA's recent new-drug and biologic approvals (openFDA), shown as the public records state them. Not trial outcomes, not price commentary, not a recommendation.", "bio.trials.title": "Clinical pipeline activity", "bio.filter.all": "All", "bio.filter.kr": "Korea", "bio.filter.global": "Global", "bio.pub.link": "{n} publications", "bio.pub.linkOne": "1 publication", "bio.pub.source": "PubMed", "bio.pub.notice": "PubMed citation metadata only (title, journal, date, PMID), no abstracts · matched by registration number (NCT)", "bio.adcomm.title": "FDA advisory committee meeting notices", "bio.adcomm.copy": "FDA advisory committee meeting notices as published in the Federal Register (upcoming meetings and meetings that ended in the last 30 days). Meeting dates are extracted from each notice's DATES paragraph; the linked notice governs the final schedule. Not a committee conclusion or an approval.", "bio.adcomm.caption": "Advisory committee meeting notices (upcoming · recently ended)", "bio.adcomm.upcoming": "Upcoming", "bio.adcomm.next": "Next meeting", "bio.adcomm.recentPast": "Ended (30d)", "bio.adcomm.undated": "Undated notices", "bio.adcomm.none": "No upcoming meeting notice.", "bio.col.meeting": "Meeting", "bio.col.committee": "Committee", "bio.col.notice": "Notice", "bio.col.published": "Published", "bio.col.state": "State", "bio.adcomm.state.upcoming": "upcoming", "bio.adcomm.state.past": "ended", "bio.adcomm.state.undated": "undated", "bio.adcomm.amendment": "amendment", "bio.adcomm.daysUntil": "in {n}d", "bio.adcomm.today": "today", "bio.mfds.title": "Korea MFDS — recent drug product permits", "bio.mfds.copy": "Drug product permits from the Ministry of Food and Drug Safety (data.go.kr), collected by permit date over the trailing 30 days. The default view is 'notable' (prescription products granted a permit, new drugs, orphan drugs); the full list includes notifications and OTC products. A regulatory record, not sales or price commentary.", "bio.mfds.caption": "MFDS drug product permits (30 days)", "bio.mfds.filter.notable": "Notable", "bio.mfds.filter.permit": "Permits only", "bio.mfds.filter.all": "All", "bio.mfds.total": "Items (30d)", "bio.mfds.permit": "Permits", "bio.mfds.report": "Notifications", "bio.mfds.rx": "Prescription", "bio.mfds.newDrug": "New drugs", "bio.mfds.rare": "Orphan drugs", "bio.mfds.none": "No matching item inside the window.", "bio.mfds.failedDays": "{n} day(s) failed to load", "bio.col.permitDate": "Permit date", "bio.col.item": "Product", "bio.col.company": "Company", "bio.col.rxOtc": "Rx/OTC", "bio.col.kind": "Permit/notification", "bio.col.ingredients": "Main ingredients", "bio.mfds.flag.newDrug": "new drug", "bio.mfds.flag.rare": "orphan", "bio.mfds.flag.cancelled": "withdrawn/cancelled", "bio.trials.copy": "Interventional Phase 2/3 studies of 34 watchlist sponsors (lead sponsor) updated in the last 14 days (at most 8 per sponsor). Status, phase and dates are the ClinicalTrials.gov registered values; Korean names and listing labels are Mulmit's reference labels.", "bio.trials.caption": "Recently updated studies (interventional Phase 2/3, 14 days)", "bio.badge.registry": "Registry record · not results", "bio.badge.sponsorEntered": "Sponsor-entered", "bio.badge.notAdvice": "Not a recommendation", "bio.trials.sponsors": "Watchlist sponsors", "bio.trials.recent": "Updated (14d)", "bio.trials.registered": "Registered studies", "bio.trials.processed": "ClinicalTrials.gov processed", "bio.trials.none": "No interventional Phase 2/3 study was updated in the last 14 days.", "bio.col.sponsor": "Sponsor", "bio.col.study": "Study", "bio.col.phase": "Phase", "bio.col.status": "Status", "bio.col.updated": "Updated", "bio.col.primary": "Primary completion (est.)", "bio.col.conditions": "Conditions", "bio.col.intervention": "Intervention", "bio.status.RECRUITING": "Recruiting", "bio.status.NOT_YET_RECRUITING": "Not yet recruiting", "bio.status.ENROLLING_BY_INVITATION": "Enrolling by invitation", "bio.status.ACTIVE_NOT_RECRUITING": "Active, not recruiting", "bio.status.COMPLETED": "Completed", "bio.status.TERMINATED": "Terminated", "bio.status.WITHDRAWN": "Withdrawn", "bio.status.SUSPENDED": "Suspended", "bio.status.UNKNOWN": "Unknown", "bio.status.AVAILABLE": "Available", "bio.status.NO_LONGER_AVAILABLE": "No longer available", "bio.flag.results": "results posted", "bio.flag.stopped": "stopped", "bio.flag.completed": "completed", "bio.flag.new": "new", "bio.flag.why": "reason", "bio.phaseSuffix": "", "bio.enrollment": "enrollment {n}", "bio.fda.title": "Recent FDA approvals", "bio.fda.copy": "NDA (new drug) and BLA (biologic) applications whose original submission was approved in the last 60 days; generics (ANDA) are shown as a count. openFDA public-domain data — a regulatory record, not sales or price commentary.", "bio.fda.caption": "Recent original approvals (NDA · BLA)", "bio.fda.window": "window {s} – {e}", "bio.fda.nda": "NDA new drugs", "bio.fda.bla": "BLA biologics", "bio.fda.anda": "ANDA generics (count)", "bio.fda.priority": "priority review", "bio.fda.nme": "new molecular entities", "bio.fda.none": "No NDA/BLA approval inside the window.", "bio.fda.publisherUpdated": "openFDA data updated", "bio.col.approved": "Approved", "bio.col.application": "Application", "bio.col.product": "Product (ingredient)", "bio.col.class": "Class", "bio.col.review": "Review", "bio.review.PRIORITY": "Priority", "bio.review.STANDARD": "Standard", "bio.listingNote": "Listing labels are Mulmit reference labels", "bio.modifications": "Modifications", "bio.processedLabel": "ClinicalTrials.gov processed",
+    "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & Global", "nav.crypto": "Crypto", "crypto.regime.title": "Market regime", "crypto.regime.copy": "A summary of how crowded the market is and which way it leans. Not a buy or sell signal — overheated does not mean a fall is coming.", "crypto.liq.title": "Liquidations", "crypto.liq.copy": "Forced liquidations over the last 24 hours, split long against short. A sum across the venues that answered — not a market-wide total. Bucketed hourly, not a live trade feed.", "crypto.liq.window": "24h liquidations", "crypto.liq.long": "Longs", "crypto.liq.short": "Shorts", "crypto.liq.hour": "Last hour", "crypto.liq.oi": "Open interest", "crypto.liq.venues": "Venues included", "crypto.liq.silent": "No data", "crypto.liq.none": "No liquidation snapshot collected yet.", "crypto.news.title": "Crypto headlines", "crypto.news.copy": "Global articles collected by GDELT whose titles name a coin. Title, source and link only — read the source for substance. Refreshed on the collection cycle, not a live wire.", "crypto.news.none": "No coin-tagged headline yet.", "crypto.news.also": "+{n} more outlets", "crypto.regime.change24h": "24h change", "crypto.regime.collecting": "trend collecting", "crypto.regime.heat": "Heat", "crypto.regime.trend": "Trend", "crypto.regime.sample": "Sample", "crypto.regime.sampleValue": "{n} liquid markets", "crypto.heatBadge": "heat {n}", "nav.bio": "Bio", "landing.bioLink": "Bio", "landing.bioDesc": "Clinical pipeline activity · recent FDA approvals · MFDS product approvals", "biopage.kicker": "BIOPHARMA", "biopage.title": "Biopharma — trials and approvals, as recorded.", "biopage.copy": "Clinical pipeline updates for a Korean and global biopharma watchlist (ClinicalTrials.gov) and the FDA's recent new-drug and biologic approvals (openFDA), shown as the public records state them. Not trial outcomes, not price commentary, not a recommendation.", "biopage.h1": "Biopharma", "biopage.scope": "what is next · Korea · US & global",
+    "biopage.sub": "Bio names move on single decisions. So what has a date sits first, and what has already been decided is split by market. All of it is the public record as written — not an outcome, not price commentary.",
+    "bio.cat.title": "What is coming", "bio.cat.note": "dated items only · soonest first",
+    "bio.cat.copy": "FDA advisory committee meetings, whose dates are fixed, alongside the primary-completion dates registered for trials — one timeline, soonest first. A primary-completion date is a sponsor-entered plan that changes often, and completion is not a readout.",
+    "bio.cat.badgePlan": "includes planned dates", "bio.cat.kindMeeting": "AdComm", "bio.cat.kindReadout": "Primary completion (est.)",
+    "bio.cat.meetings": "Upcoming AdComms", "bio.cat.readouts90": "Primary completion (90d)", "bio.cat.window": "Window",
+    "bio.cat.windowValue": "{n} days", "bio.cat.monthOnly": "(month)", "bio.cat.none": "Nothing dated inside the window.",
+    "bio.cat.basis": "Meeting dates come from Federal Register notices; primary-completion dates are the ClinicalTrials.gov registered values. Registered dates are sponsor-entered plans revised often, and primary completion is not a readout date. Undated notices do not appear here.",
+    "bio.zone.kr": "Korea", "bio.zone.krNote": "MFDS permits · Korean-sponsored trials",
+    "bio.zone.global": "US & Global", "bio.zone.globalNote": "FDA approvals · global-sponsored trials · advisory committees",
+    "bio.trials.krTitle": "Korean-sponsored trials", "bio.trials.globalTitle": "Global-sponsored trials",
+    "bio.trials.note": "updated in 14 days · interventional Phase 2/3",
+    "bio.trials.title": "Clinical pipeline activity", "bio.filter.all": "All", "bio.filter.kr": "Korea", "bio.filter.global": "Global", "bio.pub.link": "{n} publications", "bio.pub.linkOne": "1 publication", "bio.pub.source": "PubMed", "bio.pub.notice": "PubMed citation metadata only (title, journal, date, PMID), no abstracts · matched by registration number (NCT)", "bio.adcomm.title": "FDA advisory committee meeting notices", "bio.adcomm.copy": "FDA advisory committee meeting notices as published in the Federal Register (upcoming meetings and meetings that ended in the last 30 days). Meeting dates are extracted from each notice's DATES paragraph; the linked notice governs the final schedule. Not a committee conclusion or an approval.", "bio.adcomm.caption": "Advisory committee meeting notices (upcoming · recently ended)", "bio.adcomm.upcoming": "Upcoming", "bio.adcomm.next": "Next meeting", "bio.adcomm.recentPast": "Ended (30d)", "bio.adcomm.undated": "Undated notices", "bio.adcomm.none": "No upcoming meeting notice.", "bio.col.meeting": "Meeting", "bio.col.committee": "Committee", "bio.col.notice": "Notice", "bio.col.published": "Published", "bio.col.state": "State", "bio.adcomm.state.upcoming": "upcoming", "bio.adcomm.state.past": "ended", "bio.adcomm.state.undated": "undated", "bio.adcomm.amendment": "amendment", "bio.adcomm.daysUntil": "in {n}d", "bio.adcomm.today": "today", "bio.mfds.title": "Korea MFDS — recent drug product permits", "bio.mfds.copy": "Drug product permits from the Ministry of Food and Drug Safety (data.go.kr), collected by permit date over the trailing 30 days. The default view is 'notable' (prescription products granted a permit, new drugs, orphan drugs); the full list includes notifications and OTC products. A regulatory record, not sales or price commentary.", "bio.mfds.caption": "MFDS drug product permits (30 days)", "bio.mfds.filter.notable": "Notable", "bio.mfds.filter.permit": "Permits only", "bio.mfds.filter.all": "All", "bio.mfds.total": "Items (30d)", "bio.mfds.permit": "Permits", "bio.mfds.report": "Notifications", "bio.mfds.rx": "Prescription", "bio.mfds.newDrug": "New drugs", "bio.mfds.rare": "Orphan drugs", "bio.mfds.none": "No matching item inside the window.", "bio.mfds.failedDays": "{n} day(s) failed to load", "bio.col.permitDate": "Permit date", "bio.col.item": "Product", "bio.col.company": "Company", "bio.col.rxOtc": "Rx/OTC", "bio.col.kind": "Permit/notification", "bio.col.ingredients": "Main ingredients", "bio.mfds.flag.newDrug": "new drug", "bio.mfds.flag.rare": "orphan", "bio.mfds.flag.cancelled": "withdrawn/cancelled", "bio.trials.copy": "Interventional Phase 2/3 studies of 34 watchlist sponsors (lead sponsor) updated in the last 14 days (at most 8 per sponsor). Status, phase and dates are the ClinicalTrials.gov registered values; Korean names and listing labels are Mulmit's reference labels.", "bio.trials.caption": "Recently updated studies (interventional Phase 2/3, 14 days)", "bio.badge.registry": "Registry record · not results", "bio.badge.sponsorEntered": "Sponsor-entered", "bio.badge.notAdvice": "Not a recommendation", "bio.trials.sponsors": "Watchlist sponsors", "bio.trials.recent": "Updated (14d)", "bio.trials.registered": "Registered studies", "bio.trials.processed": "ClinicalTrials.gov processed", "bio.trials.none": "No interventional Phase 2/3 study was updated in the last 14 days.", "bio.col.sponsor": "Sponsor", "bio.col.study": "Study", "bio.col.phase": "Phase", "bio.col.status": "Status", "bio.col.updated": "Updated", "bio.col.primary": "Primary completion (est.)", "bio.col.conditions": "Conditions", "bio.col.intervention": "Intervention", "bio.status.RECRUITING": "Recruiting", "bio.status.NOT_YET_RECRUITING": "Not yet recruiting", "bio.status.ENROLLING_BY_INVITATION": "Enrolling by invitation", "bio.status.ACTIVE_NOT_RECRUITING": "Active, not recruiting", "bio.status.COMPLETED": "Completed", "bio.status.TERMINATED": "Terminated", "bio.status.WITHDRAWN": "Withdrawn", "bio.status.SUSPENDED": "Suspended", "bio.status.UNKNOWN": "Unknown", "bio.status.AVAILABLE": "Available", "bio.status.NO_LONGER_AVAILABLE": "No longer available", "bio.flag.results": "results posted", "bio.flag.stopped": "stopped", "bio.flag.completed": "completed", "bio.flag.new": "new", "bio.flag.why": "reason", "bio.phaseSuffix": "", "bio.enrollment": "enrollment {n}", "bio.fda.title": "Recent FDA approvals", "bio.fda.copy": "NDA (new drug) and BLA (biologic) applications whose original submission was approved in the last 60 days; generics (ANDA) are shown as a count. openFDA public-domain data — a regulatory record, not sales or price commentary.", "bio.fda.caption": "Recent original approvals (NDA · BLA)", "bio.fda.window": "window {s} – {e}", "bio.fda.nda": "NDA new drugs", "bio.fda.bla": "BLA biologics", "bio.fda.anda": "ANDA generics (count)", "bio.fda.priority": "priority review", "bio.fda.nme": "new molecular entities", "bio.fda.none": "No NDA/BLA approval inside the window.", "bio.fda.publisherUpdated": "openFDA data updated", "bio.col.approved": "Approved", "bio.col.application": "Application", "bio.col.product": "Product (ingredient)", "bio.col.class": "Class", "bio.col.review": "Review", "bio.review.PRIORITY": "Priority", "bio.review.STANDARD": "Standard", "bio.listingNote": "Listing labels are Mulmit reference labels", "bio.modifications": "Modifications", "bio.processedLabel": "ClinicalTrials.gov processed",
     "console.title": "Markets now", "console.scope": "Korea · US · Crypto", "console.hip3": "HIP-3 synthetic perpetuals · trade.xyz",
     "console.sub": "Samsung Electronics, SK hynix and the KOSPI 200 keep trading offshore around the clock while Seoul is shut. We show how far they have moved since the last official close, converted to won.",
     "console.disclose": "How is this price calculated?",
@@ -563,7 +587,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, cryptoRegime: null, cryptoNews: null, bioTrials: null, bioFda: null, bioAdcomm: null, bioMfds: null, bioFilter: "all", bioMfdsFilter: "notable", krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
+  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, cryptoRegime: null, cryptoNews: null, bioTrials: null, bioFda: null, bioAdcomm: null, bioMfds: null, bioMfdsFilter: "notable", krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -1304,7 +1328,7 @@ async function loadCore() {
 
 function renderAll() {
   renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
-  renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas(); renderCryptoBoard(); renderCryptoRegime(); renderCryptoLiquidations(); renderCryptoNews(); renderBioTrials(); renderBioFda(); renderBioAdcomm(); renderBioMfds();
+  renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas(); renderCryptoBoard(); renderCryptoRegime(); renderCryptoLiquidations(); renderCryptoNews(); renderBioCatalysts(); renderBioTrials(); renderBioFda(); renderBioAdcomm(); renderBioMfds();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -2827,28 +2851,184 @@ function bioEmptyRow(tbody, span, text) {
   const tr = document.createElement("tr"); const td = document.createElement("td"); td.colSpan = span; td.textContent = text; tr.append(td); tbody.append(tr);
 }
 
+// 다가오는 결정.
+//
+// 이 화면의 나머지는 전부 "이미 일어난 일"이다 — 승인됐다, 허가됐다, 갱신됐다.
+// 그런데 바이오 종목을 움직이는 것은 **아직 나지 않은 결정**이다. 흩어져 있던
+// 앞을 보는 값 둘을 한 시간축에 놓는다.
+//
+//   FDA 자문위 예정 회의   Federal Register 공고의 확정 일자
+//   임상 1차 완료 예정일   스폰서가 등록부에 적어 둔 **계획값**
+//
+// 둘은 확실성이 다르다. 그래서 같은 줄에 두되 배지로 구분하고, 계획값이라는
+// 것과 "1차 완료 ≠ 결과 발표"라는 것을 근거 줄에 적는다. 날짜가 없는 공고는
+// 여기 오지 않는다 — 시간축에 놓을 수 없는 값을 시간축에 두면 거짓이 된다.
+const BIO_CATALYST_DAYS = 180;
+const BIO_CATALYST_LIMIT = 24;
+
+function bioCatalystRows(todayIso) {
+  const rows = [];
+  const adcomm = state.bioAdcomm;
+  for (const meeting of (adcomm && Array.isArray(adcomm.upcoming) ? adcomm.upcoming : [])) {
+    const date = String(meeting.meeting_start || "").slice(0, 10);
+    if (!date) continue;
+    rows.push({
+      date,
+      kind: "adcomm",
+      title: meeting.committee || meeting.title,
+      note: meeting.title,
+      url: meeting.url,
+      region: "us",
+    });
+  }
+  const trials = state.bioTrials;
+  for (const trial of (trials && Array.isArray(trials.recent) ? trials.recent : [])) {
+    // 등록부는 "2026-10"처럼 월까지만 적힌 값도 준다. 그런 값은 그 달의 1일로
+    // 줄 세우되 화면에는 등록된 그대로 보여 준다 — 없는 정밀도를 만들지 않는다.
+    const raw = String(trial.primary_completion || "");
+    if (!raw) continue;
+    const sortable = raw.length === 7 ? `${raw}-01` : raw;
+    if (sortable <= todayIso) continue;
+    rows.push({
+      date: sortable,
+      shown: raw,
+      kind: "trial",
+      title: trial.title || trial.nct_id,
+      note: `${bioPhaseText(trial.phases)} · ${bioStatusText(trial.status)}`,
+      url: trial.url,
+      sponsor: trial.sponsor,
+      region: trial.sponsor?.country === "KR" ? "kr" : "global",
+    });
+  }
+  const cutoff = new Date(Date.parse(`${todayIso}T00:00:00Z`) + BIO_CATALYST_DAYS * 86400000)
+    .toISOString().slice(0, 10);
+  return rows
+    .filter((row) => row.date <= cutoff)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+    .slice(0, BIO_CATALYST_LIMIT);
+}
+
+function renderBioCatalysts() {
+  const section = $("#bio-catalysts"); if (!section) return;
+  const stateNode = $("#cat-state"), strip = $("#cat-strip"), panel = $("#cat-panel"), list = $("#cat-list"), footer = $("#cat-footer");
+
+  // 두 레인 다 닫혀 있으면 이 섹션은 존재할 이유가 없다. 하나라도 열려 있으면
+  // 그쪽 값만으로 선다 — 반쪽이라도 앞을 보는 값이 있는 편이 낫다.
+  const haveAdcomm = !!state.bioAdcomm;
+  const haveTrials = !!state.bioTrials;
+  if (!haveAdcomm && !haveTrials) {
+    if (bioGateHidden("bioAdcomm") && bioGateHidden("bioTrials")) { section.hidden = true; return; }
+    section.hidden = false; strip.hidden = true; panel.hidden = true;
+    stateNode.hidden = false; stateNode.textContent = `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+
+  const todayIso = seoulToday();
+  const rows = bioCatalystRows(todayIso);
+  section.hidden = false; stateNode.hidden = true; strip.hidden = false; panel.hidden = false; footer.hidden = false;
+
+  const meetings = rows.filter((row) => row.kind === "adcomm").length;
+  const within90 = rows.filter((row) => row.kind === "trial"
+    && calDaysAway(row.date, todayIso) <= 90).length;
+  strip.replaceChildren(
+    cryptoStripItem(t("bio.cat.meetings"), String(meetings)),
+    cryptoStripItem(t("bio.cat.readouts90"), String(within90)),
+    cryptoStripItem(t("bio.cat.window"), t("bio.cat.windowValue", { n: String(BIO_CATALYST_DAYS) })),
+  );
+
+  list.replaceChildren();
+  if (!rows.length) {
+    const empty = document.createElement("li");
+    empty.className = "bio-cat-empty";
+    empty.textContent = t("bio.cat.none");
+    list.append(empty);
+  }
+  for (const row of rows) {
+    const item = document.createElement("li");
+    const away = calDaysAway(row.date, todayIso);
+    item.className = `bio-cat-row is-${row.kind}${away <= 14 ? " is-near" : ""}`;
+
+    const when = document.createElement("div");
+    when.className = "bio-cat-when";
+    const date = document.createElement("strong");
+    date.textContent = dateText(row.shown && row.shown.length === 7 ? `${row.shown}-01` : row.date);
+    // 등록부가 월까지만 준 값은 "예정월"임을 밝힌다.
+    if (row.shown && row.shown.length === 7) date.textContent = `${row.shown} ${t("bio.cat.monthOnly")}`;
+    const dday = document.createElement("span");
+    dday.className = "bio-cat-dday";
+    dday.textContent = away === 0 ? t("cal.today") : t("cal.dday", { n: String(away) });
+    when.append(date, dday);
+
+    const what = document.createElement("div");
+    what.className = "bio-cat-what";
+    const link = document.createElement("a");
+    link.href = row.url || "#"; link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.textContent = row.title;
+    const note = document.createElement("small");
+    note.textContent = row.kind === "adcomm" ? row.note : `${bioSponsorLabel(row.sponsor)} · ${row.note}`;
+    what.append(link, note);
+
+    const tags = document.createElement("div");
+    tags.className = "bio-cat-tags";
+    const kind = document.createElement("span");
+    kind.className = `status-badge ${row.kind === "adcomm" ? "info" : ""}`.trim();
+    kind.textContent = t(row.kind === "adcomm" ? "bio.cat.kindMeeting" : "bio.cat.kindReadout");
+    tags.append(kind);
+    if (row.region === "kr") {
+      const region = document.createElement("span");
+      region.className = "status-badge";
+      region.textContent = t("cal.regionKr");
+      tags.append(region);
+    }
+
+    item.append(when, what, tags);
+    list.append(item);
+  }
+
+  footer.replaceChildren();
+  const basis = document.createElement("p");
+  basis.className = "kro-method";
+  basis.textContent = t("bio.cat.basis");
+  footer.append(basis);
+}
+
+// 지역을 필터 버튼이 아니라 **섹션**으로 나눈다.
+//
+// 한 표 안에 한국과 글로벌이 섞여 있으면, 국내 종목을 보는 사람은 매번 자기
+// 것을 눈으로 골라내야 한다. 필터 버튼이 있어도 "지금 무엇을 보고 있는지"를
+// 기억해야 하는 부담은 남는다. 화면이 대신 나눠 준다.
+const BIO_TRIAL_VIEWS = [
+  { section: "#bio-trials-kr", prefix: "biotkr", keep: (country) => country === "KR" },
+  { section: "#bio-trials-global", prefix: "biotgl", keep: (country) => country !== "KR" },
+];
+
 function renderBioTrials() {
-  const section = $("#bio-trials"); if (!section) return;
-  const stateNode = $("#biot-state"), strip = $("#biot-strip"), sponsors = $("#biot-sponsors"), panel = $("#biot-panel"), table = $("#biot-table"), footer = $("#biot-footer"), filterBar = $("#biot-filter");
+  for (const view of BIO_TRIAL_VIEWS) renderBioTrialsView(view);
+}
+
+function renderBioTrialsView({ section: sectionId, prefix, keep }) {
+  const section = $(sectionId); if (!section) return;
+  const stateNode = $(`#${prefix}-state`), strip = $(`#${prefix}-strip`), sponsors = $(`#${prefix}-sponsors`), panel = $(`#${prefix}-panel`), table = $(`#${prefix}-table`), footer = $(`#${prefix}-footer`);
   const data = state.bioTrials;
   if (!data || !Array.isArray(data.watchlist)) {
     if (bioGateHidden("bioTrials")) { section.hidden = true; return; }
     const collecting = disabledCode("bioTrials") === "bio_trials_collecting";
-    section.hidden = false; strip.hidden = true; sponsors.hidden = true; panel.hidden = true; stateNode.hidden = false; if (filterBar) filterBar.hidden = true;
+    section.hidden = false; strip.hidden = true; sponsors.hidden = true; panel.hidden = true; stateNode.hidden = false;
     stateNode.classList.toggle("disabled", collecting);
     stateNode.textContent = collecting ? t("status.collecting") : `${t("status.unavailable")} · ${t("status.retry")}`;
     return;
   }
-  section.hidden = false; stateNode.hidden = true; strip.hidden = false; sponsors.hidden = false; panel.hidden = false; footer.hidden = false; if (filterBar) filterBar.hidden = false;
-  const filter = state.bioFilter || "all";
-  const keep = (country) => filter === "all" || (filter === "KR" ? country === "KR" : country !== "KR");
-  const totals = data.totals || {};
+  section.hidden = false; stateNode.hidden = true; strip.hidden = false; sponsors.hidden = false; panel.hidden = false; footer.hidden = false;
+  // 요약 숫자도 이 지역의 것이어야 한다. 전체 합계를 그대로 쓰면 한국 섹션이
+  // 여섯 줄을 보여 주면서 "스폰서 34"라고 적게 된다.
+  const watched = data.watchlist.filter((s) => keep(s.country));
+  const recentHere = (Array.isArray(data.recent) ? data.recent : []).filter((row) => keep(row.sponsor?.country));
   strip.replaceChildren(
-    cryptoStripItem(t("bio.trials.sponsors"), String(totals.sponsors ?? "—")),
-    cryptoStripItem(t("bio.trials.recent"), String(totals.recent ?? "—")),
+    cryptoStripItem(t("bio.trials.sponsors"), String(watched.length)),
+    cryptoStripItem(t("bio.trials.recent"), String(recentHere.length)),
     cryptoStripItem(t("bio.trials.processed"), data.processed_date || "—"),
   );
-  sponsors.replaceChildren(...data.watchlist.filter((s) => keep(s.country)).map((s) => {
+  sponsors.replaceChildren(...watched.map((s) => {
     const chip = document.createElement("span"); chip.className = `bio-chip${s.error ? " muted" : ""}`;
     const name = document.createElement("strong"); name.textContent = bioSponsorLabel(s);
     const small = document.createElement("small");
@@ -2857,7 +3037,7 @@ function renderBioTrials() {
     chip.append(name, small); return chip;
   }));
   const tbody = bioHead(table, [t("bio.col.updated"), t("bio.col.sponsor"), t("bio.col.study"), t("bio.col.phase"), t("bio.col.status"), t("bio.col.primary"), t("bio.col.conditions"), t("bio.col.intervention")]);
-  const rows = (Array.isArray(data.recent) ? data.recent : []).filter((row) => keep(row.sponsor?.country));
+  const rows = recentHere;
   if (!rows.length) bioEmptyRow(tbody, 8, t("bio.trials.none"));
   rows.forEach((row) => {
     const tr = document.createElement("tr");
@@ -4194,14 +4374,6 @@ try {
     keepalive: true,
   }).catch(() => {});
 } catch (error) { /* 통계는 최선노력 */ }
-
-document.querySelectorAll("[data-bio-filter]").forEach((button) => {
-  button.addEventListener("click", () => {
-    state.bioFilter = button.dataset.bioFilter || "all";
-    document.querySelectorAll("[data-bio-filter]").forEach((other) => other.classList.toggle("active", other === button));
-    renderBioTrials();
-  });
-});
 
 document.querySelectorAll("[data-mfds-filter]").forEach((button) => {
   button.addEventListener("click", () => {
