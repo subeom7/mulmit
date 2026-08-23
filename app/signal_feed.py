@@ -31,7 +31,17 @@ from . import (
 
 log = logging.getLogger(__name__)
 
-MAX_ITEMS = 30
+MAX_ITEMS = 16
+# 어느 한 소스도 화면을 쓸어 가지 못하게 한다.
+#
+# 순수 최신순으로 자르면 가장 자주 터지는 소스가 자리를 다 가져간다. 실측
+# 2026-08-23: 홈 30칸 중 국내 주요사항보고가 12칸이었고 대부분 이름이 낯선
+# 소형주였다 — 같은 화면에서 미국 8-K는 3칸, 연금 공시는 0칸이었다. 개수만
+# 줄이면 그 비율은 그대로라 짧아진 소형주 목록이 될 뿐이다.
+#
+# 그래서 자를 때 종류를 한 바퀴씩 돈다(`_balanced`). 홈은 16칸이라 종류당
+# 서너 건이 되고, 전용 /news 페이지는 120칸이라 아무것도 가려지지 않는다 —
+# 그 페이지는 다 보여 주는 것이 목적이므로 그래야 맞다.
 # 지수 급변: 3% 계단(±3·6·9…)을 "넘는 순간"만 이벤트다. 같은 구간에 머무는
 # 동안은 반복하지 않고, 회복 방향의 계단 통과도 똑같이 기록한다.
 MOVE_STEP = 3.0
@@ -364,6 +374,27 @@ def _upcoming_items(today: dt.date) -> list[dict[str, Any]]:
     return items
 
 
+def _balanced(items: list[dict[str, Any]], cap: int) -> list[dict[str, Any]]:
+    """종류를 한 바퀴씩 돌며 뽑는다 — 각 종류의 1등, 그다음 2등, 그다음 3등.
+
+    상한을 두고 남는 자리를 최신순으로 메우는 방식도 대 봤지만, 소스가 적은
+    날에는 그 백필이 다시 같은 소스로 화면을 채웠다(합성 실측: 16칸 중 9칸이
+    한 종류). 순위 기반으로 섞으면 상한이 따로 필요 없고, 다른 종류가 동나서
+    한 종류가 꼬리를 차지하는 것은 자리를 비우는 것보다 낫다.
+
+    같은 순위 안에서는 최신순이라, 화면 위쪽은 여전히 새 소식이다.
+    """
+    rank: dict[str, int] = {}
+    ordered: list[tuple[int, int, dict[str, Any]]] = []
+    # items는 이미 최신순이므로, 원래 자리(position)가 곧 그 순위 안의 최신순이다.
+    for position, item in enumerate(items):
+        kind = str(item.get("kind") or "")
+        ordered.append((rank.get(kind, 0), position, item))
+        rank[kind] = rank.get(kind, 0) + 1
+    ordered.sort(key=lambda row: (row[0], row[1]))
+    return [item for _rank, _position, item in ordered[:cap]]
+
+
 def build_feed(*, today: dt.date | None = None, limit: int | None = None) -> dict[str, Any]:
     """신호 피드. `limit`은 화면이 정한다.
 
@@ -382,7 +413,7 @@ def build_feed(*, today: dt.date | None = None, limit: int | None = None) -> dic
     # 날짜뿐인 항목보다 뒤가 아니라 앞에 오도록 문자열 비교가 그대로 맞는다.
     items = [item for item in items if item["at"]]
     items.sort(key=lambda item: item["at"], reverse=True)
-    kept = items[:cap]
+    kept = _balanced(items, cap)
     attribution = None
     if any(item["kind"] == "news" for item in kept):
         from .providers.gdelt import GDELT_ATTRIBUTION, GDELT_ATTRIBUTION_KO, GDELT_PUBLISHER_URL

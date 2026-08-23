@@ -663,7 +663,12 @@ a.feed-text:hover { color: var(--ink); }
 /* 뉴스 영상 — 썸네일은 구글 CDN에서 오지만(쿠키 없음) 플레이어는 누르기 전에
  * 로드되지 않는다. 누르면 그 카드만 iframe으로 바뀐다. 플레이어는 약관상
  * 200x200 미만이면 안 되므로 min-height로 바닥을 받쳐 둔다. */
-.news-videos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+/* 4열 고정. auto-fill로 두니 넓은 화면에서 5열이 되어 썸네일이 244px까지
+ * 작아졌다 — 영상 목록은 칸을 늘리는 것보다 한 칸이 커지는 쪽이 낫다. */
+.news-videos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1180px) { .news-videos { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .news-videos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .news-videos { grid-template-columns: 1fr; } }
 .news-videos li { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
 .news-videos li.playing { border: 1px solid var(--accent); border-radius: 8px; overflow: hidden; }
 .news-videos .nvid-shot { position: relative; display: block; width: 100%; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); cursor: pointer; aspect-ratio: 16 / 9; }
