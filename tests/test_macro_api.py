@@ -79,16 +79,7 @@ def test_macro_overview_has_cards_series_freshness_and_attribution(db, fred_serv
     # are unaffected: latest and change are read from the full series, not from
     # this sample — otherwise the change would quietly become week-over-week.
     assert treasury["observation_count"]["sampling"] == "weekly"
-    # 달력에 기대지 않고 성질을 본다. 예전에는 "어제와 오늘"이 한 점으로 접힌다고
-    # 못 박아 뒀는데, 오늘이 월요일이면 어제는 **지난 ISO 주**라 두 점이 남는다 —
-    # 2026-08-24(월)에 그대로 터졌다. 지키려는 것은 "한 주에 한 점"이지
-    # "이 두 날짜"가 아니다.
-    assert treasury["observations"][-1] == {"date": TODAY.isoformat(), "value": 14.25}
-    weeks = [
-        dt.date.fromisoformat(point["date"]).isocalendar()[:2]
-        for point in treasury["observations"]
-    ]
-    assert len(weeks) == len(set(weeks)), f"한 주에 두 점이 남았다: {treasury['observations']}"
+    assert treasury["observations"] == [{"date": TODAY.isoformat(), "value": 14.25}]
     assert body["resolution"]["sampling"] == "weekly"
     assert body["resolution"]["full_series_url"] == "/api/market/macro/{series_id}"
 
