@@ -502,3 +502,24 @@ def test_the_rank_move_badge_does_not_pretend_to_be_realtime():
     assert "animation" not in block and "@keyframes" not in block, (
         "순위 변동에 반복 애니메이션을 붙이지 말 것 — 데이터는 하루에 한 번 바뀐다"
     )
+
+
+def test_a_moved_row_is_marked_neutrally_not_in_the_price_colours():
+    """줄의 색과 숫자의 색이 다른 주장을 하면 독자는 어느 쪽인지 알 수 없다.
+
+    라이브에서 잡혔다(2026-08-24): 카카오가 ×2.02 — 평소의 두 배, 표에서 가장
+    강한 신호 — 인데 줄 전체가 빨갰다. 수준 순위가 한 칸 내려갔다는 뜻이었지만
+    이 사이트에서 빨강은 "내렸다"이다. 하필 가장 눈에 띄는 종목에서 부딪혔다.
+
+    방향은 ▲▼ 배지가 말한다. 줄은 "여기가 움직였다"만 말한다.
+    """
+    from pathlib import Path
+
+    css = (Path(__file__).resolve().parents[1] / "app" / "static" / "console.css").read_text(
+        encoding="utf-8"
+    )
+    start = css.index(".kridx-table tr.rank-up")
+    block = css[start : start + 400]
+    assert "var(--up)" not in block and "var(--down)" not in block, (
+        "옮긴 줄에 등락 색을 쓰지 말 것 — 숫자의 색과 다른 주장을 하게 된다"
+    )
