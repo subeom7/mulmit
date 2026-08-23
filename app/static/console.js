@@ -26,7 +26,7 @@
     ko: {
       sessionOpen: "한국장 진행 중", sessionClosed: "한국장 마감", sessionWeekend: "주말 · 한국장 휴장",
       sessionUs: "미국장 시간대", until: "개장까지 {t}", day: "{d}일 ", hm: "{h}시간 {m}분",
-      vsClose: "{d} 종가 {p} 대비", vs24h: "24시간 전 대비", official: "고시 {d}",
+      vsClose: "{d} 마감 이후", vs24h: "24시간 전 대비", official: "고시 {d}",
       easy: "쉬움", pro: "전문가", modeLabel: "표시 수준",
       detailMark: "마크가격", detailFx: "환산 환율", detailFunding: "펀딩 APR",
       detailOi: "미결제약정", detail24h: "24시간 변화", detailClose: "공식 종가",
@@ -39,7 +39,7 @@
     en: {
       sessionOpen: "Korean market open", sessionClosed: "Korean market closed", sessionWeekend: "Weekend · Korea closed",
       sessionUs: "US market hours", until: "opens in {t}", day: "{d}d ", hm: "{h}h {m}m",
-      vsClose: "vs {d} close {p}", vs24h: "vs 24h ago", official: "official {d}",
+      vsClose: "since the {d} close", vs24h: "vs 24h ago", official: "official {d}",
       easy: "Simple", pro: "Pro", modeLabel: "Detail level",
       detailMark: "Mark price", detailFx: "FX applied", detailFunding: "Funding APR",
       detailOi: "Open interest", detail24h: "24h change", detailClose: "Official close",
@@ -197,6 +197,24 @@
     return span >= 60 ? t("sparkMonths", { n: Math.round(span / 30) }) : t("sparkPeriod", { n: span });
   };
 
+  /* 값이 바뀌면 깜빡인다.
+   *
+   * 5초마다 조용히 글자만 갈아 끼우면 화면이 살아 있다는 게 보이지 않는다.
+   * 직전 값을 기억해 두고 달라졌을 때만 짧게 물들인다 — 처음 그릴 때는
+   * 비교할 대상이 없으므로 깜빡이지 않는다. */
+  const lastSeen = new Map();
+  function flash(node, key, value) {
+    if (node === null || value === null || value === undefined) return;
+    const previous = lastSeen.get(key);
+    lastSeen.set(key, value);
+    if (previous === undefined || previous === value) return;
+    const tone = value > previous ? "tick-up" : "tick-down";
+    node.classList.remove("tick-up", "tick-down");
+    void node.offsetWidth; // 같은 방향으로 연달아 바뀌어도 다시 재생되게 한다
+    node.classList.add(tone);
+    node.addEventListener("animationend", () => node.classList.remove(tone), { once: true });
+  }
+
   const changeText = (spec) => spec.changeText
     ? `${arrow(spec.change)} ${spec.changeText}`.trim()
     : `${arrow(spec.change)} ${percent(spec.change)}`.trim();
@@ -207,6 +225,7 @@
     if (!node) return;
     const value = node.querySelector(".tile-value > span");
     if (value) value.textContent = spec.value;
+    flash(node.querySelector(".tile-value"), spec.key, spec.raw);
     const unit = node.querySelector(".tile-unit");
     if (unit) unit.textContent = spec.unit || "";
     const change = node.querySelector(".tile-change");
@@ -308,12 +327,13 @@
     const asText = (input) => (isKrw ? group(Math.round(input), 0) : group(input, 2));
     return {
       key: `kr:${id}`,
+      raw: value,
       name: pick(card.label),
       tag: card.code || "",
       value: asText(value),
       unit: isKrw ? t("won") : "",
       change: num(implied.vs_official_percent),
-      basis: closeValue === null ? "" : t("vsClose", { d: shortDate(official.date), p: asText(closeValue) }),
+      basis: closeValue === null ? "" : t("vsClose", { d: shortDate(official.date) }),
       href: card.code ? `/stock/${card.code}` : "/kr#kr-indices",
       observations: sparkId ? observationsFor(state, sparkId) : null,
       detail: [
@@ -334,6 +354,7 @@
     if (value === null) return null;
     return {
       key: `coin:${symbol}`,
+      raw: value,
       name: pick(coin.label) || symbol,
       tag: symbol,
       value: money(value, "USD"),
@@ -359,6 +380,7 @@
     if (!snapshot) return null;
     return {
       key: `metric:${key}`,
+      raw: num(snapshot.value),
       name: snapshot.label,
       tag: "",
       value: snapshot.text,
@@ -380,6 +402,7 @@
     const unit = asset.units?.short || "";
     return {
       key: `asset:${id}`,
+      raw: value,
       name: pick(asset.label).replace(/\s*(합성 무기한선물|synthetic perpetual)$/i, ""),
       tag: asset.display_symbol || "",
       value: unit === "USD" ? money(value, "USD") : points(value),
@@ -442,9 +465,9 @@
   /* --- 테이프 ---------------------------------------------------------- */
   function tapeItems(state) {
     const items = [];
-    const push = (name, value, change, href) => {
+    const push = (name, value, change, href, raw = null) => {
       if (value === null || value === undefined) return;
-      items.push({ name, value, change, href });
+      items.push({ name, value, change, href, raw });
     };
     for (const id of ["samsung_electronics", "sk_hynix", "kospi_200"]) {
       const card = (state.krOvernight?.cards || []).find((row) => row.id === id);
@@ -452,7 +475,7 @@
       if (card?.status === "ok" && value !== null) {
         const isKrw = (card.implied.unit || "").toUpperCase() === "KRW";
         push(pick(card.label), isKrw ? group(Math.round(value), 0) : group(value, 2),
-          num(card.implied.vs_official_percent), card.code ? `/stock/${card.code}` : "/kr#kr-indices");
+          num(card.implied.vs_official_percent), card.code ? `/stock/${card.code}` : "/kr#kr-indices", value);
       }
     }
     for (const id of ["sp500", "nasdaq", "gold"]) {
@@ -461,16 +484,16 @@
       if (value === null) continue;
       const unit = asset.units?.short || "";
       push(pick(asset.label).replace(/\s*(합성 무기한선물|synthetic perpetual)$/i, ""),
-        unit === "USD" ? money(value, "USD") : points(value), num(asset.change?.percent), "/us#global-assets");
+        unit === "USD" ? money(value, "USD") : points(value), num(asset.change?.percent), "/us#global-assets", value);
     }
     for (const symbol of ["BTC", "ETH"]) {
       const coin = (state.cryptoOverview?.coins || []).find((row) => row.symbol === symbol);
       const value = num(coin?.price?.value);
       if (value === null) continue;
-      push(pick(coin.label) || symbol, money(value, "USD"), num(coin.change_24h?.percent), `/crypto/${symbol}`);
+      push(pick(coin.label) || symbol, money(value, "USD"), num(coin.change_24h?.percent), `/crypto/${symbol}`, value);
     }
     const fx = num(state.krOvernight?.fx?.rate);
-    if (fx !== null) push("USD/KRW", group(fx, 1), null, "/us#exchange-rates");
+    if (fx !== null) push("USD/KRW", group(fx, 1), null, "/us#exchange-rates", fx);
     return items;
   }
 
@@ -483,9 +506,11 @@
     return node;
   }
 
-  function updateTapeItem(node, item) {
+  function updateTapeItem(node, item, index = 0) {
     $(".tape-name", node).textContent = item.name;
     $(".tape-value", node).textContent = item.value;
+    // 같은 항목이 두 벌 깔려 있으므로 벌마다 다른 키를 쓴다.
+    flash($(".tape-value", node), `tape:${index}:${item.name}`, item.raw);
     const delta = $(".tape-delta", node);
     const has = item.change !== null && item.change !== undefined;
     delta.className = `tape-delta ${has ? direction(item.change) : "none"}`;
@@ -561,7 +586,7 @@
       // 5초마다 다시 만들면 흐르던 띠가 매번 처음으로 튄다. 구성이 같으면
       // 글자만 갈아 끼워 애니메이션을 이어 간다.
       const nodes = track.querySelectorAll(".tape-item");
-      nodes.forEach((node, index) => updateTapeItem(node, items[index % items.length]));
+      nodes.forEach((node, index) => updateTapeItem(node, items[index % items.length], index));
       return;
     }
     if (tapeHeld && track) { tapePending = state; return; }

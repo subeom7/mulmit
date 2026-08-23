@@ -231,6 +231,26 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 .tile-spark.down { color: var(--down); }
 .tile-spark.flat { color: var(--ink-3); }
 
+/* 값이 바뀔 때의 깜빡임.
+ *
+ * 5초마다 조용히 글자만 갈아 끼우면 화면이 멈춰 있는 것처럼 보인다. 방향에
+ * 맞춰 짧게 물들이되, 등락률 쪽은 이미 색을 갖고 있으므로 색은 건드리지 않고
+ * 번짐만 준다. 움직임을 줄여 달라고 한 사용자에게는 아무 일도 일어나지 않는다. */
+@keyframes console-tick-up {
+  0% { color: var(--up); text-shadow: 0 0 14px color-mix(in srgb, var(--up) 45%, transparent); }
+  100% { color: inherit; text-shadow: none; }
+}
+@keyframes console-tick-down {
+  0% { color: var(--down); text-shadow: 0 0 14px color-mix(in srgb, var(--down) 45%, transparent); }
+  100% { color: inherit; text-shadow: none; }
+}
+.tile-value.tick-up, .tape-value.tick-up { animation: console-tick-up .7s ease-out; }
+.tile-value.tick-down, .tape-value.tick-down { animation: console-tick-down .7s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .tile-value.tick-up, .tile-value.tick-down,
+  .tape-value.tick-up, .tape-value.tick-down { animation: none; }
+}
+
 /* 발판 — 추이선과 상세를 아래에 쌓는다. 타일 폭 끝까지 선이 닿게 좌우 여백을
  * 되돌린다. */
 .tile-foot { margin: auto calc(var(--sp-4) * -1) calc(var(--sp-4) * -1); }
