@@ -538,7 +538,11 @@ html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
 .panel .accessible-table th:last-child, .panel .accessible-table td:last-child { padding-right: var(--sp-4); }
 /* 직계 자식만 잡으면 한 겹 더 들어간 푸터를 놓친다(실측: crypto-volatility의
  * `.panel > div > footer`). 자손 선택으로 바꾼다. */
-.panel .panel-footer { padding-left: var(--sp-4); padding-right: var(--sp-4); }
+/* 아래 여백도 함께 준다. 기본 규칙이 `padding: 10px 0 0`이라 바닥이 0이었고,
+ * 출처·기준 문구가 패널 테두리 위에 그대로 앉아 있었다 — 실측으로 마지막
+ * 글줄 아래가 3~8px(글자에 따라 다름)이었다. 12px을 주면 어느 섹션이든
+ * 15px로 고르게 선다. 좌우만 손보고 아래를 빠뜨렸던 자리다. */
+.panel .panel-footer { padding-left: var(--sp-4); padding-right: var(--sp-4); padding-bottom: var(--sp-3); }
 #kridx-body .kridx-group { padding-left: var(--sp-4); }
 
 /* 지수군은 표 둘이 나란히 선다. 세로로 쌓으면 오른쪽 절반이 빈 채 길어진다.
