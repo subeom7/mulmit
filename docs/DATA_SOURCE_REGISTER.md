@@ -1296,6 +1296,46 @@ gate: CRYPTO_SECTION_ENABLED + COINALYZE_ENABLED + COINALYZE_API_KEY
 recheck_on: 2026-11-22
 ```
 
+### 3.28 YouTube Data API v3 — 종목·코인 관련 영상 (계획, 키 대기)
+
+| 항목 | 기록 |
+|---|---|
+| 내부 ID | `youtube` |
+| 현재 상태 | **`approved_pending_key` (2026-08-23, `DS-2026-020`)** — 약관 원문 확인 완료, **코드 없음**. 무료 키 발급(운영자) 뒤 실측하고 착수한다 |
+| 왜 되는가 | 뉴스 썸네일과 정반대 경우다. 언론사 이미지는 GDELT가 줄 수 없는 남의 저작물이지만(§6.6), 유튜브는 **본인이 임베드 수단을 공식 제공**하고 업로더가 임베드 허용 여부를 스스로 정한다. 우리가 가져다 쓰는 것이 아니라 그들이 내주는 것을 규칙대로 쓰는 것이다 |
+| 저장 제한 | Developer Policies: 비인가 데이터(검색 결과)는 **임시 저장, 최대 30일**, 이후 "delete or refresh". 저장값이 현재값과 일치하도록 "reasonable efforts" 의무. **우리 설계는 수 시간 캐시라 여유 있게 충족** |
+| 표시 의무 | "YouTube가 출처임을 시청자에게 분명히" — YouTube Brand Features 표시. 그리고 **"YouTube에서 오지 않은 콘텐츠를 YouTube에서 온 것처럼 보이게 하면 안 된다"** — 우리 수치와 영상 목록을 시각적으로 분리해야 한다 |
+| 플레이어 규칙 | Required Minimum Functionality: 뷰포트 **200×200px 이상**, 플레이어가 화면에 절반 이상 보이기 전 **자동재생 금지**, 문서에 없는 **플레이어 변형 금지**, 플레이어 위에 **오버레이·프레임 금지** |
+| 프라이버시 | 표준 iframe이 `VISITOR_INFO1_LIVE`·`YSC`·`GPS`·DoubleClick `IDE`를 심는다. `youtube-nocookie.com`도 재생 시점까지 미룰 뿐 동의 요건을 없애지 못한다. **그래서 click-to-load 파사드로 붙인다** — 이용자가 누르기 전에는 구글로 요청이 나가지 않고, 개인정보처리방침 §3("쿠키를 사용하지 않습니다")이 참인 채로 남는다 |
+| 선례 | §4의 TradingView 히트맵이 같은 틀이다 — 지연 로딩 + 방침에 "무엇이 누구에게 전달되는지" 명시 + 제공자 정책 링크. 새 원칙이 아니라 있는 원칙의 두 번째 적용 |
+| 게이트 | `YOUTUBE_ENABLED` + `YOUTUBE_API_KEY` (기본 OFF, 키는 ingest에만) |
+| 남은 위험 | **관련성 품질**. "삼성전자"로 검색하면 시장 분석이 아니라 신제품 리뷰·광고가 상위에 올 수 있다. 관련 없는 영상을 붙이면 사이트 신뢰도를 깎으므로, 키 발급 후 **실측으로 검증하기 전에는 켜지 않는다** |
+
+```yaml
+decision_id: DS-2026-020
+provider_id: youtube
+status: approved_pending_key
+reviewed_at: 2026-08-23
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: >-
+  developers.google.com/youtube/terms/developer-policies (30-day storage cap,
+  refresh-or-delete, YouTube Brand Features attribution) and
+  /youtube/terms/required-minimum-functionality (200x200 viewport, autoplay and
+  overlay rules)
+approved_scope:
+  public_display: true
+  server_json_relay: true
+conditions:
+  - click-to-load facade; no request to Google before the viewer asks for one
+  - stored search results refreshed well inside 30 days
+  - YouTube named as the source; our own figures kept visually separate
+  - the embedded player is used unmodified, with no overlay and no autoplay
+  - the privacy policy states what reaches Google and when
+gate: YOUTUBE_ENABLED + YOUTUBE_API_KEY
+recheck_on: 2026-11-23
+```
+
 ## 4. 원 발행기관 후보
 
 아래 표의 `pending_review`는 무료라고 단정하는 표시가 아니다. 다음 세션에서 정확한 endpoint, 이용조건, attribution, 저장·캐시·제3자 표시 범위를 다시 확인한 뒤 series 단위로 승인한다.
