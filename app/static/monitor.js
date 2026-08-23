@@ -135,8 +135,10 @@ const TEXT = {
     "weekend.defaultDisclaimer": "주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.",
     "weekend.nextSession": "다음 내부 세션", "weekend.awaitingSession": "세션 대기", "weekend.proxy": "대체 신호", "weekend.direct": "직접 계약", "weekend.auxiliary": "24시간 보조", "weekend.consensus": "합성 신호", "weekend.referenceSignal": "주말 기준 신호", "weekend.funding": "시간당 펀딩", "weekend.volume": "24시간 거래대금", "weekend.openInterest": "미결제약정", "weekend.status": "상태", "weekend.confidence": "근거 품질", "weekend.session": "활성 세션", "weekend.sessionChange": "세션 기준", "weekend.change24h": "24시간 기준", "weekend.stale": "지연", "weekend.reference": "참고 품질",
     "weekend.samsungPerp": "삼성전자 USD 환산 합성 무기한선물 · 한국 현물 종가와 동일한 상품이 아닙니다.",
-    "kridx.title": "코스피 지수군", "kridx.copy": "대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 52주 범위까지 한 표에서 봅니다.",
-    "kridx.colName": "지수", "kridx.colClose": "종가", "kridx.colDay": "전일", "kridx.colYtd": "연초 대비", "kridx.colRange": "52주 범위", "kridx.colValue": "거래대금",
+    "kridx.title": "코스피 지수군", "kridx.copy": "대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 연중 최고에서 얼마나 내려와 있는지까지 한 표에서 봅니다.",
+    "kridx.peakTip": "연중 최고 {value} · {date}", "kridx.peakNone": "연중 최고가 아직 공표되지 않았습니다",
+    "kridx.lowNote": "연중 최저는 금융위가 확정 전 0으로 공표해 표시하지 않습니다",
+    "kridx.colName": "지수", "kridx.colClose": "종가", "kridx.colDay": "전일", "kridx.colYtd": "연초 대비", "kridx.colRange": "연중 최고 대비", "kridx.colValue": "거래대금",
     "kridx.asof": "기준 {date} · 다음 영업일 13시 이후 갱신",
     "zone.kr": "한국 시장", "zone.us": "미국·글로벌 시장",
     "kro.title": "한국 주식, 장 밖에서는", "kro.copy": "장이 닫혀 있어도 합성 무기한선물은 24시간 움직입니다. 마크가격을 공식환율로 환산해 마지막 공식 종가와 비교합니다. 현물 호가나 시초가 예측이 아닙니다.",
@@ -284,8 +286,10 @@ const TEXT = {
     "weekend.defaultDisclaimer": "Weekend derivative prices can be heavily affected by shallow liquidity and leverage. Do not treat them as Monday spot-market forecasts.",
     "weekend.nextSession": "Next internal session", "weekend.awaitingSession": "Awaiting session", "weekend.proxy": "Proxy", "weekend.direct": "Direct contract", "weekend.auxiliary": "24h auxiliary", "weekend.consensus": "Composite", "weekend.referenceSignal": "Weekend reference", "weekend.funding": "Hourly funding", "weekend.volume": "24h notional", "weekend.openInterest": "Open interest", "weekend.status": "Status", "weekend.confidence": "Evidence quality", "weekend.session": "Active session", "weekend.sessionChange": "Session change", "weekend.change24h": "24-hour change", "weekend.stale": "Stale", "weekend.reference": "Reference quality",
     "weekend.samsungPerp": "Samsung Electronics USD-converted synthetic perpetual · not the Korean spot close.",
-    "kridx.title": "KOSPI index family", "kridx.copy": "Confirmed closes for the headline indices and KOSPI 200 sectors, with YTD and the 52-week range in one table.",
-    "kridx.colName": "Index", "kridx.colClose": "Close", "kridx.colDay": "Day", "kridx.colYtd": "YTD", "kridx.colRange": "52w range", "kridx.colValue": "Value traded",
+    "kridx.title": "KOSPI index family", "kridx.copy": "Confirmed closes for the headline indices and KOSPI 200 sectors, with year-to-date change and how far each sits below its high for the year.",
+    "kridx.peakTip": "High for the year {value} · {date}", "kridx.peakNone": "No high published yet for this index",
+    "kridx.lowNote": "The year's low is published as 0 until it is finalised, so it is not shown",
+    "kridx.colName": "Index", "kridx.colClose": "Close", "kridx.colDay": "Day", "kridx.colYtd": "YTD", "kridx.colRange": "vs YTD high", "kridx.colValue": "Value traded",
     "kridx.asof": "As of {date} · updates after 13:00 KST the next business day",
     "zone.kr": "Korea markets", "zone.us": "US & global markets",
     "kro.title": "Korean stocks, after hours", "kro.copy": "Synthetic perpetuals keep trading around the clock. Marks are converted at the official exchange rate and compared with the last official close. Not spot quotes, not an open forecast.",
@@ -805,6 +809,13 @@ function changeParts(delta, definition) {
   if (delta.percent === null) return null;
   return { text: formatSigned(delta.percent), direction: delta.percent };
 }
+// 금융위 날짜는 하이픈 없는 8자리다("20260622"). Date가 그대로는 못 읽어서
+// dateText에 넘기기 전에 모양을 맞춘다.
+function krCompactDate(value) {
+  const text = String(value || "").trim();
+  return /^\d{8}$/.test(text) ? `${text.slice(0, 4)}-${text.slice(4, 6)}-${text.slice(6)}` : text;
+}
+
 function dateText(value) {
   if (!value) return "—";
   const date = new Date(value);
@@ -1386,6 +1397,30 @@ function renderKrIndices() {
   body.replaceChildren();
   const signed = (value, digits = 2) => value == null ? "—" : `${value > 0 ? "+" : ""}${value.toFixed(digits)}%`;
   const signClass = (value) => value == null ? "" : value > 0 ? "up" : value < 0 ? "down" : "";
+
+  // 연중 최고에서 얼마나 내려와 있나.
+  //
+  // 이 열은 "52주 범위"라는 이름으로 스물한 행 모두 "—"였다. 금융위가 연중
+  // **최저**를 확정 전까지 0(그리고 미래 날짜)으로 내보내고 우리 가드가 그걸
+  // 올바르게 걷어내기 때문이다. 반면 연중 **최고**는 스물한 행 모두 실제 값이
+  // 온다. 그래서 열을 데이터가 실제로 뒷받침하는 것으로 바꿨다.
+  //
+  // 이름도 고쳤다. 원천 필드(yrWRcrdHgst)는 "지수의 연중최고치"이지 52주를
+  // 되돌아본 값이 아니고, 형제 필드가 전년말 대비(lsYrEdVsFltRt)인 것도 이
+  // 데이터셋이 역년 기준이라는 뜻이다. 범위도 아니다 — 한쪽 끝뿐이다.
+  const peakGap = (row) => {
+    const peak = row.high_52w;
+    if (peak == null || !(peak > 0) || row.close == null) return "—";
+    return `${((row.close / peak - 1) * 100).toFixed(1)}%`;
+  };
+  const peakTitle = (row) => {
+    const peak = row.high_52w;
+    if (peak == null || !(peak > 0)) return t("kridx.peakNone");
+    return t("kridx.peakTip", {
+      value: peak.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      date: dateText(krCompactDate(row.high_52w_date)),
+    });
+  };
   for (const group of payload.groups) {
     if (!(group.rows || []).length) continue;
     // 제목과 표를 한 블록으로 묶는다. 그래야 그리드가 묶음 단위로 배치한다 —
@@ -1412,13 +1447,14 @@ function renderKrIndices() {
         ["num", row.close == null ? "—" : row.close.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })],
         [`num ${signClass(row.change_percent)}`, signed(row.change_percent)],
         [`num ${signClass(row.ytd_percent)}`, signed(row.ytd_percent, 1)],
-        ["num range", row.low_52w == null ? "—" : `${row.low_52w.toLocaleString()} ~ ${row.high_52w?.toLocaleString?.() ?? "—"}`],
+        ["num range peak", peakGap(row), peakTitle(row)],
         ["num", formatKrw(row.value)],
       ];
-      for (const [cls, text] of cells) {
+      for (const [cls, text, title] of cells) {
         const td = document.createElement("td");
         if (cls) td.className = cls;
         td.textContent = text;
+        if (title) td.title = title;
         tr.append(td);
       }
       tbody.append(tr);
@@ -1432,7 +1468,11 @@ function renderKrIndices() {
   link.textContent = source.provider_name || "금융위원회";
   const note = document.createElement("span");
   note.textContent = `${t("kridx.asof", { date: dateText(payload.as_of) })}`;
-  $("#kridx-footer").append(link, note);
+  // 열 하나가 최고만 말하는 이유를 밝힌다. 저가를 못 쓰는 것은 우리 사정이
+  // 아니라 원천이 확정 전 0으로 내보내기 때문이다.
+  const lowNote = document.createElement("span");
+  lowNote.textContent = t("kridx.lowNote");
+  $("#kridx-footer").append(link, note, lowNote);
 }
 
 // DART fields carry a closed Korean vocabulary; EN gets a fixed mapping with a
