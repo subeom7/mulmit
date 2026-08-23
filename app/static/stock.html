@@ -18,7 +18,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260823-30">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-31">
   <style>
     .stock-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 26px 0 18px; border-bottom: 1px solid var(--line); }
     .stock-head h1 { margin: 0; font-size: clamp(26px, 4vw, 40px); letter-spacing: -.04em; }
@@ -45,8 +45,8 @@
     @media (max-width: 560px) { .stock-table { min-width: 620px; } }
   </style>
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
-  <link rel="stylesheet" href="/static/tokens.css?v=20260823-30">
-  <link rel="stylesheet" href="/static/console.css?v=20260823-30">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260823-31">
+  <link rel="stylesheet" href="/static/console.css?v=20260823-31">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -102,7 +102,8 @@
 
     <section class="stock-section">
       <div class="stock-links">
-        <a id="link-analytics" href="/analytics">위험 분석 (낙폭·변동성) →</a>
+        <a id="link-analytics" href="/analytics" hidden>위험 분석 (낙폭·변동성) →</a>
+        <span id="no-risk-note" class="stock-note" hidden></span>
         <a href="/kr">한국 시장 대시보드</a>
         <a href="/us">미국·글로벌 대시보드</a>
       </div>
@@ -146,7 +147,9 @@ const kpi = (label, value, note) => { const div = document.createElement("div");
 async function loadKr() {
   // 국내 종목은 `?kr=`로 넘긴다. `?ticker=`는 저쪽에서 미국 EDGAR 티커
   // 입력란으로 들어가서, 005380을 미국 상장사로 조회하고 있었다.
-  $id("link-analytics").href = "/analytics?kr=" + SYMBOL + "#kr-section";
+  const risk = $id("link-analytics");
+  risk.href = "/analytics?kr=" + SYMBOL + "#kr-section";
+  risk.hidden = false;
   // 시세·통계
   try {
     const a = await fetchJson("/api/kr/stock/" + SYMBOL);
@@ -210,6 +213,14 @@ async function loadKr() {
 }
 
 async function loadUs() {
+  // No drawdown or volatility link here: those need a price series, and US
+  // prices are not licensed for redistribution (the legacy lane is closed).
+  // Saying so is better than a link to a page that cannot answer for this
+  // ticker — which is exactly how the page read as "no information".
+  const note = $id("no-risk-note");
+  note.textContent = "낙폭·변동성 분석은 국내 종목만 — 미국 가격 데이터는 재배포 라이선스가 없습니다";
+  note.hidden = false;
+
   $id("link-analytics").textContent = "내부자·재무 상세 (분석 페이지) →";
   $id("link-analytics").href = "/analytics";
   // 재무 + 비율
@@ -303,6 +314,6 @@ try {
   fetch("/api/pageview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: "/stock", ref: document.referrer || "", id }), keepalive: true }).catch(() => {});
 } catch (e) { console.warn('[stock] beacon failed', e); }
 </script>
-  <script src="/static/search.js?v=20260823-30" defer></script>
+  <script src="/static/search.js?v=20260823-31" defer></script>
 </body>
 </html>

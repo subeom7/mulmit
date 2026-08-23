@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>종목 분석 — 낙폭·변동성·내부자 공시·재무제표 | 물밑 Mulmit</title>
-<meta name="description" content="물밑(Mulmit) 종목 분석 — 국내 종목의 낙폭·변동성과 임원·주요주주 공시, 미국 티커의 내부자 거래와 EDGAR 재무제표를 한 화면에서.">
+<title>종목 분석 — 국내 낙폭·변동성, 미국 내부자 공시 | 물밑 Mulmit</title>
+<meta name="description" content="물밑(Mulmit) 종목 분석 — 국내 종목은 공식 종가로 낙폭·변동성까지, 미국 티커는 SEC EDGAR 내부자 공시와 재무제표를. 미국 위험 분석은 가격 데이터 라이선스가 없어 제공하지 않습니다.">
 <link rel="canonical" href="https://mulmit.com/analytics">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Mulmit">
-<meta property="og:title" content="종목 분석 — 낙폭·변동성·내부자 공시·재무제표 | 물밑 Mulmit">
+<meta property="og:title" content="종목 분석 — 국내 낙폭·변동성, 미국 내부자 공시 | 물밑 Mulmit">
 <meta property="og:description" content="물밑(Mulmit) 종목 분석 — 국내 종목 낙폭·변동성·공시, 미국 티커 내부자 거래·EDGAR 재무제표.">
 <meta property="og:url" content="https://mulmit.com/analytics">
 <meta property="og:locale" content="ko_KR">
@@ -19,7 +19,7 @@
 <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
-  <link rel="stylesheet" href="/static/monitor.css?v=20260823-30">
+  <link rel="stylesheet" href="/static/monitor.css?v=20260823-31">
 <style>
 /* ---------------------------------------------------------------------------
    디자인 토큰은 monitor.css가 단일 원본이다. 이 페이지의 예전 변수명은 아래
@@ -353,8 +353,8 @@ details[open] summary { margin-bottom: 8px; }
 footer { font-size: 12px; color: var(--text-muted); margin-top: 30px; line-height: 1.7; }
 footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
 </style>
-  <link rel="stylesheet" href="/static/tokens.css?v=20260823-30">
-  <link rel="stylesheet" href="/static/console.css?v=20260823-30">
+  <link rel="stylesheet" href="/static/tokens.css?v=20260823-31">
+  <link rel="stylesheet" href="/static/console.css?v=20260823-31">
 </head>
 <body>
 <header class="masthead">
@@ -383,8 +383,8 @@ footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
 <main>
 <div class="console-head">
   <div>
-    <h1 id="intro-title"><span data-i18n="anpage.h1">종목 분석</span> <span class="console-h1-sub" data-i18n="anpage.scope">낙폭 · 위험 · 공시 · 재무제표</span></h1>
-    <p class="console-sub" data-i18n="anpage.sub">종목 하나를 골라 얼마나 잠겼었고 앞으로 얼마나 잠길 수 있는지 봅니다. 국내는 금융위원회 공식 종가, 미국은 SEC EDGAR 공시를 그대로 씁니다.</p>
+    <h1 id="intro-title"><span data-i18n="anpage.h1">종목 분석</span> <span class="console-h1-sub" data-i18n="anpage.scope">국내 낙폭·변동성 · 미국 내부자 공시</span></h1>
+    <p class="console-sub" data-i18n="anpage.sub">국내 종목은 금융위원회 공식 종가로 낙폭·변동성까지 분석합니다. 미국 종목에는 같은 분석이 없습니다 — 재배포 가능한 가격 데이터 라이선스가 없어서이며, 대신 SEC EDGAR 내부자 공시를 원문 그대로 조회합니다. 한 종목의 재무제표·내부자·공시를 한 화면에서 보려면 종목 페이지를 쓰세요.</p>
   </div>
 </div>
 
@@ -729,8 +729,8 @@ const I18N = {
     "app.tagline": "MARKET SIGNAL CONSOLE", "app.live": "LIVE DATA",
     "nav.home": "홈", "nav.kr": "한국", "nav.us": "미국·글로벌", "nav.crypto": "암호화폐", "nav.bio": "바이오",
     "mode.easy": "쉬움", "mode.pro": "전문가", "mode.label": "표시 수준",
-    "anpage.h1": "종목 분석", "anpage.scope": "낙폭 · 위험 · 공시 · 재무제표",
-    "anpage.sub": "종목 하나를 골라 얼마나 잠겼었고 앞으로 얼마나 잠길 수 있는지 봅니다. 국내는 금융위원회 공식 종가, 미국은 SEC EDGAR 공시를 그대로 씁니다.",
+    "anpage.h1": "종목 분석", "anpage.scope": "국내 낙폭·변동성 · 미국 내부자 공시",
+    "anpage.sub": "국내 종목은 금융위원회 공식 종가로 낙폭·변동성까지 분석합니다. 미국 종목에는 같은 분석이 없습니다 — 재배포 가능한 가격 데이터 라이선스가 없어서이며, 대신 SEC EDGAR 내부자 공시를 원문 그대로 조회합니다. 한 종목의 재무제표·내부자·공시를 한 화면에서 보려면 종목 페이지를 쓰세요.",
     "intro.eyebrow": "MULMIT MARKET MONITOR", "intro.title": "시장의 흐름과 종목의 위험을 한 화면에서.",
     "intro.copy": "S&P 500 섹터 강약을 먼저 읽고, 원하는 종목의 수익률·낙폭·CAPM·미래 MDD 분포까지 같은 맥락에서 분석하세요.",
     "mode.insiderTitle": "내부자거래 공시 조회", "mode.insiderTag": "미국 상장사 전용 · SEC EDGAR · FORM 3·4·5",
@@ -862,11 +862,11 @@ const I18N = {
     "example.aapl": "애플", "example.nvda": "엔비디아", "example.samsung": "삼성전자", "example.spy": "S&P500 ETF", "example.tsla": "테슬라", "example.btc": "비트코인"
   },
   en: {
-    "doc.title": "Stock Analytics · Mulmit", "doc.description": "A market intelligence dashboard for S&P 500 sector trends, stock returns and risk analytics.",
+    "doc.title": "Stock analytics — Korea drawdown, US insider filings · Mulmit", "doc.description": "Drawdown and volatility for Korean listings from official closing prices, and SEC EDGAR insider filings for US tickers. Risk analytics are Korea-only: US price data is not licensed for redistribution.",
     "app.tagline": "MARKET SIGNAL CONSOLE", "app.live": "LIVE DATA",
     "nav.home": "Home", "nav.kr": "Korea", "nav.us": "US & global", "nav.crypto": "Crypto", "nav.bio": "Bio",
     "mode.easy": "Simple", "mode.pro": "Pro", "mode.label": "Detail level",
-    "anpage.h1": "Stock analytics", "anpage.scope": "drawdown · risk · filings · financials",
+    "anpage.h1": "Stock analytics", "anpage.scope": "Korea drawdown · US insider filings",
     "anpage.sub": "Pick one name and see how far underwater it went, and how far it could go. Korean closes come from the FSC's public data; US filings come straight from SEC EDGAR.",
     "intro.eyebrow": "MULMIT MARKET MONITOR", "intro.title": "Market leadership and stock risk, in one view.",
     "intro.copy": "Read S&P 500 sector strength first, then analyze returns, drawdowns, CAPM and the forward MDD distribution for any ticker in the same context.",
@@ -2765,7 +2765,7 @@ try {
   fetch("/api/pageview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: location.pathname, ref: document.referrer || "", id: presenceId() }), keepalive: true }).catch(() => {});
 } catch (error) { /* 최선노력 */ }
 </script>
-  <script src="/static/console.js?v=20260823-30" defer></script>
-  <script src="/static/search.js?v=20260823-30" defer></script>
+  <script src="/static/console.js?v=20260823-31" defer></script>
+  <script src="/static/search.js?v=20260823-31" defer></script>
 </body>
 </html>
