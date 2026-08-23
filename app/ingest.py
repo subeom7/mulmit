@@ -37,6 +37,7 @@ from . import (
     kr_pension,
     kr_press,
     news_feed,
+    news_videos,
     store,
     us_fundamentals,
     us_ptr,
@@ -757,6 +758,25 @@ def refresh_gdelt_news(*, force: bool = False) -> dict:
         return {"failed": str(exc)}
 
 
+def refresh_news_videos(*, force: bool = False) -> dict:
+    """뉴스 영상 목록 갱신 — 한 사이클 5유닛(채널 1 + 업로드 4). 배치 전용."""
+    if not config.YOUTUBE_ENABLED or not config.YOUTUBE_API_KEY:
+        return {"skipped": "disabled"}
+    if not force and store.load_report(news_videos.CACHE_KEY, config.YOUTUBE_MAX_AGE) is not None:
+        return {"skipped": "fresh"}
+    try:
+        result = news_videos.refresh()
+        log.info("뉴스 영상 갱신: %s", result)
+        return result
+    except RateLimited:
+        # 유튜브는 잘못된 키와 소진된 할당량을 똑같이 403으로 알린다.
+        log.warning("YouTube 요청 거부(키 또는 할당량) — 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("뉴스 영상 갱신 실패: %s", exc)
+        return {"failed": str(exc)}
+
+
 def refresh_kr_press(*, force: bool = False) -> dict:
     """정부 보도자료 RSS 갱신 — 배치 전용, 기관 단위 fail-soft."""
     if not config.KR_PRESS_ENABLED:
@@ -1195,6 +1215,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             kr_events_result = refresh_kr_events()
             refresh_gdelt_news()
             refresh_kr_press()
+            refresh_news_videos()
             ptr_result = refresh_us_ptr()
             fund_result = refresh_us_fundamentals()
             refresh_econ_calendar()
@@ -1254,6 +1275,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             kr_events_result = refresh_kr_events()
             refresh_gdelt_news()
             refresh_kr_press()
+            refresh_news_videos()
             refresh_us_ptr()
             refresh_us_fundamentals()
             refresh_econ_calendar()
@@ -1346,6 +1368,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         kr_events_result = refresh_kr_events()
         refresh_gdelt_news()
         refresh_kr_press()
+        refresh_news_videos()
         ptr_result = refresh_us_ptr()
         fund_result = refresh_us_fundamentals()
         refresh_econ_calendar()

@@ -1296,12 +1296,12 @@ gate: CRYPTO_SECTION_ENABLED + COINALYZE_ENABLED + COINALYZE_API_KEY
 recheck_on: 2026-11-22
 ```
 
-### 3.28 YouTube Data API v3 — 종목·코인 관련 영상 (계획, 키 대기)
+### 3.28 YouTube Data API v3 — 시장 뉴스 영상 (라이브)
 
 | 항목 | 기록 |
 |---|---|
 | 내부 ID | `youtube` |
-| 현재 상태 | **`approved_pending_key` (2026-08-23, `DS-2026-020`)** — 약관 원문 확인 완료, **코드 없음**. 무료 키 발급(운영자) 뒤 실측하고 착수한다 |
+| 현재 상태 | **`live` (2026-08-23, `DS-2026-020`)** — 키 발급·실측 완료, `/api/news/videos` 배포. 홈 화면 클릭 파사드 |
 | 왜 되는가 | 뉴스 썸네일과 정반대 경우다. 언론사 이미지는 GDELT가 줄 수 없는 남의 저작물이지만(§6.6), 유튜브는 **본인이 임베드 수단을 공식 제공**하고 업로더가 임베드 허용 여부를 스스로 정한다. 우리가 가져다 쓰는 것이 아니라 그들이 내주는 것을 규칙대로 쓰는 것이다 |
 | 저장 제한 | Developer Policies: 비인가 데이터(검색 결과)는 **임시 저장, 최대 30일**, 이후 "delete or refresh". 저장값이 현재값과 일치하도록 "reasonable efforts" 의무. **우리 설계는 수 시간 캐시라 여유 있게 충족** |
 | 표시 의무 | "YouTube가 출처임을 시청자에게 분명히" — YouTube Brand Features 표시. 그리고 **"YouTube에서 오지 않은 콘텐츠를 YouTube에서 온 것처럼 보이게 하면 안 된다"** — 우리 수치와 영상 목록을 시각적으로 분리해야 한다 |
@@ -1309,12 +1309,19 @@ recheck_on: 2026-11-22
 | 프라이버시 | 표준 iframe이 `VISITOR_INFO1_LIVE`·`YSC`·`GPS`·DoubleClick `IDE`를 심는다. `youtube-nocookie.com`도 재생 시점까지 미룰 뿐 동의 요건을 없애지 못한다. **그래서 click-to-load 파사드로 붙인다** — 이용자가 누르기 전에는 구글로 요청이 나가지 않고, 개인정보처리방침 §3("쿠키를 사용하지 않습니다")이 참인 채로 남는다 |
 | 선례 | §4의 TradingView 히트맵이 같은 틀이다 — 지연 로딩 + 방침에 "무엇이 누구에게 전달되는지" 명시 + 제공자 정책 링크. 새 원칙이 아니라 있는 원칙의 두 번째 적용 |
 | 게이트 | `YOUTUBE_ENABLED` + `YOUTUBE_API_KEY` (기본 OFF, 키는 ingest에만) |
-| 남은 위험 | **관련성 품질**. "삼성전자"로 검색하면 시장 분석이 아니라 신제품 리뷰·광고가 상위에 올 수 있다. 관련 없는 영상을 붙이면 사이트 신뢰도를 깎으므로, 키 발급 후 **실측으로 검증하기 전에는 켜지 않는다** |
+| 종목 검색 기각 | **실측으로 접었다(2026-08-23)**. "삼성전자 주가" `search.list` 상위 5건 중 4건이 낚시성이었고, 그중 하나는 채널명이 `حلويات جزائرية تقليدية`(알제리 전통 디저트)인 계정이 올린 한국 주식 영상이었다. 종목별 연관 영상은 **붙이지 않는다** |
+| 대신 무엇을 붙였나 | 못 박은 뉴스 채널의 **최근 업로드 목록**. 운영자 판단: 거시에 영향을 주는 일반 뉴스(사고·지정학)도 시장 화면에 있을 이유가 있다 |
+| 함정 1 — 핸들 | **핸들은 채널을 식별하지 못한다.** `@KBSnews` → "byung joo lee"(개인 채널), `@wowtv` → 2013~2014년 그랜드캐니언 여행 영상 2편. 한국경제TV가 아니다. **채널 ID로만 못 박는다** |
+| 함정 2 — 할당량 | `search.list`는 **하루 100회짜리 별도 버킷**, `channels.list`·`playlistItems.list`는 10,000/일 풀에서 **각 1유닛**. 업로드 플레이리스트를 읽으면 검색 버킷을 아예 쓰지 않는다. 한 사이클 5유닛 |
+| 함정 3 — 채널 편중 | 언어로만 번갈아 뽑으니 업로드 잦은 채널이 슬롯을 독식했다(한국어 6칸 중 YTN 4칸, 영어 6칸 중 블룸버그 4칸). **채널 단위 라운드로빈**으로 3/3/3/3 |
+| 채널 선정 | SBS Biz 뉴스 `UCbMjg2EvXs_RUGW-KrdM3pw`, YTN `UChlgI3UHCOnwUGzWzbJ3H5w`, CNBC Television `UCrp_UI8XtuYfpiqluWLD7Lw`, Bloomberg Television `UCIALMKvObZNtJ6AmdCLP7Lg`. **한국경제TV는 제외** — "월요일 공략할 TOP4" 류 팁 콘텐츠와 무릎 관절염 건강매거진이 섞여 수치 옆에 둘 수 없다 |
+| 30일 상한 이행 | 문서가 아니라 **코드로** 지킨다. 각 항목에 `stored_at`을 박고, 읽는 시점에 30일 지난 항목은 떨어뜨린다(`_within_retention`). ingest가 멈춰도 블롭이 스스로 빈다 — "갱신하고 있을 것"이라는 가정보다 안전하다 |
+| 썸네일 | **가져오지 않는다.** 약관상 표시는 가능하지만 이미지 한 장이 곧 "클릭 전 구글 요청"이라 파사드의 전제가 깨진다. 목록은 제목·채널·시각뿐 |
 
 ```yaml
 decision_id: DS-2026-020
 provider_id: youtube
-status: approved_pending_key
+status: live
 reviewed_at: 2026-08-23
 reviewer: repository owner
 evidence_type: official_terms
@@ -1332,6 +1339,11 @@ conditions:
   - YouTube named as the source; our own figures kept visually separate
   - the embedded player is used unmodified, with no overlay and no autoplay
   - the privacy policy states what reaches Google and when
+  - no thumbnail is fetched; the listing is text only
+  - channels are pinned by id, never by handle
+enforced_by:
+  - tests/test_news_videos.py (retention cutoff, facade, player size, balance)
+  - app/news_videos.py::_within_retention (30-day cap applied at read time)
 gate: YOUTUBE_ENABLED + YOUTUBE_API_KEY
 recheck_on: 2026-11-23
 ```

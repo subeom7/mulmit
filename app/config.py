@@ -263,6 +263,14 @@ KR_PRESS_ENABLED = _bool("KR_PRESS_ENABLED", False)
 KR_PRESS_TIMEOUT = _float("KR_PRESS_TIMEOUT", 15.0)
 KR_PRESS_MAX_AGE = _int("KR_PRESS_MAX_AGE", 60 * 15)
 
+# 유튜브 뉴스 영상 lane — 못 박은 채널의 최근 업로드 목록(제목·채널·시각·링크).
+# 썸네일은 받지 않고, 재생을 누르기 전에는 유튜브로 요청이 나가지 않는다.
+# 수집은 ingest 전용. 등록부 §3.28 / DS-2026-020.
+YOUTUBE_ENABLED = _bool("YOUTUBE_ENABLED", False)
+YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "").strip()
+YOUTUBE_TIMEOUT = _float("YOUTUBE_TIMEOUT", 15.0)
+YOUTUBE_MAX_AGE = _int("YOUTUBE_MAX_AGE", 60 * 30)
+
 FSC_ENABLED = _bool("FSC_ENABLED", False)
 FSC_API_KEY = os.environ.get("FSC_API_KEY", "").strip()
 FSC_TIMEOUT = _float("FSC_TIMEOUT", 20.0)
