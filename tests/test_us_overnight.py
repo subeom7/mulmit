@@ -130,3 +130,34 @@ def test_the_route_follows_the_hip3_display_gate(db, monkeypatch):
     response = TestClient(app).get("/api/us/overnight")
     assert response.status_code == 503
     assert response.json()["detail"]["code"] == "hip3_public_display_pending_rights"
+
+
+def test_the_cards_carry_their_own_trend_line(monkeypatch):
+    """추이선 값은 저장된 블롭에서만 읽는다 — 이 경로는 5초마다 돈다."""
+    from app import hip3_history
+
+    rows = [{"date": f"2026-08-{day:02d}", "value": 200.0 + day} for day in range(1, 21)]
+    monkeypatch.setattr(hip3_history, "enabled", lambda: True)
+    monkeypatch.setattr(
+        hip3_history, "load", lambda: {"series": {"xyz:NVDA": {"observations": rows}}}
+    )
+    payload = us_overnight.build_us_overnight(_Dex(), now=_at(2026, 8, 23, 12, 0))
+    by_symbol = {card["symbol"]: card for card in payload["cards"]}
+    assert by_symbol["xyz:NVDA"]["observations"][-1]["value"] == 220.0
+    # 없는 종목은 선 없이 카드만 선다.
+    assert "observations" not in by_symbol["xyz:TSLA"]
+
+
+def test_the_history_lane_collects_every_card_symbol(monkeypatch):
+    """카드가 있는데 lane이 안 모으면 그 선은 영영 비고, 에러는 나지 않는다."""
+    from app import hip3_history
+
+    monkeypatch.setattr(config, "HIP3_PUBLIC_DISPLAY_ENABLED", True)
+    collected = set(hip3_history._symbols())
+    for target in us_overnight.TARGETS:
+        assert target.symbol in collected, f"{target.ticker} 이력을 모으지 않는다"
+
+
+def test_the_lane_stays_closed_with_the_display_gate(monkeypatch):
+    monkeypatch.setattr(config, "HIP3_PUBLIC_DISPLAY_ENABLED", False)
+    assert us_overnight.history_symbols() == []
