@@ -8,6 +8,7 @@ latency, and coalesces concurrent cold-cache requests inside one process.
 from __future__ import annotations
 
 import copy
+import itertools
 import json
 import math
 import threading
@@ -177,6 +178,8 @@ class HyperliquidProvider:
 
     name = "hyperliquid"
     _cache: dict[CacheKey, CacheEntry] = {}
+    # 주입된 transport마다 붙는 일련번호. id(self)를 쓰면 안 되는 이유는 아래.
+    _namespace_seq = itertools.count(1)
     _failures: dict[CacheKey, FailureEntry] = {}
     _inflight: dict[CacheKey, threading.Event] = {}
     _cache_lock = threading.Lock()
@@ -203,8 +206,23 @@ class HyperliquidProvider:
         self._clock = clock
         self._wall_clock = wall_clock or (lambda: datetime.now(UTC))
         self._sleep = sleep
-        # Default clients share cache entries. Injected transports stay isolated.
-        self._cache_namespace = "default" if transport is None else f"transport:{id(self)}"
+        # 기본 클라이언트는 캐시를 함께 쓰고, 주입된 transport는 서로 격리한다.
+        #
+        # 예전에는 이름을 `id(self)`로 지었다. CPython의 id()는 메모리 주소라
+        # **객체가 사라지면 그 주소가 곧바로 재사용된다.** 캐시는 클래스에
+        # 붙어 있어 인스턴스가 사라져도 남으므로, 앞선 provider가 수거된 자리에
+        # 새 provider가 앉으면 죽은 인스턴스의 캐시를 그대로 물려받았다.
+        # 드문 일이 아니다 — 만들고 버리기를 200번 반복하면 198번 겹친다(실측).
+        # 격리를 약속해 놓고 지키지 못하고 있었던 셈이다.
+        #
+        # 증상은 조용하다. CI에서 test_hyperliquid의 5분 상한 테스트가 첫 패스에
+        # xyz dex를 부르지 않고 지나가 호출 수가 4가 아니라 2로 나왔다.
+        # 재사용되지 않는 일련번호를 쓴다.
+        if transport is None:
+            self._cache_namespace = "default"
+        else:
+            with self._cache_lock:
+                self._cache_namespace = f"transport:{next(self._namespace_seq)}"
 
     @classmethod
     def clear_cache(cls) -> None:
