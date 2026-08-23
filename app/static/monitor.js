@@ -147,6 +147,10 @@ const TEXT = {
     "weekend.defaultDisclaimer": "주말 파생시장 가격은 얕은 유동성과 레버리지의 영향을 크게 받을 수 있습니다. 월요일 현물시장 예측값으로 사용하지 마세요.",
     "weekend.nextSession": "다음 내부 세션", "weekend.awaitingSession": "세션 대기", "weekend.proxy": "대체 신호", "weekend.direct": "직접 계약", "weekend.auxiliary": "24시간 보조", "weekend.consensus": "합성 신호", "weekend.referenceSignal": "주말 기준 신호", "weekend.funding": "시간당 펀딩", "weekend.volume": "24시간 거래대금", "weekend.openInterest": "미결제약정", "weekend.status": "상태", "weekend.confidence": "근거 품질", "weekend.session": "활성 세션", "weekend.sessionChange": "세션 기준", "weekend.change24h": "24시간 기준", "weekend.stale": "지연", "weekend.reference": "참고 품질",
     "weekend.samsungPerp": "삼성전자 USD 환산 합성 무기한선물 · 한국 현물 종가와 동일한 상품이 아닙니다.",
+    "uso.title": "미국 대형주, 장 밖에서는", "uso.note": "마지막 정규장 마감 이후 얼마나 움직였나",
+    "uso.copy": "미국장이 닫혀 있어도 대형주를 추종하는 합성 무기한선물은 24시간 거래됩니다. 마지막 정규장 마감(16:00 ET) 시점의 퍼프 가격과 지금을 견줍니다. 현물 호가가 아니고 다음 시초가를 예측하지도 않습니다.",
+    "uso.badgePerp": "USD 합성 무기한선물", "uso.sinceClose": "{date} 마감 이후",
+    "uso.close": "마감 시점 퍼프", "uso.noClose": "마감 시점 값 없음",
     "kridx.title": "코스피 지수군", "kridx.copy": "대표 지수와 코스피 200 섹터의 장 마감 확정값입니다. 연초 대비와 연중 최고에서 얼마나 내려와 있는지까지 한 표에서 봅니다.",
     "kridx.peakTip": "연중 최고 {value} · {date}", "kridx.peakNone": "연중 최고가 아직 공표되지 않았습니다",
     "kridx.lowNote": "연중 최저는 금융위가 확정 전 0으로 공표해 표시하지 않습니다",
@@ -313,6 +317,10 @@ const TEXT = {
     "weekend.defaultDisclaimer": "Weekend derivative prices can be heavily affected by shallow liquidity and leverage. Do not treat them as Monday spot-market forecasts.",
     "weekend.nextSession": "Next internal session", "weekend.awaitingSession": "Awaiting session", "weekend.proxy": "Proxy", "weekend.direct": "Direct contract", "weekend.auxiliary": "24h auxiliary", "weekend.consensus": "Composite", "weekend.referenceSignal": "Weekend reference", "weekend.funding": "Hourly funding", "weekend.volume": "24h notional", "weekend.openInterest": "Open interest", "weekend.status": "Status", "weekend.confidence": "Evidence quality", "weekend.session": "Active session", "weekend.sessionChange": "Session change", "weekend.change24h": "24-hour change", "weekend.stale": "Stale", "weekend.reference": "Reference quality",
     "weekend.samsungPerp": "Samsung Electronics USD-converted synthetic perpetual · not the Korean spot close.",
+    "uso.title": "US large caps, outside the session", "uso.note": "how far they moved since the last close",
+    "uso.copy": "Even with the US market shut, synthetic perpetuals tracking these names trade around the clock. Each card compares the mark now with the mark at the last regular-session close (16:00 ET). Not a spot quote, and not a prediction of the next open.",
+    "uso.badgePerp": "USD synthetic perpetual", "uso.sinceClose": "since the {date} close",
+    "uso.close": "Mark at close", "uso.noClose": "No value at the close",
     "kridx.title": "KOSPI index family", "kridx.copy": "Confirmed closes for the headline indices and KOSPI 200 sectors, with year-to-date change and how far each sits below its high for the year.",
     "kridx.peakTip": "High for the year {value} · {date}", "kridx.peakNone": "No high published yet for this index",
     "kridx.lowNote": "The year's low is published as 0 until it is finalised, so it is not shown",
@@ -593,7 +601,7 @@ const COMPARISONS = [
 const state = {
   lang: localStorage.getItem("monitor.locale") === "en" ? "en" : "ko",
   assets: null, macro: null, sectors: null, weekend: null,
-  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, cryptoRegime: null, cryptoNews: null, bioTrials: null, bioFda: null, bioAdcomm: null, bioMfds: null, bioMfdsFilter: "notable", krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, calendar: null,
+  stress: null, sentiment: null, cryptoOverview: null, cryptoSentiment: null, cryptoVolatility: null, cryptoKimchi: null, cryptoStructure: null, cryptoGas: null, cryptoBoard: null, cryptoRegime: null, cryptoNews: null, bioTrials: null, bioFda: null, bioAdcomm: null, bioMfds: null, bioMfdsFilter: "notable", krOvernight: null, krPension: null, krHoldings: null, krEtf: null, usPtr: null, usOvernight: null, calendar: null,
   records: new Map(), restricted: new Map(), errors: {}, sectorPeriod: localStorage.getItem("monitor.sectorPeriod") || "1d",
   tvPeriod: localStorage.getItem("monitor.tvPeriod") || "1d", tvLoaded: false, correlationLoaded: false,
 };
@@ -1275,6 +1283,7 @@ const PAGE_FETCHES = {
   krEvents: ["kr"],
   krEtf: ["kr"],
   usPtr: ["us"],
+  usOvernight: ["us"],
   usEvents: ["us"],
   calendar: ["landing", "us"],
   cryptoOverview: ["landing", "crypto"],
@@ -1297,7 +1306,7 @@ async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, cryptoRegime, cryptoLiquidations, cryptoNews, bioTrials, bioFda, bioAdcomm, bioMfds] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usOvernight, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, cryptoRegime, cryptoLiquidations, cryptoNews, bioTrials, bioFda, bioAdcomm, bioMfds] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/market/sentiment", "sentiment"), request("/api/kr/indices", "krIndices"),
@@ -1305,6 +1314,7 @@ async function loadCore() {
     request("/api/kr/holdings", "krHoldings"),
     request("/api/kr/events", "krEvents"),
     request("/api/kr/etf", "krEtf"), request("/api/us/ptr", "usPtr"),
+    request("/api/us/overnight", "usOvernight"),
     request("/api/us/events", "usEvents"),
     request("/api/calendar", "calendar"),
     request("/api/feed", "feed"),
@@ -1325,7 +1335,7 @@ async function loadCore() {
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
   state.stress = stress; state.sentiment = sentiment; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krHoldings = krHoldings;
-  state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
+  state.krEvents = krEvents; state.krEtf = krEtf; state.usPtr = usPtr; state.usOvernight = usOvernight; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
   state.cryptoOverview = cryptoOverview; state.cryptoSentiment = cryptoSentiment; state.cryptoVolatility = cryptoVolatility;
   state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure; state.cryptoGas = cryptoGas; state.cryptoBoard = cryptoBoard; state.cryptoRegime = cryptoRegime; state.cryptoLiquidations = cryptoLiquidations; state.cryptoNews = cryptoNews; state.bioTrials = bioTrials; state.bioFda = bioFda; state.bioAdcomm = bioAdcomm; state.bioMfds = bioMfds;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets"); ingestPayload(sentimentRecordPayload(sentiment), "sentiment");
@@ -1334,7 +1344,7 @@ async function loadCore() {
 
 function renderAll() {
   renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
-  renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas(); renderCryptoBoard(); renderCryptoRegime(); renderCryptoLiquidations(); renderCryptoNews(); renderBioCatalysts(); renderBioTrials(); renderBioFda(); renderBioAdcomm(); renderBioMfds();
+  renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas(); renderCryptoBoard(); renderCryptoRegime(); renderCryptoLiquidations(); renderUsOvernight(); renderCryptoNews(); renderBioCatalysts(); renderBioTrials(); renderBioFda(); renderBioAdcomm(); renderBioMfds();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
   // legacy price lane. When the deployment has that lane switched off they are
@@ -2590,6 +2600,130 @@ function kroMoney(value, kind) {
 
 // 직전 렌더의 환산가 — 값이 움직인 카드에 틱 플래시를 준다.
 const kroPrevValues = new Map();
+const usoPrevValues = new Map();
+
+// 미국 대형주, 장 밖에서는.
+//
+// 카드는 /kr의 야간 카드와 같은 부품(.kro-card)을 쓴다. 같은 성격의 값이라
+// 화면마다 다르게 생길 이유가 없다. 다른 것은 두 가지뿐이다 — 통화가 USD라
+// 환산이 없고, 정규장이 열려 있으면 섹션 자체가 서지 않는다.
+// 미국 정규장 마감일은 뉴욕 날짜로 적는다. 보는 사람의 시간대로 찍으면
+// 금요일 16:00 ET가 한국에서는 토요일이 되고, 미국장이 열리지도 않는 날짜를
+// "마감"이라 부르게 된다(실측: 8/21 금 마감이 "8. 22. 마감 이후"로 나왔다).
+function usoCloseDate(iso) {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.valueOf())) return String(iso);
+  return new Intl.DateTimeFormat(state.lang === "ko" ? "ko-KR" : "en-US", {
+    month: "numeric", day: "numeric", timeZone: "America/New_York",
+  }).format(date);
+}
+
+// 주식 가격은 소수 두 자리다. 암호화폐 포맷터는 $0.09100처럼 잔돈까지 보여
+// 주려고 자릿수를 늘리는데, 그 규칙을 주식에 쓰면 $218.040이 된다.
+function usoPrice(value) {
+  return value === null ? "—" : `$${value.toLocaleString("en-US", {
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
+  })}`;
+}
+
+function renderUsOvernight() {
+  const section = $("#us-overnight"); if (!section) return;
+  const stateNode = $("#uso-state"), grid = $("#uso-grid"), footer = $("#uso-footer");
+  const payload = state.usOvernight;
+
+  if (!payload) {
+    // 게이트가 닫혀 있으면 섹션을 아예 숨긴다 — 빈 카드보다 없는 편이 정직하다.
+    if (disabledCode("usOvernight")) { section.hidden = true; return; }
+    section.hidden = false; grid.hidden = true; footer.hidden = true;
+    stateNode.hidden = false;
+    stateNode.textContent = `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+  // 정규장 중에는 이 섹션이 할 말이 없다. 서버도 카드를 만들지 않는다.
+  if (payload.session?.market_open || payload.status === "market_open") {
+    section.hidden = true; return;
+  }
+
+  const cards = Array.isArray(payload.cards) ? payload.cards : [];
+  const usable = cards.filter((card) => safeNumber(card.price?.value) !== null);
+  if (!usable.length) {
+    section.hidden = false; grid.hidden = true; footer.hidden = true;
+    stateNode.hidden = false;
+    stateNode.textContent = `${t("status.unavailable")} · ${t("status.retry")}`;
+    return;
+  }
+  section.hidden = false; stateNode.hidden = true; grid.hidden = false; footer.hidden = false;
+
+  grid.replaceChildren(...usable.map((card) => {
+    const price = safeNumber(card.price?.value);
+    const sinceClose = safeNumber(card.session_reference?.vs_percent);
+    const change24h = safeNumber(card.change_24h?.percent);
+    const article = document.createElement("article");
+    article.className = `kro-card ${changeClass(sinceClose)}`;
+
+    const header = document.createElement("header");
+    const title = document.createElement("h3");
+    title.textContent = localValue(card.label, state.lang);
+    const symbol = document.createElement("span");
+    symbol.className = "kro-sym";
+    symbol.textContent = card.ticker || card.symbol;
+    header.append(title, symbol);
+
+    const priceNode = document.createElement("div");
+    priceNode.className = "kro-price";
+    priceNode.textContent = usoPrice(price);
+    const previous = usoPrevValues.get(card.id);
+    if (previous !== undefined && price !== previous) {
+      priceNode.classList.add(price > previous ? "tick-up" : "tick-down");
+    }
+    usoPrevValues.set(card.id, price);
+
+    // 헤드라인은 "마감 이후"다. 이 섹션의 존재 이유이고, 24시간 변화는 그 아래
+    // 근거표로 내린다 — 주말에는 24시간 창이 마감 이후 구간과 어긋난다.
+    const vs = document.createElement("div");
+    vs.className = `kro-vs ${changeClass(sinceClose)}`;
+    vs.textContent = sinceClose === null
+      ? t("uso.noClose")
+      : `${formatSigned(sinceClose)} · ${t("uso.sinceClose", { date: usoCloseDate(card.session_reference?.boundary_et) })}`;
+
+    const meta = document.createElement("dl");
+    meta.className = "kro-meta";
+    const row = (labelText, valueText) => {
+      const wrap = document.createElement("div");
+      const dt = document.createElement("dt"); dt.textContent = labelText;
+      const dd = document.createElement("dd"); dd.textContent = valueText;
+      wrap.append(dt, dd); return wrap;
+    };
+    const refClose = safeNumber(card.session_reference?.close);
+    meta.append(row(t("uso.close"), usoPrice(refClose)));
+    meta.append(row(t("kro.mark"), change24h === null ? usoPrice(price) : `${usoPrice(price)} · 24h ${formatSigned(change24h)}`));
+    meta.append(row(t("crypto.volume"), cryptoUsd(safeNumber(card.volume_24h_usd), { compact: true })));
+
+    const badges = document.createElement("div");
+    badges.className = "kro-badges";
+    if (card.liquidity_status === "low") {
+      const chip = document.createElement("span");
+      chip.className = "status-badge warn";
+      chip.textContent = t("weekend.liquidity");
+      badges.append(chip);
+    }
+
+    article.append(header, priceNode, vs, meta);
+    if (badges.childElementCount) article.append(badges);
+    return article;
+  }));
+
+  footer.replaceChildren();
+  const method = document.createElement("p");
+  method.className = "kro-method";
+  method.textContent = localValue(payload.methodology, state.lang);
+  const disclaimer = document.createElement("p");
+  disclaimer.className = "kro-disclaimer";
+  disclaimer.textContent = localValue(payload.disclaimer, state.lang);
+  footer.append(method, disclaimer);
+}
+
 
 /* 장 마감 이후의 움직임을 정직하게 말하는 기준은 둘 중 하나다.
  *
