@@ -10,9 +10,20 @@ from app.providers.fred import FRED_REQUIRED_NOTICE, FRED_SERIES_BY_ID
 
 # Freshness is judged against the wall clock (7-day grace for daily series), so
 # fixtures are dated relative to today rather than pinned to a calendar day.
-TODAY = dt.date.today()
+#
+# But not to *today* exactly. The weekly-sampling assertion below needs the two
+# seeded days to land in the same ISO week, and a Monday has no earlier day in
+# its own week — so on Mondays the pair straddled the boundary, sampling kept
+# both points, and the suite went red at midnight with nothing having changed.
+# Stepping back off Monday costs one day (still inside the 7-day grace) and
+# makes the fixture mean the same thing on every calendar day.
+_WALL_TODAY = dt.date.today()
+TODAY = _WALL_TODAY - dt.timedelta(days=1) if _WALL_TODAY.weekday() == 0 else _WALL_TODAY
 YESTERDAY = TODAY - dt.timedelta(days=1)
 WEEK_AGO = TODAY - dt.timedelta(days=7)
+assert TODAY.isocalendar()[:2] == YESTERDAY.isocalendar()[:2], (
+    "두 점은 같은 ISO 주에 있어야 한다 — 주간 표본이 하나로 접히는지가 이 파일의 주장이다"
+)
 
 
 def _seed(db, *, notes: str = ""):
