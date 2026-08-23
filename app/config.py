@@ -203,7 +203,10 @@ NAVER_DATALAB_TIMEOUT = _float("NAVER_DATALAB_TIMEOUT", 8.0)
 NAVER_DATALAB_RETRIES = _int("NAVER_DATALAB_RETRIES", 1)
 # 값은 하루 단위로만 바뀐다. 6시간이면 워치리스트 한 벌이 하루 4번 × 묶음 수다.
 NAVER_DATALAB_MAX_AGE = _int("NAVER_DATALAB_MAX_AGE", 6 * 60 * 60)
-# 볼 종목. 비어 있으면 lane은 데이터 없음으로 닫힌다 — 로스터 전체를 도는 것은
+# 볼 종목. `코드` 또는 `코드=검색어` 쉼표 목록. 비어 있으면 lane은 닫힌다.
+# 검색어 덮어쓰기는 이름이 회사만 가리키지 않는 종목을 위한 것이다 —
+# `NAVER`나 `카카오`를 검색한 사람 대부분은 주식을 보러 온 것이 아니다.
+# 로스터 전체를 도는 것은
 # 쿼터가 아니라 뜻에서 틀린다(거래 없는 종목의 검색 추이는 잡음이다).
 NAVER_DATALAB_WATCHLIST = os.environ.get("NAVER_DATALAB_WATCHLIST", "").strip()
 
