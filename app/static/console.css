@@ -473,6 +473,17 @@ html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
  * 테두리 안에서 빈 채로 남는다. */
 .cboard-card .accessible-table { width: 100%; }
 
+/* 테두리 안쪽 여백.
+ * `.panel`은 padding이 0이고 표의 셀 padding 10px에만 기대고 있었다. 그래서
+ * 패널 왼쪽 629px에 "대표 지수"가 630px — 글자가 테두리에 닿았다(실측
+ * 2026-08-23). 표 자체는 행 구분선을 끝까지 긋는 편이 나으니 full-bleed로
+ * 두고, 바깥쪽 셀의 padding으로 같은 들여쓰기를 만든다.
+ * 카드 안의 작은 표(.cboard-card)는 카드가 이미 안쪽 여백을 갖고 있어 뺀다. */
+.panel .accessible-table th:first-child, .panel .accessible-table td:first-child { padding-left: var(--sp-4); }
+.panel .accessible-table th:last-child, .panel .accessible-table td:last-child { padding-right: var(--sp-4); }
+.panel > .panel-footer { padding-left: var(--sp-4); padding-right: var(--sp-4); }
+#kridx-body .kridx-group { padding-left: var(--sp-4); }
+
 /* 지수군은 표 둘이 나란히 선다. 세로로 쌓으면 오른쪽 절반이 빈 채 길어진다.
  * auto-fit이라 묶음이 하나뿐이거나 화면이 좁으면 저절로 한 줄이 된다. */
 #kridx-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(520px, 1fr)); gap: 0 var(--sp-6); align-items: start; }
@@ -490,7 +501,9 @@ html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
 
 /* 위험 표시는 접지 않는다 — 다만 주황 알약 세 개가 나란히 서면 그것대로
  * 소음이라, 테두리만 남긴 조용한 칩으로 바꾼다. */
-.risk-strip { gap: 6px; margin: var(--sp-3) 0 0; }
+/* 아래 여백이 0이라 카드 격자가 배지 줄 바로 아래 붙어 있었다
+ * (실측: 배지 bottom 394px = 카드 top 394px). */
+.risk-strip { gap: 6px; margin: var(--sp-3) 0 var(--sp-4); }
 .risk-strip .status-badge {
   padding: 4px 10px; border-radius: 999px; font-size: var(--fs-xs); font-weight: 600;
   color: var(--ink-3); background: transparent; border: 1px solid var(--line-strong);
@@ -771,7 +784,7 @@ html[data-lang="en"] .lang-en { display: revert; }
 .cal-agenda-empty { padding: var(--sp-5) var(--sp-4); color: var(--ink-3); font-size: var(--fs-sm); text-align: center; }
 
 .cal-all { border-top: 1px solid var(--line); border-bottom: 0; }
-.cal-all .table-scroll { padding: 0 var(--sp-4) var(--sp-3); }
+.cal-all .table-scroll { padding: 0 0 var(--sp-3); }
 
 /* 좁은 화면: 칸은 날짜와 점만, 이름은 아래 목록에서. */
 @media (max-width: 760px) {

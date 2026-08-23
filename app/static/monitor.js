@@ -169,6 +169,7 @@ const TEXT = {
     "cal.kindRelease": "지표 발표", "cal.kindPolicy": "정책회의", "cal.regionUs": "미국", "cal.regionKr": "한국",
     "cal.dday": "D-{n}", "cal.today": "오늘",
     "cal.prev": "이전 달", "cal.next": "다음 달", "cal.thisMonth": "이번 달",
+    "cal.shortNote": "기관이 공표한 예정일 · 변경될 수 있습니다",
     "cal.empty": "이 달에는 예정된 발표가 없습니다.", "cal.allEvents": "전체 일정 {n}건 표로 보기",
     "sector.title": "섹터 자금 흐름", "sector.caption": "S&P 500 섹터 ETF 기간 수익률", "sector.name": "섹터", "sector.return": "수익률", "sector.interpretation": "플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.",
     "tv.title": "S&P 500 종목 히트맵", "tv.embed": "외부 위젯", "tv.notice": "이 히트맵은 TradingView가 직접 그립니다. Mulmit이 계산한 값이 아닙니다.",
@@ -317,6 +318,7 @@ const TEXT = {
     "cal.kindRelease": "Data release", "cal.kindPolicy": "Policy meeting", "cal.regionUs": "US", "cal.regionKr": "Korea",
     "cal.dday": "D-{n}", "cal.today": "Today",
     "cal.prev": "Previous month", "cal.next": "Next month", "cal.thisMonth": "This month",
+    "cal.shortNote": "As announced by the institutions · dates can change",
     "cal.empty": "No scheduled releases this month.", "cal.allEvents": "All {n} dates as a table",
     "sector.title": "Sector flow", "sector.caption": "S&P 500 sector ETF period returns", "sector.name": "Sector", "sector.return": "Return", "sector.interpretation": "Broader positive participation can confirm a wider advance. ETF returns are not the same thing as fund-flow dollars.",
     "tv.title": "S&P 500 constituent heatmap", "tv.embed": "Third-party widget", "tv.notice": "TradingView serves this embed directly; it is not Mulmit API data.",
@@ -1233,7 +1235,7 @@ const PAGE_FETCHES = {
   krEtf: ["kr"],
   usPtr: ["us"],
   usEvents: ["us"],
-  calendar: ["us"],
+  calendar: ["landing", "us"],
   cryptoOverview: ["landing", "crypto"],
   cryptoSentiment: ["landing", "crypto"],
   cryptoVolatility: ["crypto"],
@@ -1916,10 +1918,12 @@ function renderFeed() {
   if (!items.length) { section.hidden = true; return; }
   section.hidden = false;
 
+  // 홈에는 경제 캘린더 격자가 따로 있어 이 칩 줄을 두지 않는다. 요소가 없는
+  // 페이지에서도 돌아야 하므로 존재를 먼저 확인한다.
   const upcoming = $("#feed-upcoming");
   const soon = Array.isArray(payload.upcoming) ? payload.upcoming : [];
-  upcoming.hidden = !soon.length;
-  if (soon.length) {
+  if (upcoming) upcoming.hidden = !soon.length;
+  if (upcoming && soon.length) {
     upcoming.replaceChildren(...soon.map((event) => {
       const chip = document.createElement("a");
       chip.className = "feed-soon";
