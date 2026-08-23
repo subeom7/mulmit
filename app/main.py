@@ -45,6 +45,7 @@ from . import (
     kr_press,
     kr_stocks,
     news_feed,
+    news_page,
     news_videos,
     search,
     service,
@@ -513,6 +514,22 @@ def privacy_policy() -> FileResponse:
 @app.get("/terms", include_in_schema=False)
 def terms_of_use() -> FileResponse:
     return FileResponse(config.STATIC_DIR / "terms.html")
+
+
+@app.get("/news", include_in_schema=False)
+def news_feed_page() -> HTMLResponse:
+    """전용 신호 피드. 서버에서 렌더한다.
+
+    이 페이지를 만드는 이유의 절반이 색인이고, JS로 채우면 크롤러가 빈 화면을
+    읽는다. `/glossary`와 같은 이유로 같은 선택이다. 캐시는 짧게 — 15분 주기로
+    갱신되는 레인이라 한 시간을 물고 있으면 낡은 목록을 보여 준다.
+    """
+    page = news_page.template()
+    filled = news_page.render()
+    page = page.replace("{{JSONLD}}", news_page.json_ld())
+    for key, value in filled.items():
+        page = page.replace("{{" + key + "}}", value)
+    return HTMLResponse(page, headers={"Cache-Control": "public, max-age=300"})
 
 
 @app.get("/glossary", include_in_schema=False)
