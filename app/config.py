@@ -352,6 +352,13 @@ US_PTR_MAX_AGE = _int("US_PTR_MAX_AGE", 60 * 60 * 6)
 #
 # The FSC lane above does not change this: it is a separate grant over a
 # separate, next-day dataset, not KRX approval arriving by another route.
+# 국내 종목 종가 미리 수집. 사람이 실제로 검색하는 것은 시총 위쪽 몇백 종목이고,
+# 그 페이지에 값이 있어야 검색엔진에 올릴 것이 생긴다(2026-08-24 실측: 2,873종목 중
+# 값이 있는 것이 19개였다 — 나머지는 방문할 때 그 자리에서 모으는 구조라 크롤러가
+# 볼 때는 비어 있다). 한 바퀴에 조금씩만 모아 data.go.kr 일일 한도를 지킨다.
+KR_PRECOLLECT_TOP = _int("KR_PRECOLLECT_TOP", 300)
+KR_PRECOLLECT_PER_RUN = _int("KR_PRECOLLECT_PER_RUN", 20)
+
 KRX_ENABLED = _bool("KRX_ENABLED", False)
 KRX_API_KEY = os.environ.get("KRX_API_KEY", "").strip()
 KRX_TIMEOUT = _float("KRX_TIMEOUT", 15.0)
