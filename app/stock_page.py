@@ -64,7 +64,7 @@ def _link(text: Any, url: Any) -> str:
 
 
 def _kr_body(code: str) -> str:
-    from . import kr_events, kr_fundamentals, kr_insider, kr_pension, kr_stocks, store
+    from . import config, kr_events, kr_fundamentals, kr_insider, kr_pension, kr_stocks, store
 
     parts: list[str] = []
 
@@ -127,7 +127,10 @@ def _kr_body(code: str) -> str:
         ("국민연금 5% 공시", kr_pension, "filings", ("report_date", "reason", "report_url")),
     ):
         try:
-            stored = store.load_report(module.CACHE_KEY, None) or {}
+            # TTL은 서빙 경로와 같은 값을 쓴다. 서빙하기에 낡은 것은 색인에 넣기에도
+            # 낡은 것이고, 무엇보다 `None`을 넘기면 store가 float와 None을 비교하다
+            # 터진다 — 아래 except가 삼켜서 블록이 조용히 사라진다(2026-08-24 실측).
+            stored = store.load_report(module.CACHE_KEY, config.REPORT_TTL * 2) or {}
             items = [
                 item for item in (stored.get(key) or []) if item.get("stock_code") == code
             ]
