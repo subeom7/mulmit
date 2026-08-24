@@ -4,9 +4,8 @@
 
 한국·미국 시장의 **공개 기록**으로만 만든 시장 모니터다. 장이 닫혀 있는 시간의
 합성 무기한선물 참고가, 거시·유동성·스트레스 지표, 공시(내부자·대량보유·연금·미
-의원 거래), 경제 캘린더, 크립토 파생 지표, 바이오 임상·승인 기록을 한 사이트에서
-본다. 개별 티커의 **CAPM 지표 · 최대낙폭(MDD) · 미래 MDD 확률분포**를 보는 분석
-화면도 그대로 있다. 모든 화면이 한국어와 영어를 함께 담는다.
+의원 거래), 경제 캘린더, 크립토 파생 지표, 바이오 임상·승인 기록, 종목별 재무제표와
+내부자 거래를 한 사이트에서 본다. 모든 화면이 한국어와 영어를 함께 담는다.
 
 FastAPI + 정적 HTML/JS(프레임워크 없음) + Postgres/SQLite.
 
@@ -18,8 +17,10 @@ FastAPI + 정적 HTML/JS(프레임워크 없음) + Postgres/SQLite.
 | `/crypto` | 크립토 — 퍼프 시세, 김치프리미엄, 공포·탐욕, 도미넌스·스테이블코인, 펀딩·OI, 전체 시장 보드, 가스, 실현 변동성, 코인 태깅 헤드라인 |
 | `/bio` | 바이오 — 임상 파이프라인(+PubMed 서지), FDA 자문위 공고, FDA 승인, 식약처 품목허가 |
 | `/crypto/{심볼}` | 코인 상세 — 캔들 차트, 국면 신호(heat·direction), 업비트 상장 코인의 원화 시세·김치프리미엄, 관련 헤드라인 |
-| `/analytics` | 개별 티커 분석 — CAPM·MDD·미래 MDD 분포, 재무제표, 내부자 공시 |
-| `/stock/{코드\|티커}` | 종목 허브 — 서버가 종목별 제목·설명을 렌더한다(한국 6자리 코드, 미국 티커) |
+| `/analytics` | 종목 찾기 — 코인·국내·미국을 한 입력창에서 찾아 종목 화면으로 보낸다 |
+| `/stock/{코드\|티커}` | 종목 화면 — 재무제표·내부자 거래·공시·보유 공시. 양국이 같은 구성이고 머리 지표만 나라가 공개하는 것에 맞춘다. 서버가 제목·설명을 렌더한다 |
+| `/news` | 신호 피드 전용 페이지 — 서버 렌더(색인용) |
+| `/glossary` | 용어 사전 — 이 화면들이 쓰는 말의 뜻 |
 | `/monitor` | 페이지 분리 전의 통합 모니터. 페이지 레이어의 기준 구현으로 남겨 둔다 |
 
 ## 이 저장소의 제약은 기술이 아니라 권리다
@@ -76,50 +77,19 @@ python cli.py --corr AAPL MSFT GLD
 
 ---
 
-## 미래 MDD 예측을 어떻게 하는가
+## 미래 MDD 시뮬레이션 — 지금은 API만 남아 있다
 
-**점 예측은 하지 않는다.** "내년에 -32% 빠진다" 같은 숫자는 의미가 없다.
-대신 수익률 경로를 수천 개 시뮬레이션해서 **MDD의 확률분포**를 만들고
-"1년 안에 -30% 이상 빠질 확률 15%" 형태로 제시한다.
+`/api/metrics`와 그 뒤의 계산(`app/analysis/forecast.py`의 블록 부트스트랩·정규·
+t분포 세 방법, 낙폭 구간, 얼스터 지수)은 그대로 있다. **화면은 2026-08-24에
+지웠다.**
 
-가정이 서로 다른 세 방법을 함께 돌려서 교차검증한다. 세 값이 비슷하면 신뢰도가
-올라가고, 크게 갈리면 그 자체가 신호다.
+이유는 이 저장소의 다른 결정과 같다 — 그 화면은 `legacy_price_data` lane에
+매달려 있고 그 lane은 재배포 라이선스가 없어 꺼져 있다. 즉 운영에서 이미 보이지
+않는 화면이었고, 보이지 않는 2,000줄을 린트·테스트·자산 해시가 계속 끌고 다녔다.
 
-| 방법 | 하는 일 | 강점 |
-|---|---|---|
-| `block_bootstrap` (기본) | 과거 일간 수익률을 20일 **블록** 단위로 복원추출 | 분포 가정이 없다. 블록으로 뽑아서 변동성 군집(폭락은 몰려온다)과 꼬리 위험이 보존된다 |
-| `student_t` | 과거 첨도로 자유도를 추정한 t분포 GBM | 과거에 없던 크기의 충격도 만들어내 부트스트랩을 보완 |
-| `historical_windows` | 과거 실제 N거래일 구간들의 MDD 실증분포 | 드리프트 가정이 개입하지 않는 현실 기준선 |
-
-AAPL 1년 기준 실제 출력 — 세 방법이 근접한다:
-
-| 방법 | 중앙값 | 상위 5% 악조건 | -20% 초과 확률 |
-|---|---|---|---|
-| 블록 부트스트랩 | -20.9% | -37.0% | 55% |
-| t분포 시뮬레이션 | -20.3% | -37.4% | 51% |
-| 과거 실증 구간 | -20.4% | -38.5% | 54% |
-
-같은 엔진이 한국 종목에도 돌아간다. 한국은 금융위원회 공공데이터의 **공식 종가**
-5년치를 쓰고(`/api/kr/stock/{code}`), 미국 가격 경로는 라이선스된 공급자가 생길
-때까지 레거시 opt-in으로 닫혀 있다.
-
-### 수익률 가정을 반드시 확인할 것
-
-기본값 `historical`은 **과거 추세가 그대로 이어진다**고 가정한다. 최근 급등한
-종목에서는 이게 미래를 크게 낙관하게 만든다(AAPL은 연 29% 드리프트가 깔린다).
-낙폭이 얕게 나오는 이유가 대부분 여기 있다. UI의 "수익률 가정"에서 바꿀 수 있다.
-
-| 가정 | AAPL 1년 MDD 중앙값 | -20% 초과 확률 |
-|---|---|---|
-| 과거 추세 유지 (연 29.1%) | -20.9% | 55% |
-| CAPM 기대수익률 (연 8.6%) | -23.9% | 68% |
-| 0% (보수적) | -26.2% | 74% |
-
-### 한계
-
-세 방법 모두 **미래의 변동성 구조가 과거와 비슷하다**고 가정한다. 사업 구조가
-바뀐 기업, 상장 초기 종목, 체제 전환 구간에서는 빗나간다. 표본이 3년 미만이거나
-예측 구간이 표본에 비해 길면 응답의 `warnings`에 경고가 담긴다.
+되살리는 조건과 코드 위치(`git show 278ae61:app/static/index.html`, 관련 함수
+이름)는 `docs/ROADMAP.md` §3에 적어 두었다. 조건은 **승인된 미국 가격 공급자**이고,
+그때는 별도 페이지가 아니라 종목 화면 안에 양국 동형으로 붙인다.
 
 ---
 
@@ -191,12 +161,15 @@ app/
   static/
     landing.html kr.html us.html crypto.html bio.html   페이지별 골격
     crypto-coin.html  코인 상세 템플릿 (서버가 치환)
-    index.html        개별 티커 분석 화면 (차트는 직접 그린 SVG)
+    analytics.html    종목 찾기 (통합 검색 → 종목 화면 링크. 데이터는 그리지 않는다)
     stock.html        종목 허브 템플릿 (서버가 치환)
     monitor.html      분리 전 통합 모니터
     monitor.js        전 페이지 공용 렌더러. `window.MULMIT_PAGE`로 분기한다
     monitor.css       다크/라이트·반응형
-    privacy/terms/disclaimer.html + legal.css·legal.js
+    privacy.html terms.html disclaimer.html   법적 고지 3종
+    legal.css legal.js                        위 3종 전용
+    analytics.html glossary.html news.html    검색·사전·신호 피드
+    search.js                                 마스트헤드 통합 검색 (전 페이지 자가 마운트)
 deploy/               Caddyfile, 배포·부트스트랩 스크립트, env.example, AWS 문서
 docs/                 로드맵·권리 등록부·섹션 계획·문의 기록
 tests/                단위·통합 테스트 (네트워크 불필요)
@@ -288,6 +261,9 @@ FRED lane이 열려도 `VIXCLS`가 계속 비어 있는 이유다.
 | PubMed (NCBI) | `PUBMED_ENABLED`, `NCBI_EMAIL`, `NCBI_API_KEY`(선택) | 임상별 논문 **서지만** | NCBI 정책 — tool/email 식별, 3 req/s, 야간 창. 초록 비표시 | `approved` (`DS-2026-017`, 메타데이터 한정) |
 | Federal Register | `FEDERAL_REGISTER_ENABLED` | FDA 자문위원회 회의 공고 | 공개 도메인. NARA/OFR 로고·인장 사용 금지 | `approved` (`DS-2026-016`) |
 | 식약처 품목허가 | `MFDS_ENABLED`, `MFDS_API_KEY`(없으면 `FSC_API_KEY`) | 최근 30일 의약품 품목허가 | data.go.kr 이용허락범위 제한 없음 | `approved` (`DS-2026-018`) |
+| Coinalyze | `COINALYZE_ENABLED`, `COINALYZE_API_KEY` | 청산 집계·미결제약정 | 무료 티어 회신 대기 중 수용 범위 내 이용. 응답한 거래소 합계임을 명시 | 등록부 §3.27 `DS-2026-019` |
+| YouTube Data API | `YOUTUBE_ENABLED`, `YOUTUBE_API_KEY` | 못 박은 뉴스 채널의 최근 업로드 | 저장 30일 상한(코드로 강제), 출처 표시, 플레이어 규칙. 썸네일은 URL만 나르고 바이트는 나르지 않는다 | 등록부 §3.28 `DS-2026-020` |
+| 네이버 데이터랩 | `NAVER_DATALAB_ENABLED`, `NAVER_DATALAB_CLIENT_*` | 종목 검색어 관심도 | 검색 특약이 적용되지 않는 API. 무저장 설계로 캐싱 조항을 피한다 | 등록부 §3.29 |
 | KRX OPEN API | `KRX_ENABLED`, `KRX_API_KEY` | — | 어댑터·테스트는 준비돼 있으나 공개 이용 승인이 없다 | `pending_rights` |
 | 레거시 가격(Yahoo) | `LEGACY_PRICE_DATA_ENABLED` | 미국 일봉, 섹터 ETF, 상관 | Yahoo가 재배포하지 말라고 안내 | `private_only` |
 
@@ -306,6 +282,9 @@ DART_ENABLED=false
 DART_API_KEY=
 CRYPTO_SECTION_ENABLED=false
 BIO_SECTION_ENABLED=false
+YOUTUBE_ENABLED=false
+YOUTUBE_API_KEY=
+NAVER_DATALAB_ENABLED=false
 ```
 
 ### 판정이 왜 이렇게 됐는가
@@ -423,6 +402,7 @@ PR 전에 `ruff`와 `pytest`를 로컬에서 돌린다. 게이트 값은 이미�
 | 엔드포인트 | 설명 |
 |---|---|
 | `GET /api/health` | 헬스체크 (DB 연결까지 확인) |
+| `GET /api/search?q=` | 통합 검색 — 코인·국내 상장·미국 티커 로스터. 저장된 로스터만 읽는다 |
 | `GET /api/status` | 저장 티커 수, 마지막 수집 시각, **lane별 상태(`data_lanes`)** |
 | `GET /api/market/assets?history=3y` | HIP-3 합성 무기한선물 기반 핵심 자산 카드 |
 | `GET /api/market/weekend` | 한국 주식·KOSPI 200·미국 기술주 주말 참고 신호 |
@@ -442,8 +422,10 @@ PR 전에 `ruff`와 `pytest`를 로컬에서 돌린다. 게이트 값은 이미�
 | `GET /api/kr/pension` | 국민연금 대량보유 공시 |
 | `GET /api/kr/events` | DART 주요사항보고 속보 |
 | `GET /api/kr/press` | 정부 보도자료 헤드라인 |
+| `GET /api/kr/search-interest` | 종목 검색어 관심도 (네이버 데이터랩, 무저장) |
 | `GET /api/us/fundamentals/{ticker}` | SEC XBRL 재무제표·비율 (`concepts_used` 동봉) |
 | `GET /api/us/events` | 8-K 이벤트 피드 |
+| `GET /api/us/overnight` | 미국 대형주 장 밖 참고 신호 — 정규장이 닫혔을 때만 |
 | `GET /api/us/ptr` | 미 하원 의원 거래(STOCK Act) — §105(c) 고지 동봉 |
 | `GET /api/insider/{ticker}` | SEC Form 3·4·5 (거래 성격별 분리) |
 | `GET /api/crypto/overview` | 퍼프 시세 카드 |
@@ -455,12 +437,14 @@ PR 전에 `ruff`와 `pytest`를 로컬에서 돌린다. 게이트 값은 이미�
 | `GET /api/crypto/gas` | 이더리움·Base·Arbitrum 가스 |
 | `GET /api/crypto/coin/{symbol}` | 코인 상세 — 시장 컨텍스트, 캔들, 국면 신호(`signal`) |
 | `GET /api/crypto/regime` | 시장 전체 국면 — 쏠림 폭·상승 폭·기준 코인 과열도·공포탐욕 |
+| `GET /api/crypto/liquidations` | 강제청산 24시간 집계·미결제약정 (응답한 거래소 합계) |
 | `GET /api/crypto/news?symbol=&limit=` | 코인 태그가 붙은 헤드라인 (저장된 GDELT 블롭) |
 | `GET /api/bio/trials` | 워치리스트 임상 갱신 (+PubMed 서지) |
 | `GET /api/bio/fda` | 최근 FDA 원 신청 승인 (NDA·BLA) |
 | `GET /api/bio/adcomm` | FDA 자문위원회 회의 공고 |
 | `GET /api/bio/mfds` | 식약처 최근 의약품 품목허가 |
 | `GET /api/calendar` | 경제 캘린더 (지표 릴리스 + 정책회의) |
+| `GET /api/news/videos` | 못 박은 뉴스 채널의 최근 업로드 — 제목·채널·시각·썸네일 URL. 플레이어는 클릭 전 로드되지 않는다 |
 | `GET /api/feed` | 통합 신호 피드 (공시·뉴스·급변 시간순) |
 | `GET /api/news` | 영문 뉴스 헤드라인 |
 | `GET /api/metrics?ticker=AAPL` | 전체 분석 지표 (레거시 opt-in) |
