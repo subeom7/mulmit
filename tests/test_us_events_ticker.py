@@ -68,3 +68,33 @@ def test_the_stock_screen_filters_by_ticker() -> None:
         encoding="utf-8"
     )
     assert '/api/us/events?ticker=" + encodeURIComponent(SYMBOL)' in source
+
+
+def test_the_ptr_feed_narrows_to_the_ticker_inside_the_filing(db, monkeypatch):
+    """PTR은 티커가 보고서가 아니라 **그 안의 거래**에 붙어 있다.
+
+    그래서 두 단계로 좁힌다 — 그 종목의 거래가 든 보고서만 남기고, 보고서
+    안에서도 그 종목의 거래만 남긴다. 한 단계만 하면 다른 의원의 다른 종목
+    거래가 이 종목 표에 섞인다.
+    """
+    from app import config, us_ptr
+
+    monkeypatch.setattr(config, "US_PTR_ENABLED", True)
+    store.save_report(us_ptr.CACHE_KEY, {"filings": [
+        {"doc_id": "d1", "name": "Doe, Jane", "pdf_url": "https://clerk.example/d1",
+         "transaction_count": 2,
+         "transactions": [{"ticker": "AAPL", "date": "2026-08-01"},
+                          {"ticker": "BA", "date": "2026-08-02"}]},
+        {"doc_id": "d2", "name": "Roe, Ada", "pdf_url": "https://clerk.example/d2",
+         "transaction_count": 1,
+         "transactions": [{"ticker": "BA", "date": "2026-08-03"}]},
+    ]})
+
+    payload = us_ptr.get_filings(ticker="AAPL")
+    assert [filing["doc_id"] for filing in payload["filings"]] == ["d1"]
+    assert [t["ticker"] for t in payload["filings"][0]["transactions"]] == ["AAPL"], (
+        "보고서만 거르고 거래를 안 거르면 보잉 거래가 애플 표에 남는다"
+    )
+    assert payload["filings"][0]["transaction_count"] == 1
+
+    assert len(us_ptr.get_filings()["filings"]) == 2, "인자가 없으면 전체 그대로"

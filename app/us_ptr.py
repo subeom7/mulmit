@@ -156,10 +156,31 @@ def refresh(provider: HouseFdProvider | None = None, *, today: dt.date | None = 
     }
 
 
-def get_filings() -> dict:
-    """저장된 결과만 읽는다. 요청 경로에서 하원 서버를 호출하지 않는다."""
+def get_filings(ticker: str | None = None) -> dict:
+    """저장된 결과만 읽는다. 요청 경로에서 하원 서버를 호출하지 않는다.
+
+    `ticker`를 주면 그 종목의 거래가 든 보고서만, 그리고 보고서 안에서도 그
+    종목의 거래만 남긴다. 티커가 보고서가 아니라 **그 안의 거래**에 붙어 있어서
+    두 단계로 좁혀야 한다.
+
+    종목 화면이 이걸 필요로 한다. 전역 목록을 받아 브라우저에서 거르면, 창 안에
+    그 종목이 아예 없는 경우가 대부분이라 표가 늘 비어 보인다.
+    """
     _require_lane()
     cached = store.load_report(CACHE_KEY, config.REPORT_TTL * 2)
     if cached is None:
         raise DataUnavailable("House PTR filings not collected yet")
-    return cached
+    if not ticker:
+        return cached
+
+    wanted = ticker.strip().upper()
+    filings = []
+    for filing in cached.get("filings") or []:
+        mine = [
+            transaction
+            for transaction in (filing.get("transactions") or [])
+            if str(transaction.get("ticker") or "").strip().upper() == wanted
+        ]
+        if mine:
+            filings.append({**filing, "transactions": mine, "transaction_count": len(mine)})
+    return {**cached, "filings": filings, "count": len(filings), "ticker": wanted}
