@@ -25,7 +25,7 @@ def test_public_default_serves_split_pages_and_keeps_analytics_route(db):
     assert legacy.status_code == 200
     assert "MULMIT_PAGE" not in legacy.text
     assert analytics.status_code == 200
-    assert 'id="ticker"' in analytics.text
+    assert 'id="lookup-input"' in analytics.text
 
 
 def test_legacy_public_apis_fail_closed_with_migration_response(db):

@@ -51,9 +51,10 @@ def _dictionary(path: Path, marker: str) -> tuple[dict[str, str], dict[str, str]
     return _entries(ko_block), _entries(en_block)
 
 
+# `/analytics`는 2026-08-24에 자체 사전을 버리고 `.lang-ko`/`.lang-en` 스팬
+# 방식으로 바뀌었다(용어 사전과 같은 방식). 대조할 사전이 하나 남는다.
 DICTIONARIES = {
     "monitor.js TEXT": (MONITOR, "const TEXT = {"),
-    "index.html I18N": (STATIC / "index.html", "const I18N = {"),
 }
 
 

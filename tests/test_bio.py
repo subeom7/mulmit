@@ -283,7 +283,7 @@ def test_bio_is_reachable_even_though_it_left_the_tab_row():
     landing = (static / "landing.html").read_text(encoding="utf-8")
     assert 'class="zone-link-card" href="/bio"' in landing, "랜딩 존 카드에서 사라졌다"
 
-    consoles = ["landing.html", "kr.html", "us.html", "crypto.html", "index.html", "glossary.html"]
+    consoles = ["landing.html", "kr.html", "us.html", "crypto.html", "analytics.html", "glossary.html"]
     for name in consoles:
         page = (static / name).read_text(encoding="utf-8")
         assert '<a href="/bio"' in page, f"{name} 푸터에 /bio 링크가 없다"
