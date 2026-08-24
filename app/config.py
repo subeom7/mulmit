@@ -303,6 +303,21 @@ FSC_REQUEST_INTERVAL = _float("FSC_REQUEST_INTERVAL", 0.2)
 # One publication a day means a long refresh window costs nothing and keeps the
 # daily call allowance clear.
 FSC_MAX_AGE = _int("FSC_MAX_AGE", 60 * 60 * 12)
+# 개별 종목의 종가 시리즈는 스냅샷과 수명이 다르다.
+#
+# `FSC_MAX_AGE` 하나가 로스터·지수·ETF 스냅샷과 종목 시리즈를 함께 지배했다.
+# 운영에서는 스냅샷을 빨리 받으려고 이 값을 1시간으로 낮춰 두었는데, 그 바람에
+# 종목 시리즈도 매시간 만료됐다 — 같은 종목을 한 시간 뒤에 다시 열면 5년치를
+# 처음부터 다시 받는다.
+#
+# 실측 2026-08-24(서버): 콜드 3.0초 중 **상류 호출이 3.05초**, DB 저장 0.22초,
+# 읽기 0.01초. 줄일 수 있는 지역 비용이 없다. 행 수에 비례하고(1,236행 2.97초,
+# 729행 2.03초, 245행 0.67초) 호출은 언제나 1회다.
+#
+# 시리즈는 확정 종가라 장중에 바뀌지 않으므로, 수명을 따로 준다. 6시간이면
+# 아침 발행을 그날 안에 받으면서 콜드 조회는 6분의 1로 준다. 이 파일의 원래
+# 기본값이 12시간이었으니 새로 만든 위험도 아니다.
+FSC_SERIES_MAX_AGE = _int("FSC_SERIES_MAX_AGE", 60 * 60 * 6)
 FSC_HISTORY_DAYS = _int("FSC_HISTORY_DAYS", 366 * 5)
 
 # 금융감독원 Open DART — 임원·주요주주 특정증권등 소유상황 보고(한국판 Form 4).

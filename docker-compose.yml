@@ -63,6 +63,8 @@ x-app: &app
     # 잠겨 있는 lane처럼 보인다. 게이트와 마찬가지로 양쪽에 같은 값을 준다.
     FSC_API_KEY: ${FSC_API_KEY:-}
     FSC_MAX_AGE: ${FSC_MAX_AGE:-43200}
+    # 개별 종목 시리즈의 수명. 요청 경로(web)가 쓰므로 공용 블록에 둔다.
+    FSC_SERIES_MAX_AGE: ${FSC_SERIES_MAX_AGE:-21600}
     FSC_HISTORY_DAYS: ${FSC_HISTORY_DAYS:-1830}
     # DART도 FSC와 같은 이유로 web·ingest 양쪽에 준다: 요청 기반 조회는 web에서 돈다.
     DART_ENABLED: ${DART_ENABLED:-false}

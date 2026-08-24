@@ -532,3 +532,55 @@ def test_the_stock_page_sends_korean_codes_to_the_korean_analyser():
     analytics = (static / "index.html").read_text(encoding="utf-8")
     assert 'get("kr")' in analytics, "분석 페이지가 kr 파라미터를 읽지 않는다"
     assert "loadKrStock(wantedKr.toUpperCase()" in analytics, "kr 파라미터로 국내 분석을 돌리지 않는다"
+
+
+# --- 종목 시리즈의 수명은 스냅샷과 다르다 ---------------------------------
+
+def test_a_stored_series_is_not_refetched_within_the_series_ttl(db, fsc_lane, monkeypatch):
+    """`FSC_MAX_AGE` 하나가 스냅샷과 종목 시리즈를 함께 지배했다.
+
+    운영에서 스냅샷을 빨리 받으려고 그 값을 1시간으로 낮춰 두었고, 그래서 같은
+    종목을 한 시간 뒤에 다시 열면 5년치를 처음부터 다시 받았다 — 서버 실측으로
+    콜드 3.0초 중 3.05초가 상류 호출이었다(DB는 0.23초). 확정 종가는 장중에
+    바뀌지 않으므로 시리즈에는 더 긴 수명을 준다.
+    """
+    _seed_roster(db)
+    calls: list[str] = []
+
+    def counted(code, name):
+        calls.append(code)
+        db.save_economic_series(
+            f"kr_stock_{code}", provider_id="fsc", provider_series_id=code,
+            metadata_fields={"title": code, "units": "KRW", "units_short": "원",
+                             "frequency": "Daily", "frequency_short": "D"},
+            observations=[(dt.date(2026, 8, 20), 100.0), (dt.date(2026, 8, 21), 101.0)],
+            publisher="금융위원회", publisher_url="https://www.fsc.go.kr/",
+            series_url="https://www.data.go.kr/data/15094808/openapi.do",
+            rights_status="approved",
+        )
+        return 2
+
+    monkeypatch.setattr(kr_stocks, "_fetch_series", counted)
+    # 스냅샷 수명은 짧게, 시리즈 수명은 길게 — 운영의 실제 배치다.
+    monkeypatch.setattr(kr_stocks.config, "FSC_MAX_AGE", 1)
+    monkeypatch.setattr(kr_stocks.config, "FSC_SERIES_MAX_AGE", 60 * 60 * 6)
+
+    kr_stocks.get_analysis("005930")
+    assert calls == ["005930"]
+
+    time.sleep(1.1)              # 스냅샷 수명은 지났고 시리즈 수명은 남았다
+    kr_stocks.get_analysis("005930")
+
+    assert calls == ["005930"], "스냅샷 수명 때문에 시리즈를 다시 받았다"
+
+
+def test_the_request_path_reads_the_series_lifetime_not_the_snapshot_one():
+    """분리해 놓고 한쪽만 읽으면 분리한 의미가 없다."""
+    import inspect
+
+    source = inspect.getsource(kr_stocks)
+    freshness = [line for line in source.splitlines() if "fetched_at" in line and "time.time()" in line]
+
+    assert freshness, "신선도 판정을 찾지 못했다 — 테스트를 고쳐라"
+    for line in freshness:
+        assert "FSC_SERIES_MAX_AGE" in line, f"스냅샷 수명을 보고 있다: {line.strip()}"
