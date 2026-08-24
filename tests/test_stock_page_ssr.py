@@ -120,3 +120,29 @@ def test_the_indexing_block_is_not_hidden() -> None:
     assert "if (ssr && drew) ssr.remove();" in source, (
         "진짜 섹션이 하나라도 섰을 때만 지운다 — 아무것도 못 그렸는데 지우면 빈 페이지가 남는다"
     )
+
+
+def test_the_stored_feeds_actually_render(db, monkeypatch):
+    """`None`을 TTL로 넘기면 store가 터지고 except가 삼켜서 블록이 조용히 사라진다.
+
+    2026-08-24에 실제로 그랬다. 주요사항보고·국민연금 블록이 코드에는 있는데
+    화면에는 없었고, 에러도 로그도 없었다 — `time.time() - created_at >= None`이
+    TypeError를 내고 fail-soft가 그것을 데이터 없음으로 바꿔 놓았다.
+    """
+    from app import kr_events, store
+
+    store.save_kr_listings(
+        [{"srtn_cd": "000660", "itms_nm": "SK하이닉스", "mrkt_ctg": "KOSPI",
+          "clpr": 1.0, "flt_rt": 0.0, "mrkt_tot_amt": 1.0}],
+        "20260821",
+    )
+    store.save_report(kr_events.CACHE_KEY, {"events": [{
+        "rcept_no": "r1", "filed_at": "2026-08-21", "company": "SK하이닉스",
+        "stock_code": "000660", "report_name": "주요사항보고서(자기주식취득결정)",
+        "url": "https://dart.example/r1",
+    }]})
+
+    body = stock_page.render("000660", korean=True)
+    assert "주요사항보고" in body, "저장돼 있는데 안 나오면 TTL 인자를 의심할 것"
+    assert "자기주식취득결정" in body
+    assert "dart.example/r1" in body

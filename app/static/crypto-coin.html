@@ -95,6 +95,11 @@
     .state-line { padding: 14px; border: 1px dashed var(--line); border-radius: 9px; color: var(--faint); font-size: 11.5px; }
     .up { color: var(--green); } .down { color: var(--red); }
     @media (max-width: 560px) { .coin-table { min-width: 560px; } }
+  /* 서버가 넣은 색인용 본문. JS가 성공하면 지워진다. */
+  #ssr-body .ssr-block { margin: 0 0 22px; }
+  #ssr-body h2 { margin: 0 0 8px; font-size: 16px; letter-spacing: -.02em; }
+  #ssr-body table { width: auto; max-width: 100%; }
+  #ssr-body .ssr-note { color: var(--faint); font-size: var(--fs-xs); }
   </style>
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
   <link rel="stylesheet" href="/static/tokens.css?v=ccb2656202">
@@ -123,6 +128,11 @@
       <code id="coin-symbol">{{SYMBOL}}-PERP</code>
       <span class="market-tag">HYPERLIQUID · 무기한선물</span>
     </div>
+
+    <!-- 크롤러가 읽는 본문. 서버가 저장된 값으로 채운다 — 이 페이지는 사이트맵에
+         조차 없었고, 크롤러가 받아 가는 본문이 677자였다(2026-08-24 실측).
+         숨기지 않는다: JS가 진짜 화면을 다 그린 뒤에 지운다. -->
+    <div id="ssr-body">{{SSR}}</div>
 
     <div class="coin-price">
       <strong id="coin-last">—</strong>
@@ -763,7 +773,13 @@ async function loadNews() {
   }
 }
 
-load(true);
+// 서버가 넣어 둔 색인용 본문은 첫 렌더가 끝난 뒤에 지운다. 값이 실제로 그려졌을
+// 때만 — 못 그렸는데 지우면 빈 페이지가 남고, 그건 지금보다 나쁘다.
+load(true).finally(() => {
+  const ssr = document.getElementById("ssr-body");
+  const drew = document.getElementById("coin-last")?.textContent.trim() !== "—";
+  if (ssr && drew) ssr.remove();
+});
 loadNews();
 setInterval(() => { if (!document.hidden) load(false); }, REFRESH_MS);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) load(false); });

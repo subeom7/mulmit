@@ -27,6 +27,7 @@ from . import (
     config,
     crypto_board,
     crypto_coin,
+    crypto_coin_page,
     crypto_gas,
     crypto_kimchi,
     crypto_liquidations,
@@ -329,6 +330,8 @@ def crypto_coin_hub(symbol: str) -> HTMLResponse:
         ("{{TITLE}}", title), ("{{DESCRIPTION}}", description),
     ):
         page = page.replace(key, _html.escape(value, quote=True))
+    # 크롤러가 읽을 본문. 이미 이스케이프된 HTML이라 위 치환 뒤에 넣는다.
+    page = page.replace("{{SSR}}", crypto_coin_page.render(resolved, label=spec.label_ko))
     return HTMLResponse(page, headers={"Cache-Control": "public, max-age=300"})
 
 
@@ -489,6 +492,14 @@ def sitemap_stocks() -> PlainResponse:
         f"https://mulmit.com/stock/{row['ticker']}"
         for row in store.list_insider_companies(status="ok")
     ]
+    # 코인 상세도 같은 사이트맵에 올린다. 지금까지 아예 빠져 있어서 구글이 존재를
+    # 모르는 상태였다(2026-08-24 확인). 큐레이션된 목록이라 값이 없는 페이지가
+    # 섞이지 않는다 — 종목과 달리 여기서는 전수가 곧 "볼 것이 있는" 목록이다.
+    if data_rights.crypto_section_enabled():
+        urls += [
+            f"https://mulmit.com/crypto/{symbol}"
+            for symbol in crypto_coin.curated_symbols()
+        ]
     lines = ['<?xml version="1.0" encoding="UTF-8"?>']
     lines.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
     lines.extend(
