@@ -180,6 +180,7 @@ const TEXT = {
     "ksi.badgeRelative": "상대값 · 절댓값 아님", "ksi.badgeWeekday": "같은 요일끼리 비교", "ksi.badgeNotRank": "검색량 순위 아님",
     "ksi.colVs": "평소 대비", "ksi.colPercentile": "90일 위치", "ksi.colTrend": "추이", "ksi.thinSample": "표본 부족",
     "ksi.colRank": "순위", "ksi.colLevel": "관심도 수준", "ksi.anchorTag": "기준",
+    "ksi.help": "×1보다 크면 평소보다 많이 찾아봤다는 뜻입니다. 요일마다 검색량이 크게 달라서 같은 요일끼리만 견줍니다.",
     "ksi.sortSpike": "평소 대비", "ksi.sortLevel": "관심도 수준",
     "ksi.anchorNote": "수준은 {name}를 100으로 둔 상대 위치입니다. 검색량의 절댓값이 아니며, 순위 변동은 전날 대비입니다.",
     "kre.colName": "종목", "kre.colClose": "종가", "kre.colDay": "등락", "kre.colNav": "NAV", "kre.colPremium": "괴리율", "kre.colIndex": "기초지수", "kre.colValue": "거래대금",
@@ -358,6 +359,7 @@ const TEXT = {
     "ksi.badgeRelative": "Relative, not absolute", "ksi.badgeWeekday": "Same weekday compared", "ksi.badgeNotRank": "Not a volume ranking",
     "ksi.colVs": "vs usual", "ksi.colPercentile": "90-day position", "ksi.colTrend": "Trend", "ksi.thinSample": "Too few samples",
     "ksi.colRank": "Rank", "ksi.colLevel": "Interest level", "ksi.anchorTag": "baseline",
+    "ksi.help": "Above ×1 means people looked it up more than usual. Search volume swings by weekday, so each day is compared with the same weekday.",
     "ksi.sortSpike": "vs usual", "ksi.sortLevel": "Interest level",
     "ksi.anchorNote": "Level is measured against {name} at 100. It is not an absolute search count, and rank moves are against the previous day.",
     "kre.colName": "Fund", "kre.colClose": "Close", "kre.colDay": "Day", "kre.colNav": "NAV", "kre.colPremium": "Premium", "kre.colIndex": "Underlying index", "kre.colValue": "Value traded",
@@ -1692,13 +1694,19 @@ function renderKrSearchInterest() {
     : (safeNumber(b.vs_baseline) ?? -1) - (safeNumber(a.vs_baseline) ?? -1));
 
   const body = $("#ksi-body"); body.replaceChildren();
+  // 쉬움 모드의 한 줄. 숫자가 무슨 뜻인지 그 자리에서 말한다 — 용어 사전으로
+  // 보내는 대신, 보고 있는 화면에서 답한다.
+  const help = document.createElement("p");
+  help.className = "easy-only ksi-help";
+  help.textContent = t("ksi.help");
+  body.append(help);
   const scroll = document.createElement("div"); scroll.className = "table-scroll";
   const table = document.createElement("table"); table.className = "accessible-table kridx-table";
   table.innerHTML = `<thead><tr>
     <th scope="col" class="num">${t("ksi.colRank")}</th>
     <th scope="col">${t("krev.colCode")}</th><th scope="col">${t("kre.colName")}</th>
     <th scope="col" class="num">${t("ksi.colLevel")}</th>
-    <th scope="col" class="num">${t("ksi.colVs")}</th><th scope="col" class="num">${t("ksi.colPercentile")}</th>
+    <th scope="col" class="num">${t("ksi.colVs")}</th><th scope="col" class="num pro-only">${t("ksi.colPercentile")}</th>
     <th scope="col" id="ksi-trend-head">${t("ksi.colTrend")}</th>
   </tr></thead>`;
   const tbody = document.createElement("tbody");
@@ -1760,7 +1768,9 @@ function renderKrSearchInterest() {
     }
 
     const percentile = safeNumber(stock.percentile);
-    const pctTd = document.createElement("td"); pctTd.className = "num";
+    // 백분위는 배수를 이해한 다음에 읽는 값이다. 쉬움 모드에서는 접는다 —
+    // 두 숫자를 나란히 놓으면 초보자는 어느 쪽을 봐야 할지부터 헤맨다.
+    const pctTd = document.createElement("td"); pctTd.className = "num pro-only";
     pctTd.textContent = percentile === null ? "—" : `${percentile.toFixed(0)}%`;
 
     const trendTd = document.createElement("td");

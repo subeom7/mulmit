@@ -288,6 +288,9 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 }
 /* 정렬 토글은 헤더가 아니라 본문 위에 선다 — margin-left:auto를 되돌린다. */
 #ksi-sort { margin: 0 0 var(--sp-3); }
+/* 쉬움 모드의 한 줄. 숫자가 무슨 뜻인지 그 자리에서 말한다 — 용어 사전으로
+   보내면 대부분 안 간다. */
+.ksi-help { padding: var(--sp-3) var(--sp-4) 0; margin: 0; color: var(--muted); font-size: var(--fs-xs); }
 
 .tile-spark.up { color: var(--up); }
 .tile-spark.down { color: var(--down); }
