@@ -103,3 +103,21 @@ def test_the_us_filing_link_comes_from_the_filing_not_the_transaction() -> None:
     block = source[start : start + 1600]
     assert "url: filing.pdf_url" in block, "PDF는 filing에서 가져온다"
     assert "x.pdf_url" not in block, "거래 객체에는 pdf_url이 없다"
+
+
+def test_the_source_column_style_actually_matches_the_table() -> None:
+    """선택자가 아무것도 안 잡으면 조용히 지나간다.
+
+    `.accessible-table td.doc`라고 적었는데 이 페이지의 표 클래스는 `stock-table`
+    이었다. 규칙은 파일에 있고 CSS 오류도 없는데 어디에도 걸리지 않아서, 원문 열이
+    폭 제한 없이 253px까지 벌어졌다 — 두 글자 링크가 표에서 가장 넓은 칸이었다
+    (2026-08-24 라이브 실측).
+    """
+    source = _source()
+    match = re.search(r"^\s*([^\n{]*\btd\.doc\b[^\n{]*)\{", source, re.M)
+    assert match, "원문 열 폭을 잡는 규칙이 있어야 한다"
+    selector = match.group(1)
+    assert "accessible-table" not in selector, (
+        "이 페이지의 표는 stock-table이다 — accessible-table로는 아무것도 안 잡힌다"
+    )
+    assert "width" in source[match.end() : match.end() + 120], "폭을 제한해야 한다"
