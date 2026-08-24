@@ -23,7 +23,7 @@ import re
 
 import pytest
 
-from app import config, kr_insider, stock_page, store
+from app import config, kr_insider, stock_page
 from app.kr_stocks import stock_series_spec
 
 TODAY = dt.date(2026, 8, 21)
