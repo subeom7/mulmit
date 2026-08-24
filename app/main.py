@@ -155,8 +155,46 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.state.limiter = limiter
+
+
+class HeadAsGet:
+    """HEAD를 GET처럼 처리하고 본문만 뺀다.
+
+    Starlette의 평범한 `Route`는 GET을 선언하면 HEAD를 함께 붙여 주는데,
+    **FastAPI의 `APIRoute`는 그러지 않는다.** 그래서 이 앱의 모든 경로가 —
+    홈페이지와 `/favicon.ico`까지 — HEAD에 405를 돌려주고 있었다(실측
+    2026-08-24: `HEAD /` → `{"detail":"Method Not Allowed"}`).
+
+    존재하는 페이지가 HEAD에 405를 주는 것은 그 자체로 틀린 동작이다. 링크
+    검사기·업타임 모니터·일부 크롤러가 본문을 안 받으려고 HEAD를 쓴다.
+
+    라우트마다 `methods=["GET", "HEAD"]`를 다는 대신 여기서 한 번에 처리한다 —
+    앞으로 추가되는 라우트도 자동으로 따라온다. RFC 9110 §9.3.2대로 헤더는
+    GET과 같게 두고(`Content-Length` 포함) 본문만 비운다.
+    """
+
+    def __init__(self, app) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send) -> None:
+        if scope.get("type") != "http" or scope.get("method") != "HEAD":
+            await self.app(scope, receive, send)
+            return
+
+        async def drop_body(message):
+            if message["type"] == "http.response.body":
+                # 헤더는 그대로 두고 바이트만 지운다. more_body가 남아 있으면
+                # 서버가 다음 청크를 기다리므로 여기서 끊는다.
+                message = {"type": "http.response.body", "body": b"", "more_body": False}
+            await send(message)
+
+        await self.app({**scope, "method": "GET"}, receive, drop_body)
+
+
 # 가격 시계열이 수천 포인트라 압축이 체감된다
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+# HEAD 변환은 가장 바깥에 둔다 — 안쪽 미들웨어와 라우트는 GET만 보면 된다.
+app.add_middleware(HeadAsGet)
 
 
 # 캐시 지시를 명시한다.
