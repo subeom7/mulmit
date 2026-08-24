@@ -40,6 +40,7 @@ PUBMED = "pubmed"
 FEDERAL_REGISTER = "federal_register"
 MFDS = "mfds_drug_permit"
 OFR = "ofr"
+NPS_PORTFOLIO = "nps_portfolio"
 
 # --- structured client contracts --------------------------------------------
 # The frontend keys off ``code``: these are disabled states, not retryable
@@ -449,6 +450,22 @@ def mfds_serving_enabled() -> bool:
 def mfds_ingest_enabled() -> bool:
     """Only ingest holds the data.go.kr key (MFDS_API_KEY, falling back to FSC_API_KEY)."""
     return mfds_serving_enabled() and bool(config.MFDS_API_KEY)
+
+
+def nps_portfolio_serving_enabled() -> bool:
+    """국민연금 국내주식 포트폴리오. **언제나 열려 있고, 그 사실이 여기 적혀
+    있는 것이 요점이다.**
+
+    이 lane에는 환경 게이트가 없다. 다른 lane과 달리 요청 시 외부를 부르지
+    않고(파일이 이미지 안에 있다) 이용허락범위가 "제한 없음"이라 막아야 할
+    권리 문제도 없다 — 끌 수 없는 게이트는 안전을 더하지 않고 고장날 곳만
+    만든다. 그렇다고 이 모듈을 건너뛰면 "모든 공개 lane은 여기에 묻는다"는
+    성질이 조용히 깨지므로, 판단을 상수로 두는 대신 함수로 세워 둔다.
+
+    닫아야 할 날이 오면(원천이 라이선스를 바꾸는 등) 고칠 곳은 여기 한 곳이다.
+    사정은 `docs/DATA_SOURCE_REGISTER.md` §3.30.
+    """
+    return True
 
 
 def chain_gas_configured_chains() -> list[str]:

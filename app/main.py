@@ -43,6 +43,7 @@ from . import (
     kr_holdings,
     kr_insider,
     kr_pension,
+    kr_pension_portfolio,
     kr_press,
     kr_search_interest,
     kr_stocks,
@@ -1474,6 +1475,25 @@ def kr_pension_filings(request: Request, response: Response) -> dict:
         ) from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "FSS DART"
+    return payload
+
+
+@app.get("/api/kr/pension-portfolio")
+@limiter.limit(config.RATE_LIMIT)
+def kr_pension_portfolio_snapshot(request: Request, response: Response) -> dict:
+    """국민연금 국내주식 포트폴리오(연말 스냅샷).
+
+    저장소에 들어 있는 파일을 읽으므로 게이트도 수집 배치도 없다. 이용허락범위가
+    제한 없음이라 막을 권리 문제가 없고, 요청 시 외부를 부르지 않으므로 꺼야 할
+    쿼터도 없다 — 끌 수 없는 게이트는 안전을 더하지 않고 고장날 곳만 만든다.
+    사정은 `docs/DATA_SOURCE_REGISTER.md` §3.30에 적었다.
+    """
+    if not data_rights.nps_portfolio_serving_enabled():  # pragma: no cover - 항상 참
+        raise HTTPException(status_code=503, detail="NPS portfolio lane is closed")
+    payload = kr_pension_portfolio.get_portfolio()
+    # 이미지 안에서 바뀌지 않는 파일이다. 짧게 잡을 이유가 없다.
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    response.headers["X-Data-Source"] = "data.go.kr NPS"
     return payload
 
 

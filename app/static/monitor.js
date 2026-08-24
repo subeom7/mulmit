@@ -167,7 +167,7 @@ const TEXT = {
     "dots.title": "연준 점도표", "dots.copy": "FOMC 위원들이 분기 SEP에서 스스로 전망한 연말 기준금리입니다. 시장 내재 확률이 아니라 위원 전망의 중앙값과 중앙경향입니다.",
     "dots.target": "전망 대상", "dots.median": "중앙값", "dots.band": "중앙경향", "dots.year": "{year}년 말", "dots.longerRun": "장기 (중립)",
     "dots.asof": "SEP {date} 기준 · 분기 FOMC(3·6·9·12월)마다 갱신 · 중앙경향은 상·하위 3명 제외 범위",
-    "krp.title": "국민연금 5% 공시", "krp.copy": "주식등의 대량보유 상황보고(5% 룰) 중 국민연금공단 제출분입니다. 보고서 단위의 보유비율 변동이며, 통상 한 달치가 월초에 일괄 공시됩니다. 일별 매매가 아닙니다.",
+    "krpf.title": "국민연금 국내주식 포트폴리오", "krpf.copy": "국민연금공단이 공시한 국내주식 종목별 평가액과 자산군 내 비중입니다. 연 1회 갱신되는 연말 스냅샷이라 현재 보유와 다를 수 있습니다. 아래 5% 공시가 그 뒤의 변동입니다.", "krpf.asOf": "{date} 기준", "krpf.next": "다음 파일 {date} 예정", "krpf.rest": "기타", "krpf.restCount": "기타 {n}종목", "krpf.total": "평가액 합계", "krpf.count": "보유 종목", "krpf.topShare": "상위 {n}개 비중", "krpf.countValue": "{n}종목", "krpf.centerLabel": "국내주식 평가액", "krpf.colRank": "순위", "krpf.colName": "종목명", "krpf.colValue": "평가액(억원)", "krpf.colWeight": "자산군 내 비중", "krpf.colStake": "지분율", "krpf.caption": "평가액 상위 {n}종목", "krpf.weightNote": "화면의 백분율은 원자료의 값을 그대로 옮긴 것입니다. 공단의 반올림 때문에 1,200종목의 비중을 다 더하면 {sum}%가 되며, 원형 차트의 각도는 평가액으로 그렸습니다.", "krpf.tailNote": "{n}종목은 비중이 0.00%로 반올림되어 표시됩니다 — 평가액을 다 더해도 {value}으로 전체의 {pct}%입니다.", "krpf.none": "포트폴리오 파일을 읽지 못했습니다.", "krp.title": "국민연금 5% 공시", "krp.copy": "주식등의 대량보유 상황보고(5% 룰) 중 국민연금공단 제출분입니다. 보고서 단위의 보유비율 변동이며, 통상 한 달치가 월초에 일괄 공시됩니다. 일별 매매가 아닙니다.",
     "krev.colCode": "종목코드", "krp.colMarket": "시장",
     "krp.colDate": "보고일", "krp.colCompany": "회사", "krp.colRatio": "보유비율", "krp.colChange": "증감", "krp.colShares": "보유주식수", "krp.colReason": "보고사유",
     "krp.detailPending": "상세 미확보", "krp.window": "최근 {days}일 공시 {total}건 중 {count}건",
@@ -346,7 +346,7 @@ const TEXT = {
     "dots.title": "Fed dot plot", "dots.copy": "Year-end fed funds projections FOMC participants publish themselves in the quarterly SEP — the committee's own medians and central tendency, not market-implied odds.",
     "dots.target": "Target", "dots.median": "Median", "dots.band": "Central tendency", "dots.year": "End of {year}", "dots.longerRun": "Longer run (neutral)",
     "dots.asof": "As of the {date} SEP · updates at quarterly FOMCs (Mar·Jun·Sep·Dec) · central tendency trims the three highest and lowest",
-    "krp.title": "NPS 5% filings", "krp.copy": "Large-holding (5% rule) reports filed by the National Pension Service. Report-level stake changes, usually filed as one early-month batch covering the prior month — not daily trades.",
+    "krpf.title": "NPS domestic equity portfolio", "krpf.copy": "Domestic equity holdings published by the National Pension Service: market value and share of the domestic-equity book. A year-end snapshot updated once a year, so it may differ from current holdings. The 5% filings below are what moved since.", "krpf.asOf": "As of {date}", "krpf.next": "Next file due {date}", "krpf.rest": "Others", "krpf.restCount": "{n} other holdings", "krpf.total": "Total market value", "krpf.count": "Holdings", "krpf.topShare": "Top {n} share", "krpf.countValue": "{n} names", "krpf.centerLabel": "Domestic equity", "krpf.colRank": "Rank", "krpf.colName": "Name", "krpf.colValue": "Market value (KRW 100M)", "krpf.colWeight": "Share of book", "krpf.colStake": "Stake in company", "krpf.caption": "Top {n} holdings by market value", "krpf.weightNote": "Percentages are relayed verbatim from the source. After the publisher rounding, all 1,200 holdings sum to {sum}%; the pie angles are drawn from market value instead.", "krpf.tailNote": "{n} holdings round to 0.00% — together they are {value}, {pct}% of the book.", "krpf.none": "Portfolio file could not be read.", "krp.title": "NPS 5% filings", "krp.copy": "Large-holding (5% rule) reports filed by the National Pension Service. Report-level stake changes, usually filed as one early-month batch covering the prior month — not daily trades.",
     "krh.title": "5% filings — all filers", "krh.copy": "Every large-holding (5% rule) report: asset managers, funds, major shareholders. The filing deadline is five business days, so the report date can trail the change — not daily trades.",
     "krh.colReporter": "Filer", "krh.colType": "Type",
     "krh.window": "{count} of {total} filings in the last {days} days",
@@ -1009,6 +1009,7 @@ function renderJumpNav() {
     { id: "kr-etf", text: t("kre.title") },
     { id: "kr-search-interest", text: t("ksi.title") },
     { id: "kr-events", text: t("krev.title") },
+    { id: "kr-pension-portfolio", text: t("krpf.title") },
     { id: "kr-pension", text: t("krp.title") },
     { id: "constituent-heatmap", text: t("tv.title") },
     { id: "us-ptr", text: t("ptr.title") },
@@ -1307,6 +1308,7 @@ const PAGE_FETCHES = {
   feed: ["landing"],
   newsVideos: ["landing"],
   krPension: ["kr"],
+  krPensionPortfolio: ["kr"],
   krHoldings: ["kr"],
   krEvents: ["kr"],
   krEtf: ["kr"],
@@ -1335,11 +1337,12 @@ async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krHoldings, krEvents, krEtf, usPtr, usOvernight, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, cryptoRegime, cryptoLiquidations, cryptoNews, bioTrials, bioFda, bioAdcomm, bioMfds, newsVideos, krSearchInterest] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krPensionPortfolio, krHoldings, krEvents, krEtf, usPtr, usOvernight, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, cryptoRegime, cryptoLiquidations, cryptoNews, bioTrials, bioFda, bioAdcomm, bioMfds, newsVideos, krSearchInterest] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/market/sentiment", "sentiment"), request("/api/kr/indices", "krIndices"),
     request("/api/kr/overnight", "krOvernight"), request("/api/kr/pension", "krPension"),
+    request("/api/kr/pension-portfolio", "krPensionPortfolio"),
     request("/api/kr/holdings", "krHoldings"),
     request("/api/kr/events", "krEvents"),
     request("/api/kr/etf", "krEtf"), request("/api/us/ptr", "usPtr"),
@@ -1365,7 +1368,7 @@ async function loadCore() {
     request("/api/kr/search-interest", "krSearchInterest"),
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
-  state.stress = stress; state.sentiment = sentiment; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krHoldings = krHoldings;
+  state.stress = stress; state.sentiment = sentiment; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krPensionPortfolio = krPensionPortfolio; state.krHoldings = krHoldings;
   state.krEvents = krEvents; state.krEtf = krEtf; state.krSearchInterest = krSearchInterest; state.usPtr = usPtr; state.usOvernight = usOvernight; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
   state.cryptoOverview = cryptoOverview; state.cryptoSentiment = cryptoSentiment; state.cryptoVolatility = cryptoVolatility;
   state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure; state.cryptoGas = cryptoGas; state.cryptoBoard = cryptoBoard; state.cryptoRegime = cryptoRegime; state.cryptoLiquidations = cryptoLiquidations; state.cryptoNews = cryptoNews; state.bioTrials = bioTrials; state.bioFda = bioFda; state.bioAdcomm = bioAdcomm; state.bioMfds = bioMfds; state.newsVideos = newsVideos;
@@ -1374,7 +1377,7 @@ async function loadCore() {
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderKrSearchInterest(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPensionPortfolio(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderKrSearchInterest(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
   renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas(); renderCryptoBoard(); renderCryptoRegime(); renderCryptoLiquidations(); renderUsOvernight(); renderCryptoNews(); renderBioCatalysts(); renderBioTrials(); renderBioFda(); renderBioAdcomm(); renderBioMfds(); renderNewsVideos();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
@@ -1579,6 +1582,231 @@ const KRP_REASON_EN = {
   "단순투자목적에서 일반투자목적으로 보유목적 변경":
     "Purpose changed from simple to general investment",
 };
+
+/* 국민연금 국내주식 포트폴리오 — 연말 스냅샷의 원형 차트.
+ *
+ * 여기서 가장 조심한 것은 **각도와 라벨의 출처를 나눈 것**이다. 원자료의 비중
+ * 컬럼은 소수 둘째 자리 반올림이라 1,200행을 다 더하면 100%가 아니라 99.37%가
+ * 된다. 100%로 정규화하면 그림은 깔끔해지지만 그것은 공단이 내지 않은 숫자를
+ * 화면에 세우는 일이다. 그래서 각도는 평가액(정수, 잔차 없음)으로 그리고 화면에
+ * 찍히는 %는 원자료 값을 그대로 옮긴다. 둘이 미세하게 어긋난다는 사실 자체를
+ * 푸터가 말한다.
+ *
+ * 조각을 20개로 끊은 것도 임의가 아니다 — 이름 붙은 조각이 과반이 되는 가장
+ * 작은 수다(상위 20 = 53.48%, 상위 15 = 48.75%). 15에서 끊으면 `기타`가 최대
+ * 조각이 되어 그림이 "나머지"를 말하게 된다.
+ *
+ * 접근성: 파이는 아래 표의 요약일 뿐이고 같은 값이 표에 전부 글자로 있다.
+ * 조각마다 <title>을 넣어 마우스와 스크린리더가 같은 문장을 읽게 했다. */
+function renderKrPensionPortfolio() {
+  const section = $("#kr-pension-portfolio");
+  if (!section) return;
+  const payload = state.krPensionPortfolio;
+  const slices = Array.isArray(payload?.slices) ? payload.slices : [];
+  if (!slices.length) { section.hidden = true; return; }
+  section.hidden = false;
+
+  const locale = state.lang === "ko" ? "ko-KR" : "en-US";
+  const totals = payload.totals || {};
+  const restLabel = t("krpf.rest");
+  const nameOf = (slice) => slice.kind === "rest" ? restLabel : slice.name;
+  const num = (value, digits) => Number(value ?? 0).toLocaleString(locale, {
+    minimumFractionDigits: digits ?? 0, maximumFractionDigits: digits ?? 0,
+  });
+
+  /* 금액은 언어마다 읽는 단위가 다르다. 원자료의 단위는 억원인데, 한국어는
+   * 조/억으로 접고 영어는 원화를 T/B로 접어야 읽힌다. 처음엔 숫자 뒤에 단위
+   * 문자열을 그냥 이어 붙였다가 영어에서 "230,421hundred million KRW"가
+   * 나왔다 — 한국어의 무공백 관례를 그대로 옮긴 탓이다. 표에서는 이 함수를
+   * 쓰지 않는다. 칸마다 단위가 붙으면 세로로 비교가 안 되므로 단위는 열
+   * 제목에 한 번만 적고 칸에는 숫자만 둔다. */
+  const money = (eok) => {
+    const value = Number(eok) || 0;
+    if (state.lang === "ko") {
+      return value >= 10000 ? num(value / 10000, 1) + "조원" : num(value) + "억원";
+    }
+    const krw = value * 1e8;
+    if (krw >= 1e12) return "KRW " + num(krw / 1e12, 1) + "T";
+    if (krw >= 1e9) return "KRW " + num(krw / 1e9, 1) + "B";
+    return "KRW " + num(krw / 1e6, 0) + "M";
+  };
+
+  // 인접한 조각끼리 색이 붙지 않도록 황금각으로 색상환을 걷는다.
+  const colorOf = (index, kind) => kind === "rest"
+    ? "var(--ink-4, #9aa0a6)"
+    : "hsl(" + Math.round((index * 137.508 + 208) % 360) + " 58% 52%)";
+
+  const body = $("#krpf-body");
+  body.replaceChildren();
+
+  const wrap = document.createElement("div");
+  wrap.className = "krpf-wrap";
+
+  /* --- 도넛 ------------------------------------------------------------- */
+  const SIZE = 260, R_OUT = 118, R_IN = 68, CX = SIZE / 2, CY = SIZE / 2;
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 " + SIZE + " " + SIZE);
+  svg.setAttribute("class", "krpf-donut");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", t("krpf.caption", { n: String(slices.length - 1) }));
+
+  const point = (r, angle) => [
+    (CX + r * Math.cos(angle)).toFixed(2),
+    (CY + r * Math.sin(angle)).toFixed(2),
+  ];
+
+  let angle = -Math.PI / 2;  // 12시에서 시작해 시계 방향.
+  slices.forEach((slice, index) => {
+    const sweep = (Number(slice.share) || 0) / 100 * Math.PI * 2;
+    if (sweep <= 0) return;
+    const end = angle + sweep;
+    const large = sweep > Math.PI ? 1 : 0;
+    const [x0, y0] = point(R_OUT, angle), [x1, y1] = point(R_OUT, end);
+    const [x2, y2] = point(R_IN, end), [x3, y3] = point(R_IN, angle);
+
+    const path = document.createElementNS(NS, "path");
+    path.setAttribute("d", [
+      "M", x0, y0, "A", R_OUT, R_OUT, 0, large, 1, x1, y1,
+      "L", x2, y2, "A", R_IN, R_IN, 0, large, 0, x3, y3, "Z",
+    ].join(" "));
+    path.setAttribute("fill", colorOf(index, slice.kind));
+    path.setAttribute("class", "krpf-slice");
+
+    const title = document.createElementNS(NS, "title");
+    title.textContent = nameOf(slice) + " " + num(slice.weight, 2) + "% · "
+      + money(slice.value);
+    path.append(title);
+    svg.append(path);
+    angle = end;
+  });
+
+  // 가운데는 합계. 억원은 자릿수가 커서 조원으로 한 번 더 접어 보여 준다.
+  const centerTop = document.createElementNS(NS, "text");
+  centerTop.setAttribute("x", String(CX)); centerTop.setAttribute("y", String(CY - 4));
+  centerTop.setAttribute("class", "krpf-center-value");
+  centerTop.setAttribute("text-anchor", "middle");
+  centerTop.textContent = money(totals.value);
+  const centerSub = document.createElementNS(NS, "text");
+  centerSub.setAttribute("x", String(CX)); centerSub.setAttribute("y", String(CY + 16));
+  centerSub.setAttribute("class", "krpf-center-label");
+  centerSub.setAttribute("text-anchor", "middle");
+  centerSub.textContent = t("krpf.centerLabel");
+  svg.append(centerTop, centerSub);
+
+  /* --- 범례 ------------------------------------------------------------- */
+  const legend = document.createElement("ul");
+  legend.className = "krpf-legend";
+  slices.forEach((slice, index) => {
+    const li = document.createElement("li");
+    const dot = document.createElement("span");
+    dot.className = "krpf-dot";
+    dot.style.background = colorOf(index, slice.kind);
+    const name = document.createElement("span");
+    name.className = "krpf-legend-name";
+    name.textContent = slice.kind === "rest"
+      ? t("krpf.restCount", { n: num(slice.count) })
+      : nameOf(slice);
+    const pct = document.createElement("span");
+    pct.className = "krpf-legend-pct";
+    pct.textContent = num(slice.weight, 2) + "%";
+    li.append(dot, name, pct);
+    legend.append(li);
+  });
+
+  wrap.append(svg, legend);
+  body.append(wrap);
+
+  /* --- 요약 숫자 --------------------------------------------------------- */
+  const topShare = slices
+    .filter((slice) => slice.kind !== "rest")
+    .reduce((sum, slice) => sum + (Number(slice.weight) || 0), 0);
+  const stats = document.createElement("dl");
+  stats.className = "krpf-stats";
+  [
+    [t("krpf.count"), t("krpf.countValue", { n: num(totals.count) })],
+    [t("krpf.total"), money(totals.value)],
+    [t("krpf.topShare", { n: String(totals.slice_count ?? "") }), num(topShare, 2) + "%"],
+  ].forEach((pair) => {
+    const dt = document.createElement("dt"); dt.textContent = pair[0];
+    const dd = document.createElement("dd"); dd.textContent = pair[1];
+    stats.append(dt, dd);
+  });
+  body.append(stats);
+
+  /* --- 표 ---------------------------------------------------------------- */
+  const holdings = Array.isArray(payload.holdings) ? payload.holdings : [];
+  if (holdings.length) {
+    const caption = document.createElement("p");
+    caption.className = "krpf-caption";
+    caption.textContent = t("krpf.caption", { n: num(holdings.length) });
+    const scroll = document.createElement("div"); scroll.className = "table-scroll";
+    const table = document.createElement("table");
+    table.className = "accessible-table kridx-table krpf-table";
+    const head = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    [
+      ["num", t("krpf.colRank")],
+      ["", t("krpf.colName")],
+      ["num", t("krpf.colValue")],
+      ["num", t("krpf.colWeight")],
+      ["num", t("krpf.colStake")],
+    ].forEach((pair) => {
+      const th = document.createElement("th");
+      th.scope = "col";
+      if (pair[0]) th.className = pair[0];
+      th.textContent = pair[1];
+      headRow.append(th);
+    });
+    head.append(headRow); table.append(head);
+
+    const tbody = document.createElement("tbody");
+    holdings.forEach((row) => {
+      const tr = document.createElement("tr");
+      [
+        ["num krp-code", num(row.rank)],
+        ["", row.name],
+        ["num", num(row.value)],
+        ["num", num(row.weight, 2) + "%"],
+        ["num", num(row.stake, 2) + "%"],
+      ].forEach((pair) => {
+        const td = document.createElement("td");
+        if (pair[0]) td.className = pair[0];
+        td.textContent = pair[1];
+        tr.append(td);
+      });
+      tbody.append(tr);
+    });
+    table.append(tbody); scroll.append(table);
+    body.append(caption, scroll);
+  }
+
+  /* --- 푸터: 출처와 반올림 사정 ------------------------------------------ */
+  const footer = $("#krpf-footer");
+  footer.replaceChildren();
+  const source = payload.source || {};
+  const link = document.createElement("a");
+  link.href = source.url || "#"; link.target = "_blank"; link.rel = "noopener noreferrer";
+  link.textContent = (source.publisher || "") + " · " + (source.provider_name || "");
+  const asOf = document.createElement("span");
+  asOf.className = "krpf-asof";
+  asOf.textContent = t("krpf.asOf", { date: payload.as_of || "" })
+    + " · " + t("krpf.next", { date: payload.next_release || "" });
+  const rounding = document.createElement("span");
+  rounding.textContent = t("krpf.weightNote", { sum: num(totals.weight_sum, 2) });
+  const tail = document.createElement("span");
+  const tailValue = Number(totals.rounded_out_value) || 0;
+  const totalValue = Number(totals.value) || 1;
+  tail.textContent = t("krpf.tailNote", {
+    n: num(totals.rounded_out_count),
+    value: money(tailValue),
+    pct: num(tailValue / totalValue * 100, 2),
+  });
+  const basis = document.createElement("span");
+  basis.textContent = state.lang === "ko" ? (payload.basis_ko || "") : (payload.basis_en || "");
+  footer.append(link, asOf, rounding, tail, basis);
+}
+
 
 function renderKrPension() {
   const section = $("#kr-pension");
