@@ -58,6 +58,7 @@
      "열기" 21px뿐이라, 왼쪽 정렬이면 좌 9px 대 우 55px로 한쪽에 쏠린다(실측).
      오른쪽 정렬은 그 쏠림을 반대편으로 옮길 뿐이다. 가운데면 32/32가 된다. */
   th.doc, td.doc { white-space: nowrap; text-align: center; }
+  .ksi-help { margin: 0 0 12px; color: var(--muted); font-size: var(--fs-xs); }
   .ksi-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 12px; }
   .ksi-row .stock-kpi { flex: 1 1 150px; }
   /* 비율을 건드리지 않는다. 이 선의 viewBox는 240×46(5.2:1)이고 그리는 함수는
@@ -76,7 +77,7 @@
 </style>
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
   <link rel="stylesheet" href="/static/tokens.css?v=ccb2656202">
-  <link rel="stylesheet" href="/static/console.css?v=570d3d835e">
+  <link rel="stylesheet" href="/static/console.css?v=dbef7bd880">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -140,9 +141,10 @@
     <section class="stock-section" id="sec-ksi" hidden>
       <h2>종목 검색 관심도</h2>
       <p class="sub" id="ksi-sub"></p>
+      <p class="easy-only ksi-help">×1보다 크면 평소보다 많이 찾아봤다는 뜻입니다. 요일마다 검색량이 크게 달라서 <strong>같은 요일끼리만</strong> 견줍니다.</p>
       <div class="ksi-row">
-        <div class="stock-kpi"><small>평소 대비</small><strong id="ksi-vs">—</strong><span id="ksi-vs-note"></span></div>
-        <div class="stock-kpi"><small>90일 위치</small><strong id="ksi-pct">—</strong><span>백분위</span></div>
+        <div class="stock-kpi"><small>평소 대비</small><strong id="ksi-vs">—</strong><span id="ksi-vs-note" class="pro-only"></span></div>
+        <div class="stock-kpi pro-only"><small>90일 위치</small><strong id="ksi-pct">—</strong><span>백분위</span></div>
         <div class="stock-kpi"><small>관심도 수준</small><strong id="ksi-level">—</strong><span id="ksi-level-note"></span></div>
       </div>
       <div id="ksi-spark" class="ksi-spark"></div>
