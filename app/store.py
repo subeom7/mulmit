@@ -1713,8 +1713,42 @@ def traffic_stats(days: int = 14, *, today: dt.date | None = None) -> dict:
     }
 
 
+def list_kr_codes_by_market_cap(limit: int) -> list[tuple[str, str]]:
+    """시가총액 큰 순으로 (코드, 이름).
+
+    로스터 전체를 미리 모으는 것은 뜻에서 틀린다 — 아무도 "삼성스팩10호"를
+    검색하지 않는다. 사람이 실제로 찾는 것은 위쪽 몇백 종목이고, 그 페이지에만
+    값이 있으면 사이트맵이 광고할 것이 생긴다.
+    """
+    if limit <= 0:
+        return []
+    with engine().begin() as conn:
+        rows = conn.execute(
+            sa.select(kr_listings.c.srtn_cd, kr_listings.c.itms_nm)
+            .order_by(kr_listings.c.mrkt_tot_amt.desc().nulls_last())
+            .limit(limit)
+        ).all()
+    return [(str(code), str(name or "")) for code, name in rows]
+
+
+def list_kr_codes_with_series() -> list[str]:
+    """저장된 종가 계열이 있는 종목 코드.
+
+    사이트맵이 이것으로 좁혀진다. 값이 없는 페이지를 검색엔진에 올리면 색인이
+    안 되는 데서 끝나지 않고 사이트 전체의 품질 신호를 끌어내린다 — 2026-08-24
+    실측으로 2,873종목 중 값이 있는 것이 19개였다.
+    """
+    prefix = "kr_stock_"
+    with engine().begin() as conn:
+        rows = conn.execute(
+            sa.select(economic_series.c.series_key)
+            .where(economic_series.c.series_key.like(f"{prefix}%"))
+        ).all()
+    return sorted({str(key)[len(prefix):] for (key,) in rows if str(key).startswith(prefix)})
+
+
 def list_kr_codes() -> list[tuple[str, str]]:
-    """전 상장 종목의 (코드, 이름) — 종목 허브 사이트맵용."""
+    """전 상장 종목의 (코드, 이름) — 검색·수집 대상 목록."""
     with engine().begin() as conn:
         rows = conn.execute(
             sa.select(kr_listings.c.srtn_cd, kr_listings.c.itms_nm)

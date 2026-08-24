@@ -468,8 +468,23 @@ def sitemap_pages() -> FileResponse:
 
 @app.get("/sitemap-stocks.xml", include_in_schema=False)
 def sitemap_stocks() -> PlainResponse:
-    """전 종목 허브 URL의 동적 사이트맵 — 롱테일 검색 유입의 입구."""
-    urls = [f"https://mulmit.com/stock/{code}" for code, _name in store.list_kr_codes()]
+    """종목 허브 사이트맵 — **값이 있는 종목만**.
+
+    로스터 전체를 올리던 때가 있었다. 2026-08-24에 재 보니 국내 2,873종목 중
+    저장된 종가가 있는 것이 19개였다 — 나머지는 방문할 때 그 자리에서 모으는
+    구조라 크롤러가 볼 때 비어 있다. 빈 페이지를 3,000개 광고하면 그것들이 색인
+    안 되는 데서 끝나지 않고 사이트 전체의 품질 신호를 끌어내린다.
+
+    좁힌다고 페이지가 사라지지는 않는다 — 사람이 찾아오면 그때 수집해서 보여
+    준다. 사이트맵은 "이건 지금 볼 것이 있다"는 약속이고, 그 약속만 지킨다.
+    수집이 진행되면 이 목록은 저절로 늘어난다.
+    """
+    with_data = set(store.list_kr_codes_with_series())
+    urls = [
+        f"https://mulmit.com/stock/{code}"
+        for code, _name in store.list_kr_codes()
+        if code in with_data
+    ]
     urls += [
         f"https://mulmit.com/stock/{row['ticker']}"
         for row in store.list_insider_companies(status="ok")

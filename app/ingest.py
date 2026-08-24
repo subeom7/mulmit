@@ -36,6 +36,7 @@ from . import (
     kr_holdings,
     kr_pension,
     kr_press,
+    kr_stocks,
     news_feed,
     news_videos,
     store,
@@ -551,6 +552,31 @@ def refresh_bls(*, force: bool = False) -> dict:
     return result
 
 
+def _precollect_kr_stocks() -> int:
+    """시총 상위 종목 중 아직 종가가 없는 것을 조금씩 모은다. 모은 개수를 돌려준다.
+
+    실패는 삼킨다. 이 단계는 색인을 위한 덤이지 카드가 서는 조건이 아니다 —
+    여기서 예외가 올라가면 그날의 지수·ETF 수집까지 같이 죽는다.
+    """
+    wanted = store.list_kr_codes_by_market_cap(config.KR_PRECOLLECT_TOP)
+    if not wanted:
+        return 0
+    have = set(store.list_kr_codes_with_series())
+    missing = [(code, name) for code, name in wanted if code not in have]
+    collected = 0
+    for code, name in missing[: max(0, config.KR_PRECOLLECT_PER_RUN)]:
+        try:
+            kr_stocks._fetch_series(code, name)
+            collected += 1
+        except RateLimited:
+            log.warning("data.go.kr 일일 한도 — 종목 미리 수집은 다음 주기에 (%d개 완료)", collected)
+            break
+        except Exception as exc:  # noqa: BLE001 - 한 종목의 실패가 나머지를 막지 않는다
+            log.warning("%s 종가 미리 수집 실패: %s", code, exc)
+    if collected:
+        log.info("국내 종가 미리 수집 %d종목 (남은 대상 %d)", collected, len(missing) - collected)
+    return collected
+
 def refresh_fsc(*, force: bool = False) -> dict:
     """Refresh the Korean official closes published as FSC open data.
 
@@ -616,6 +642,18 @@ def refresh_fsc(*, force: bool = False) -> dict:
         except Exception as exc:  # noqa: BLE001
             result["etfs_error"] = str(exc)
             log.warning("국내 ETF 스냅샷 갱신 실패: %s", exc)
+
+    # 시총 상위 종목의 종가를 미리 모은다.
+    #
+    # 종목 허브는 방문할 때 그 자리에서 수집하는 구조다. 사람에게는 그걸로
+    # 충분하지만 크롤러에게는 아니다 — 크롤러가 볼 때 페이지가 비어 있고, 값이
+    # 없는 페이지를 사이트맵으로 3,000개 올리면 색인이 안 되는 데서 끝나지 않고
+    # 사이트 전체의 품질 신호를 끌어내린다(2026-08-24 실측: 2,873종목 중 값이
+    # 있는 것 19개).
+    #
+    # 한 바퀴에 조금씩만 모은다. data.go.kr 일일 한도를 한 번에 쓰면 그날의 다른
+    # 수집이 굶는다 — 로스터·지수·ETF가 같은 한도를 나눠 쓴다.
+    result["precollected"] = _precollect_kr_stocks()
 
     keys = [spec.series_key for spec in FSC_SERIES]
     targets = (
