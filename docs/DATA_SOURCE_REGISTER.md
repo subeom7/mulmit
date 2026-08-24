@@ -1796,6 +1796,34 @@ K-샤프지수·KRX 300 계열·섹터·KTOP 30·코리아 밸류업뿐). 따라
 **문의 발송 대기** (초안 생성 2026-08-23): 한국거래소 데이터사업부 `krxdata@krx.co.kr`(종가 한정 견적·제3자 제공 해당 여부·개인사업자 계약 가부),
 EODHD `support@eodhistoricaldata.com`(커머셜 범위·가격·한국 EOD 제공 시각), Twelve Data `sales@twelvedata.com`(Venture 미만 범위 가능 여부).
 
+#### EODHD 1차 회신 (2026-08-24, Egor Dmitriev) — 기각 아님, 두 항목 확인 후 견적
+
+| 문의 | 회신 |
+|---|---|
+| ① 커버리지 | **확인됨.** 당일 실측으로 `005930.KO`·`000660.KO`·`005380.KO` 모두 EOD 종가 반환. 우리가 겪는 **금~월 공백을 닫는다**고 명시 |
+| ② 우리 JSON API 중계 | **여기가 핵심이다.** 원문: "displaying values on your pages is one thing, but re-serving them through your own API — even unauthenticated, short-cache, no bulk export — **is redistribution**, and that is a **heavier licence class** than pure on-page display. It does not make it impossible; it means we scope it as redistribution" |
+| ③ 비용·거래소 수수료 | **보류.** "Korea end-of-day display/redistribution licensing has an **exchange-side question** I need to confirm internally … Korea is not one of the markets where I can state the display-licensing position off the top of my head the way I can for the US or EU" — 추측 대신 확인 후 회신 |
+| ④ 15:30 KST 마감 후 제공 시각 | **보류.** 근사치 대신 정확한 KST 시각을 확인해 ③과 함께 회신하겠다고 명시 |
+
+**기록해 둘 만한 것 — 벤더가 이 등록부와 같은 선을 그었다.** §2의 `approved_scope`는
+처음부터 `public_display`와 `server_json_relay`를 **별개 플래그**로 두고 있었는데,
+EODHD가 독립적으로 같은 구분을 하고 우리의 중계 구조를 **더 무거운 등급**으로
+지목했다. "도달 가능 ≠ 재배포 가능"이 우리만의 조심성이 아니라 **업계의 계약
+구분**임을 확인한 셈이다.
+
+**우리 아키텍처가 걸리는 이유.** 이 사이트는 정적 HTML/JS가 **자체 JSON을 받아**
+그리는 구조라, 모든 lane이 `server_json_relay`다. 즉 표시 등급이 아니라 재배포
+등급으로 스코프된다.
+
+**따라오는 갈림길(미해결).** 값을 JSON으로 내보내지 않고 **서버에서 HTML로 렌더**하면
+표시 등급으로 내려갈 수 있는가? `/news`가 이미 서버 렌더 페이지라 패턴은 있다.
+다만 이건 KR 가격 lane의 렌더링 경로를 바꾸는 일이고, **가격이 나오기 전에 설계를
+바꾸지는 않는다** — 등급이 실제로 갈리는지 EODHD에 물어본 뒤에 판단한다.
+
+**③이 KRX 문의와 같은 벽일 가능성.** "exchange-side question"이라 했으므로 EODHD의
+한국 가격은 결국 KRX 라이선스 조건에 달려 있을 수 있다. 우리가 이미 회신을 기다리는
+그 문이다(`krxdata@krx.co.kr`).
+
 **회신 전까지의 자세.** 종가는 T+1 그대로 두되 **왜 늦는지를 카드에 밝힌다**(`official.behind_last_session`·
 `publication_note_ko`). 숫자를 지어내지 않고, 다른 화면과 다른 이유를 읽는 사람이 알 수 있게 하는 것이
 회신 전에 할 수 있는 전부다.
