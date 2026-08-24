@@ -1612,6 +1612,7 @@ function donutSvg(slices, opts) {
     (cy + r * Math.sin(angle)).toFixed(2),
   ];
 
+  const paths = [];
   let angle = -Math.PI / 2;  // 12시에서 시작해 시계 방향.
   slices.forEach((slice, index) => {
     const sweep = (Number(opts.shareOf(slice)) || 0) / 100 * Math.PI * 2;
@@ -1628,32 +1629,115 @@ function donutSvg(slices, opts) {
     ].join(" "));
     path.setAttribute("fill", opts.colorOf(slice, index));
     if (opts.sliceClass) path.setAttribute("class", opts.sliceClass);
+    // 조각의 한가운데 각도. 호버할 때 이 방향으로 밀어내면 원에서 빠져나오는
+    // 것처럼 보인다 — 회전 원점을 잡을 필요가 없어 SVG에서 가장 안전한 방법이다.
+    const mid = angle + sweep / 2;
+    path.style.setProperty("--dx", (Math.cos(mid) * 7).toFixed(2) + "px");
+    path.style.setProperty("--dy", (Math.sin(mid) * 7).toFixed(2) + "px");
+    path.style.setProperty("--delay", (index * 26) + "ms");
+    path.dataset.slice = String(index);
     if (opts.titleOf) {
       const title = document.createElementNS(NS, "title");
       title.textContent = opts.titleOf(slice, index);
       path.append(title);
     }
     svg.append(path);
+    paths.push(path);
     angle = end;
   });
 
+  let topNode = null, subNode = null;
   if (opts.centerValue) {
-    const top = document.createElementNS(NS, "text");
-    top.setAttribute("x", String(cx)); top.setAttribute("y", String(cy - 4));
-    top.setAttribute("class", opts.centerValueClass || "krpf-center-value");
-    top.setAttribute("text-anchor", "middle");
-    top.textContent = opts.centerValue;
-    svg.append(top);
+    topNode = document.createElementNS(NS, "text");
+    topNode.setAttribute("x", String(cx)); topNode.setAttribute("y", String(cy - 4));
+    topNode.setAttribute("class", opts.centerValueClass || "krpf-center-value");
+    topNode.setAttribute("text-anchor", "middle");
+    topNode.textContent = opts.centerValue;
+    svg.append(topNode);
   }
   if (opts.centerLabel) {
-    const sub = document.createElementNS(NS, "text");
-    sub.setAttribute("x", String(cx)); sub.setAttribute("y", String(cy + 16));
-    sub.setAttribute("class", opts.centerLabelClass || "krpf-center-label");
-    sub.setAttribute("text-anchor", "middle");
-    sub.textContent = opts.centerLabel;
-    svg.append(sub);
+    subNode = document.createElementNS(NS, "text");
+    subNode.setAttribute("x", String(cx)); subNode.setAttribute("y", String(cy + 16));
+    subNode.setAttribute("class", opts.centerLabelClass || "krpf-center-label");
+    subNode.setAttribute("text-anchor", "middle");
+    subNode.textContent = opts.centerLabel;
+    svg.append(subNode);
   }
+
+  /* 가운데 글자를 바꾸는 손잡이. 조각에 마우스를 올리면 합계 대신 그 조각을
+   * 읽게 하려는 것인데, 도넛의 빈 가운데는 원래 그 용도로 비어 있는 자리다.
+   * 손잡이를 노드에 붙여 두면 부르는 쪽이 `append(svg)`를 그대로 쓸 수 있다. */
+  svg.setCenter = (value, label) => {
+    if (topNode) topNode.textContent = value;
+    if (subNode) subNode.textContent = label;
+  };
+  svg.resetCenter = () => svg.setCenter(opts.centerValue || "", opts.centerLabel || "");
+  svg.slicePaths = paths;
   return svg;
+}
+
+/* 조각과 범례를 서로 묶는다.
+ *
+ * 범례에 마우스를 올리면 해당 조각이, 조각에 올리면 해당 범례 줄이 살아난다.
+ * 조각 스물한 개 중 어느 것이 어느 이름인지 색만으로 찾게 두면 범례가 장식이
+ * 된다. 가운데 글자도 그때 그 조각을 읽는다. */
+function linkDonutAndLegendByIndex(svg, legendItems, sliceIndexes, describe) {
+  const rows = Array.from(legendItems);
+  const paint = (sliceIndex, rowIndex) => {
+    svg.slicePaths.forEach((path, i) => path.classList.toggle("is-active", i === sliceIndex));
+    rows.forEach((row, i) => row.classList.toggle("is-active", i === rowIndex));
+    svg.classList.toggle("is-hovering", sliceIndex >= 0);
+    const text = sliceIndex >= 0 ? describe(sliceIndex) : null;
+    if (text) svg.setCenter(text.value, text.label);
+  };
+  const clear = () => {
+    svg.slicePaths.forEach((path) => path.classList.remove("is-active"));
+    rows.forEach((row) => row.classList.remove("is-active"));
+    svg.classList.remove("is-hovering");
+    svg.resetCenter();
+  };
+  svg.slicePaths.forEach((path, index) => {
+    path.addEventListener("mouseenter", () => paint(index, sliceIndexes.indexOf(index)));
+    path.addEventListener("mouseleave", clear);
+  });
+  rows.forEach((row, rowIndex) => {
+    const sliceIndex = sliceIndexes[rowIndex];
+    if (sliceIndex == null || sliceIndex < 0) return;
+    row.addEventListener("mouseenter", () => paint(sliceIndex, rowIndex));
+    row.addEventListener("mouseleave", clear);
+    row.tabIndex = 0;
+    row.addEventListener("focus", () => paint(sliceIndex, rowIndex));
+    row.addEventListener("blur", clear);
+  });
+}
+
+function linkDonutAndLegend(svg, legendItems, describe) {
+  const rows = Array.from(legendItems);
+  const activate = (index) => {
+    svg.slicePaths.forEach((path, i) => path.classList.toggle("is-active", i === index));
+    rows.forEach((row, i) => row.classList.toggle("is-active", i === index));
+    svg.classList.add("is-hovering");
+    const text = describe(index);
+    if (text) svg.setCenter(text.value, text.label);
+  };
+  const clear = () => {
+    svg.slicePaths.forEach((path) => path.classList.remove("is-active"));
+    rows.forEach((row) => row.classList.remove("is-active"));
+    svg.classList.remove("is-hovering");
+    svg.resetCenter();
+  };
+  svg.slicePaths.forEach((path, index) => {
+    path.addEventListener("mouseenter", () => activate(index));
+    path.addEventListener("mouseleave", clear);
+  });
+  rows.forEach((row, index) => {
+    row.addEventListener("mouseenter", () => activate(index));
+    row.addEventListener("mouseleave", clear);
+    // 키보드로도 닿아야 한다 — 마우스에만 있는 정보를 만들지 않는다.
+    row.tabIndex = 0;
+    row.addEventListener("focus", () => activate(index));
+    row.addEventListener("blur", clear);
+  });
 }
 
 /* 인접 조각의 색이 붙지 않도록 황금각으로 색상환을 걷는다. 두 화면이 같은
@@ -1719,12 +1803,14 @@ function renderUsManagers() {
 
     const head = document.createElement("header");
     head.className = "usm-card-head";
+    // 사람 이름이 먼저이고 더 크다. 이 카드를 찾아 읽는 사람은 "버크셔"가
+    // 아니라 "버핏"을 찾는다 — 신고자 이름은 그 아래 근거로 둔다.
     const title = document.createElement("h3");
-    title.textContent = local(manager.fund);
-    const person = document.createElement("p");
-    person.className = "usm-person";
-    person.textContent = local(manager.person);
-    head.append(title, person);
+    title.textContent = local(manager.person);
+    const fund = document.createElement("p");
+    fund.className = "usm-fund";
+    fund.textContent = local(manager.fund);
+    head.append(title, fund);
     card.append(head);
 
     // 도넛. 조각 라벨은 발행사 이름 그대로 옮긴다.
@@ -1784,6 +1870,20 @@ function renderUsManagers() {
       legend.append(li);
     }
     card.append(legend);
+
+    // 범례는 상위 여덟(+기타)만이라 조각 색인과 일대일이 아니다. 범례 줄이
+    // 가리키는 조각 번호를 따로 넘겨 어긋나지 않게 한다.
+    const legendIndex = named.slice(0, 8).map((_, i) => i);
+    if (named.length > 8) legendIndex.push(-1);      // "이하 N종목" 줄
+    if (rest) legendIndex.push(slices.indexOf(rest));
+    linkDonutAndLegendByIndex(donut, legend.children, legendIndex, (sliceIndex) => {
+      const slice = slices[sliceIndex];
+      if (!slice) return null;
+      return {
+        value: num(slice.share, 1) + "%",
+        label: slice.kind === "rest" ? restLabel : slice.issuer,
+      };
+    });
 
     // 배지 - 전부 수치에서 계산한다.
     const badges = document.createElement("ul");
@@ -1939,6 +2039,16 @@ function renderKrPensionPortfolio() {
     pct.textContent = num(slice.weight, 2) + "%";
     li.append(dot, name, pct);
     legend.append(li);
+  });
+
+  // 조각·범례를 묶고, 가운데 글자가 지금 가리키는 것을 읽게 한다.
+  linkDonutAndLegend(svg, legend.children, (index) => {
+    const slice = slices[index];
+    if (!slice) return null;
+    return {
+      value: num(slice.weight, 2) + "%",
+      label: slice.kind === "rest" ? restLabel : slice.name,
+    };
   });
 
   wrap.append(svg, legend);
