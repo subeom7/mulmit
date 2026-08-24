@@ -121,3 +121,30 @@ def test_the_source_column_style_actually_matches_the_table() -> None:
         "이 페이지의 표는 stock-table이다 — accessible-table로는 아무것도 안 잡힌다"
     )
     assert "width" in source[match.end() : match.end() + 120], "폭을 제한해야 한다"
+
+
+def test_the_tables_stand_at_content_width() -> None:
+    """`width: 100%`면 남는 공간이 열에 나눠지고 값이 자기 칸 왼쪽에 붙는다.
+
+    운영자가 세션 초에 지적한 그 문제다. 사이트의 다른 표(`.accessible-table`)는
+    그때 auto로 바꿨는데 이 페이지만 남아 있었고, 그래서 원문 열의 `width: 1%`가
+    먹지 않았다 — 규칙은 걸리는데 표가 100%라 남는 폭이 분배됐다(실측 253px).
+    """
+    source = _source()
+    match = re.search(r"\.stock-table\s*\{([^}]*)\}", source)
+    assert match, ".stock-table 규칙이 있어야 한다"
+    body = match.group(1)
+    assert "width: auto" in body, "내용 폭으로 서야 값이 칸 왼쪽에 붙지 않는다"
+    assert "max-width: 100%" in body, "패널을 넘지는 않아야 한다"
+
+
+def test_the_stock_page_respects_the_label_floor() -> None:
+    """tokens.css: `--fs-xs: 12 — 라벨 하한선. 이보다 작게 쓰지 않는다`."""
+    source = _source()
+    style = source[source.index("<style>") : source.index("</style>")]
+    sizes = [
+        int(float(size))
+        for size in re.findall(r"font:[^;]*?\b([\d.]+)px", style)
+        + re.findall(r"font-size:\s*([\d.]+)px", style)
+    ]
+    assert not [size for size in sizes if size < 12], f"12px보다 작은 글자: {sizes}"
