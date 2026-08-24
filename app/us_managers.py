@@ -69,6 +69,71 @@ _INDEX_HINTS = ("SPDR", "ISHARES", "VANGUARD", "INVESCO QQQ", "SELECT SECTOR",
                 "POWERSHARES", "PROSHARES", "SCHWAB STRATEGIC", "INDEX TR")
 
 
+COMMONS_FILE = "https://commons.wikimedia.org/wiki/File:"
+
+
+@dataclass(frozen=True)
+class Portrait:
+    """카드에 놓는 인물 사진과 **그 사진을 쓸 수 있게 하는 조건**.
+
+    출처 표기가 데이터와 함께 다녀야 한다 — 이 저장소가 모든 숫자에 대해 지키는
+    규칙을 사진에도 그대로 적용한다. 파일은 `app/static/portraits/`에 담아 자체
+    호스팅한다(핫링크하면 읽는 사람의 브라우저가 위키미디어를 때리고, 그건 쿠키를
+    심지 않는다는 방침과 결이 다르다).
+
+    `share_alike`가 참이면 **가공본도 같은 라이선스**다. 우리는 원본을 정사각형으로
+    자르고 줄였고 그것이 변형(adaptation)에 해당하므로, 표기에 그 사실을 적는다.
+    """
+
+    file: str
+    artist: str
+    licence: str
+    licence_url: str
+    commons_file: str
+    share_alike: bool = False
+
+    @property
+    def source_url(self) -> str:
+        from urllib.parse import quote
+        return COMMONS_FILE + quote(self.commons_file.replace(" ", "_"))
+
+
+#: 자유 라이선스가 확인된 것만 담는다(조회 2026-08-25, 커먼즈 `extmetadata`).
+#:
+#: **드러켄밀러와 켄 피셔는 없다.** 드러켄밀러는 커먼즈에 사진이 한 장도 없고,
+#: "Ken Fisher"로 나오는 유일한 사진은 **동명이인**이다 — Fisher House Foundation의
+#: 켄 피셔로, 미 국방부가 찍어 라이선스는 자유지만 다른 사람이다. 이름만 보고
+#: 넣었으면 아무도 눈치채지 못했을 종류의 오류라 적어 둔다. 사진이 없는 사람은
+#: 화면이 이니셜로 자리를 채운다.
+PORTRAITS: dict[str, Portrait] = {
+    "berkshire": Portrait(
+        file="/static/portraits/buffett.webp",
+        artist="USA International Trade Administration",
+        licence="Public domain", licence_url="",
+        commons_file="Warren Buffett at the 2015 SelectUSA Investment Summit (cropped).jpg",
+    ),
+    "pershing": Portrait(
+        file="/static/portraits/ackman.webp",
+        artist="Senate Democrats",
+        licence="CC BY 2.0", licence_url="https://creativecommons.org/licenses/by/2.0",
+        commons_file="Valeant Pharmaceuticals' Business Model (headshot).jpg",
+    ),
+    "ark": Portrait(
+        file="/static/portraits/wood.webp",
+        artist="Caroline Wood",
+        licence="CC BY-SA 4.0", licence_url="https://creativecommons.org/licenses/by-sa/4.0",
+        commons_file="Cathie Wood ARK Invest Photo.jpg",
+        share_alike=True,
+    ),
+    "bridgewater": Portrait(
+        file="/static/portraits/dalio.webp",
+        artist="Web Summit",
+        licence="CC BY 2.0", licence_url="https://creativecommons.org/licenses/by/2.0",
+        commons_file="Web Summit 2018 - Forum - Day 2, November 7 HM1 7481 (44858045925).jpg",
+    ),
+}
+
+
 @dataclass(frozen=True)
 class Manager:
     slug: str
@@ -141,6 +206,20 @@ def _slice_count(holdings: list[dict[str, Any]], total: float) -> tuple[int, boo
     return capped, (reached / total) <= 0.5
 
 
+def _portrait_payload(slug: str) -> dict[str, Any] | None:
+    portrait = PORTRAITS.get(slug)
+    if portrait is None:
+        return None
+    return {
+        "file": portrait.file,
+        "artist": portrait.artist,
+        "licence": portrait.licence,
+        "licence_url": portrait.licence_url,
+        "source_url": portrait.source_url,
+        "share_alike": portrait.share_alike,
+    }
+
+
 def _build_manager(manager: Manager, portfolio: ManagerPortfolio, today: dt.date) -> dict[str, Any]:
     total = portfolio.total_usd
     rows = [
@@ -180,6 +259,7 @@ def _build_manager(manager: Manager, portfolio: ManagerPortfolio, today: dt.date
         "filer_name": portfolio.name,
         "fund": {"ko": manager.fund_ko, "en": manager.fund_en},
         "person": {"ko": manager.person_ko, "en": manager.person_en},
+        "portrait": _portrait_payload(manager.slug),
         "person_note": (
             {"ko": manager.person_note_ko, "en": manager.person_note_en}
             if manager.person_note_ko else None

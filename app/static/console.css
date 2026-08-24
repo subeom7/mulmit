@@ -1157,6 +1157,15 @@ html[data-lang="en"] .lang-en { display: revert; }
 /* 다섯 칸뿐이라 내용 폭에 맡기면 표가 패널 왼쪽 400px에 몰린다. */
 .krpf-table { width: 100%; max-width: 860px; }
 .krpf-table td:nth-child(2), .krpf-table th:nth-child(2) { text-align: left; }
+/* 순위 칸을 좁히고 왼쪽에 붙인다.
+ *
+ * `width:100%`인 표는 남는 폭을 칸마다 나눠 주는데, 그러면 첫 칸이 넓게
+ * 벌어지고 그 안에서 오른쪽 정렬된 숫자가 안쪽으로 밀린다. 표 제목
+ * (`평가액 상위 50종목`)은 패널 여백에 그대로 앉아 있으니 둘이 어긋나 보인다.
+ * 첫 칸을 좁혀 왼쪽에 붙이면 순위·종목명이 표 제목과 같은 선에서 시작한다. */
+.krpf-table th:first-child, .krpf-table td:first-child {
+  width: 3em; text-align: left;
+}
 .krpf-asof { color: var(--ink-2); }
 
 @media (max-width: 520px) {
@@ -1179,7 +1188,23 @@ html[data-lang="en"] .lang-en { display: revert; }
 }
 /* 사람 이름이 제목이고 신고자 이름이 그 아래 근거다. 카드를 찾아 읽는 사람은
  * "버크셔"가 아니라 "버핏"을 찾는다. */
-.usm-card-head { display: flex; flex-direction: column; gap: 1px; }
+.usm-card-head { display: flex; align-items: center; gap: var(--sp-3); min-width: 0; }
+.usm-names { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+/* 얼굴. 사진이 없는 사람은 같은 크기의 이니셜 원이 자리를 채운다 — 넷만
+ * 사진이고 둘은 비어 있으면 격자가 어긋나 보인다. */
+.usm-portrait {
+  flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%;
+  overflow: hidden; background: var(--panel); border: 1px solid var(--line);
+}
+.usm-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.usm-portrait.is-initials {
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--num); font-size: var(--fs-sm); font-weight: 650;
+  color: var(--ink-3); letter-spacing: .02em;
+}
+.usm-credit { display: block; width: 100%; color: var(--ink-3); line-height: 1.6; }
+.usm-credit a { color: var(--ink-3); text-decoration: underline; text-underline-offset: 2px; }
 .usm-card-head h2, .usm-card-head h3 {
   margin: 0; font-size: var(--fs-lg); line-height: 1.25; letter-spacing: -.01em;
   font-weight: 650; color: var(--ink);
