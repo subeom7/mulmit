@@ -310,11 +310,14 @@ async function loadUs() {
         date: tr.date,                       // and date, not transaction_date
         type: (tr.type_meaning && tr.type_meaning.ko) || tr.type,
         amount: tr.amount,
+        // 원문 PDF는 거래가 아니라 **보고서**에 붙어 있다. 거래 쪽에서 찾으면
+        // 언제나 undefined라 링크가 조용히 사라진다.
+        url: filing.pdf_url,
       });
     }
     if (mine.length) {
       $id("extra-title").textContent = "미 하원 의원 거래 (STOCK Act)";
-      fill("extra-table", [["", "의원"], ["", "거래일"], ["", "유형"], ["", "금액 구간"]], mine.slice(0, 8).map((x) => [["", x.member ? (x.district ? `${x.member} (${x.district})` : x.member) : "—", x.pdf_url], ["", x.date || "—"], ["", x.type || "—"], ["", x.amount || "—"]]));
+      fill("extra-table", [["", "의원"], ["", "거래일"], ["", "유형"], ["", "금액 구간"]], mine.slice(0, 8).map((x) => [["", x.member ? (x.district ? `${x.member} (${x.district})` : x.member) : "—", x.url], ["", x.date || "—"], ["", x.type || "—"], ["", x.amount || "—"]]));
       $id("sec-extra").hidden = false;
     }
   } catch (e) { console.warn('[stock] section failed', e); }
