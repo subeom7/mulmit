@@ -343,10 +343,15 @@ US_PTR_RETRIES = _int("US_PTR_RETRIES", 2)
 US_PTR_REQUEST_INTERVAL = _float("US_PTR_REQUEST_INTERVAL", 1.0)
 US_PTR_MAX_AGE = _int("US_PTR_MAX_AGE", 60 * 60 * 6)
 
-# KRX OPEN API must remain disabled until KRX approves the exact public use
-# case. Possessing a key alone does not grant redistribution rights. The FSC
-# lane above does not change this: it is a separate grant over a separate,
-# next-day dataset, not KRX approval arriving by another route.
+# KRX OPEN API stays off permanently. This is no longer our reading of the
+# terms: KRX 데이터사업부 answered the operator on 2026-08-24 and said it in
+# their own words — "상업적 목적을 위한 라이선스 계약 등은 존재하지 않습니다",
+# and the ban on redistribution "API 상의 수치 데이터를 웹사이트에 그대로
+# 표출하는 것도 포함합니다". There is no approval to wait for; the commercial
+# path is KOSCOM, a different company and a different price class (§6.2b).
+#
+# The FSC lane above does not change this: it is a separate grant over a
+# separate, next-day dataset, not KRX approval arriving by another route.
 KRX_ENABLED = _bool("KRX_ENABLED", False)
 KRX_API_KEY = os.environ.get("KRX_API_KEY", "").strip()
 KRX_TIMEOUT = _float("KRX_TIMEOUT", 15.0)
