@@ -242,6 +242,46 @@ def _attach_level_ranks(stocks: list[dict[str, Any]]) -> None:
         row.pop("_level_prev", None)
 
 
+def build_for(
+    code: str,
+    *,
+    today: dt.date | None = None,
+    provider: DatalabProvider | None = None,
+) -> dict[str, Any]:
+    """종목 하나의 검색 관심도. 상류 호출 **한 번**이다.
+
+    앵커를 함께 넣어 부른다 — 그래야 이 종목의 수준을 다른 화면의 값과 견줄 수
+    있다. 앵커 없이 혼자 부르면 그 종목이 자기 요청의 최댓값이 되어 언제나
+    100으로 나오고, 그건 아무 뜻도 없는 숫자다.
+
+    종목 화면에서 부르는 경로다. 6시간 캐시가 붙어 있고 값은 하루 단위로만
+    바뀌므로, 한 종목을 하루에 네 번 넘게 물어보지 않는다.
+    """
+    wanted = str(code).strip().upper()
+    if not wanted:
+        raise DataUnavailable("종목 코드가 없다")
+    codes = [config.NAVER_DATALAB_ANCHOR, wanted]
+    if wanted == config.NAVER_DATALAB_ANCHOR:
+        codes = [wanted]
+    payload = build(codes, today=today, provider=provider)
+    stock = next(
+        (row for row in payload["stocks"] if row["code"] == wanted), None
+    )
+    if stock is None:
+        raise DataUnavailable(f"{wanted}의 검색 추이를 읽을 수 없다")
+    return {
+        "generated_at": payload["generated_at"],
+        "window": payload["window"],
+        "stock": stock,
+        "anchor": payload.get("anchor"),
+        "basis_ko": payload["basis_ko"],
+        "basis_en": payload["basis_en"],
+        "attribution": payload["attribution"],
+        "source": payload["source"],
+        "rights": payload["rights"],
+    }
+
+
 def build(
     codes: list[str] | None = None,
     *,
@@ -384,6 +424,7 @@ __all__ = [
     "DatalabConfigError",
     "KrSearchInterestDisabled",
     "build",
+    "build_for",
     "reset_provider",
     "watchlist",
 ]

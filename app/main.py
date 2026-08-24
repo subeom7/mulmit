@@ -1244,6 +1244,34 @@ def kr_search_interest_board(request: Request, response: Response) -> dict:
     return payload
 
 
+@app.get("/api/kr/search-interest/{code}")
+@limiter.limit(config.RATE_LIMIT)
+def kr_search_interest_one(code: str, request: Request, response: Response) -> dict:
+    """종목 하나의 검색 관심도. 상류 호출 한 번, 6시간 캐시.
+
+    국내 종목 전용이다 — 네이버에서 미국 티커를 검색하는 모집단은 다르고
+    훨씬 작아서, 그것을 재면 신호가 아니라 잡음이다.
+    """
+    code = code.strip().upper()
+    if not re.fullmatch(r"\d{6}", code):
+        raise HTTPException(status_code=404, detail="국내 종목 코드가 아닙니다")
+    try:
+        payload = kr_search_interest.build_for(code)
+    except kr_search_interest.KrSearchInterestDisabled as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=data_rights.KR_SEARCH_INTEREST_DISABLED,
+            headers=dict(data_rights.NO_STORE_HEADERS),
+        ) from exc
+    except kr_search_interest.DatalabConfigError as exc:
+        raise HTTPException(status_code=503, detail="NAVER DataLab credentials are not configured") from exc
+    except (DataUnavailable, RateLimited) as exc:
+        raise HTTPException(status_code=503, detail="Search-interest data unavailable") from exc
+    response.headers["Cache-Control"] = "public, max-age=900"
+    response.headers["X-Data-Source"] = "NAVER DataLab search trends"
+    return payload
+
+
 @app.get("/api/kr/overnight")
 @limiter.limit(config.RATE_LIMIT)
 def kr_overnight(request: Request, response: Response) -> dict:
