@@ -229,11 +229,8 @@
     var input = document.getElementById("lookup-input");
     var panel = document.getElementById("lookup-results");
     if (!input || !panel) return;
-    var GROUPS = {
-      kr_stock: { ko: "국내", en: "Korea" },
-      us_stock: { ko: "미국", en: "US" },
-      coin: { ko: "코인", en: "Crypto" },
-    };
+    // 묶음 이름은 API가 두 언어로 함께 준다 — 여기서 사전을 또 만들면
+    // 새 묶음이 생겼을 때 이름 없는 칸이 뜬다.
     var lang = function () { return document.documentElement.lang === "en" ? "en" : "ko"; };
     var links = [], active = -1, timer = 0, controller = null;
 
@@ -258,13 +255,13 @@
       active = -1;
       var shown = 0;
       ((payload && payload.groups) || []).forEach(function (group) {
-        var items = group.items || [];
-        if (!items.length) return;
+        var results = group.results || [];
+        if (!results.length) return;
         var head = document.createElement("p");
         head.className = "group";
-        head.textContent = (GROUPS[group.kind] || { ko: group.kind, en: group.kind })[lang()];
+        head.textContent = (group.label && group.label[lang()]) || group.kind || "";
         panel.append(head);
-        items.forEach(function (item) {
+        results.forEach(function (item) {
           if (!item.hub) return;
           var link = document.createElement("a");
           link.href = item.hub;
@@ -274,7 +271,8 @@
           sym.textContent = item.symbol || "";
           var name = document.createElement("span");
           name.className = "nm";
-          name.textContent = item.name || item.symbol || "";
+          // 코인은 영어 이름을 따로 준다. 없으면 한국어 이름이 곧 그 이름이다.
+          name.textContent = (lang() === "en" && item.name_en) || item.name || item.symbol || "";
           link.append(sym, name);
           panel.append(link);
           links.push(link);
