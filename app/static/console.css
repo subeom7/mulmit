@@ -1049,3 +1049,62 @@ html[data-lang="en"] .lang-en { display: revert; }
   .bio-cat-when { flex-direction: row; align-items: center; gap: var(--sp-2); }
   .bio-cat-tags { justify-content: flex-start; }
 }
+
+/* 국민연금 국내주식 포트폴리오 — 도넛 + 범례.
+ *
+ * 좁은 화면에서는 도넛 아래로 범례가 내려간다. 범례를 도넛 옆에 억지로 붙여
+ * 두면 21줄이 세로로 눌려 읽을 수 없게 된다. */
+.krpf-wrap {
+  display: flex; flex-wrap: wrap; gap: var(--sp-4);
+  align-items: center; justify-content: center;
+}
+.krpf-donut { width: 300px; height: 300px; flex: 0 0 auto; }
+.krpf-slice { stroke: var(--panel-2); stroke-width: 1; transition: opacity .12s ease; }
+.krpf-wrap:hover .krpf-slice { opacity: .55; }
+.krpf-wrap .krpf-slice:hover { opacity: 1; }
+.krpf-center-value {
+  font-family: var(--num); font-size: 22px; font-weight: 650; fill: var(--ink);
+}
+.krpf-center-label { font-family: var(--sans); font-size: 11px; fill: var(--ink-3); }
+
+/* 범례를 마음껏 늘리면 넓은 화면에서 다섯 열로 퍼져 1,000px을 먹고, 그 옆의
+ * 도넛이 구석에 박힌 것처럼 보인다(2026-08-24 로컬에서 눈으로 확인). 최대 폭을
+ * 묶어 두면 셋 열에서 멈추고 그림과 범례가 한 덩어리로 읽힌다. */
+.krpf-legend {
+  list-style: none; margin: 0; padding: 0; flex: 1 1 300px; max-width: 900px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 2px var(--sp-4); min-width: 0;
+}
+.krpf-legend li {
+  display: flex; align-items: center; gap: var(--sp-2);
+  font-size: var(--fs-xs); padding: 3px 0; min-width: 0;
+}
+.krpf-dot { width: 9px; height: 9px; border-radius: 2px; flex: 0 0 auto; }
+.krpf-legend-name {
+  color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.krpf-legend-pct {
+  margin-left: auto; font-family: var(--num); color: var(--ink-3); flex: 0 0 auto;
+}
+
+.krpf-stats {
+  display: flex; flex-wrap: wrap; gap: var(--sp-4);
+  margin: var(--sp-4) 0 0; padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+.krpf-stats dt { font-size: var(--fs-xs); color: var(--ink-3); margin: 0 0 2px; }
+.krpf-stats dd {
+  margin: 0; font-family: var(--num); font-size: var(--fs-sm); color: var(--ink);
+}
+.krpf-caption {
+  margin: var(--sp-4) 0 var(--sp-2); font-size: var(--fs-xs); color: var(--ink-3);
+}
+/* 다섯 칸뿐이라 내용 폭에 맡기면 표가 패널 왼쪽 400px에 몰린다. */
+.krpf-table { width: 100%; max-width: 860px; }
+.krpf-table td:nth-child(2), .krpf-table th:nth-child(2) { text-align: left; }
+.krpf-asof { color: var(--ink-2); }
+
+@media (max-width: 520px) {
+  .krpf-donut { width: 240px; height: 240px; }
+  .krpf-legend { grid-template-columns: 1fr; }
+}

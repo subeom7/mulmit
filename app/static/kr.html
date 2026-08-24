@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
   <link rel="stylesheet" href="/static/monitor.css?v=08cab506e0">
   <link rel="stylesheet" href="/static/tokens.css?v=ccb2656202">
-  <link rel="stylesheet" href="/static/console.css?v=dbef7bd880">
+  <link rel="stylesheet" href="/static/console.css?v=134b5d9972">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -149,6 +149,20 @@
       </div>
     </section>
 
+    <!-- 연말 스냅샷(구성)을 먼저, 그 뒤의 변동(5% 공시)을 아래에 둔다.
+         두 섹션은 같은 기관을 다루지만 재는 것이 다르다 - 여기는 포트폴리오
+         대비 비중, 아래는 회사 대비 지분율이다. -->
+    <section class="console-section" id="kr-pension-portfolio" hidden aria-labelledby="krpf-title">
+      <header>
+        <h2 id="krpf-title" data-i18n="krpf.title">국민연금 국내주식 포트폴리오</h2>
+      </header>
+      <p class="section-copy" data-i18n="krpf.copy" style="margin:0 0 12px">국민연금공단이 공시한 국내주식 종목별 평가액과 자산군 내 비중입니다. 연 1회 갱신되는 연말 스냅샷이라 현재 보유와 다를 수 있습니다. 아래 5% 공시가 그 뒤의 변동입니다.</p>
+      <div class="panel">
+        <div id="krpf-body"></div>
+        <footer class="panel-footer" id="krpf-footer"></footer>
+      </div>
+    </section>
+
     <section class="console-section" id="kr-pension" hidden aria-labelledby="krp-title">
       <header>
         <h2 id="krp-title" data-i18n="krp.title">국민연금 5% 공시</h2>
@@ -266,7 +280,7 @@
 
   <script>window.MULMIT_PAGE = "kr";</script>
   <script src="/static/console.js?v=fafc741bcd" defer></script>
-  <script src="/static/monitor.js?v=af4fb2a2fe" defer></script>
+  <script src="/static/monitor.js?v=0751312712" defer></script>
   <script src="/static/search.js?v=e2093e0d4d" defer></script>
 </body>
 </html>

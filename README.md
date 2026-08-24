@@ -250,6 +250,7 @@ FRED lane이 열려도 `VIXCLS`가 계속 비어 있는 이유다.
 | OFR (미 재무부) | `OFR_ENABLED` | 금융스트레스지수 종합·범주 | 연방 저작물, 저작권 주장 없음. 재무부 인장·로고 사용 금지 | `approved` (`DS-2026-009`) |
 | 한국은행 ECOS | `ECOS_ENABLED`, `ECOS_API_KEY` | 한국 거시 시계열 | 인증키를 **"영리" 이용형태로 승인**(2026-08-20) | `approved` (2026-08-20) |
 | 금융위 공공데이터 | `FSC_ENABLED`, `FSC_API_KEY` | 코스피·코스닥 지수군, 전 종목 공식 종가, ETF | data.go.kr 이용허락범위 **"제한 없음"**·무료 | `approved` |
+| 국민연금공단 (공공데이터포털 파일) | **게이트 없음** — 저장소 내 CSV | 국내주식 1,200종목 평가액·자산군 내 비중·지분율(연말) | data.go.kr 이용허락범위 **"제한 없음"**. 연 1회 갱신이라 API 없이 파일로 싣는다 | `approved` (`DS-2026-023`) |
 | 금감원 Open DART | `DART_ENABLED`, `DART_API_KEY` | 내부자·5% 대량보유·연금·재무제표·주요사항보고 | 법정 공시 개방 API. 재배포 금지 조항 없이 허용량 제한만 | `approved` (범위 한정) |
 | SEC EDGAR | `SEC_EDGAR_ENABLED`, `SEC_EDGAR_USER_AGENT` | Form 3·4·5, XBRL 재무제표, 8-K | 연방 공시 시스템. 연락처 담긴 User-Agent + 초당 10요청 상한 | `approved` (범위 한정) |
 | 미 하원 서기국 PTR | `US_PTR_ENABLED` | STOCK Act 거래보고 | 법정 공시. EIGA §105(c) 고지를 응답에 동봉 | `approved` — 상원 eFD는 **보류** |
@@ -425,6 +426,7 @@ PR 전에 `ruff`와 `pytest`를 로컬에서 돌린다. 게이트 값은 이미�
 | `GET /api/kr/insider/{code}` | 임원·주요주주 소유상황 보고 |
 | `GET /api/kr/holdings` | 대량보유(5%) 보고 |
 | `GET /api/kr/pension` | 국민연금 대량보유 공시 |
+| `GET /api/kr/pension-portfolio` | 국민연금 국내주식 포트폴리오(연말 스냅샷, 저장소 내 파일) |
 | `GET /api/kr/events` | DART 주요사항보고 속보 |
 | `GET /api/kr/press` | 정부 보도자료 헤드라인 |
 | `GET /api/kr/search-interest` | 종목 검색어 관심도 (네이버 데이터랩, 무저장) |
