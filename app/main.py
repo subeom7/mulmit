@@ -1475,10 +1475,18 @@ def kr_events_feed(request: Request, response: Response) -> dict:
 
 @app.get("/api/us/ptr")
 @limiter.limit(config.RATE_LIMIT)
-def us_ptr_filings(request: Request, response: Response) -> dict:
-    """미 하원 의원 주기거래보고(PTR). ingest 배치가 저장한 결과만 읽는다."""
+def us_ptr_filings(
+    request: Request,
+    response: Response,
+    ticker: str | None = Query(None, max_length=12),
+) -> dict:
+    """미 하원 의원 주기거래보고(PTR). ingest 배치가 저장한 결과만 읽는다.
+
+    `ticker`를 주면 그 종목의 거래만. 티커가 보고서가 아니라 그 안의 거래에
+    붙어 있어 두 단계로 좁힌다.
+    """
     try:
-        payload = us_ptr.get_filings()
+        payload = us_ptr.get_filings(ticker=ticker)
     except us_ptr.UsPtrDisabled as exc:
         raise HTTPException(
             status_code=503,

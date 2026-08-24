@@ -300,6 +300,9 @@ async function loadUs() {
   } catch (e) { console.warn('[stock] section failed', e); }
   // 의원 거래 언급 (PTR)
   try {
+    // 서버가 티커로 좁혀 준다. 전역 목록을 받아 여기서 거르면 창 안에 그 종목이
+    // 아예 없는 경우가 대부분이라 표가 늘 비어 보인다. 아래 거르기는 남겨 둔다 —
+    // 보고서 안에 다른 종목의 거래가 섞여 오더라도 이 표에는 이 종목만 선다.
     const p = await fetchJson("/api/us/ptr?ticker=" + encodeURIComponent(SYMBOL));
     const mine = [];
     for (const filing of (p.filings || [])) for (const tr of (filing.transactions || [])) {
