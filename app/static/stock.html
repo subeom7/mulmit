@@ -58,6 +58,10 @@
      "열기" 21px뿐이라, 왼쪽 정렬이면 좌 9px 대 우 55px로 한쪽에 쏠린다(실측).
      오른쪽 정렬은 그 쏠림을 반대편으로 옮길 뿐이다. 가운데면 32/32가 된다. */
   th.doc, td.doc { white-space: nowrap; text-align: center; }
+  .ksi-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 12px; }
+  .ksi-row .stock-kpi { flex: 1 1 150px; }
+  .ksi-spark { height: 46px; }
+  .ksi-spark svg { width: 100%; height: 100%; }
   /* 서버가 넣은 색인용 본문. JS가 성공하면 지워지므로 대개 안 보이지만,
      보일 때는 진짜 섹션과 같은 리듬이어야 한다. */
   #ssr-body .ssr-block { margin: 0 0 26px; }
@@ -124,6 +128,21 @@
       <h2 id="events-title">공시 이벤트</h2>
       <p class="sub" id="events-sub"></p>
       <div class="table-scroll"><table class="stock-table" id="events-table"><thead></thead><tbody></tbody></table></div>
+    </section>
+
+    <!-- 검색 관심도. 서버 렌더 블록에는 못 들어간다 — 이 lane은 값을 저장하지
+         않기로 한 설계라(네이버 약관을 아예 안 건드리는 자리) 크롤러에게 줄
+         저장본이 없다. 사람에게만 보이는 섹션이다. -->
+    <section class="stock-section" id="sec-ksi" hidden>
+      <h2>종목 검색 관심도</h2>
+      <p class="sub" id="ksi-sub"></p>
+      <div class="ksi-row">
+        <div class="stock-kpi"><small>평소 대비</small><strong id="ksi-vs">—</strong><span id="ksi-vs-note"></span></div>
+        <div class="stock-kpi"><small>90일 위치</small><strong id="ksi-pct">—</strong><span>백분위</span></div>
+        <div class="stock-kpi"><small>관심도 수준</small><strong id="ksi-level">—</strong><span id="ksi-level-note"></span></div>
+      </div>
+      <div id="ksi-spark" class="ksi-spark"></div>
+      <p class="stock-note" id="ksi-note"></p>
     </section>
 
     <section class="stock-section" id="sec-extra" hidden>
@@ -256,6 +275,37 @@ async function loadKr() {
       $id("sec-events").hidden = false;
     }
   } catch (e) { console.warn('[stock] section failed', e); }
+  // 검색 관심도 (국내만)
+  //
+  // 상류 호출 한 번이다. 앵커를 함께 부르므로 수준이 다른 화면의 값과 견줄 수
+  // 있고, 6시간 캐시가 붙어 있어 한 종목을 하루에 네 번 넘게 묻지 않는다.
+  try {
+    const k = await fetchJson("/api/kr/search-interest/" + SYMBOL);
+    const stock = k.stock || {};
+    const vs = stock.vs_baseline, pct = stock.percentile, level = stock.level;
+    if (vs != null || pct != null) {
+      $id("ksi-sub").textContent = `네이버 통합검색 ${k.window?.days || 90}일 추이 · 같은 요일끼리 비교`;
+      const vsNode = $id("ksi-vs");
+      vsNode.textContent = vs == null ? "표본 부족" : `×${vs.toFixed(2)}`;
+      vsNode.className = vs == null ? "" : vs > 1 ? "up" : vs < 1 ? "down" : "";
+      $id("ksi-vs-note").textContent = stock.compared_to
+        ? `같은 요일 ${stock.compared_to.samples}개 중앙값 대비` : "";
+      $id("ksi-pct").textContent = pct == null ? "—" : `${pct.toFixed(0)}%`;
+      $id("ksi-level").textContent = level == null ? "—"
+        : level >= 10 ? level.toFixed(1) : level >= 1 ? level.toFixed(2) : level.toFixed(3);
+      $id("ksi-level-note").textContent = k.anchor ? `${k.anchor.name} = 100 기준` : "";
+      // 추이선은 다른 화면과 같은 함수를 쓴다 — 창을 자르는 규칙이 갈리면
+      // 같은 그림이 다른 뜻이 된다.
+      const spark = window.mulmitSparkline?.((stock.series || []).map(
+        (p) => ({ date: p.period, value: p.ratio })));
+      const host = $id("ksi-spark");
+      host.replaceChildren();
+      if (spark) host.append(spark.node);
+      $id("ksi-note").textContent = k.basis_ko || "";
+      $id("sec-ksi").hidden = false;
+    }
+  } catch (e) { console.warn('[stock] section failed', e); }
+
   // 국민연금 보유 언급
   try {
     const p = await fetchJson("/api/kr/pension");
@@ -380,6 +430,10 @@ try {
   fetch("/api/pageview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: "/stock", ref: document.referrer || "", id }), keepalive: true }).catch(() => {});
 } catch (e) { console.warn('[stock] beacon failed', e); }
 </script>
+  <!-- 추이선을 다른 화면과 **같은 함수**로 그리려고 싣는다(window.mulmitSparkline).
+       콘솔 셸이 없는 페이지지만 초기화가 전부 요소 없으면 빠져나가고, 이 페이지에는
+       모드 의존 요소가 없어서 data-mode가 붙어도 바뀌는 것이 없다. -->
+  <script src="/static/console.js?v=fafc741bcd" defer></script>
   <script src="/static/search.js?v=e2093e0d4d" defer></script>
 </body>
 </html>

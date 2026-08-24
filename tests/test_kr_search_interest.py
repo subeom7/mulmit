@@ -523,3 +523,38 @@ def test_a_moved_row_is_marked_neutrally_not_in_the_price_colours():
     assert "var(--up)" not in block and "var(--down)" not in block, (
         "옮긴 줄에 등락 색을 쓰지 말 것 — 숫자의 색과 다른 주장을 하게 된다"
     )
+
+
+def test_one_stock_is_measured_against_the_anchor(open_lane, roster):
+    """앵커 없이 혼자 부르면 그 종목이 자기 요청의 최댓값이라 언제나 100이다.
+
+    그건 아무 뜻도 없는 숫자다. 종목 화면에서 부르는 경로는 앵커를 함께 넣어
+    한 번에 묻는다 — 그래야 이 화면의 수준이 `/kr` 표의 값과 같은 자로 잰
+    것이 된다.
+    """
+    provider = FakeProvider({"삼성전자": _flat(80.0), "SK하이닉스": _flat(20.0)})
+    payload = kr_search_interest.build_for("000660", today=dt.date(2026, 8, 23), provider=provider)
+
+    assert provider.calls == [["삼성전자", "SK하이닉스"]], "상류 호출은 한 번, 앵커와 함께"
+    assert payload["stock"]["code"] == "000660"
+    assert payload["stock"]["level"] == 25.0, "앵커=100 기준으로 잰 값이어야 한다"
+    assert payload["anchor"]["code"] == "005930"
+
+
+def test_asking_for_the_anchor_itself_does_not_ask_twice(open_lane, roster):
+    provider = FakeProvider({"삼성전자": _flat(80.0)})
+    payload = kr_search_interest.build_for("005930", today=dt.date(2026, 8, 23), provider=provider)
+    assert provider.calls == [["삼성전자"]]
+    assert payload["stock"]["level"] == 100.0
+
+
+def test_the_stock_screen_uses_the_shared_sparkline() -> None:
+    """창을 자르는 규칙이 화면마다 갈리면 같은 그림이 다른 뜻이 된다."""
+    from pathlib import Path
+
+    static = Path(__file__).resolve().parents[1] / "app" / "static"
+    source = (static / "stock.html").read_text(encoding="utf-8")
+    assert "window.mulmitSparkline" in source
+    assert "/static/console.js" in source, (
+        "그 함수는 console.js에 있다 — 안 실으면 조용히 undefined가 되어 선이 안 그려진다"
+    )
