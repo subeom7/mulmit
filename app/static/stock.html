@@ -49,7 +49,12 @@
     @media (max-width: 560px) { .stock-table { min-width: 620px; } }
   /* 원문 열. 값이 아니라 나가는 문이므로 값보다 조용해야 한다 — 표를 훑는
      눈이 숫자에서 걸리지 않도록 색은 옅게 두고, 올려다볼 때만 또렷해진다. */
-  th.doc, td.doc { width: 1%; white-space: nowrap; }
+  /* 폭을 지정하지 않는다. `width: 1%`는 100% 폭 표에서 열을 좁히는 오래된 수법인데,
+     auto 폭 표에서는 정반대로 작동한다 — 퍼센트를 의미 있게 만들려고 브라우저가 표를
+     컨테이너 폭까지 늘려 버린다. 실측(2026-08-24): 이 한 줄 때문에 표가 1288px로
+     벌어져 보고일 칸이 323px였고, 빼자마자 408px로 줄면서 87px가 됐다. 내용 폭으로
+     서는 표에서는 아무것도 안 하는 것이 좁히는 방법이다. */
+  th.doc, td.doc { white-space: nowrap; }
   .doc-link { color: var(--faint); text-decoration: none; border-bottom: 1px solid transparent; }
   .doc-link:hover, .doc-link:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
 </style>

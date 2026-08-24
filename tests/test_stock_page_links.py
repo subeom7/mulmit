@@ -114,13 +114,15 @@ def test_the_source_column_style_actually_matches_the_table() -> None:
     (2026-08-24 라이브 실측).
     """
     source = _source()
-    match = re.search(r"^\s*([^\n{]*\btd\.doc\b[^\n{]*)\{", source, re.M)
-    assert match, "원문 열 폭을 잡는 규칙이 있어야 한다"
-    selector = match.group(1)
+    match = re.search(r"^\s*([^\n{]*\btd\.doc\b[^\n{]*)\{([^}]*)\}", source, re.M)
+    assert match, "원문 열 규칙이 있어야 한다"
+    selector, body = match.group(1), match.group(2)
     assert "accessible-table" not in selector, (
         "이 페이지의 표는 stock-table이다 — accessible-table로는 아무것도 안 잡힌다"
     )
-    assert "width" in source[match.end() : match.end() + 120], "폭을 제한해야 한다"
+    assert "%" not in body, (
+        "퍼센트 폭은 auto 폭 표를 오히려 컨테이너 폭까지 늘린다 — 실측 1288px 대 408px"
+    )
 
 
 def test_the_tables_stand_at_content_width() -> None:
