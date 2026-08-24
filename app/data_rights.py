@@ -144,6 +144,18 @@ US_FUNDAMENTALS_NOT_CONFIGURED = {
     "message": "SEC_EDGAR_USER_AGENT must declare a contact before EDGAR use.",
 }
 
+US_MANAGERS_DISABLED = {
+    "code": "us_managers_disabled",
+    "status": "disabled",
+    "message": "The SEC EDGAR lane is disabled for this deployment.",
+}
+
+US_MANAGERS_NOT_CONFIGURED = {
+    "code": "us_managers_not_configured",
+    "status": "not_configured",
+    "message": "SEC_EDGAR_USER_AGENT must declare a contact before EDGAR use.",
+}
+
 CRYPTO_SECTION_DISABLED = {
     "code": "crypto_section_disabled",
     "status": "disabled",

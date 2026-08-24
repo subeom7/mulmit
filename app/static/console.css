@@ -1108,3 +1108,60 @@ html[data-lang="en"] .lang-en { display: revert; }
   .krpf-donut { width: 240px; height: 240px; }
   .krpf-legend { grid-template-columns: 1fr; }
 }
+
+/* 13F 기관 포트폴리오 — 운용자 카드 격자.
+ *
+ * 카드가 여섯이라 국민연금처럼 도넛 하나를 크게 놓을 수 없다. 카드마다 작은
+ * 도넛 + 상위 여덟 줄만 세우고, 나머지는 SEC 원문 링크로 넘긴다. */
+.usm-grid {
+  display: grid; gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+.usm-card {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  padding: var(--sp-4); min-width: 0;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2);
+}
+.usm-card-head { display: flex; flex-direction: column; gap: 2px; }
+.usm-card-head h2, .usm-card-head h3 {
+  margin: 0; font-size: var(--fs-sm); color: var(--ink);
+}
+.usm-person { margin: 0; font-size: var(--fs-xs); color: var(--ink-3); }
+
+.usm-donut { width: 190px; height: 190px; align-self: center; }
+.usm-slice { stroke: var(--panel-2); stroke-width: 1; transition: opacity .12s ease; }
+.usm-card:hover .usm-slice { opacity: .55; }
+.usm-card .usm-slice:hover { opacity: 1; }
+.usm-center-value {
+  font-family: var(--num); font-size: 15px; font-weight: 650; fill: var(--ink);
+}
+.usm-center-label { font-family: var(--sans); font-size: 9px; fill: var(--ink-3); }
+
+.usm-legend { list-style: none; margin: 0; padding: 0; min-width: 0; }
+.usm-legend li {
+  display: flex; align-items: center; gap: var(--sp-2);
+  font-size: var(--fs-xs); padding: 2px 0; min-width: 0;
+}
+.usm-legend-more { color: var(--ink-3); padding-left: 17px; }
+
+/* 배지는 전부 수치에서 계산된다. 경고 톤은 "틀렸다"가 아니라 "이 그림을 읽을
+ * 때 알아야 하는 사정이 있다"는 뜻이다. */
+.usm-badges {
+  list-style: none; display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0;
+}
+.usm-badge {
+  font-size: 11px; padding: 2px 7px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--ink-3);
+}
+.usm-badge-warn { color: var(--ink-2); border-color: var(--ink-4, #9aa0a6); }
+
+.usm-note {
+  margin: 0; font-size: var(--fs-xs); line-height: 1.5; color: var(--ink-3);
+  padding-left: var(--sp-3); border-left: 2px solid var(--line);
+}
+.usm-card-foot { margin: 0; font-size: var(--fs-xs); }
+.usm-failed { color: var(--ink-3); }
+
+@media (max-width: 420px) {
+  .usm-grid { grid-template-columns: 1fr; }
+}

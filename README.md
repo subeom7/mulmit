@@ -434,6 +434,7 @@ PR 전에 `ruff`와 `pytest`를 로컬에서 돌린다. 게이트 값은 이미�
 | `GET /api/us/events` | 8-K 이벤트 피드 |
 | `GET /api/us/overnight` | 미국 대형주 장 밖 참고 신호 — 정규장이 닫혔을 때만 |
 | `GET /api/us/ptr` | 미 하원 의원 거래(STOCK Act) — §105(c) 고지 동봉 |
+| `GET /api/us/managers` | 13F 기관 포트폴리오(버핏·드러켄밀러·애크먼·우드·피셔·달리오) |
 | `GET /api/insider/{ticker}` | SEC Form 3·4·5 (거래 성격별 분리) |
 | `GET /api/crypto/overview` | 퍼프 시세 카드 |
 | `GET /api/crypto/board` | 전체 시장 보드 — 24h 급등락·OI·거래대금·펀딩 극단값 |

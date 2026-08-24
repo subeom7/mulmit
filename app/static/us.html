@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
   <link rel="stylesheet" href="/static/monitor.css?v=08cab506e0">
   <link rel="stylesheet" href="/static/tokens.css?v=ccb2656202">
-  <link rel="stylesheet" href="/static/console.css?v=134b5d9972">
+  <link rel="stylesheet" href="/static/console.css?v=e99d0d3c57">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -146,6 +146,20 @@
         <div class="notice-line"><span class="status-badge info" data-i18n="tv.embed">외부 위젯</span><span data-i18n="tv.notice">이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.</span></div>
         <div id="tradingview-host" class="tradingview-host lazy-host" data-lazy="tradingview"><div class="state-block" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div></div>
         <footer class="panel-footer"><a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView</a><span data-i18n="tv.terms">데이터·표시 조건은 제공자 정책을 따릅니다.</span></footer>
+      </div>
+    </section>
+
+    <!-- 13F는 분기 서식이고 45일 지연이 있다. 그리고 공매도·채권·현금·해외
+         상장·사모 지분이 안 들어온다 - 그래서 "자산 전부"가 아니라 "미국 상장주식
+         롱 포지션의 구성"이라고 섹션 머리에서 못 박는다. -->
+    <section class="console-section" id="us-managers" hidden aria-labelledby="usm-title">
+      <header>
+        <h2 id="usm-title" data-i18n="usm.title">13F 기관 포트폴리오</h2>
+      </header>
+      <p class="section-copy" data-i18n="usm.copy" style="margin:0 0 12px">미국 증권거래위원회에 제출된 13F-HR(분기 기관 보유 신고)을 그대로 옮깁니다. 분기 말 기준이고 45일 안에 내면 되므로 현재 보유와 다를 수 있습니다. 이 서식에는 공매도·채권·현금·해외 상장 주식·사모 지분이 들어오지 않으므로, 여기 보이는 것은 자산 전부가 아니라 미국 상장주식 롱 포지션의 구성입니다. 투자 권유가 아닙니다.</p>
+      <div class="panel">
+        <div id="usm-body"></div>
+        <footer class="panel-footer" id="usm-footer"></footer>
       </div>
     </section>
 
@@ -301,7 +315,7 @@
 
   <script>window.MULMIT_PAGE = "us";</script>
   <script src="/static/console.js?v=fafc741bcd" defer></script>
-  <script src="/static/monitor.js?v=0751312712" defer></script>
+  <script src="/static/monitor.js?v=49eba3837b" defer></script>
   <script src="/static/search.js?v=e2093e0d4d" defer></script>
 </body>
 </html>

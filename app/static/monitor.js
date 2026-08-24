@@ -185,7 +185,7 @@ const TEXT = {
     "ksi.anchorNote": "수준은 {name}를 100으로 둔 상대 위치입니다. 검색량의 절댓값이 아니며, 순위 변동은 전날 대비입니다.",
     "kre.colName": "종목", "kre.colClose": "종가", "kre.colDay": "등락", "kre.colNav": "NAV", "kre.colPremium": "괴리율", "kre.colIndex": "기초지수", "kre.colValue": "거래대금",
     "kre.window": "상장 {total}종목 중 거래대금 상위 {count}", "kre.asof": "기준 {date}",
-    "ptr.title": "미 하원 의원 주식 거래", "ptr.copy": "STOCK Act에 따른 주기거래보고(PTR)를 그대로 옮깁니다. 금액은 구간으로만 공시되며, 수기 제출분은 원문 링크로 안내합니다. 상원은 수집 경로가 막혀 있어 포함되지 않습니다.",
+    "usm.title": "13F 기관 포트폴리오", "usm.copy": "미국 증권거래위원회에 제출된 13F-HR(분기 기관 보유 신고)을 그대로 옮깁니다. 분기 말 기준이고 45일 안에 내면 되므로 현재 보유와 다를 수 있습니다. 이 서식에는 공매도·채권·현금·해외 상장 주식·사모 지분이 들어오지 않으므로, 여기 보이는 것은 자산 전부가 아니라 미국 상장주식 롱 포지션의 구성입니다. 투자 권유가 아닙니다.", "usm.centerLabel": "미국 상장주식", "usm.rest": "기타", "usm.restCount": "{n}종목", "usm.andMore": "이하 {n}종목", "usm.period": "{date} 기준", "usm.lagged": "신고 지연 {n}일", "usm.options": "옵션 {n}%", "usm.indexed": "지수 상품 {n}%", "usm.manyNames": "보유 {n}종목", "usm.noMajority": "상위 조각이 과반에 못 미침", "usm.filing": "{form} 원문", "usm.failed": "읽지 못한 신고자 {n}곳", "ptr.title": "미 하원 의원 주식 거래", "ptr.copy": "STOCK Act에 따른 주기거래보고(PTR)를 그대로 옮깁니다. 금액은 구간으로만 공시되며, 수기 제출분은 원문 링크로 안내합니다. 상원은 수집 경로가 막혀 있어 포함되지 않습니다.",
     "ev.colTicker": "티커",
     "ptr.colDistrict": "지역구", "ptr.colTicker": "티커", "ptr.colOwner": "보유자",
     "ptr.colDate": "거래일", "ptr.colMember": "의원", "ptr.colAsset": "자산", "ptr.colType": "유형", "ptr.colAmount": "금액 구간", "ptr.colFiled": "신고일",
@@ -364,7 +364,7 @@ const TEXT = {
     "ksi.anchorNote": "Level is measured against {name} at 100. It is not an absolute search count, and rank moves are against the previous day.",
     "kre.colName": "Fund", "kre.colClose": "Close", "kre.colDay": "Day", "kre.colNav": "NAV", "kre.colPremium": "Premium", "kre.colIndex": "Underlying index", "kre.colValue": "Value traded",
     "kre.window": "Top {count} of {total} listed, by traded value", "kre.asof": "As of {date}",
-    "ptr.title": "US House stock trades", "ptr.copy": "Periodic transaction reports under the STOCK Act, relayed verbatim. Amounts are disclosed only as ranges; scanned paper filings link to the original. The Senate is not included because its portal blocks server collection.",
+    "usm.title": "13F institutional portfolios", "usm.copy": "Form 13F-HR quarterly institutional holdings, relayed verbatim from the SEC. Positions are as of quarter end and may be filed up to 45 days later, so they may differ from current holdings. The form excludes short positions, bonds, cash, non-US listings and private stakes, so this is the composition of a US-listed long book, not a whole portfolio. Not investment advice.", "usm.centerLabel": "US-listed long book", "usm.rest": "Others", "usm.restCount": "{n} names", "usm.andMore": "{n} more named", "usm.period": "As of {date}", "usm.lagged": "{n} days since quarter end", "usm.options": "Options {n}%", "usm.indexed": "Index products {n}%", "usm.manyNames": "{n} holdings", "usm.noMajority": "Named slices are not a majority", "usm.filing": "{form} filing", "usm.failed": "{n} filers unread", "ptr.title": "US House stock trades", "ptr.copy": "Periodic transaction reports under the STOCK Act, relayed verbatim. Amounts are disclosed only as ranges; scanned paper filings link to the original. The Senate is not included because its portal blocks server collection.",
     "ev.colTicker": "Ticker",
     "ptr.colDistrict": "District", "ptr.colTicker": "Ticker", "ptr.colOwner": "Owner",
     "ptr.colDate": "Traded", "ptr.colMember": "Member", "ptr.colAsset": "Asset", "ptr.colType": "Type", "ptr.colAmount": "Amount range", "ptr.colFiled": "Filed",
@@ -1012,6 +1012,7 @@ function renderJumpNav() {
     { id: "kr-pension-portfolio", text: t("krpf.title") },
     { id: "kr-pension", text: t("krp.title") },
     { id: "constituent-heatmap", text: t("tv.title") },
+    { id: "us-managers", text: t("usm.title") },
     { id: "us-ptr", text: t("ptr.title") },
     { id: "us-events", text: t("ev.title") },
     { id: "econ-calendar", text: t("cal.title") },
@@ -1313,6 +1314,7 @@ const PAGE_FETCHES = {
   krEvents: ["kr"],
   krEtf: ["kr"],
   usPtr: ["us"],
+  usManagers: ["us"],
   usOvernight: ["landing", "us"],
   usEvents: ["us"],
   calendar: ["landing", "us"],
@@ -1337,7 +1339,7 @@ async function loadCore() {
   $("#refresh-button")?.setAttribute("aria-busy", "true");
   state.records.clear(); state.restricted.clear();
   const request = (url, key) => onPage(...PAGE_FETCHES[key]) ? fetchJson(url, key) : Promise.resolve(null);
-  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krPensionPortfolio, krHoldings, krEvents, krEtf, usPtr, usOvernight, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, cryptoRegime, cryptoLiquidations, cryptoNews, bioTrials, bioFda, bioAdcomm, bioMfds, newsVideos, krSearchInterest] = await Promise.all([
+  const [macro, assets, sectors, weekend, stress, sentiment, krIndices, krOvernight, krPension, krPensionPortfolio, krHoldings, krEvents, krEtf, usPtr, usManagers, usOvernight, usEvents, calendar, feed, cryptoOverview, cryptoSentiment, cryptoVolatility, cryptoKimchi, cryptoStructure, cryptoGas, cryptoBoard, cryptoRegime, cryptoLiquidations, cryptoNews, bioTrials, bioFda, bioAdcomm, bioMfds, newsVideos, krSearchInterest] = await Promise.all([
     request("/api/market/macro?history=3y", "macro"), request("/api/market/assets?history=3y", "assets"),
     request("/api/market/sectors", "sectors"), request("/api/market/weekend", "weekend"),
     request("/api/market/stress", "stress"), request("/api/market/sentiment", "sentiment"), request("/api/kr/indices", "krIndices"),
@@ -1346,6 +1348,7 @@ async function loadCore() {
     request("/api/kr/holdings", "krHoldings"),
     request("/api/kr/events", "krEvents"),
     request("/api/kr/etf", "krEtf"), request("/api/us/ptr", "usPtr"),
+    request("/api/us/managers", "usManagers"),
     request("/api/us/overnight", "usOvernight"),
     request("/api/us/events", "usEvents"),
     request("/api/calendar", "calendar"),
@@ -1369,7 +1372,7 @@ async function loadCore() {
   ]);
   state.macro = macro; state.assets = assets; state.sectors = sectors; state.weekend = weekend;
   state.stress = stress; state.sentiment = sentiment; state.krIndices = krIndices; state.krOvernight = krOvernight; state.krPension = krPension; state.krPensionPortfolio = krPensionPortfolio; state.krHoldings = krHoldings;
-  state.krEvents = krEvents; state.krEtf = krEtf; state.krSearchInterest = krSearchInterest; state.usPtr = usPtr; state.usOvernight = usOvernight; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
+  state.krEvents = krEvents; state.krEtf = krEtf; state.krSearchInterest = krSearchInterest; state.usPtr = usPtr; state.usManagers = usManagers; state.usOvernight = usOvernight; state.usEvents = usEvents; state.calendar = calendar; state.feed = feed;
   state.cryptoOverview = cryptoOverview; state.cryptoSentiment = cryptoSentiment; state.cryptoVolatility = cryptoVolatility;
   state.cryptoKimchi = cryptoKimchi; state.cryptoStructure = cryptoStructure; state.cryptoGas = cryptoGas; state.cryptoBoard = cryptoBoard; state.cryptoRegime = cryptoRegime; state.cryptoLiquidations = cryptoLiquidations; state.cryptoNews = cryptoNews; state.bioTrials = bioTrials; state.bioFda = bioFda; state.bioAdcomm = bioAdcomm; state.bioMfds = bioMfds; state.newsVideos = newsVideos;
   ingestPayload(macro, "macro"); ingestPayload(assets, "assets"); ingestPayload(sentimentRecordPayload(sentiment), "sentiment");
@@ -1377,7 +1380,7 @@ async function loadCore() {
 }
 
 function renderAll() {
-  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPensionPortfolio(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderKrSearchInterest(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
+  renderSummary(); renderMetricCards(); renderAttribution(); renderSectors(); renderWeekend(); renderStressIndex(); renderSentimentIndex(); renderKrIndices(); renderKrOvernight(); renderKroOfficialStrip(); renderFeed(); renderKrPensionPortfolio(); renderKrPension(); renderKrHoldings(); renderKrEvents(); renderKrEtf(); renderKrSearchInterest(); renderUsManagers(); renderUsPtr(); renderUsEvents(); renderCalendar(); renderFomcDots();
   renderCryptoOverview(); renderCryptoSentiment(); renderCryptoDerivatives(); renderCryptoVolatility(); renderCryptoKimchi(); renderCryptoStructure(); renderCryptoGas(); renderCryptoBoard(); renderCryptoRegime(); renderCryptoLiquidations(); renderUsOvernight(); renderCryptoNews(); renderBioCatalysts(); renderBioTrials(); renderBioFda(); renderBioAdcomm(); renderBioMfds(); renderNewsVideos();
   renderMastTicker(); renderZonePreviews(); updateSessionBadge(); renderPresenceBadge();
   // The sector monitor and the correlation matrix live on the quarantined
@@ -1583,6 +1586,271 @@ const KRP_REASON_EN = {
     "Purpose changed from simple to general investment",
 };
 
+/* 도넛 하나를 그린다. 국민연금 파이와 13F 카드가 **같은 함수를 쓴다.**
+ *
+ * 처음엔 13F 쪽에 기하를 한 벌 더 쓰려 했다. 두 벌로 두면 반드시 어긋난다 —
+ * 한쪽에서 12시 시작을 고치고 다른 쪽을 잊는 식이다. 각도는 그림의 뜻이라
+ * 그런 어긋남이 눈에 잘 띄지도 않는다.
+ *
+ * `shareOf`가 백분율을 준다. 조각의 합이 100이 되도록 부르는 쪽이 책임진다 —
+ * 두 화면 모두 **금액에서 뽑은 비율**을 넘기므로 잔차가 없다. */
+function donutSvg(slices, opts) {
+  const NS = "http://www.w3.org/2000/svg";
+  const size = opts.size || 260;
+  const rOut = size / 2 - (opts.pad == null ? 12 : opts.pad);
+  const rIn = rOut * (opts.ring == null ? 0.58 : opts.ring);
+  const cx = size / 2, cy = size / 2;
+
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+  if (opts.className) svg.setAttribute("class", opts.className);
+  svg.setAttribute("role", "img");
+  if (opts.ariaLabel) svg.setAttribute("aria-label", opts.ariaLabel);
+
+  const point = (r, angle) => [
+    (cx + r * Math.cos(angle)).toFixed(2),
+    (cy + r * Math.sin(angle)).toFixed(2),
+  ];
+
+  let angle = -Math.PI / 2;  // 12시에서 시작해 시계 방향.
+  slices.forEach((slice, index) => {
+    const sweep = (Number(opts.shareOf(slice)) || 0) / 100 * Math.PI * 2;
+    if (sweep <= 0) return;
+    const end = angle + sweep;
+    const large = sweep > Math.PI ? 1 : 0;
+    const [x0, y0] = point(rOut, angle), [x1, y1] = point(rOut, end);
+    const [x2, y2] = point(rIn, end), [x3, y3] = point(rIn, angle);
+
+    const path = document.createElementNS(NS, "path");
+    path.setAttribute("d", [
+      "M", x0, y0, "A", rOut, rOut, 0, large, 1, x1, y1,
+      "L", x2, y2, "A", rIn, rIn, 0, large, 0, x3, y3, "Z",
+    ].join(" "));
+    path.setAttribute("fill", opts.colorOf(slice, index));
+    if (opts.sliceClass) path.setAttribute("class", opts.sliceClass);
+    if (opts.titleOf) {
+      const title = document.createElementNS(NS, "title");
+      title.textContent = opts.titleOf(slice, index);
+      path.append(title);
+    }
+    svg.append(path);
+    angle = end;
+  });
+
+  if (opts.centerValue) {
+    const top = document.createElementNS(NS, "text");
+    top.setAttribute("x", String(cx)); top.setAttribute("y", String(cy - 4));
+    top.setAttribute("class", opts.centerValueClass || "krpf-center-value");
+    top.setAttribute("text-anchor", "middle");
+    top.textContent = opts.centerValue;
+    svg.append(top);
+  }
+  if (opts.centerLabel) {
+    const sub = document.createElementNS(NS, "text");
+    sub.setAttribute("x", String(cx)); sub.setAttribute("y", String(cy + 16));
+    sub.setAttribute("class", opts.centerLabelClass || "krpf-center-label");
+    sub.setAttribute("text-anchor", "middle");
+    sub.textContent = opts.centerLabel;
+    svg.append(sub);
+  }
+  return svg;
+}
+
+/* 인접 조각의 색이 붙지 않도록 황금각으로 색상환을 걷는다. 두 화면이 같은
+ * 규칙을 써서 같은 순위의 조각이 같은 색으로 보인다. */
+function sliceColor(index, isRest) {
+  return isRest
+    ? "var(--ink-4, #9aa0a6)"
+    : "hsl(" + Math.round((index * 137.508 + 208) % 360) + " 58% 52%)";
+}
+
+/* 13F 기관 포트폴리오 — 널리 알려진 운용자들의 미국 상장주식 구성.
+ *
+ * 국민연금 파이와 겉모습은 닮았지만 **말해야 하는 경고가 다르다.** 13F에는
+ * 공매도·채권·현금·해외 상장·사모 지분이 안 들어오므로 이 그림은 자산 전부가
+ * 아니다. 그 문장을 섹션 머리에 한 번, 그리고 카드마다 사정을 배지로 붙인다:
+ *
+ *   - 지연이 큰 신고자(퍼싱은 실측 147일)
+ *   - 옵션 비중이 큰 신고자(두케인 16.4%) - 13F는 옵션을 명목가로 적는다
+ *   - 지수 상품 비중이 큰 신고자(브리지워터 30.5%)
+ *   - 보유 종목이 아주 많은 신고자(피셔 1,019 - 자산관리사 성격)
+ *
+ * 배지는 전부 **payload의 수치에서 계산된다.** 손으로 적은 설명은 데이터가
+ * 바뀌면 조용히 거짓이 되기 때문이다. 사람에 관한 사실 하나만 예외로 서버가
+ * 문장으로 들고 온다(`person_note`) - 달리오가 2022년 브리지워터 지배에서
+ * 물러났다는 것으로, 수치로는 유도할 수 없다. */
+function renderUsManagers() {
+  const section = $("#us-managers");
+  if (!section) return;
+  const payload = state.usManagers;
+  const managers = Array.isArray(payload?.managers) ? payload.managers : [];
+  if (!managers.length) { section.hidden = true; return; }
+  section.hidden = false;
+
+  const locale = state.lang === "ko" ? "ko-KR" : "en-US";
+  const num = (value, digits) => Number(value ?? 0).toLocaleString(locale, {
+    minimumFractionDigits: digits ?? 0, maximumFractionDigits: digits ?? 0,
+  });
+  // 달러도 언어마다 읽는 단위가 다르다. 국민연금에서 겪은 그 문제다.
+  const usd = (value) => {
+    const v = Number(value) || 0;
+    if (state.lang === "ko") {
+      return v >= 1e8 ? num(v / 1e8, 0) + "억 달러" : num(v / 1e4, 0) + "만 달러";
+    }
+    if (v >= 1e9) return "$" + num(v / 1e9, 1) + "B";
+    if (v >= 1e6) return "$" + num(v / 1e6, 1) + "M";
+    return "$" + num(v, 0);
+  };
+  const local = (pair) => pair ? (state.lang === "ko" ? pair.ko : pair.en) : "";
+
+  const body = $("#usm-body");
+  body.replaceChildren();
+
+  const grid = document.createElement("div");
+  grid.className = "usm-grid";
+
+  managers.forEach((manager) => {
+    const totals = manager.totals || {};
+    const slices = Array.isArray(manager.slices) ? manager.slices : [];
+    const restLabel = t("usm.rest");
+
+    const card = document.createElement("article");
+    card.className = "usm-card";
+
+    const head = document.createElement("header");
+    head.className = "usm-card-head";
+    const title = document.createElement("h3");
+    title.textContent = local(manager.fund);
+    const person = document.createElement("p");
+    person.className = "usm-person";
+    person.textContent = local(manager.person);
+    head.append(title, person);
+    card.append(head);
+
+    // 도넛. 조각 라벨은 발행사 이름 그대로 옮긴다.
+    const donut = donutSvg(slices, {
+      size: 190, pad: 6, ring: 0.6,
+      className: "usm-donut", sliceClass: "usm-slice",
+      centerValue: usd(totals.value),
+      centerValueClass: "usm-center-value",
+      centerLabel: t("usm.centerLabel"),
+      centerLabelClass: "usm-center-label",
+      ariaLabel: local(manager.fund) + " " + t("usm.centerLabel"),
+      shareOf: (slice) => slice.share,
+      colorOf: (slice, index) => sliceColor(index, slice.kind === "rest"),
+      titleOf: (slice) => (slice.kind === "rest"
+        ? t("usm.restCount", { n: num(slice.count) })
+        : slice.issuer) + " " + num(slice.share, 1) + "% · " + usd(slice.value),
+    });
+    card.append(donut);
+
+    // 범례는 상위 여덟만. 카드 여섯 개에 스무 줄씩 세우면 아무도 안 읽는다.
+    const legend = document.createElement("ul");
+    legend.className = "usm-legend";
+    const named = slices.filter((slice) => slice.kind === "holding");
+    named.slice(0, 8).forEach((slice, index) => {
+      const li = document.createElement("li");
+      const dot = document.createElement("span");
+      dot.className = "krpf-dot";
+      dot.style.background = sliceColor(index, false);
+      const name = document.createElement("span");
+      name.className = "krpf-legend-name";
+      name.textContent = slice.issuer;
+      const pct = document.createElement("span");
+      pct.className = "krpf-legend-pct";
+      pct.textContent = num(slice.share, 1) + "%";
+      li.append(dot, name, pct);
+      legend.append(li);
+    });
+    if (named.length > 8) {
+      const li = document.createElement("li");
+      li.className = "usm-legend-more";
+      li.textContent = t("usm.andMore", { n: num(named.length - 8) });
+      legend.append(li);
+    }
+    const rest = slices.find((slice) => slice.kind === "rest");
+    if (rest) {
+      const li = document.createElement("li");
+      const dot = document.createElement("span");
+      dot.className = "krpf-dot";
+      dot.style.background = sliceColor(0, true);
+      const name = document.createElement("span");
+      name.className = "krpf-legend-name";
+      name.textContent = restLabel + " " + t("usm.restCount", { n: num(rest.count) });
+      const pct = document.createElement("span");
+      pct.className = "krpf-legend-pct";
+      pct.textContent = num(rest.share, 1) + "%";
+      li.append(dot, name, pct);
+      legend.append(li);
+    }
+    card.append(legend);
+
+    // 배지 - 전부 수치에서 계산한다.
+    const badges = document.createElement("ul");
+    badges.className = "usm-badges";
+    const badge = (text, tone) => {
+      const li = document.createElement("li");
+      li.className = "usm-badge" + (tone ? " usm-badge-" + tone : "");
+      li.textContent = text;
+      badges.append(li);
+    };
+    badge(t("usm.period", { date: manager.period || "—" }));
+    if ((manager.period_lag_days || 0) > 120) {
+      badge(t("usm.lagged", { n: num(manager.period_lag_days) }), "warn");
+    }
+    if ((totals.options_share || 0) >= 5) {
+      badge(t("usm.options", { n: num(totals.options_share, 0) }), "warn");
+    }
+    if ((totals.index_share || 0) >= 10) {
+      badge(t("usm.indexed", { n: num(totals.index_share, 0) }), "warn");
+    }
+    if ((totals.issuers || 0) >= 500) {
+      badge(t("usm.manyNames", { n: num(totals.issuers) }), "warn");
+    }
+    if (totals.short_of_majority) {
+      badge(t("usm.noMajority"), "warn");
+    }
+    card.append(badges);
+
+    if (manager.person_note) {
+      const note = document.createElement("p");
+      note.className = "usm-note";
+      note.textContent = local(manager.person_note);
+      card.append(note);
+    }
+
+    const foot = document.createElement("p");
+    foot.className = "usm-card-foot";
+    const link = document.createElement("a");
+    link.href = manager.filing_url || "#";
+    link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.textContent = t("usm.filing", { form: manager.form || "13F-HR" });
+    foot.append(link);
+    card.append(foot);
+
+    grid.append(card);
+  });
+
+  body.append(grid);
+
+  const footer = $("#usm-footer");
+  footer.replaceChildren();
+  const source = payload.source || {};
+  const link = document.createElement("a");
+  link.href = source.url || "#"; link.target = "_blank"; link.rel = "noopener noreferrer";
+  link.textContent = source.publisher || "SEC";
+  const basis = document.createElement("span");
+  basis.textContent = state.lang === "ko" ? (payload.basis_ko || "") : (payload.basis_en || "");
+  footer.append(link, basis);
+  if (Array.isArray(payload.failed) && payload.failed.length) {
+    const failed = document.createElement("span");
+    failed.className = "usm-failed";
+    failed.textContent = t("usm.failed", { n: String(payload.failed.length) });
+    footer.append(failed);
+  }
+}
+
+
 /* 국민연금 국내주식 포트폴리오 — 연말 스냅샷의 원형 차트.
  *
  * 여기서 가장 조심한 것은 **각도와 라벨의 출처를 나눈 것**이다. 원자료의 비중
@@ -1631,10 +1899,8 @@ function renderKrPensionPortfolio() {
     return "KRW " + num(krw / 1e6, 0) + "M";
   };
 
-  // 인접한 조각끼리 색이 붙지 않도록 황금각으로 색상환을 걷는다.
-  const colorOf = (index, kind) => kind === "rest"
-    ? "var(--ink-4, #9aa0a6)"
-    : "hsl(" + Math.round((index * 137.508 + 208) % 360) + " 58% 52%)";
+  // 색 규칙은 13F 카드와 공유한다(`sliceColor`).
+  const colorOf = (index, kind) => sliceColor(index, kind === "rest");
 
   const body = $("#krpf-body");
   body.replaceChildren();
@@ -1643,56 +1909,17 @@ function renderKrPensionPortfolio() {
   wrap.className = "krpf-wrap";
 
   /* --- 도넛 ------------------------------------------------------------- */
-  const SIZE = 260, R_OUT = 118, R_IN = 68, CX = SIZE / 2, CY = SIZE / 2;
-  const NS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(NS, "svg");
-  svg.setAttribute("viewBox", "0 0 " + SIZE + " " + SIZE);
-  svg.setAttribute("class", "krpf-donut");
-  svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", t("krpf.caption", { n: String(slices.length - 1) }));
-
-  const point = (r, angle) => [
-    (CX + r * Math.cos(angle)).toFixed(2),
-    (CY + r * Math.sin(angle)).toFixed(2),
-  ];
-
-  let angle = -Math.PI / 2;  // 12시에서 시작해 시계 방향.
-  slices.forEach((slice, index) => {
-    const sweep = (Number(slice.share) || 0) / 100 * Math.PI * 2;
-    if (sweep <= 0) return;
-    const end = angle + sweep;
-    const large = sweep > Math.PI ? 1 : 0;
-    const [x0, y0] = point(R_OUT, angle), [x1, y1] = point(R_OUT, end);
-    const [x2, y2] = point(R_IN, end), [x3, y3] = point(R_IN, angle);
-
-    const path = document.createElementNS(NS, "path");
-    path.setAttribute("d", [
-      "M", x0, y0, "A", R_OUT, R_OUT, 0, large, 1, x1, y1,
-      "L", x2, y2, "A", R_IN, R_IN, 0, large, 0, x3, y3, "Z",
-    ].join(" "));
-    path.setAttribute("fill", colorOf(index, slice.kind));
-    path.setAttribute("class", "krpf-slice");
-
-    const title = document.createElementNS(NS, "title");
-    title.textContent = nameOf(slice) + " " + num(slice.weight, 2) + "% · "
-      + money(slice.value);
-    path.append(title);
-    svg.append(path);
-    angle = end;
+  // 기하는 13F 카드와 같은 함수를 쓴다 — 두 벌로 두면 반드시 어긋난다.
+  const svg = donutSvg(slices, {
+    size: 260, pad: 12, ring: 0.576,
+    className: "krpf-donut", sliceClass: "krpf-slice",
+    ariaLabel: t("krpf.caption", { n: String(slices.length - 1) }),
+    centerValue: money(totals.value),
+    centerLabel: t("krpf.centerLabel"),
+    shareOf: (slice) => slice.share,
+    colorOf: (slice, index) => colorOf(index, slice.kind),
+    titleOf: (slice) => nameOf(slice) + " " + num(slice.weight, 2) + "% · " + money(slice.value),
   });
-
-  // 가운데는 합계. 억원은 자릿수가 커서 조원으로 한 번 더 접어 보여 준다.
-  const centerTop = document.createElementNS(NS, "text");
-  centerTop.setAttribute("x", String(CX)); centerTop.setAttribute("y", String(CY - 4));
-  centerTop.setAttribute("class", "krpf-center-value");
-  centerTop.setAttribute("text-anchor", "middle");
-  centerTop.textContent = money(totals.value);
-  const centerSub = document.createElementNS(NS, "text");
-  centerSub.setAttribute("x", String(CX)); centerSub.setAttribute("y", String(CY + 16));
-  centerSub.setAttribute("class", "krpf-center-label");
-  centerSub.setAttribute("text-anchor", "middle");
-  centerSub.textContent = t("krpf.centerLabel");
-  svg.append(centerTop, centerSub);
 
   /* --- 범례 ------------------------------------------------------------- */
   const legend = document.createElement("ul");

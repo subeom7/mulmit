@@ -111,6 +111,10 @@ NYFED_HISTORY_DAYS = _int("NYFED_HISTORY_DAYS", 366 * 10)
 # https://www.sec.gov/os/accessing-edgar-data
 SEC_EDGAR_ENABLED = _bool("SEC_EDGAR_ENABLED", False)
 SEC_EDGAR_USER_AGENT = os.environ.get("SEC_EDGAR_USER_AGENT", "").strip()
+
+# 13F는 분기 서식이고 제출은 분기 말 + 45일 안이다. 하루에 한 번이면
+# 넘치도록 촘촘하다 - 더 자주 돌면 EDGAR에 폐를 끼치고 얻는 것이 없다.
+US_MANAGERS_MAX_AGE = _int("US_MANAGERS_MAX_AGE", 60 * 60 * 24)
 SEC_EDGAR_TIMEOUT = _float("SEC_EDGAR_TIMEOUT", 15.0)
 SEC_EDGAR_RETRIES = _int("SEC_EDGAR_RETRIES", 2)
 # 0.15s between requests is ~6.7/s, comfortably under the published 10/s cap
