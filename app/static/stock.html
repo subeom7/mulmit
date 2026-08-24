@@ -102,7 +102,6 @@
 
     <section class="stock-section">
       <div class="stock-links">
-        <a id="link-analytics" href="/analytics" hidden>위험 분석 (낙폭·변동성) →</a>
         <span id="no-risk-note" class="stock-note" hidden></span>
         <a href="/kr">한국 시장 대시보드</a>
         <a href="/us">미국·글로벌 대시보드</a>
@@ -145,11 +144,6 @@ const kpi = (label, value, note) => { const div = document.createElement("div");
   if (note) div.querySelector("span").textContent = note; return div; };
 
 async function loadKr() {
-  // 국내 종목은 `?kr=`로 넘긴다. `?ticker=`는 저쪽에서 미국 EDGAR 티커
-  // 입력란으로 들어가서, 005380을 미국 상장사로 조회하고 있었다.
-  const risk = $id("link-analytics");
-  risk.href = "/analytics?kr=" + SYMBOL + "#kr-section";
-  risk.hidden = false;
   // 시세·통계
   try {
     const a = await fetchJson("/api/kr/stock/" + SYMBOL);
@@ -221,8 +215,6 @@ async function loadUs() {
   note.textContent = "낙폭·변동성 분석은 국내 종목만 — 미국 가격 데이터는 재배포 라이선스가 없습니다";
   note.hidden = false;
 
-  $id("link-analytics").textContent = "내부자·재무 상세 (분석 페이지) →";
-  $id("link-analytics").href = "/analytics";
   // 재무 + 비율
   try {
     const f = await fetchJson("/api/us/fundamentals/" + SYMBOL);

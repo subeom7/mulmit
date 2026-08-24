@@ -517,21 +517,29 @@ def test_the_missing_year_low_is_explained_on_screen():
     assert 'lowNote.textContent = t("kridx.lowNote")' in monitor, "근거 문구를 푸터에 붙이지 않았다"
 
 
-def test_the_stock_page_sends_korean_codes_to_the_korean_analyser():
-    """종목 상세의 '위험 분석' 링크가 미국 조회로 가고 있었다.
+def test_the_stock_page_does_not_send_anyone_back_to_the_lookup():
+    """예전에는 종목 페이지가 `/analytics?kr=…`로 되돌려 보냈다.
 
-    `/analytics?ticker=005380`으로 넘겼는데, 저쪽에서 `ticker`는 **미국 상장사
-    전용** SEC EDGAR 입력란으로 들어간다. 그래서 국내 종목코드를 들고 미국
-    내부자거래 공시를 조회하고 있었다. 국내는 `?kr=`로 넘긴다.
+    그 링크는 두 번 틀렸다. 처음에는 국내 종목코드를 `?ticker=`로 넘겨 **미국
+    EDGAR 입력란**에 집어넣었고(005380을 미국 상장사로 조회했다), `?kr=`로
+    고친 뒤에도 목적지가 같은 내용을 다르게 그리는 두 번째 화면이었다.
+
+    2026-08-24에 `/analytics`는 찾아서 보내 주기만 하는 페이지가 됐다. 종목
+    데이터를 그리는 곳은 이제 종목 페이지 하나뿐이므로, 되돌아가는 링크는
+    없어야 한다 — 있으면 그건 다시 두 곳에서 그리기 시작했다는 뜻이다.
     """
     static = Path(config.STATIC_DIR)
     stock = (static / "stock.html").read_text(encoding="utf-8")
-    assert '"/analytics?kr=" + SYMBOL' in stock, "국내 종목을 kr 파라미터로 넘기지 않는다"
-    assert '"/analytics?ticker=" + SYMBOL' not in stock, "미국 티커 입력란으로 다시 보내고 있다"
 
-    analytics = (static / "index.html").read_text(encoding="utf-8")
-    assert 'get("kr")' in analytics, "분석 페이지가 kr 파라미터를 읽지 않는다"
-    assert "loadKrStock(wantedKr.toUpperCase()" in analytics, "kr 파라미터로 국내 분석을 돌리지 않는다"
+    assert "/analytics?" not in stock, "종목 페이지가 분석 페이지로 인자를 넘기고 있다"
+    assert "link-analytics" not in stock, "되돌아가는 링크가 남아 있다"
+    # 탭 줄의 링크는 남는다 — 그건 이동 수단이지 분석으로 가는 우회로가 아니다.
+    assert '<a class="view-tab" href="/analytics">' in stock
+
+    lookup = (static / "analytics.html").read_text(encoding="utf-8")
+    assert "/api/search" in lookup, "찾기 페이지가 통합 검색을 쓰지 않는다"
+    for gone in ("/api/insider/", "/api/us/fundamentals/", "/api/kr/insider/", "/api/kr/fundamentals/"):
+        assert gone not in lookup, f"찾기 페이지가 다시 {gone} 를 그리고 있다"
 
 
 # --- 종목 시리즈의 수명은 스냅샷과 다르다 ---------------------------------

@@ -146,8 +146,9 @@ app = FastAPI(
     title="Mulmit Market Intelligence",
     version=__version__,
     description=(
-        "S&P 500 섹터 흐름과 개별 종목의 CAPM·낙폭·미래 MDD 확률분포를 "
-        "제공합니다. / S&P 500 sector trends and stock risk analytics."
+        "한국·미국 시장과 암호화폐를 공시 기록과 공공데이터로 봅니다 — 종목별 "
+        "재무제표·내부자 거래·공시, 거시 지표, 크립토 파생 지표. / Korean and US "
+        "markets and crypto, from filings and public data."
     ),
     lifespan=lifespan,
 )
@@ -338,7 +339,14 @@ def market_monitor() -> FileResponse:
 
 @app.get("/analytics", include_in_schema=False)
 def stock_analytics() -> FileResponse:
-    return FileResponse(config.STATIC_DIR / "index.html")
+    """종목 찾기 진입 페이지. 종목 데이터는 여기서 그리지 않는다.
+
+    예전에는 이 페이지가 국내·미국 종목을 각자 다른 모양으로 직접 렌더했고,
+    그 두 벌이 `/stock/{심볼}`이 그리는 것과 같은 payload를 세 번째로 그리는
+    셈이었다. 한쪽만 고쳐서 다른 쪽이 조용히 깨지는 사고가 실제로 났다.
+    지금은 찾아서 보내 주기만 한다.
+    """
+    return FileResponse(config.STATIC_DIR / "analytics.html")
 
 
 @app.get("/favicon.ico", include_in_schema=False)

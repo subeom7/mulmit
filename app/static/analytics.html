@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ko" data-theme="dark" data-mode="easy">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="종목 하나를 검색하면 연간 재무제표와 비율, 내부자 거래, 공시 이벤트, 보유·거래 공시를 한 화면에서 봅니다. 국내는 금융위·DART, 미국은 SEC EDGAR 공시 기록 그대로.">
+  <meta name="keywords" content="종목 분석, 종목 검색, 재무제표, 내부자 거래, 공시, 8-K, 주요사항보고서, 국민연금 5% 공시, 의원 주식거래">
+  <title>종목 분석 — 재무제표·내부자 거래·공시를 한 화면에서 | 물밑 Mulmit</title>
+  <meta name="doc-title-ko" content="종목 분석 — 재무제표·내부자 거래·공시를 한 화면에서 | 물밑 Mulmit">
+  <meta name="doc-title-en" content="Stock analytics — financials, insider trades and filings | Mulmit">
+  <link rel="canonical" href="https://mulmit.com/analytics">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mulmit">
+  <meta property="og:title" content="종목 분석 — 재무제표·내부자 거래·공시를 한 화면에서 | 물밑 Mulmit">
+  <meta property="og:description" content="회사명·종목코드·티커로 검색하면 그 종목의 공시 기록을 한 화면에 모아 봅니다.">
+  <meta property="og:url" content="https://mulmit.com/analytics">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="icon" type="image/png" sizes="96x96" href="/static/brand/favicon-96.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/monitor.css?v=08cab506e0">
+  <style>
+  /* 페이지 본문의 큰 검색. 마스트헤드의 것과 같은 API를 부르지만 스타일은
+   * 공유하지 않는다 — 그쪽은 높이 32px의 도구이고, 이쪽은 이 페이지의 본문이다. */
+  .lookup { max-width: 620px; }
+  .lookup-field { position: relative; }
+  .lookup-input {
+    width: 100%; height: 46px; padding: 0 14px; border: 1px solid var(--line);
+    border-radius: 8px; background: var(--panel-2); color: var(--ink); font-size: 15px;
+  }
+  .lookup-input:focus { outline: none; border-color: var(--accent); }
+  .lookup-results {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 20;
+    max-height: 340px; overflow-y: auto; padding: 4px 0;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--panel); box-shadow: var(--shadow);
+  }
+  .lookup-results .group { margin: 0; padding: 7px 13px 3px; color: var(--faint); font: 650 10px/1.4 var(--num); font-variant-numeric: tabular-nums; }
+  .lookup-results a { display: flex; gap: 10px; align-items: baseline; padding: 8px 13px; color: inherit; text-decoration: none; }
+  .lookup-results a:hover, .lookup-results a.active { background: var(--wash); }
+  .lookup-results .sym { font: 650 11px/1.4 var(--num); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .lookup-results .nm { font-weight: 650; font-size: 13px; }
+  .lookup-note { margin: 9px 0 0; color: var(--faint); font-size: var(--fs-xs); }
+  .lookup-examples { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
+  .lookup-examples a {
+    padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px;
+    color: var(--muted); text-decoration: none; font: 650 11px/1 var(--num);
+    font-variant-numeric: tabular-nums;
+  }
+  .lookup-examples a:hover { color: var(--accent); border-color: var(--accent); }
+  </style>
+  <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
+  <link rel="stylesheet" href="/static/tokens.css?v=ccb2656202">
+  <link rel="stylesheet" href="/static/console.css?v=570d3d835e">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the lookup</a>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Mulmit home">
+      <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="30" height="30">
+      <span><strong>Mulmit</strong></span>
+    </a>
+    <nav class="view-switch" aria-label="View">
+      <a class="view-tab" href="/"><span class="lang-ko">홈</span><span class="lang-en">Home</span></a>
+      <a class="view-tab" href="/kr"><span class="lang-ko">한국</span><span class="lang-en">Korea</span></a>
+      <a class="view-tab" href="/us"><span class="lang-ko">미국·글로벌</span><span class="lang-en">US &amp; Global</span></a>
+      <a class="view-tab" href="/crypto"><span class="lang-ko">암호화폐</span><span class="lang-en">Crypto</span></a>
+      <a class="view-tab active" aria-current="page" href="/analytics"><span class="lang-ko">종목 분석</span><span class="lang-en">Stock analytics</span></a>
+    </nav>
+    <div class="mast-actions">
+      <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
+    </div>
+  </header>
+
+  <main id="main" class="shell">
+    <div class="console-head">
+      <div>
+        <h1>
+          <span class="lang-ko">종목 분석</span><span class="lang-en">Stock analytics</span>
+          <span class="console-h1-sub">
+            <span class="lang-ko">한 종목의 공시 기록을 한 화면에</span><span class="lang-en">one company, one screen</span>
+          </span>
+        </h1>
+        <p class="console-sub">
+          <span class="lang-ko">회사명·종목코드·티커 중 아는 것으로 찾으면 그 종목의 화면으로 바로 갑니다. 국내와 미국이 같은 구성이고, 다른 것은 두 나라가 공개하는 기록의 종류뿐입니다.</span>
+          <span class="lang-en">Search by company name, listing code or ticker and go straight to that company's screen. Korea and the US share one layout; what differs is which records each country publishes.</span>
+        </p>
+      </div>
+    </div>
+
+    <section class="console-section" aria-labelledby="lookup-title">
+      <header>
+        <h2 id="lookup-title"><span class="lang-ko">종목 찾기</span><span class="lang-en">Find a company</span></h2>
+        <span class="sec-note"><span class="lang-ko">저장된 상장 목록만 읽습니다 · 입력이 외부로 나가지 않습니다</span><span class="lang-en">Reads stored listing rosters only — keystrokes never leave this site</span></span>
+      </header>
+      <div class="panel">
+        <div class="lookup">
+          <div class="lookup-field">
+            <input id="lookup-input" class="lookup-input" type="search" spellcheck="false"
+                   role="combobox" aria-expanded="false" aria-controls="lookup-results" aria-autocomplete="list"
+                   aria-label="회사명, 종목코드 또는 티커" placeholder="삼성전자 · 005930 · AAPL">
+            <div id="lookup-results" class="lookup-results" role="listbox" hidden></div>
+          </div>
+          <p class="lookup-note">
+            <span class="lang-ko">국내는 금융위원회 상장 로스터, 미국은 공시 수집 대상 티커, 코인은 Hyperliquid 상장 무기한선물에서 찾습니다.</span>
+            <span class="lang-en">Korean names come from the FSC listing roster, US tickers from the filing roster, coins from Hyperliquid-listed perpetuals.</span>
+          </p>
+          <div class="lookup-examples">
+            <a href="/stock/005930">삼성전자</a>
+            <a href="/stock/000660">SK하이닉스</a>
+            <a href="/stock/035420">NAVER</a>
+            <a href="/stock/AAPL">AAPL</a>
+            <a href="/stock/NVDA">NVDA</a>
+            <a href="/stock/MSFT">MSFT</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="console-section" aria-labelledby="shows-title">
+      <header>
+        <h2 id="shows-title"><span class="lang-ko">종목 화면이 보여 주는 것</span><span class="lang-en">What the company screen shows</span></h2>
+      </header>
+      <div class="method-grid">
+        <article>
+          <h3><span class="lang-ko">연간 재무제표와 비율</span><span class="lang-en">Annual financials and ratios</span></h3>
+          <p>
+            <span class="lang-ko">국내는 DART 사업보고서의 주요계정(연결 우선), 미국은 EDGAR의 10-K·10-Q XBRL 값을 공시된 그대로 옮깁니다. 마진과 ROE는 같은 보고서 안의 값끼리 나눈 것입니다.</span>
+            <span class="lang-en">Korean figures come from DART annual reports (consolidated preferred), US figures from 10-K and 10-Q XBRL, relayed as filed. Margins and ROE divide values from within the same filing.</span>
+          </p>
+        </article>
+        <article>
+          <h3><span class="lang-ko">내부자 거래</span><span class="lang-en">Insider trades</span></h3>
+          <p>
+            <span class="lang-ko">국내는 임원·주요주주 소유상황보고, 미국은 SEC Form 4입니다. 거래 성격은 공시된 코드 그대로 옮기며, 매수·매도가 무엇을 뜻하는지는 해석하지 않습니다.</span>
+            <span class="lang-en">Korean officer and major-shareholder reports, and SEC Form 4 for the US. Transaction types are relayed by their filed code; we do not interpret what a buy or a sale means.</span>
+          </p>
+        </article>
+        <article>
+          <h3><span class="lang-ko">공시 이벤트</span><span class="lang-en">Filing events</span></h3>
+          <p>
+            <span class="lang-ko">국내는 주요사항보고서, 미국은 8-K입니다. 제목은 원문 그대로이고 본문은 원문 링크에서 확인하시면 됩니다.</span>
+            <span class="lang-en">Korean material-event reports and US 8-K filings. Titles are relayed verbatim; the filing itself is one link away.</span>
+          </p>
+        </article>
+        <article>
+          <h3><span class="lang-ko">보유·거래 공시</span><span class="lang-en">Holder and trade disclosures</span></h3>
+          <p>
+            <span class="lang-ko">국내는 국민연금 5% 대량보유 공시, 미국은 하원의원 주식거래 보고(STOCK Act)입니다. 두 나라가 공개하는 기록이 달라 항목도 다릅니다.</span>
+            <span class="lang-en">Korea's National Pension Service 5% filings, and US House STOCK Act trade reports. The two countries publish different records, so the entries differ.</span>
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="methodology" aria-labelledby="scope-title">
+      <p class="eyebrow">NOTE</p>
+      <h2 id="scope-title"><span class="lang-ko">지금 없는 것</span><span class="lang-en">What is not here</span></h2>
+      <div class="method-grid">
+        <article>
+          <h3><span class="lang-ko">미국 주가 분석</span><span class="lang-en">US price analysis</span></h3>
+          <p>
+            <span class="lang-ko">낙폭·변동성·시뮬레이션은 승인된 미국 가격 공급자가 있어야 합니다. 그 lane이 열려 있지 않아 지금은 국내 종목에만 가격 지표가 보이며, 열리면 양국에 같은 형태로 붙입니다.</span>
+            <span class="lang-en">Drawdown, volatility and simulation need a licensed US price source. That lane is not open, so price figures appear for Korean listings only; when it opens, both markets get the same treatment.</span>
+          </p>
+        </article>
+        <article>
+          <h3><span class="lang-ko">목표주가·투자의견</span><span class="lang-en">Price targets and ratings</span></h3>
+          <p>
+            <span class="lang-ko">증권사 리포트의 저작물이라 옮기지 않습니다. 이 화면의 모든 숫자는 공시 기록에서 직접 계산한 것입니다.</span>
+            <span class="lang-en">These are brokerage research, so they are not relayed. Every number on these screens is computed from the filings themselves.</span>
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <nav aria-label="Legal">
+        <a href="/privacy"><span class="lang-ko">개인정보처리방침</span><span class="lang-en">Privacy policy</span></a>
+        <a href="/terms"><span class="lang-ko">이용약관</span><span class="lang-en">Terms of use</span></a>
+        <a href="/disclaimer"><span class="lang-ko">면책 고지</span><span class="lang-en">Disclaimer</span></a>
+        <a href="/news"><span class="lang-ko">신호 피드</span><span class="lang-en">Signal feed</span></a>
+        <a href="/glossary"><span class="lang-ko">용어 사전</span><span class="lang-en">Glossary</span></a>
+        <a href="/bio"><span class="lang-ko">바이오</span><span class="lang-en">Bio</span></a>
+        <a href="/docs">API</a>
+      </nav>
+      <p><span class="lang-ko">Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다.</span><span class="lang-en">Mulmit is an information service, not investment advice or a solicitation to trade.</span></p>
+    </footer>
+  </main>
+
+  <script>
+  // 이 페이지는 데이터 레인을 하나도 부르지 않는다. 언어 선택만 사이트 전체와
+  // 맞추면 되고, 그건 localStorage 한 칸과 <html> 속성 두 개로 끝난다.
+  (function () {
+    var root = document.documentElement;
+    function apply(lang) {
+      root.lang = lang;
+      root.dataset.lang = lang;
+      var button = document.getElementById("locale-toggle");
+      if (button) {
+        button.textContent = lang === "ko" ? "EN" : "KO";
+        var meta = document.querySelector('meta[name="doc-title-' + lang + '"]');
+        if (meta && meta.content) document.title = meta.content;
+      }
+      var input = document.getElementById("lookup-input");
+      if (input) {
+        input.placeholder = lang === "ko" ? "삼성전자 · 005930 · AAPL" : "Apple · AAPL · 005930";
+        input.setAttribute("aria-label", lang === "ko"
+          ? "회사명, 종목코드 또는 티커" : "Company, listing code or ticker");
+      }
+    }
+    apply(localStorage.getItem("monitor.locale") === "en" ? "en" : "ko");
+    document.getElementById("locale-toggle").addEventListener("click", function () {
+      var next = root.lang === "ko" ? "en" : "ko";
+      localStorage.setItem("monitor.locale", next);
+      apply(next);
+    });
+  })();
+
+  /* 본문의 검색. 마스트헤드의 것과 같은 `/api/search`를 부르지만 이쪽은 도구가
+   * 아니라 이 페이지의 본문이라 따로 둔다. 결과는 전부 종목 화면으로 가는
+   * 링크다 — 이 페이지는 종목 데이터를 직접 그리지 않는다. 그리는 곳이 둘이면
+   * 한쪽만 고쳐서 다른 쪽이 조용히 깨진다. */
+  (function () {
+    var input = document.getElementById("lookup-input");
+    var panel = document.getElementById("lookup-results");
+    if (!input || !panel) return;
+    var GROUPS = {
+      kr_stock: { ko: "국내", en: "Korea" },
+      us_stock: { ko: "미국", en: "US" },
+      coin: { ko: "코인", en: "Crypto" },
+    };
+    var lang = function () { return document.documentElement.lang === "en" ? "en" : "ko"; };
+    var links = [], active = -1, timer = 0, controller = null;
+
+    function close() {
+      panel.hidden = true;
+      input.setAttribute("aria-expanded", "false");
+      links = [];
+      active = -1;
+    }
+
+    function move(step) {
+      if (!links.length) return;
+      if (active >= 0) links[active].classList.remove("active");
+      active = (active + step + links.length) % links.length;
+      links[active].classList.add("active");
+      links[active].scrollIntoView({ block: "nearest" });
+    }
+
+    function render(payload) {
+      panel.replaceChildren();
+      links = [];
+      active = -1;
+      var shown = 0;
+      ((payload && payload.groups) || []).forEach(function (group) {
+        var items = group.items || [];
+        if (!items.length) return;
+        var head = document.createElement("p");
+        head.className = "group";
+        head.textContent = (GROUPS[group.kind] || { ko: group.kind, en: group.kind })[lang()];
+        panel.append(head);
+        items.forEach(function (item) {
+          if (!item.hub) return;
+          var link = document.createElement("a");
+          link.href = item.hub;
+          link.setAttribute("role", "option");
+          var sym = document.createElement("span");
+          sym.className = "sym";
+          sym.textContent = item.symbol || "";
+          var name = document.createElement("span");
+          name.className = "nm";
+          name.textContent = item.name || item.symbol || "";
+          link.append(sym, name);
+          panel.append(link);
+          links.push(link);
+          shown += 1;
+        });
+      });
+      if (!shown) {
+        var empty = document.createElement("p");
+        empty.className = "group";
+        empty.textContent = lang() === "en" ? "No matching market." : "일치하는 종목이 없습니다.";
+        panel.append(empty);
+      }
+      panel.hidden = false;
+      input.setAttribute("aria-expanded", "true");
+    }
+
+    function search() {
+      var query = input.value.trim();
+      if (!query) { close(); return; }
+      if (controller) controller.abort();
+      controller = new AbortController();
+      fetch("/api/search?q=" + encodeURIComponent(query), { signal: controller.signal })
+        .then(function (response) { return response.ok ? response.json() : null; })
+        .then(function (body) { if (body) render(body); })
+        .catch(function (error) { if (error.name !== "AbortError") close(); });
+    }
+
+    input.addEventListener("input", function () {
+      clearTimeout(timer);
+      timer = setTimeout(search, 180);
+    });
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "ArrowDown") { event.preventDefault(); move(1); }
+      else if (event.key === "ArrowUp") { event.preventDefault(); move(-1); }
+      else if (event.key === "Enter") {
+        // 골라 둔 것이 있으면 그것으로, 없으면 첫 결과로 간다.
+        var target = links[active >= 0 ? active : 0];
+        if (target) { event.preventDefault(); window.location.href = target.href; }
+      } else if (event.key === "Escape") {
+        close();
+      }
+    });
+    document.addEventListener("click", function (event) {
+      if (!panel.contains(event.target) && event.target !== input) close();
+    });
+  })();
+  </script>
+  <script src="/static/search.js?v=e2093e0d4d" defer></script>
+</body>
+</html>

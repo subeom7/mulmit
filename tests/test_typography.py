@@ -20,7 +20,7 @@ STATIC = Path(__file__).resolve().parents[1] / "app" / "static"
 # 없어서 등폭 글꼴이 3,130개 상세 페이지에 그대로 남아 있었다(실측 2026-08-23:
 # 종목 2,953 + 코인 177). 새 시트가 생기면 여기에 더한다.
 SHEETS = ["monitor.css", "console.css", "tokens.css",
-          "index.html", "stock.html", "crypto-coin.html"]
+          "analytics.html", "stock.html", "crypto-coin.html"]
 
 # 등폭을 써도 되는 곳: 글이 아니라 식별자인 것들.
 IDENTIFIER_SELECTORS = {".kro-sym"}
@@ -116,7 +116,7 @@ def test_every_page_that_ships_its_own_styles_loads_the_design_system():
     시트는 인라인 <style> **뒤에** 와야 한다. 앞에 두면 같은 특이도에서 지고,
     `/analytics`에서 실제로 그렇게 토큰이 먹히지 않았다.
     """
-    for name in ("index.html", "stock.html", "crypto-coin.html"):
+    for name in ("analytics.html", "stock.html", "crypto-coin.html"):
         source = (STATIC / name).read_text(encoding="utf-8")
         assert "<style>" in source, f"{name}에 인라인 스타일이 없다 — 목록을 손보라"
         for sheet in ("tokens.css", "console.css"):
