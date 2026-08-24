@@ -93,3 +93,32 @@ def test_the_structure_tree_only_names_files_that_exist():
 def test_the_lane_table_names_the_gate_that_opens_each_lane(gate: str):
     """lane 표는 '무엇을 켜면 열리는가'가 있어야 쓸모가 있다."""
     assert gate in README, f"{gate} lane이 README에 없다"
+
+
+def _some_screen_draws_the_underwater_curve() -> bool:
+    """정적 화면 중 언더워터 곡선을 그리는 것이 있는가."""
+    for path in list(STATIC.glob("*.html")) + list(STATIC.glob("*.js")):
+        text = path.read_text(encoding="utf-8")
+        if "underwater" in text.lower() or "언더워터" in text:
+            return True
+    return False
+
+
+def test_the_readme_does_not_claim_a_chart_that_nothing_draws():
+    """README가 "이 서비스의 핵심 차트가 그 언더워터 곡선이다"라고 말하고 있었다.
+
+    서버는 아직 곡선을 계산하지만(`app/metrics/drawdown.py` →
+    `/api/metrics`), 2026-08-24에 마지막 소비자였던 화면을 지우면서 **그리는
+    곳이 하나도 없어졌다.** 이름의 유래는 그대로지만 현재형은 틀렸다.
+
+    그리는 화면이 다시 생기면 이 검사는 스스로 풀린다 — 그때는 README가
+    현재형으로 말해도 맞다.
+    """
+    if _some_screen_draws_the_underwater_curve():
+        return
+
+    assert "언더워터 곡선을 그리는 화면은 없다" in README, (
+        "언더워터 곡선을 그리는 화면이 없는데 README가 그 사실을 말하지 않는다"
+    )
+    for claim in ("핵심 차트가 그 언더워터", "앞으로 얼마나 잠길 수 있나"):
+        assert claim not in README, f"없는 화면을 현재형으로 말한다: {claim!r}"
