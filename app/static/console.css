@@ -265,10 +265,21 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 .ksi-move { margin-left: 4px; font: 650 var(--fs-xs)/1 var(--num); font-variant-numeric: tabular-nums; }
 .ksi-move.up { color: var(--up); }
 .ksi-move.down { color: var(--down); }
-/* 자리를 옮긴 줄. 눈이 그 줄을 다시 찾도록 배경만 옅게 남긴다 — 표 전체가
-   깜빡이면 어느 줄이 움직였는지 오히려 안 보인다. */
-.kridx-table tr.rank-up td { background: color-mix(in srgb, var(--up) 7%, transparent); }
-.kridx-table tr.rank-down td { background: color-mix(in srgb, var(--down) 7%, transparent); }
+/* 자리를 옮긴 줄. 눈이 그 줄을 다시 찾도록 표시하되 **중립색**으로 한다.
+ *
+ * 처음엔 오른 줄을 초록, 내린 줄을 빨강으로 칠했다. 라이브에서 보니 카카오가
+ * ×2.02(평소의 두 배, 이 표에서 가장 강한 신호)인데 줄 전체가 빨갰다 — 수준
+ * 순위가 한 칸 내려갔다는 뜻이었지만, 이 사이트에서 빨강은 "내렸다"이다.
+ * 같은 색 언어로 다른 두 주장을 하면 독자는 어느 쪽인지 알 수 없다.
+ *
+ * 방향은 ▲▼ 배지가 말한다 — 그건 자기가 설명하는 것에 붙어 있다. 줄은 "여기가
+ * 움직였다"만 말하면 된다. */
+.kridx-table tr.rank-up td, .kridx-table tr.rank-down td {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+.kridx-table tr.rank-up td:first-child, .kridx-table tr.rank-down td:first-child {
+  box-shadow: inset 2px 0 0 var(--faint);
+}
 /* 기준 종목 표시. 100의 출처를 밝히지 않으면 100이 절댓값처럼 읽힌다. */
 .ksi-anchor-tag {
   padding: 1px 5px; border: 1px solid var(--line); border-radius: 999px;

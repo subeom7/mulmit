@@ -38,7 +38,18 @@ DIGEST_LENGTH = 10
 
 
 def digest(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()[:DIGEST_LENGTH]
+    """줄바꿈을 LF로 맞춘 뒤 해싱한다.
+
+    같은 파일이 작업 사본에서는 CRLF, 저장소에서는 LF일 수 있다(git의 `text=auto`).
+    바이트를 그대로 해싱하면 그 둘의 해시가 달라져서, 윈도우에서 찍은 스탬프가
+    CI에서 어긋난다 — 2026-08-24에 실제로 그랬다. 파일 하나를 CRLF로 다시 쓴
+    편집 스크립트 때문이었고, 화면은 멀쩡한데 CI만 빨개져서 원인을 찾는 데
+    시간이 걸렸다.
+
+    URL은 **내용**을 가리켜야 하고, 줄바꿈 표기는 내용이 아니다.
+    """
+    raw = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(raw).hexdigest()[:DIGEST_LENGTH]
 
 
 def expected_versions() -> dict[str, str]:

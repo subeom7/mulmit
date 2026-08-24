@@ -76,3 +76,22 @@ def test_a_changed_asset_forces_a_changed_url():
         assert stamped["monitor.js"] != digest(target), "바뀐 파일이 옛 URL을 그대로 쓰고 있다"
     finally:
         target.write_bytes(original)
+
+
+def test_the_digest_ignores_line_endings():
+    """같은 파일이 작업 사본에서는 CRLF, 저장소에서는 LF일 수 있다(git `text=auto`).
+
+    바이트를 그대로 해싱하면 그 둘의 해시가 달라진다. 윈도우에서 찍은 스탬프가
+    CI에서 어긋나고, 화면은 멀쩡한데 CI만 빨개진다 — 2026-08-24에 실제로 그랬다.
+    편집 스크립트 하나가 CSS를 CRLF로 다시 쓴 것이 원인이었다.
+
+    URL은 내용을 가리켜야 하고, 줄바꿈 표기는 내용이 아니다.
+    """
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as folder:
+        lf = Path(folder) / "lf.css"
+        crlf = Path(folder) / "crlf.css"
+        lf.write_bytes(b"a {\n  color: red;\n}\n")
+        crlf.write_bytes(b"a {\r\n  color: red;\r\n}\r\n")
+        assert digest(lf) == digest(crlf), "줄바꿈 표기가 URL을 바꾸면 안 된다"
