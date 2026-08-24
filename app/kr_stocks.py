@@ -437,7 +437,7 @@ def get_analysis(code: str) -> dict[str, Any]:
     fresh = (
         record is not None
         and record.get("status") == "ok"
-        and (record.get("fetched_at") or 0) > time.time() - config.FSC_MAX_AGE
+        and (record.get("fetched_at") or 0) > time.time() - config.FSC_SERIES_MAX_AGE
     )
 
     if not fresh:
@@ -449,7 +449,7 @@ def get_analysis(code: str) -> dict[str, Any]:
                 fresh = (
                     record is not None
                     and record.get("status") == "ok"
-                    and (record.get("fetched_at") or 0) > time.time() - config.FSC_MAX_AGE
+                    and (record.get("fetched_at") or 0) > time.time() - config.FSC_SERIES_MAX_AGE
                 )
                 if not fresh:
                     try:
