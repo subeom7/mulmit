@@ -175,3 +175,54 @@ def test_route_validates_serves_and_names_its_sources(rosters):
     assert "Hyperliquid" in body["basis"]["en"] and "금융위" in body["basis"]["ko"]
 
     assert len(client.get("/api/search?q=b&limit=2").json()["groups"][0]["results"]) == 2
+
+
+# --- 찾기 페이지가 읽는 이름이 API가 내는 이름인가 -------------------------
+
+def test_the_lookup_page_reads_the_field_names_the_route_actually_returns(rosters):
+    """`/analytics`가 `group.items`를 읽고 있었다 — 실제 이름은 `results`다.
+
+    라이브에서 검색을 쳐 보고서야 알았다: 패널은 열리는데 결과가 0건이었다.
+    묶음 이름도 `coin`으로 짐작했지만 API는 `crypto`라고 하고, 두 언어 라벨을
+    이미 함께 준다. 페이지가 payload 모양을 **짐작**했고 아무도 대조하지 않았다.
+
+    그래서 대조한다. 실제 응답에서 키를 꺼내 페이지 소스와 맞춰 본다.
+    """
+    from pathlib import Path
+
+    body = TestClient(app).get("/api/search", params={"q": "삼"}).json()
+    groups = body["groups"]
+    assert groups and any(group["results"] for group in groups), "픽스처가 아무것도 못 찾았다"
+
+    page = (Path(config.STATIC_DIR) / "analytics.html").read_text(encoding="utf-8")
+
+    # 묶음이 실제로 쓰는 키를 페이지도 써야 한다.
+    for key in ("results", "label", "kind"):
+        assert key in groups[0], f"응답에 {key}가 없다 — 테스트를 고쳐라"
+        assert f"group.{key}" in page, f"페이지가 group.{key}를 읽지 않는다"
+    assert "group.items" not in page, "없는 키(items)를 읽고 있다"
+
+    hit = next(result for group in groups for result in group["results"])
+    for key in ("symbol", "name", "hub"):
+        assert key in hit, f"결과에 {key}가 없다 — 테스트를 고쳐라"
+        assert f"item.{key}" in page, f"페이지가 item.{key}를 읽지 않는다"
+
+
+def test_the_lookup_page_knows_every_group_kind_the_route_can_emit(rosters):
+    """묶음 종류를 페이지가 따로 외우지 않는다는 것을 지킨다.
+
+    이름을 페이지에서 다시 짓는 순간, 새 묶음이 생기면 이름 없는 칸이 뜬다.
+    라벨은 API가 두 언어로 주므로 그것을 쓴다.
+    """
+    from pathlib import Path
+
+    body = TestClient(app).get("/api/search", params={"q": "a"}).json()
+    kinds = {group["kind"] for group in body["groups"]}
+    assert kinds, "묶음이 하나도 없다 — 테스트를 고쳐라"
+
+    page = (Path(config.STATIC_DIR) / "analytics.html").read_text(encoding="utf-8")
+    for kind in kinds:
+        # 라벨을 API에서 받으므로 종류 이름이 페이지에 박혀 있을 이유가 없다.
+        assert f'{kind}:' not in page, f"페이지가 {kind} 라벨을 자체 사전으로 들고 있다"
+    for group in body["groups"]:
+        assert set(group["label"]) >= {"ko", "en"}, "라벨이 두 언어를 다 주지 않는다"
