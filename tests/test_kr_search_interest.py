@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import re
 
 import pytest
 
@@ -558,3 +559,21 @@ def test_the_stock_screen_uses_the_shared_sparkline() -> None:
     assert "/static/console.js" in source, (
         "그 함수는 console.js에 있다 — 안 실으면 조용히 undefined가 되어 선이 안 그려진다"
     )
+
+
+def test_the_stock_page_sparkline_keeps_its_aspect_ratio() -> None:
+    """폭을 100%로 늘리면 선이 찌그러져 세로 움직임이 작아 보인다.
+
+    2026-08-24 실측: viewBox가 240×46(5.2:1)인데 그려진 크기가 1288×46(28:1)이었다.
+    그리는 함수가 `preserveAspectRatio="none"`이라 그대로 늘어난다 — 값이 아니라
+    **모양**이 거짓말을 하는 종류이고, 검색 관심도는 주중·주말 진폭이 큰 계열이라
+    하필 그 진폭이 뭉개진다. 사이트의 다른 추이선은 전부 5.2를 지킨다.
+    """
+    from pathlib import Path
+
+    source = (Path(__file__).resolve().parents[1] / "app" / "static" / "stock.html").read_text(
+        encoding="utf-8"
+    )
+    match = re.search(r"\.ksi-spark svg\s*\{([^}]*)\}", source)
+    assert match, ".ksi-spark svg 규칙이 있어야 한다"
+    assert "width: 100%" not in match.group(1), "폭을 늘리면 비율이 깨진다"
