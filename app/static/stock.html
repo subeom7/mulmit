@@ -43,7 +43,11 @@
     .stock-links a { padding: 6px 11px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font-size: 11px; font-weight: 700; text-decoration: none; }
     .stock-links a:hover { color: var(--ink); border-color: var(--line-strong); }
     @media (max-width: 560px) { .stock-table { min-width: 620px; } }
-  </style>
+    /* 원문으로 나가는 링크. 표 안에서 눈에 띄되 값보다 시끄럽지 않게 —
+     점선 밑줄만 두고, 색은 올려다볼 때만 바뀐다. */
+  .doc-link { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--faint); }
+  .doc-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+</style>
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
   <link rel="stylesheet" href="/static/tokens.css?v=ccb2656202">
   <link rel="stylesheet" href="/static/console.css?v=570d3d835e">
@@ -128,13 +132,34 @@ const usd = (v) => v == null ? "—" : Math.abs(v) >= 1e9 ? "$" + (v/1e9).toFixe
 const pct = (v) => v == null ? "—" : v.toFixed(1) + "%";
 const num = (v, d = 0) => v == null ? "—" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 const fetchJson = async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(String(r.status)); return r.json(); };
+// 칸은 [class, text] 또는 [class, text, href]다.
+//
+// href가 있으면 원문으로 나가는 링크가 된다. 이 페이지를 국내·미국 한 벌로
+// 다시 쓰면서 이 세 번째 자리가 통째로 빠졌고, 여섯 표가 전부 링크를 잃었다.
+// 데이터에는 계속 URL이 있었으므로(report_url·url·filing_url·pdf_url) 화면만
+// 조용히 못 쓰고 있었다 — 공시를 옮겨 적는 화면에서 원문으로 가는 길이 없는
+// 것은 값이 틀린 것 다음으로 나쁘다.
 const fill = (tableId, headers, rows) => {
   const table = $id(tableId);
   table.querySelector("thead").innerHTML = "<tr>" + headers.map(([cls, text]) => `<th class="${cls}">${text}</th>`).join("") + "</tr>";
   const tbody = table.querySelector("tbody"); tbody.replaceChildren();
   for (const row of rows) {
     const tr = document.createElement("tr");
-    for (const [cls, text] of row) { const td = document.createElement("td"); if (cls) td.className = cls; td.textContent = text; tr.append(td); }
+    for (const [cls, text, href] of row) {
+      const td = document.createElement("td");
+      if (cls) td.className = cls;
+      if (href) {
+        // 빈 href는 눌리기만 하고 아무 데도 가지 않는다 — 링크처럼 보이는 것이
+        // 링크가 아닌 상태를 만들지 않는다.
+        const a = document.createElement("a");
+        a.href = href; a.target = "_blank"; a.rel = "noopener noreferrer";
+        a.className = "doc-link"; a.textContent = text;
+        td.append(a);
+      } else {
+        td.textContent = text;
+      }
+      tr.append(td);
+    }
     tbody.append(tr);
   }
 };
@@ -175,7 +200,7 @@ async function loadKr() {
   // 내부자(임원·주요주주)
   try {
     const i = await fetchJson("/api/kr/insider/" + SYMBOL);
-    const rows = (i.reports || []).slice(0, 12).map((r) => [["", r.report_date || "—"], ["", r.reporter || "—"], ["", r.position && r.position !== "-" ? r.position : (r.main_shareholder || "—")], ["num", num(r.shares_owned)], ["num" + (r.shares_change < 0 ? " down" : r.shares_change > 0 ? " up" : ""), r.shares_change == null ? "—" : (r.shares_change > 0 ? "+" : "") + num(r.shares_change)]]);
+    const rows = (i.reports || []).slice(0, 12).map((r) => [["", r.report_date || "—", r.report_url], ["", r.reporter || "—"], ["", r.position && r.position !== "-" ? r.position : (r.main_shareholder || "—")], ["num", num(r.shares_owned)], ["num" + (r.shares_change < 0 ? " down" : r.shares_change > 0 ? " up" : ""), r.shares_change == null ? "—" : (r.shares_change > 0 ? "+" : "") + num(r.shares_change)]]);
     if (rows.length) {
       $id("insider-title").textContent = "임원·주요주주 소유보고";
       fill("insider-table", [["", "보고일"], ["", "보고자"], ["", "직위·관계"], ["num", "소유수량"], ["num", "증감"]], rows);
@@ -189,7 +214,7 @@ async function loadKr() {
     const mine = (ev.events || []).filter((x) => x.stock_code === SYMBOL).slice(0, 8);
     if (mine.length) {
       $id("events-title").textContent = "주요사항보고 (최근)";
-      fill("events-table", [["", "접수일"], ["", "보고서명"]], mine.map((x) => [["", x.filed_at], ["", x.report_name]]));
+      fill("events-table", [["", "접수일"], ["", "보고서명"]], mine.map((x) => [["", x.filed_at], ["", x.report_name, x.url]]));
       $id("events-sub").textContent = "DART 접수 목록 원문 제목 그대로 · 수집 주기 갱신";
       $id("sec-events").hidden = false;
     }
@@ -200,7 +225,7 @@ async function loadKr() {
     const mine = (p.filings || []).filter((x) => x.stock_code === SYMBOL).slice(0, 5);
     if (mine.length) {
       $id("extra-title").textContent = "국민연금 5% 공시 (이 종목)";
-      fill("extra-table", [["", "보고일"], ["num", "보유비율"], ["num", "증감"], ["", "보고사유"]], mine.map((x) => [["", x.report_date], ["num", x.ratio == null ? "—" : x.ratio + "%"], ["num", x.ratio_change == null ? "—" : x.ratio_change + "%p"], ["", x.reason || "—"]]));
+      fill("extra-table", [["", "보고일"], ["num", "보유비율"], ["num", "증감"], ["", "보고사유"]], mine.map((x) => [["", x.report_date, x.report_url], ["num", x.ratio == null ? "—" : x.ratio + "%"], ["num", x.ratio_change == null ? "—" : x.ratio_change + "%p"], ["", x.reason || "—"]]));
       $id("sec-extra").hidden = false;
     }
   } catch (e) { console.warn('[stock] section failed', e); }
@@ -247,7 +272,7 @@ async function loadUs() {
       const move = (r.transaction && r.transaction.label && r.transaction.label.ko)
         || (r.transaction && r.transaction.code) || "—";
       return [
-        ["", r.transaction_date || r.filing_date || "—"],
+        ["", r.transaction_date || r.filing_date || "—", r.filing_url],
         ["", who],
         ["", move],
         ["num", num(r.shares)],
@@ -268,7 +293,7 @@ async function loadUs() {
     const mine = (ev.events || []).slice(0, 8);
     if (mine.length) {
       $id("events-title").textContent = "8-K 이벤트 공시 (최근)";
-      fill("events-table", [["", "제출일"], ["", "내용 (Item)"]], mine.map((x) => [["", x.filed_at], ["", (x.items || []).map((it) => it.label.ko).join(" · ") || "—"]]));
+      fill("events-table", [["", "제출일"], ["", "내용 (Item)"]], mine.map((x) => [["", x.filed_at], ["", (x.items || []).map((it) => it.label.ko).join(" · ") || "—", x.url]]));
       $id("events-sub").textContent = "표준 Item 제목 · 수집 주기 갱신";
       $id("sec-events").hidden = false;
     }
@@ -289,7 +314,7 @@ async function loadUs() {
     }
     if (mine.length) {
       $id("extra-title").textContent = "미 하원 의원 거래 (STOCK Act)";
-      fill("extra-table", [["", "의원"], ["", "거래일"], ["", "유형"], ["", "금액 구간"]], mine.slice(0, 8).map((x) => [["", x.member ? (x.district ? `${x.member} (${x.district})` : x.member) : "—"], ["", x.date || "—"], ["", x.type || "—"], ["", x.amount || "—"]]));
+      fill("extra-table", [["", "의원"], ["", "거래일"], ["", "유형"], ["", "금액 구간"]], mine.slice(0, 8).map((x) => [["", x.member ? (x.district ? `${x.member} (${x.district})` : x.member) : "—", x.pdf_url], ["", x.date || "—"], ["", x.type || "—"], ["", x.amount || "—"]]));
       $id("sec-extra").hidden = false;
     }
   } catch (e) { console.warn('[stock] section failed', e); }
