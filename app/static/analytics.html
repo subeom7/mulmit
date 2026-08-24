@@ -26,7 +26,10 @@
   <style>
   /* 페이지 본문의 큰 검색. 마스트헤드의 것과 같은 API를 부르지만 스타일은
    * 공유하지 않는다 — 그쪽은 높이 32px의 도구이고, 이쪽은 이 페이지의 본문이다. */
-  .lookup { max-width: 620px; }
+  /* 패널은 스스로 안쪽 여백을 주지 않는다(표가 자기 padding을 갖기 때문에).
+     그래서 여기서 준다 — 안 주면 입력창과 글자가 테두리에 1px까지 붙는다.
+     실측으로 잡혔다: 좌·상·하 여백이 전부 1px, 즉 테두리 두께뿐이었다. */
+  .lookup { max-width: 620px; padding: var(--sp-4); }
   .lookup-field { position: relative; }
   .lookup-input {
     width: 100%; height: 46px; padding: 0 14px; border: 1px solid var(--line);
@@ -39,16 +42,16 @@
     border: 1px solid var(--line); border-radius: 8px;
     background: var(--panel); box-shadow: var(--shadow);
   }
-  .lookup-results .group { margin: 0; padding: 7px 13px 3px; color: var(--faint); font: 650 10px/1.4 var(--num); font-variant-numeric: tabular-nums; }
+  .lookup-results .group { margin: 0; padding: 7px 13px 3px; color: var(--faint); font: 650 var(--fs-xs)/1.4 var(--num); font-variant-numeric: tabular-nums; }
   .lookup-results a { display: flex; gap: 10px; align-items: baseline; padding: 8px 13px; color: inherit; text-decoration: none; }
   .lookup-results a:hover, .lookup-results a.active { background: var(--wash); }
-  .lookup-results .sym { font: 650 11px/1.4 var(--num); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .lookup-results .sym { font: 650 var(--fs-xs)/1.4 var(--num); color: var(--muted); font-variant-numeric: tabular-nums; }
   .lookup-results .nm { font-weight: 650; font-size: 13px; }
   .lookup-note { margin: 9px 0 0; color: var(--faint); font-size: var(--fs-xs); }
   .lookup-examples { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
   .lookup-examples a {
     padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px;
-    color: var(--muted); text-decoration: none; font: 650 11px/1 var(--num);
+    color: var(--muted); text-decoration: none; font: 650 var(--fs-xs)/1 var(--num);
     font-variant-numeric: tabular-nums;
   }
   .lookup-examples a:hover { color: var(--accent); border-color: var(--accent); }

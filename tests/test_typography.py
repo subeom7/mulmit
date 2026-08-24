@@ -124,3 +124,28 @@ def test_every_page_that_ships_its_own_styles_loads_the_design_system():
             assert source.index("</style>") < source.index(sheet), (
                 f"{name}: {sheet}가 인라인 <style>보다 앞에 있어 특이도에서 진다"
             )
+
+
+def test_the_lookup_panel_insets_its_contents():
+    """패널은 스스로 안쪽 여백을 주지 않는다 — 표가 자기 padding을 갖기 때문이다.
+
+    그래서 패널 안에 표가 아닌 것을 넣으면 테두리에 그대로 붙는다. `/analytics`의
+    종목 찾기가 그랬다(2026-08-24 운영자 지적). 실측하니 입력창·설명문·칩의 좌·상·하
+    여백이 전부 1px, 즉 테두리 두께뿐이었다.
+    """
+    source = (STATIC / "analytics.html").read_text(encoding="utf-8")
+    match = re.search(r"\.lookup\s*\{([^}]*)\}", source)
+    assert match, ".lookup 규칙이 있어야 한다"
+    assert "padding" in match.group(1), (
+        "패널 안의 내용은 스스로 여백을 가져야 한다 — 안 그러면 테두리에 1px까지 붙는다"
+    )
+
+
+def test_the_lookup_panel_respects_the_label_floor():
+    """tokens.css: `--fs-xs: 12 — 라벨 하한선. 이보다 작게 쓰지 않는다`."""
+    source = (STATIC / "analytics.html").read_text(encoding="utf-8")
+    style = source[source.index("<style>") : source.index("</style>")]
+    tiny = re.findall(r"font:[^;]*?\b(\d+)px", style) + re.findall(r"font-size:\s*(\d+)px", style)
+    assert not [size for size in tiny if int(size) < 12], (
+        f"12px보다 작은 글자가 있다: {tiny} — tokens.css의 하한선을 지킬 것"
+    )
