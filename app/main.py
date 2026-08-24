@@ -51,6 +51,7 @@ from . import (
     search,
     service,
     signal_feed,
+    stock_page,
     store,
     us_events,
     us_fundamentals,
@@ -420,7 +421,8 @@ def stock_hub(symbol: str) -> HTMLResponse:
     import html as _html
 
     symbol = symbol.strip().upper()
-    if re.fullmatch(r"\d{6}", symbol):
+    korean = bool(re.fullmatch(r"\d{6}", symbol))
+    if korean:
         listing = store.get_kr_listing(symbol)
         if listing is None:
             raise HTTPException(status_code=404, detail="unknown KRX code")
@@ -451,6 +453,8 @@ def stock_hub(symbol: str) -> HTMLResponse:
         ("{{TITLE}}", title), ("{{DESCRIPTION}}", description),
     ):
         page = page.replace(key, _html.escape(value, quote=True))
+    # 크롤러가 읽을 본문. 이미 이스케이프된 HTML이라 위 치환 뒤에 넣는다.
+    page = page.replace("{{SSR}}", stock_page.render(symbol, korean=bool(korean)))
     return HTMLResponse(page, headers={"Cache-Control": "public, max-age=600"})
 
 

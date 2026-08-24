@@ -58,6 +58,11 @@
      "열기" 21px뿐이라, 왼쪽 정렬이면 좌 9px 대 우 55px로 한쪽에 쏠린다(실측).
      오른쪽 정렬은 그 쏠림을 반대편으로 옮길 뿐이다. 가운데면 32/32가 된다. */
   th.doc, td.doc { white-space: nowrap; text-align: center; }
+  /* 서버가 넣은 색인용 본문. JS가 성공하면 지워지므로 대개 안 보이지만,
+     보일 때는 진짜 섹션과 같은 리듬이어야 한다. */
+  #ssr-body .ssr-block { margin: 0 0 26px; }
+  #ssr-body h2 { margin: 0 0 8px; font-size: 16px; letter-spacing: -.02em; }
+  #ssr-body table { width: auto; max-width: 100%; }
   .doc-link { color: var(--faint); text-decoration: none; border-bottom: 1px solid transparent; }
   .doc-link:hover, .doc-link:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
 </style>
@@ -88,6 +93,15 @@
       <code id="stock-symbol">{{SYMBOL}}</code>
       <span class="market-tag" id="stock-market">{{MARKET}}</span>
     </div>
+
+    <!-- 크롤러가 읽는 본문. 서버가 저장된 값으로 채워 넣는다 — 자바스크립트가
+         돌지 않는 방문자에게는 이것이 페이지의 전부이고, 크롤러가 바로 그런
+         방문자다(실측 2026-08-24: JS 없이 받는 본문이 214자였다).
+
+         **숨기지 않는다.** 숨긴 텍스트는 가중치가 깎이고, 무엇보다 JS가 실패한
+         사람에게 빈 화면을 주게 된다. 대신 아래 스크립트가 진짜 섹션을 다 그린
+         뒤에 이 블록을 **지운다** — 실패하면 남아서 대신 읽힌다. -->
+    <div id="ssr-body">{{SSR}}</div>
 
     <div class="stock-kpis" id="stock-kpis" hidden></div>
     <div class="table-scroll" style="margin-top:6px"><div id="head-state" class="state-line">데이터를 불러오는 중입니다…</div></div>
@@ -352,6 +366,11 @@ async function loadUs() {
 
 (IS_KR ? loadKr() : loadUs()).finally(() => {
   if (!$id("head-state").hidden && !$id("sec-fund").hidden) $id("head-state").hidden = true;
+  // 서버가 넣어 둔 색인용 본문은 여기서 지운다. 진짜 섹션이 하나라도 섰을 때만 —
+  // 아무것도 못 그렸는데 지우면 빈 페이지가 남고, 그건 지금보다 나쁘다.
+  const ssr = $id("ssr-body");
+  const drew = [...document.querySelectorAll(".stock-section")].some((s) => !s.hidden);
+  if (ssr && drew) ssr.remove();
 });
 
 // 방문 통계 비콘 (익명·쿠키 없음)
