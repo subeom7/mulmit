@@ -150,3 +150,19 @@ def test_the_stock_page_respects_the_label_floor() -> None:
         + re.findall(r"font-size:\s*([\d.]+)px", style)
     ]
     assert not [size for size in sizes if size < 12], f"12px보다 작은 글자: {sizes}"
+
+
+def test_the_source_column_is_centred_under_its_header() -> None:
+    """열 폭은 머리글이 정하는데 칸의 내용은 그보다 훨씬 짧다.
+
+    실측(2026-08-24): 머리글 `원문 · DART`가 74px라 열이 85px인데 칸의 `열기`는
+    21px다. 왼쪽 정렬이면 좌 9px 대 우 55px로 한쪽에 쏠린다 — 운영자가 그것을
+    지적했다. 오른쪽 정렬은 쏠림을 반대편으로 옮길 뿐이고(55/9), 가운데면
+    32/32가 된다.
+    """
+    source = _source()
+    match = re.search(r"^\s*[^\n{]*\btd\.doc\b[^\n{]*\{([^}]*)\}", source, re.M)
+    assert match, "원문 열 규칙이 있어야 한다"
+    assert "text-align: center" in match.group(1), (
+        "머리글보다 짧은 내용은 가운데로 세워야 열 안에서 균형이 맞는다"
+    )

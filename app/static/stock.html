@@ -54,7 +54,10 @@
      컨테이너 폭까지 늘려 버린다. 실측(2026-08-24): 이 한 줄 때문에 표가 1288px로
      벌어져 보고일 칸이 323px였고, 빼자마자 408px로 줄면서 87px가 됐다. 내용 폭으로
      서는 표에서는 아무것도 안 하는 것이 좁히는 방법이다. */
-  th.doc, td.doc { white-space: nowrap; }
+  /* 가운데로 세운다. 열 폭은 머리글("원문 · DART", 74px)이 정하는데 칸의 내용은
+     "열기" 21px뿐이라, 왼쪽 정렬이면 좌 9px 대 우 55px로 한쪽에 쏠린다(실측).
+     오른쪽 정렬은 그 쏠림을 반대편으로 옮길 뿐이다. 가운데면 32/32가 된다. */
+  th.doc, td.doc { white-space: nowrap; text-align: center; }
   .doc-link { color: var(--faint); text-decoration: none; border-bottom: 1px solid transparent; }
   .doc-link:hover, .doc-link:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
 </style>
