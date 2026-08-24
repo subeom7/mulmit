@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import datetime as dt
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -289,3 +290,104 @@ def test_the_section_copy_says_what_the_form_leaves_out():
     monitor = _static("monitor.js")
     assert "공매도" in monitor
     assert "short positions" in monitor
+
+# --- 8. 인물 사진 -----------------------------------------------------------
+#
+# 사진은 라이선스가 붙은 남의 저작물이다. 숫자에 대해 지키는 규칙(출처가 값과
+# 함께 다닌다)을 사진에도 그대로 적용한다.
+
+def test_every_portrait_file_actually_ships():
+    """payload가 가리키는 파일이 없으면 카드에 깨진 그림이 뜬다."""
+    static = Path(__file__).resolve().parents[1] / "app" / "static"
+    for slug, portrait in us_managers.PORTRAITS.items():
+        assert portrait.file.startswith("/static/portraits/"), slug
+        path = static / portrait.file.removeprefix("/static/")
+        assert path.exists(), f"{slug}: {path}가 없다"
+        assert path.stat().st_size > 0
+
+
+def test_every_portrait_names_its_author_and_licence():
+    """CC BY 계열은 저작자와 라이선스를 밝혀야 쓸 수 있다."""
+    for slug, portrait in us_managers.PORTRAITS.items():
+        assert portrait.artist, slug
+        assert portrait.licence, slug
+        assert portrait.commons_file, slug
+        assert portrait.source_url.startswith("https://commons.wikimedia.org/wiki/File:"), slug
+        # 퍼블릭 도메인 말고는 라이선스 원문 링크가 있어야 한다.
+        if portrait.licence.lower() != "public domain":
+            assert portrait.licence_url.startswith("https://creativecommons.org/"), slug
+
+
+def test_share_alike_is_flagged_where_it_applies():
+    """우리는 원본을 자르고 줄였다 — BY-SA 사진의 가공본도 같은 라이선스다.
+
+    이 값이 참인 항목이 하나라도 있으면 화면이 그 사실을 말해야 하고, 그
+    문장은 `usm.photosCropped`가 들고 있다.
+    """
+    share_alike = [slug for slug, p in us_managers.PORTRAITS.items() if p.share_alike]
+    assert share_alike == ["ark"], share_alike
+    assert "BY-SA" in _static("monitor.js")
+
+
+def test_no_portrait_for_people_without_a_free_photo():
+    """드러켄밀러는 커먼즈에 사진이 없고, "Ken Fisher"로 나오는 사진은
+    **동명이인**이다(Fisher House Foundation의 켄 피셔). 라이선스는 자유지만
+    다른 사람이라 쓰면 카드에 엉뚱한 얼굴이 붙는다 — 이름만 보고 넣었으면
+    아무도 눈치채지 못했을 종류의 오류다.
+    """
+    assert "duquesne" not in us_managers.PORTRAITS
+    assert "fisher" not in us_managers.PORTRAITS
+    assert us_managers._portrait_payload("fisher") is None
+
+
+def test_the_card_payload_carries_the_portrait(card):
+    """카드 조립에서 사진이 빠지면 화면은 전원 이니셜이 된다."""
+    assert card["portrait"] is not None
+    assert card["portrait"]["file"] == "/static/portraits/buffett.webp"
+
+
+def test_the_page_falls_back_to_initials():
+    """사진 없는 사람 자리가 비면 격자가 어긋난다."""
+    monitor = _static("monitor.js")
+    assert "is-initials" in monitor
+    assert "usm-portrait" in monitor
+
+
+def test_photos_are_self_hosted_not_hotlinked():
+    """핫링크하면 읽는 사람의 브라우저가 위키미디어를 때린다 — 쿠키를 심지
+    않는다는 방침과 결이 다르다."""
+    for portrait in us_managers.PORTRAITS.values():
+        assert "wikimedia.org" not in portrait.file
+        assert portrait.file.startswith("/static/")
+
+
+def test_the_fetch_script_is_not_imported_by_the_app():
+    """Pillow는 `requirements.txt`에 없다. 앱이나 테스트가 이 스크립트를
+    import하면 CI 수집 단계에서 배포가 막힌다(2026-08-21에 겪었다)."""
+    root = Path(__file__).resolve().parents[1]
+    here = Path(__file__).resolve()
+    needle = "PIL"  # 이 파일 자신이 문자열로 담고 있으므로 아래에서 자신은 건너뛴다.
+    for folder in ("app", "tests"):
+        for path in (root / folder).rglob("*.py"):
+            if path.resolve() == here:
+                continue
+            text = path.read_text(encoding="utf-8")
+            assert "fetch_portraits" not in text, path
+            assert f"from {needle}" not in text, path
+            assert f"import {needle}" not in text, path
+
+def test_portraits_are_served_as_images_not_as_text():
+    """`StaticFiles`는 mimetypes 표에 기대고 그 표는 OS마다 다르다.
+
+    webp를 모르는 환경에서는 사진이 `text/plain; charset=utf-8`로 나간다.
+    폰트 때(`test_woff2_is_served_as_a_font_not_as_text`)와 달리 **브라우저가
+    스니핑도 안 해 준다** — 실측(2026-08-25) 결과 카드의 얼굴이 통째로 안
+    그려졌고 `naturalWidth`가 0이었다. 파일은 멀쩡한 `RIFF....WEBP`였다.
+
+    테스트로는 잡히지 않아 눈으로 보다가 나온 종류라, 여기 묶어 둔다.
+    """
+    for portrait in us_managers.PORTRAITS.values():
+        response = client.get(portrait.file)
+        assert response.status_code == 200, portrait.file
+        assert response.headers["content-type"] == "image/webp", portrait.file
+        assert response.content[:4] == b"RIFF" and response.content[8:12] == b"WEBP"

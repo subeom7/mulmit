@@ -305,6 +305,11 @@ async def _rate_limit_handler(_request: Request, exc: RateLimitExceeded) -> JSON
 # 변환을 시도하면 그대로 깨진다. 서버마다 다르게 동작할 이유가 없다.
 mimetypes.add_type("font/woff2", ".woff2")
 mimetypes.add_type("font/woff", ".woff")
+# 같은 이유로 webp도 못 박는다. 폰트 때와 달리 여기서는 **브라우저가 스니핑도
+# 안 해 준다** — `text/plain`으로 나간 인물 사진이 로컬에서 통째로 안 그려졌다
+# (2026-08-25 실측: 파일은 정상적인 `RIFF....WEBP`, naturalWidth 0). 테스트로는
+# 잡히지 않는 종류라 눈으로 보다가 나왔다.
+mimetypes.add_type("image/webp", ".webp")
 
 if config.STATIC_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=config.STATIC_DIR), name="static")

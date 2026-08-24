@@ -185,7 +185,7 @@ const TEXT = {
     "ksi.anchorNote": "수준은 {name}를 100으로 둔 상대 위치입니다. 검색량의 절댓값이 아니며, 순위 변동은 전날 대비입니다.",
     "kre.colName": "종목", "kre.colClose": "종가", "kre.colDay": "등락", "kre.colNav": "NAV", "kre.colPremium": "괴리율", "kre.colIndex": "기초지수", "kre.colValue": "거래대금",
     "kre.window": "상장 {total}종목 중 거래대금 상위 {count}", "kre.asof": "기준 {date}",
-    "usm.title": "13F 기관 포트폴리오", "usm.copy": "미국 증권거래위원회에 제출된 13F-HR(분기 기관 보유 신고)을 그대로 옮깁니다. 분기 말 기준이고 45일 안에 내면 되므로 현재 보유와 다를 수 있습니다. 이 서식에는 공매도·채권·현금·해외 상장 주식·사모 지분이 들어오지 않으므로, 여기 보이는 것은 자산 전부가 아니라 미국 상장주식 롱 포지션의 구성입니다. 투자 권유가 아닙니다.", "usm.centerLabel": "미국 상장주식", "usm.rest": "기타", "usm.restCount": "{n}종목", "usm.andMore": "이하 {n}종목", "usm.period": "{date} 기준", "usm.lagged": "신고 지연 {n}일", "usm.options": "옵션 {n}%", "usm.indexed": "지수 상품 {n}%", "usm.manyNames": "보유 {n}종목", "usm.noMajority": "상위 조각이 과반에 못 미침", "usm.filing": "{form} 원문", "usm.failed": "읽지 못한 신고자 {n}곳", "ptr.title": "미 하원 의원 주식 거래", "ptr.copy": "STOCK Act에 따른 주기거래보고(PTR)를 그대로 옮깁니다. 금액은 구간으로만 공시되며, 수기 제출분은 원문 링크로 안내합니다. 상원은 수집 경로가 막혀 있어 포함되지 않습니다.",
+    "usm.photos": "사진", "usm.photosCropped": "정사각형으로 자르고 줄여 사용했으며, 동일조건변경허락(BY-SA) 사진의 가공본도 같은 라이선스입니다.", "usm.title": "13F 기관 포트폴리오", "usm.copy": "미국 증권거래위원회에 제출된 13F-HR(분기 기관 보유 신고)을 그대로 옮깁니다. 분기 말 기준이고 45일 안에 내면 되므로 현재 보유와 다를 수 있습니다. 이 서식에는 공매도·채권·현금·해외 상장 주식·사모 지분이 들어오지 않으므로, 여기 보이는 것은 자산 전부가 아니라 미국 상장주식 롱 포지션의 구성입니다. 투자 권유가 아닙니다.", "usm.centerLabel": "미국 상장주식", "usm.rest": "기타", "usm.restCount": "{n}종목", "usm.andMore": "이하 {n}종목", "usm.period": "{date} 기준", "usm.lagged": "신고 지연 {n}일", "usm.options": "옵션 {n}%", "usm.indexed": "지수 상품 {n}%", "usm.manyNames": "보유 {n}종목", "usm.noMajority": "상위 조각이 과반에 못 미침", "usm.filing": "{form} 원문", "usm.failed": "읽지 못한 신고자 {n}곳", "ptr.title": "미 하원 의원 주식 거래", "ptr.copy": "STOCK Act에 따른 주기거래보고(PTR)를 그대로 옮깁니다. 금액은 구간으로만 공시되며, 수기 제출분은 원문 링크로 안내합니다. 상원은 수집 경로가 막혀 있어 포함되지 않습니다.",
     "ev.colTicker": "티커",
     "ptr.colDistrict": "지역구", "ptr.colTicker": "티커", "ptr.colOwner": "보유자",
     "ptr.colDate": "거래일", "ptr.colMember": "의원", "ptr.colAsset": "자산", "ptr.colType": "유형", "ptr.colAmount": "금액 구간", "ptr.colFiled": "신고일",
@@ -364,7 +364,7 @@ const TEXT = {
     "ksi.anchorNote": "Level is measured against {name} at 100. It is not an absolute search count, and rank moves are against the previous day.",
     "kre.colName": "Fund", "kre.colClose": "Close", "kre.colDay": "Day", "kre.colNav": "NAV", "kre.colPremium": "Premium", "kre.colIndex": "Underlying index", "kre.colValue": "Value traded",
     "kre.window": "Top {count} of {total} listed, by traded value", "kre.asof": "As of {date}",
-    "usm.title": "13F institutional portfolios", "usm.copy": "Form 13F-HR quarterly institutional holdings, relayed verbatim from the SEC. Positions are as of quarter end and may be filed up to 45 days later, so they may differ from current holdings. The form excludes short positions, bonds, cash, non-US listings and private stakes, so this is the composition of a US-listed long book, not a whole portfolio. Not investment advice.", "usm.centerLabel": "US-listed long book", "usm.rest": "Others", "usm.restCount": "{n} names", "usm.andMore": "{n} more named", "usm.period": "As of {date}", "usm.lagged": "{n} days since quarter end", "usm.options": "Options {n}%", "usm.indexed": "Index products {n}%", "usm.manyNames": "{n} holdings", "usm.noMajority": "Named slices are not a majority", "usm.filing": "{form} filing", "usm.failed": "{n} filers unread", "ptr.title": "US House stock trades", "ptr.copy": "Periodic transaction reports under the STOCK Act, relayed verbatim. Amounts are disclosed only as ranges; scanned paper filings link to the original. The Senate is not included because its portal blocks server collection.",
+    "usm.photos": "Photos", "usm.photosCropped": "cropped square and resized; adaptations of ShareAlike (BY-SA) photos carry the same licence.", "usm.title": "13F institutional portfolios", "usm.copy": "Form 13F-HR quarterly institutional holdings, relayed verbatim from the SEC. Positions are as of quarter end and may be filed up to 45 days later, so they may differ from current holdings. The form excludes short positions, bonds, cash, non-US listings and private stakes, so this is the composition of a US-listed long book, not a whole portfolio. Not investment advice.", "usm.centerLabel": "US-listed long book", "usm.rest": "Others", "usm.restCount": "{n} names", "usm.andMore": "{n} more named", "usm.period": "As of {date}", "usm.lagged": "{n} days since quarter end", "usm.options": "Options {n}%", "usm.indexed": "Index products {n}%", "usm.manyNames": "{n} holdings", "usm.noMajority": "Named slices are not a majority", "usm.filing": "{form} filing", "usm.failed": "{n} filers unread", "ptr.title": "US House stock trades", "ptr.copy": "Periodic transaction reports under the STOCK Act, relayed verbatim. Amounts are disclosed only as ranges; scanned paper filings link to the original. The Senate is not included because its portal blocks server collection.",
     "ev.colTicker": "Ticker",
     "ptr.colDistrict": "District", "ptr.colTicker": "Ticker", "ptr.colOwner": "Owner",
     "ptr.colDate": "Traded", "ptr.colMember": "Member", "ptr.colAsset": "Asset", "ptr.colType": "Type", "ptr.colAmount": "Amount range", "ptr.colFiled": "Filed",
@@ -1803,6 +1803,37 @@ function renderUsManagers() {
 
     const head = document.createElement("header");
     head.className = "usm-card-head";
+
+    /* 얼굴 또는 이니셜.
+     *
+     * 자유 라이선스 사진이 있는 사람만 사진이 붙는다. 없는 사람(드러켄밀러,
+     * 켄 피셔)은 이니셜로 자리를 채운다 — 넷만 사진이고 둘은 비어 있으면
+     * 격자가 어긋나 보인다. 사진이 있느냐 없느냐는 서버가 정한다. */
+    const face = document.createElement("div");
+    face.className = "usm-portrait";
+    if (manager.portrait && manager.portrait.file) {
+      const img = document.createElement("img");
+      // 지연 로딩을 쓰지 않는다. 넷 합쳐 15KB뿐이라 얻는 것이 없는데, `src`를
+      // 먼저 정하고 `loading`을 나중에 붙였더니 **로드가 아예 시작되지 않았다**
+      // (2026-08-25 실측: `currentSrc`가 빈 값, `complete` false). 얼굴이 안
+      // 뜨는데 오류도 안 나는 종류의 고장이다.
+      img.decoding = "async";
+      img.width = 88; img.height = 88;
+      img.src = manager.portrait.file;
+      // 장식이 아니라 누구인지 말하는 그림이다.
+      img.alt = local(manager.person);
+      face.append(img);
+    } else {
+      face.classList.add("is-initials");
+      const initials = String(manager.person?.en || "")
+        .split(/\s+/).filter(Boolean).slice(0, 2)
+        .map((word) => word[0].toUpperCase()).join("");
+      face.textContent = initials || "—";
+      face.setAttribute("aria-hidden", "true");
+    }
+
+    const names = document.createElement("div");
+    names.className = "usm-names";
     // 사람 이름이 먼저이고 더 크다. 이 카드를 찾아 읽는 사람은 "버크셔"가
     // 아니라 "버핏"을 찾는다 — 신고자 이름은 그 아래 근거로 둔다.
     const title = document.createElement("h3");
@@ -1810,7 +1841,8 @@ function renderUsManagers() {
     const fund = document.createElement("p");
     fund.className = "usm-fund";
     fund.textContent = local(manager.fund);
-    head.append(title, fund);
+    names.append(title, fund);
+    head.append(face, names);
     card.append(head);
 
     // 도넛. 조각 라벨은 발행사 이름 그대로 옮긴다.
@@ -1942,6 +1974,36 @@ function renderUsManagers() {
   const basis = document.createElement("span");
   basis.textContent = state.lang === "ko" ? (payload.basis_ko || "") : (payload.basis_en || "");
   footer.append(link, basis);
+
+  /* 사진 출처. CC BY 계열은 저작자와 라이선스를 밝혀야 쓸 수 있고, 그 의무는
+   * 숫자의 출처 표기와 같은 급이라 같은 자리에 적는다. 우리가 정사각형으로
+   * 자르고 줄였으므로 **변형했다는 사실**도 함께 적는다 — BY-SA 항목은 가공본도
+   * 같은 라이선스이기 때문이다. */
+  const credited = managers.filter((manager) => manager.portrait && manager.portrait.file);
+  if (credited.length) {
+    const credit = document.createElement("span");
+    credit.className = "usm-credit";
+    credit.append(document.createTextNode(t("usm.photos") + " "));
+    credited.forEach((manager, index) => {
+      const portrait = manager.portrait;
+      if (index) credit.append(document.createTextNode(" · "));
+      const who = document.createElement("a");
+      who.href = portrait.source_url; who.target = "_blank"; who.rel = "noopener noreferrer";
+      who.textContent = local(manager.person);
+      credit.append(who, document.createTextNode(" " + portrait.artist + ", "));
+      if (portrait.licence_url) {
+        const lic = document.createElement("a");
+        lic.href = portrait.licence_url; lic.target = "_blank"; lic.rel = "noopener noreferrer";
+        lic.textContent = portrait.licence;
+        credit.append(lic);
+      } else {
+        credit.append(document.createTextNode(portrait.licence));
+      }
+    });
+    credit.append(document.createTextNode(" — " + t("usm.photosCropped")));
+    footer.append(credit);
+  }
+
   if (Array.isArray(payload.failed) && payload.failed.length) {
     const failed = document.createElement("span");
     failed.className = "usm-failed";
