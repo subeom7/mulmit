@@ -1909,6 +1909,44 @@ AI·Naver API 약관에 광고 조항 자체가 없다.
 낫다 — "consistently scaled data"라 요청 간 재정규화가 없고(네이버의 앵커 문제가 사라진다),
 최근 5년 롤링·일/주/월/연 단위·국가와 하위 지역을 준다. **승인제가 열리면 재검토**한다.
 
+### 6.8 토스증권 오픈 API — 조사 결과 **기각** (`prohibited_by_terms`) (2026-08-24, 운영자 아이디어)
+
+운영자 제안: 본인 토스증권 포트폴리오·거래내역을 "운영자의 포트폴리오"로
+mulmit.com에 공개해 유입을 만든다. **약관 원문 확인 결과 불가.**
+
+| 항목 | 기록 |
+|---|---|
+| 원문 | [오픈 API 서비스 이용 약관](https://corp.tossinvest.com/ko/terms/v2?id=752) — 제정 2026-05-18, **개정 2026-08-12**. 페이지가 JS 렌더라 브라우저로 읽었다(WebFetch는 제목만 받는다) |
+| 서비스 자체 | 실재한다. [2026-08-13 정식 개시](https://www.mt.co.kr/stock/2026/08/13/2026081317374659887), 시세·종목정보·환율·시장일정·**계좌·보유주식·주문**·실시간 WS. 기술 문서는 `https://openapi.tossinvest.com/openapi-docs/overview.md`, 색인은 `https://developers.tossinvest.com/llms.txt` |
+| **막는 조항 ①** | 제5조 ③ — "고객은 회사에서 제공하는 **시세(국내주식, 해외주식)정보를 개인투자자 본인의 매매 목적에 한하여** 이용하여야 하며, **제3자에게 제공하거나 배포 또는 상업적으로 활용해서는 아니 된다.**" |
+| **막는 조항 ②** | 제5조 ④ — "**법인 고객은 오픈 API 서비스 대상에서 제외된다.** 법인 고객이 오픈 API를 통해 시세 정보를 수신하고자 하는 경우, ㈜코스콤 등 시세 제공업체와 직접 계약을 체결하여야 한다." |
+| 왜 포트폴리오도 걸리나 | ③이 문면상 겨냥하는 것은 *시세*지만, 공개하려는 값(평가금액·수익률·손익)은 **보유수량 × 시세**로 만들어진다. 시세를 재배포하지 않고 시세로 만든 수를 재배포한다는 구분은 이 저장소가 다른 벤더에서 이미 기각한 논리다(§5.4.1). 게다가 사이트는 광고 수익을 목표로 하므로 "상업적으로 활용"에 그대로 해당한다 |
+| 사업자등록과의 충돌 | TradingView Advanced Charts 때문에 사업자등록을 검토 중인데(ROADMAP §1 인접), 등록하면 ④의 **법인 고객 제외**에 직접 걸린다. 개인 자격으로 키를 받아 상업 사이트에 물리는 것은 ③ 위반이다. 어느 쪽으로 가도 막힌다 |
+| 기술 메모 | rate limit은 **클라이언트 × API 그룹 단위 TPS**(그룹별 1~20 req/s), "운영 상황에 따라 사전 공지 없이 조정될 수 있"다. 계좌·주문 계열은 `X-Tossinvest-Account` 헤더로 본인 계좌에 한정 |
+| 재검토 조건 | 토스증권이 **서비스 제공자용 별도 계약**을 신설하거나, 코스콤과 직접 시세 계약을 맺을 때. 지금은 문의할 창구조차 약관에 없다 |
+
+```yaml
+decision_id: DS-2026-022
+provider_id: toss_invest_open_api
+status: prohibited_by_terms
+reviewed_at: 2026-08-24
+reviewer: repository owner
+evidence_type: official_terms
+evidence_reference: >-
+  corp.tossinvest.com/ko/terms/v2?id=752 — Open API 서비스 이용 약관
+  (제정 2026-05-18, 개정 2026-08-12), Article 5(3) personal-trading-only and
+  no third-party provision / distribution / commercial use; Article 5(4)
+  corporate customers excluded from the service entirely
+approved_scope:
+  public_display: false
+  server_json_relay: false
+conditions:
+  - do not display Toss-derived portfolio, returns or trade history on the site
+  - do not obtain a key for site use; a personal key on a commercial site breaches 5(3)
+recheck_on: 2027-02-24
+```
+
+
 ## 7. 공급자 문의 템플릿
 
 아래 문구를 공급자별 상품명·캐시 시간에 맞게 수정해 보낸다.
