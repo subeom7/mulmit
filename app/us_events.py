@@ -45,9 +45,10 @@ def _items_payload(raw: str | None) -> list[dict[str, Any]]:
     return payload
 
 
-def build_events_feed(limit: int = DEFAULT_EVENTS) -> dict[str, Any]:
+def build_events_feed(limit: int = DEFAULT_EVENTS, ticker: str | None = None) -> dict[str, Any]:
+    """`ticker`를 주면 그 종목의 8-K만. 안 주면 커버리지 전체의 최근 목록이다."""
     _require_serving()
-    rows = store.load_recent_events(min(max(limit, 1), MAX_EVENTS))
+    rows = store.load_recent_events(min(max(limit, 1), MAX_EVENTS), ticker=ticker)
     events = [
         {
             "ticker": row["ticker"],

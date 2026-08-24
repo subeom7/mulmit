@@ -43,7 +43,7 @@ def test_every_filing_table_points_at_its_source_document() -> None:
         "국민연금 5% 공시": "x.report_date, x.report_url",
         "미국 내부자 Form 3·4·5": "r.filing_url",
         "미국 8-K": '"—", x.url',
-        "미 하원 PTR": "x.pdf_url",
+        "미 하원 PTR": "url: filing.pdf_url",
     }
     missing = [label for label, needle in wanted.items() if needle not in source]
     assert not missing, f"원문 링크가 빠진 표: {missing}"
@@ -57,3 +57,16 @@ def test_the_link_style_stays_quieter_than_the_value() -> None:
     body = match.group(1)
     assert "color: inherit" in body, "기본 상태에서는 값과 같은 색이다"
     assert "dotted" in body, "점선 밑줄만으로 링크임을 알린다"
+
+
+def test_the_us_filing_link_comes_from_the_filing_not_the_transaction() -> None:
+    """의원 거래 PDF는 거래가 아니라 **보고서**에 붙어 있다.
+
+    거래 쪽에서 찾으면 언제나 undefined라 링크가 조용히 사라진다 — 라이브에서
+    6행 전부 링크가 없었다(2026-08-24).
+    """
+    source = _source()
+    start = source.index("// 의원 거래 언급 (PTR)")
+    block = source[start : start + 1400]
+    assert "url: filing.pdf_url" in block, "PDF는 filing에서 가져온다"
+    assert "x.pdf_url" not in block, "거래 객체에는 pdf_url이 없다"

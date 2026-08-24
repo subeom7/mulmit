@@ -1604,26 +1604,32 @@ def save_company_events(ticker: str, rows: list[dict]) -> int:
     return saved
 
 
-def load_recent_events(limit: int = 40) -> list[dict]:
-    """커버리지 전체에서 최근 8-K를 최신순으로. 회사 이름은 sec_companies에서 조인."""
+def load_recent_events(limit: int = 40, ticker: str | None = None) -> list[dict]:
+    """커버리지 전체에서 최근 8-K를 최신순으로. 회사 이름은 sec_companies에서 조인.
+
+    `ticker`를 주면 그 종목만 돌려준다. 종목 화면이 이걸 필요로 한다 — 없이 부르면
+    커버리지 전체의 최근 8-K가 오고, 화면은 그것을 그 종목의 공시인 것처럼 싣게
+    된다. 2026-08-24에 애플 화면에 보잉 공시가 실려 있었다.
+    """
+    statement = (
+        sa.select(
+            company_events,
+            sec_companies.c.name.label("company_name"),
+        )
+        .join(
+            sec_companies,
+            company_events.c.ticker == sec_companies.c.ticker,
+            isouter=True,
+        )
+    )
+    if ticker:
+        statement = statement.where(company_events.c.ticker == ticker.strip().upper())
+    statement = statement.order_by(
+        company_events.c.filed_at.desc(),
+        company_events.c.accepted_at.desc().nulls_last(),
+    ).limit(limit)
     with engine().begin() as conn:
-        rows = conn.execute(
-            sa.select(
-                company_events,
-                sec_companies.c.name.label("company_name"),
-            )
-            .join(
-                sec_companies,
-                company_events.c.ticker == sec_companies.c.ticker,
-                isouter=True,
-            )
-            .order_by(
-                company_events.c.filed_at.desc(),
-                company_events.c.accepted_at.desc().nulls_last(),
-            )
-            .limit(limit)
-        ).mappings()
-        return [dict(row) for row in rows]
+        return [dict(row) for row in conn.execute(statement).mappings()]
 
 
 # --- 방문 통계 (자체 집계) ----------------------------------------------------

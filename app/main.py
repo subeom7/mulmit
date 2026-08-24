@@ -1566,10 +1566,16 @@ def us_events_feed(
     request: Request,
     response: Response,
     limit: int = Query(us_events.DEFAULT_EVENTS, ge=1, le=us_events.MAX_EVENTS),
+    ticker: str | None = Query(None, max_length=12),
 ) -> dict:
-    """커버 중인 티커의 8-K 이벤트 공시 피드. 저장소만 읽는다."""
+    """커버 중인 티커의 8-K 이벤트 공시 피드. 저장소만 읽는다.
+
+    `ticker`를 주면 그 종목만. 이 인자가 없던 동안 종목 화면이 그것을 붙여
+    부르고 있었고, FastAPI가 모르는 쿼리를 조용히 무시해서 **커버리지 전체의
+    최근 8-K가 그 종목의 것처럼 실렸다** — 애플 화면에 보잉 공시가 있었다.
+    """
     try:
-        payload = us_events.build_events_feed(limit)
+        payload = us_events.build_events_feed(limit, ticker=ticker)
     except InsiderDataDisabled as exc:
         detail = (
             data_rights.INSIDER_NOT_CONFIGURED
