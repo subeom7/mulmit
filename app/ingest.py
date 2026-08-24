@@ -41,6 +41,7 @@ from . import (
     news_videos,
     store,
     us_fundamentals,
+    us_managers,
     us_ptr,
 )
 from .market_assets import ASSET_TICKERS, CORRELATION_TICKERS
@@ -729,6 +730,33 @@ def migrate_macro_store() -> dict:
     return result
 
 
+def refresh_us_managers(*, force: bool = False) -> dict:
+    """13F 기관 포트폴리오 갱신. 분기 서식이라 자주 돌 이유가 없다.
+
+    한 신고자가 실패해도 나머지는 저장된다(`us_managers.refresh`). 전체가
+    실패하면 섹션은 데이터 없음으로 닫힌다 — 만들어 보여주지 않는다.
+    """
+    if not config.SEC_EDGAR_ENABLED:
+        return {"skipped": "disabled"}
+    if not config.SEC_EDGAR_USER_AGENT:
+        return {"skipped": "not_configured"}
+    if (
+        not force
+        and store.load_report(us_managers.CACHE_KEY, config.US_MANAGERS_MAX_AGE) is not None
+    ):
+        return {"skipped": "fresh"}
+    try:
+        result = us_managers.refresh()
+        log.info("13F 포트폴리오 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("EDGAR 허용량 — 13F는 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("13F 포트폴리오 갱신 실패: %s", exc)
+        return {"failed": str(exc)}
+
+
 def refresh_kr_pension(*, force: bool = False) -> dict:
     """국민연금 대량보유(5%) 공시 갱신. list.json 전체 페이징이라 배치 전용이다.
 
@@ -1255,6 +1283,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_kr_press()
             refresh_news_videos()
             ptr_result = refresh_us_ptr()
+            refresh_us_managers()
             fund_result = refresh_us_fundamentals()
             refresh_econ_calendar()
             hip3_result = refresh_hip3_history()
@@ -1315,6 +1344,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_kr_press()
             refresh_news_videos()
             refresh_us_ptr()
+            refresh_us_managers()
             refresh_us_fundamentals()
             refresh_econ_calendar()
             hip3_result = refresh_hip3_history()
@@ -1408,6 +1438,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         refresh_kr_press()
         refresh_news_videos()
         ptr_result = refresh_us_ptr()
+        refresh_us_managers()
         fund_result = refresh_us_fundamentals()
         refresh_econ_calendar()
         hip3_result = refresh_hip3_history()

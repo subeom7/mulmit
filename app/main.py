@@ -57,6 +57,7 @@ from . import (
     store,
     us_events,
     us_fundamentals,
+    us_managers,
     us_overnight,
     us_ptr,
 )
@@ -1586,6 +1587,34 @@ def kr_events_feed(request: Request, response: Response) -> dict:
         ) from exc
     response.headers["Cache-Control"] = "public, max-age=300"
     response.headers["X-Data-Source"] = "FSS DART"
+    return payload
+
+
+@app.get("/api/us/managers")
+@limiter.limit(config.RATE_LIMIT)
+def us_manager_portfolios(request: Request, response: Response) -> dict:
+    """13F 기관 포트폴리오. ingest 배치가 저장한 결과만 읽는다.
+
+    분기 서식이라 요청 경로에서 EDGAR를 부를 이유가 없고, 부르면 크롤러 한 번이
+    SEC 요청 열여덟 번이 된다. 사정은 `docs/DATA_SOURCE_REGISTER.md` §3.31.
+    """
+    try:
+        payload = us_managers.get_managers()
+    except us_managers.ManagersDisabled as exc:
+        detail = (
+            data_rights.US_MANAGERS_NOT_CONFIGURED
+            if exc.reason == "not_configured"
+            else data_rights.US_MANAGERS_DISABLED
+        )
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    except DataUnavailable as exc:
+        raise HTTPException(
+            status_code=503, detail="13F portfolios not collected yet"
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    response.headers["X-Data-Source"] = "SEC EDGAR"
     return payload
 
 

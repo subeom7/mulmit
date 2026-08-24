@@ -229,6 +229,148 @@ def transaction_code_label(code: str) -> dict[str, str]:
     return {"en": known[0], "ko": known[1]}
 
 
+# --- 13F-HR 기관 보유 ---------------------------------------------------------
+#
+# 13F는 운용자산 1억 달러 이상인 기관이 분기마다 미국 상장주식 롱 포지션을
+# 신고하는 서식이다. **분기 말 기준이고 45일 안에 내면 되므로** 화면에 뜨는
+# 것은 최대 한 분기 반쯤 지난 사진이다.
+#
+# 이 서식으로 만들 수 없는 것을 먼저 적어 둔다 — 공매도, 채권, 현금, 해외
+# 상장 주식, 사모 지분은 들어오지 않는다. 그래서 여기서 나온 파이는 "그 사람의
+# 자산 전부"가 아니라 **"미국 상장주식 롱 포지션의 구성"** 이다.
+
+#: 13F 신고 의무가 생기는 운용자산 기준선. 아래 단위 판별에 쓴다.
+FORM_13F_THRESHOLD_USD = 100_000_000
+
+FORM_13F = ("13F-HR", "13F-HR/A")
+
+
+@dataclass(frozen=True)
+class ManagerHolding:
+    issuer: str
+    cusip: str
+    value_usd: float
+    shares: float | None
+    is_option: bool
+
+
+@dataclass(frozen=True)
+class ManagerPortfolio:
+    cik: str
+    name: str
+    form: str
+    filed: dt.date | None
+    period: dt.date | None
+    accession: str
+    holdings: tuple[ManagerHolding, ...]
+    row_count: int
+    value_scale: str
+    options_value_usd: float
+
+    @property
+    def total_usd(self) -> float:
+        return sum(holding.value_usd for holding in self.holdings)
+
+
+def _local(tag: str) -> str:
+    """네임스페이스 접두어를 뗀 태그 이름.
+
+    13F 정보표는 제출 대행사마다 접두어가 다르다(`ns1:infoTable`, `infoTable`,
+    `ns:infoTable`). 접두어를 그대로 찾으면 어떤 제출자는 조용히 0건이 된다 —
+    실제로 처음 훑을 때 브리지워터·피셔가 그렇게 빠졌다.
+    """
+    return tag.rsplit("}", 1)[-1].rsplit(":", 1)[-1]
+
+
+def _parse_info_table(
+    blocks: list[ElementTree.Element],
+) -> tuple[tuple[ManagerHolding, ...], int, float]:
+    """행을 **발행사 단위로 합친다.**
+
+    한 종목이 여러 행으로 쪼개져 오는 제출자가 있다 — 운용 재량(sole/shared)
+    구분이나 계좌 구분 때문이다. 버크셔의 최근 제출은 89행이지만 발행사는
+    26곳뿐이다(실측 2026-08-24). 합치지 않으면 애플이 파이에 여러 조각으로
+    나타난다.
+    """
+    merged: dict[str, dict[str, Any]] = {}
+    options_value = 0.0
+
+    for block in blocks:
+        fields: dict[str, str] = {}
+        for node in block.iter():
+            name = _local(node.tag)
+            if name in {"nameOfIssuer", "cusip", "value", "sshPrnamt", "putCall"}:
+                fields[name] = (node.text or "").strip()
+
+        issuer = " ".join(fields.get("nameOfIssuer", "").split()).upper()
+        if not issuer:
+            continue
+        try:
+            value = float(fields.get("value", "") or 0)
+        except ValueError:
+            value = 0.0
+        try:
+            shares = float(fields.get("sshPrnamt", "") or 0) or None
+        except ValueError:
+            shares = None
+
+        is_option = bool(fields.get("putCall"))
+        if is_option:
+            options_value += value
+
+        row = merged.setdefault(
+            issuer,
+            {"issuer": issuer, "cusip": fields.get("cusip", ""), "value": 0.0,
+             "shares": 0.0, "is_option": False},
+        )
+        row["value"] += value
+        if shares:
+            row["shares"] += shares
+        row["is_option"] = row["is_option"] or is_option
+
+    holdings = tuple(
+        ManagerHolding(
+            issuer=row["issuer"],
+            cusip=row["cusip"],
+            value_usd=row["value"],
+            shares=row["shares"] or None,
+            is_option=row["is_option"],
+        )
+        for row in sorted(merged.values(), key=lambda row: -row["value"])
+    )
+    return holdings, len(blocks), options_value
+
+
+def _normalise_scale(
+    holdings: tuple[ManagerHolding, ...], options_value: float
+) -> tuple[str, tuple[ManagerHolding, ...], float]:
+    """금액 단위를 맞춘다 — **제출자마다 다르다.**
+
+    2023년 개정으로 `value`는 달러가 됐지만 여전히 **천 달러**로 내는 제출자가
+    있다. 실측(2026-08-24): 버크셔 합계 2.99e11(달러 = $299B), 두케인 합계
+    5.21e6. 두케인이 달러라면 $5.2M인데, **13F는 1억 달러 이상일 때만 의무**라
+    있을 수 없는 값이다. 즉 두케인은 천 단위다.
+
+    그래서 판별 규칙을 서식의 기준선 자체에서 가져온다 — **합계가 1억 달러에
+    못 미치면 그 숫자는 달러가 아니다.** 섞어서 한 화면에 올리면 조용히 천 배
+    틀린 그림이 나오므로, 추정이 아니라 규칙으로 못 박는다.
+    """
+    total = sum(holding.value_usd for holding in holdings)
+    if total <= 0 or total >= FORM_13F_THRESHOLD_USD:
+        return "dollars", holdings, options_value
+    scaled = tuple(
+        ManagerHolding(
+            issuer=holding.issuer,
+            cusip=holding.cusip,
+            value_usd=holding.value_usd * 1000,
+            shares=holding.shares,
+            is_option=holding.is_option,
+        )
+        for holding in holdings
+    )
+    return "thousands", scaled, options_value * 1000
+
+
 class SecEdgarProvider:
     """Rate-limited EDGAR reader with an injectable HTTP transport."""
 
@@ -546,3 +688,68 @@ class SecEdgarProvider:
                     )
                 )
         return rows
+
+    def fetch_latest_13f(self, cik: str) -> ManagerPortfolio:
+        cik = normalize_cik(cik)
+        payload = self._request_json(f"{SEC_DATA_BASE}/submissions/CIK{int(cik):010d}.json")
+        if not isinstance(payload, dict):
+            raise DataUnavailable(f"EDGAR submissions for CIK {cik} is not an object")
+
+        recent = (payload.get("filings") or {}).get("recent") or {}
+        forms = recent.get("form")
+        if not isinstance(forms, list):
+            raise DataUnavailable(f"EDGAR submissions for CIK {cik} has no recent filings")
+
+        for index, form in enumerate(forms):
+            if form not in FORM_13F:
+                continue
+            accession = str((recent.get("accessionNumber") or [])[index]).replace("-", "")
+            holdings, rows, options = self._fetch_13f_table(cik, accession)
+            if not holdings:
+                raise DataUnavailable(f"13F information table unreadable for CIK {cik}")
+            scale, holdings, options = _normalise_scale(holdings, options)
+            return ManagerPortfolio(
+                cik=cik,
+                name=str(payload.get("name") or ""),
+                form=str(form),
+                filed=_date(str((recent.get("filingDate") or [])[index])),
+                period=_date(str((recent.get("reportDate") or [])[index])),
+                accession=accession,
+                holdings=holdings,
+                row_count=rows,
+                value_scale=scale,
+                options_value_usd=options,
+            )
+        raise EdgarNotFound(f"CIK {cik} has no recent 13F-HR")
+
+    def _fetch_13f_table(
+        self, cik: str, accession: str
+    ) -> tuple[tuple[ManagerHolding, ...], int, float]:
+        """정보표 XML을 찾아 행을 읽는다.
+
+        제출물 안에 XML이 여러 개다(표지 `primary_doc.xml` + 정보표). 이름
+        규칙이 제출자마다 달라 이름으로 고르지 않고 **`infoTable`이 든 파일**을
+        찾는다.
+        """
+        base = f"{SEC_BASE}/Archives/edgar/data/{int(cik)}/{accession}/"
+        listing = self._request_json(f"{base}index.json")
+        items = ((listing or {}).get("directory") or {}).get("item") or []
+        names = [
+            str(item.get("name"))
+            for item in items
+            if str(item.get("name", "")).lower().endswith(".xml")
+        ]
+        # 표지를 먼저 열어 낭비할 이유가 없다.
+        names.sort(key=lambda name: "primary_doc" in name.lower())
+
+        for name in names:
+            body = self._request(f"{base}{name}", accept="application/xml")
+            try:
+                root = ElementTree.fromstring(body)
+            except ElementTree.ParseError:
+                continue
+            blocks = [node for node in root.iter() if _local(node.tag) == "infoTable"]
+            if not blocks:
+                continue
+            return _parse_info_table(blocks)
+        return (), 0, 0.0
