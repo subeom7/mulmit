@@ -42,6 +42,25 @@ Mulmit의 `/api/market/*`는 인증 없이 열려 있으므로 누구나 응답 
 - 하위 권리: 거래소·지수 제공자·원 기초 데이터의 별도 조건
 - 종료 처리: 계약 만료, 약관 변경, 키 정지 시 fail-closed 동작
 
+**렌더링 방식이 라이선스 등급을 가른다 (2026-08-24, 벤더 확인).** 위 "표시 방식"
+항목이 왜 공개 JSON API를 따로 적어 두는지에 대한 답이 벤더로부터 왔다. EODHD
+원문: "The **public JSON endpoint is exactly what tips a lane from display into
+redistribution**: the moment the values are re-servable through your own API, we
+scope it as redistribution **regardless of cache or volume**. If instead you
+render the values server-side into the HTML and expose no public JSON endpoint
+for them, that's **on-page display, not redistribution** — the lighter of the two
+classes."
+
+즉 **유료 시세를 언제든 붙이게 되면, 그 값은 서버에서 HTML로 렌더하고 공개 JSON
+으로 내보내지 않는다.** 캐시 TTL을 줄이거나 트래픽이 작다는 사실은 등급을 바꾸지
+못한다. `/news`가 이미 서버 렌더 페이지라 패턴은 저장소 안에 있다(§6.5).
+
+단서: 화면에 나가는 값이 **원본 종가 그 자체**면(파생값이 아니면) 등급이 가벼워질
+뿐 **라이선스 계약 자체는 여전히 필요하다** — 자가결제 구독으로 해결되지 않는다.
+
+이 규칙은 EODHD 전용이 아니다. KRX·NXT·Twelve Data 등 앞으로의 모든 유료 시세
+협상에 그대로 적용된다.
+
 ## 3. 현재 공급자 결정표
 
 ### 3.1 Hyperliquid HIP-3 / trade.xyz
@@ -1823,6 +1842,28 @@ EODHD가 독립적으로 같은 구분을 하고 우리의 중계 구조를 **�
 **③이 KRX 문의와 같은 벽일 가능성.** "exchange-side question"이라 했으므로 EODHD의
 한국 가격은 결국 KRX 라이선스 조건에 달려 있을 수 있다. 우리가 이미 회신을 기다리는
 그 문이다(`krxdata@krx.co.kr`).
+
+#### EODHD 2차 회신 (2026-08-24) — 세 답이 모두 확정, **가격은 예산 밖**
+
+| 항목 | 회신 |
+|---|---|
+| 렌더링이 등급을 바꾸는가 | **바꾼다** (원문은 §2에 인용). 서버 HTML 렌더 + 공개 JSON 없음 = 표시 등급. "restructuring the others to match is worth doing" |
+| 단서 | 원본 종가를 그대로 표시하므로 "licensed display arrangement rather than a plain self-serve subscription" — 등급만 가벼워지고 계약은 필요 |
+| KO EOD 제공 시각 | **같은 거래일에 나온다.** 회신 시점(서울 초저녁) 기준 **당일 월요일 종가가 이미 피드에 있고 지난 금요일 종가도 있다**. 15:30 KST 마감 후 몇 시간. 분 단위 정확한 시각은 추후 확인해 주기로 함 |
+| 가격 | **$700/월, 올인.** "The Korea exchange licensing is arranged on our side and **bundled into that figure** — nothing separate for you to sign or to pay on top." 우리가 밝힌 규모(하루 수십 PV·일별 종가만)를 반영해 잡은 금액 |
+
+**판정: 현시점 기각 (예산).** $700/월 ≈ **975,000원/월 = 연 1,170만원**으로 이
+등록부의 월 예산 기준(50,000원)의 **20배**다. 광고로 회수하려면 월 14만~70만 PV가
+필요한데(디스플레이 RPM $1~5 가정) 현재는 월 수백 PV다. 참고로 Tiingo 월 $150이
+"예산 4배 초과 → 불가"로 기각됐다(§6.5 표).
+
+**돈을 안 쓰고 얻은 것 둘.** ① 위 렌더링 규칙 — 앞으로 모든 유료 시세 협상에 쓰인다.
+② **T+1 공백은 한국 종가의 성질이 아니라 공공데이터셋의 성질이다.** 같은 날 저녁에
+나오는 경로가 실재함이 벤더 실측으로 확인됐다. KRX·NXT 판단에도 그대로 쓰인다.
+
+**재검토 조건**: 월 트래픽이 십만 PV 급이 되거나, 광고·후원 수익이 월 100만원을
+넘을 때. 회신하지 않기로 함(운영자 판단 2026-08-24) — 문은 닫히지 않았고 금액도
+알았으므로, 조건이 되면 그때 다시 연락한다.
 
 **회신 전까지의 자세.** 종가는 T+1 그대로 두되 **왜 늦는지를 카드에 밝힌다**(`official.behind_last_session`·
 `publication_note_ko`). 숫자를 지어내지 않고, 다른 화면과 다른 이유를 읽는 사람이 알 수 있게 하는 것이
