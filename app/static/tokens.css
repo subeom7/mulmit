@@ -170,6 +170,47 @@ h1, h2, p, .console-sub, .section-copy, .sec-note, .intro-copy,
 .pulse-label, .pulse-note, .period-button { font-size: var(--fs-xs); }
 .insider-source, .heatmap-subtitle, .heatmap-footer { font-size: var(--fs-xs); }
 .sub, .intro-copy { font-size: var(--fs-xs); }
+
+/* --- 12px 바닥, 2026-08-25 실측 훑기 ------------------------------------
+   하한선은 여기 적힌 것만 지켜진다 — 규칙을 새로 쓰면서 이 목록에 안 넣으면
+   아무도 안 잡는다. 실제로 그렇게 새어 나간 게 `.segmented button`(9px)이었고,
+   그 김에 브라우저로 모든 페이지를 훑어 남은 것을 여기 모았다.
+   tests/test_typography.py가 이제 새 누수를 막는다. */
+/* 마스트·네비·푸터. `.brand small`은 일부러 뺐다 — 위에 적힌 대로 그 줄만
+   12px 아래를 허용하기로 한 자리다(장식이지 데이터가 아니다). */
+.nav-chip, .icon-button, .refresh-button, .view-tab,
+.mast-ticker, .mast-ticker small, .presence-badge, .session-badge, .site-footer p { font-size: var(--fs-xs); }
+/* 히어로·요약 카드·주말 구역 */
+.kicker, .eyebrow, .hero-meta, .summary-label, .summary-change, .summary-meta,
+.weekend-disclaimer, .zone-divider small, .zone-mini small, .zone-link-card span { font-size: var(--fs-xs); }
+/* 섹터·상관·지수 표 */
+.sector-name, .sector-name code, .sector-value, .corr-cell, .method-grid p,
+.kridx-table td.range { font-size: var(--fs-xs); }
+/* 주말 참고가(kro) — 한 카드 안에서만 8.5~11px이 여섯 가지 섞여 있었다 */
+.kro-sym, .kro-vs, .kro-vs-ref, .kro-meta dt, .kro-meta dd, .kro-lag,
+.kro-footer .kro-method, .kro-footer .kro-disclaimer, .kro-official-strip,
+.kro-official-strip .kro-strip-label, .kro-strip-lag, .kro-strip-item em { font-size: var(--fs-xs); }
+/* 뉴스 레인·영상 */
+.feed-region, .feed-date, .feed-tag, .feed-domain, .feed-move, .feed-hub,
+.news-videos .nvid-meta, .news-videos .nvid-play { font-size: var(--fs-xs); }
+/* /bio — .bio-chip 안의 <small>은 규칙이 아예 없어 브라우저 기본값(부모의 0.83배)
+   으로 9.17px에 앉아 있었다. 실측 184곳으로 사이트에서 가장 작은 글자였다 */
+.bio-chip, .bio-chip small, .bio-table .bio-why, .bio-table .bio-pub,
+.bio-filter button { font-size: var(--fs-xs); }
+/* 규칙이 없는 <small>은 어디에 있든 부모의 0.8333배로 앉는다. `.bio-chip small`을
+   올리자 그 아래 `.bio-title small`이 드러났고, 하나씩 쫓으면 끝이 없다. 상대
+   축소는 남기되 12px 아래로는 못 내려가게 바닥을 깐다 — 타입 셀렉터라 클래스로
+   크기를 정한 곳(위 목록)은 전부 이 규칙을 이긴다. */
+small { font-size: max(var(--fs-xs), 0.8333em); }
+/* SVG 도넛 가운데 라벨·13F 배지는 console.css 원본에서 올렸다 — console.css가
+   tokens.css보다 **뒤에** 실려서 여기 적어도 안 먹는다(실측: 11px 그대로였다). */
+/* /crypto/{심볼} — 인라인 <style>로 짜인 코인 177페이지 */
+.coin-head .market-tag, .coin-price small, .coin-kpi small, .coin-kpi span,
+.coin-section .sub, .coin-note, .chart-toolbar button, .chart-studies .group-label,
+.chart-studies button, .chart-wrap .cc-axis, .chart-tip, .chart-state,
+.coin-table, .coin-table th, .sig-cell small, .coin-news .meta,
+.coin-links a, .state-line { font-size: var(--fs-xs); }
+
 /* 이 페이지의 규칙이 더 구체적이라 선택자 무게를 맞춘다. */
 .insider-table .role { font-size: var(--fs-xs); }
 .insider-stat .k, .insider-stat .n { font-size: var(--fs-xs); }

@@ -149,3 +149,79 @@ def test_the_lookup_panel_respects_the_label_floor():
     assert not [size for size in tiny if int(size) < 12], (
         f"12px보다 작은 글자가 있다: {tiny} — tokens.css의 하한선을 지킬 것"
     )
+
+
+# 하한선을 일부러 비켜 가는 자리. 늘리려면 tokens.css에도 이유를 적을 것.
+ALLOWED_BELOW_FLOOR = {
+    # 브랜드 로크업의 부제. tokens.css가 11px로 못박아 둔 유일한 예외다 —
+    # 데이터가 아니라 장식이라, 읽히지 않아도 잃는 정보가 없다.
+    ".brand small",
+}
+
+
+def _floor_selectors() -> set[str]:
+    """tokens.css가 12px 이상으로 끌어올려 둔 셀렉터들."""
+    covered = set(ALLOWED_BELOW_FLOOR)
+    for selector, body in _rules((STATIC / "tokens.css").read_text(encoding="utf-8")):
+        if re.search(r"font-size:\s*var\(--fs-(xs|sm)\)", body):
+            covered.update(part.strip() for part in selector.split(","))
+    return covered
+
+
+def test_nothing_renders_below_the_label_floor() -> None:
+    """12px 하한선은 **tokens.css에 적힌 것만** 지켜진다.
+
+    각 시트는 여전히 9~11.5px을 선언하고, tokens.css가 나중에 실려서 그걸
+    덮는 구조다. 그래서 규칙을 새로 쓰면서 이 목록에 넣는 걸 잊으면 아무도
+    안 잡는다 — 실제로 그렇게 샌 것이 `.segmented button`(9px)이었다. 헤더 안의
+    토글만 12px로 올리는 예외가 따로 있어서, 헤더 밖에 선 토글 하나만 9px로
+    낱말을 찍고 있었고 운영자가 화면에서 그걸 짚었다.
+
+    2026-08-25에 브라우저로 모든 페이지를 훑어 남은 72개를 목록에 넣었다.
+    가장 작았던 건 `/bio`의 `.bio-chip small` 9.17px 184곳 — 규칙이 아예 없어
+    브라우저 기본값(부모의 0.83배)에 앉아 있었다.
+
+    이 테스트는 하한선을 **선언 시점에** 강제한다. 12px 미만을 쓰려면 같은
+    셀렉터를 tokens.css의 바닥 목록에도 넣어야 한다.
+    """
+    leaking = []
+    covered = _floor_selectors()
+    for name in SHEETS:
+        if name == "tokens.css":
+            continue
+        for selector, body in _rules((STATIC / name).read_text(encoding="utf-8")):
+            sizes = [float(px) for px in re.findall(r"font:[^;]*?\b(\d+(?:\.\d+)?)px", body)]
+            sizes += [float(px) for px in re.findall(r"font-size:\s*(\d+(?:\.\d+)?)px", body)]
+            if not [size for size in sizes if size < 12]:
+                continue
+            leaking += [
+                f"{name}: {part}" for part in (p.strip() for p in selector.split(","))
+                if part not in covered
+            ]
+    assert not leaking, (
+        "12px보다 작은 글자가 하한선 밖에 있다. tokens.css의 바닥 목록에 같은 "
+        f"셀렉터를 넣거나 크기를 var(--fs-xs)로 올리라: {leaking}"
+    )
+
+
+def test_the_floor_audit_can_actually_see_a_shorthand_declaration() -> None:
+    r"""감사 정규식이 자기 대상을 못 보면, 통과는 아무것도 뜻하지 않는다.
+
+    실제로 그랬다. 위 테스트를 처음 쓸 때 `\b`가 파일에 **리터럴 백스페이스
+    문자(0x08)**로 들어가서 `font:` 단축형 검사가 죽어 있었다. `font-size: 9px`는
+    잡고 `font: 650 9px/1`은 놓쳤는데, 정작 사이트에서 작은 글자는 거의 다
+    단축형으로 쓰여 있다 — 운영자가 짚은 `.segmented button`도 단축형이었다.
+
+    같은 실수가 전에도 한 번 있었다(질의 매개변수 감사). 그래서 감사에는
+    감사를 붙인다.
+    """
+    samples = {
+        "font-size: 9px;": 9.0,
+        "font: 650 9px/1 var(--num);": 9.0,
+        "font: 700 8.5px/1.2 var(--num);": 8.5,
+        "font: 11.5px/1.4 var(--num);": 11.5,
+    }
+    for body, expected in samples.items():
+        sizes = [float(px) for px in re.findall(r"font:[^;]*?\b(\d+(?:\.\d+)?)px", body)]
+        sizes += [float(px) for px in re.findall(r"font-size:\s*(\d+(?:\.\d+)?)px", body)]
+        assert expected in sizes, f"감사가 이 선언을 못 본다: {body!r} → {sizes}"

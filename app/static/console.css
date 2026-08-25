@@ -1135,7 +1135,7 @@ html[data-lang="en"] .lang-en { display: revert; }
 .krpf-center-value {
   font-family: var(--num); font-size: 22px; font-weight: 650; fill: var(--ink);
 }
-.krpf-center-label { font-family: var(--sans); font-size: 11px; fill: var(--ink-3); }
+.krpf-center-label { font-family: var(--sans); font-size: var(--fs-xs); fill: var(--ink-3); }
 
 /* 범례를 마음껏 늘리면 넓은 화면에서 다섯 열로 퍼져 1,000px을 먹고, 그 옆의
  * 도넛이 구석에 박힌 것처럼 보인다(2026-08-24 로컬에서 눈으로 확인). 최대 폭을
@@ -1230,7 +1230,7 @@ html[data-lang="en"] .lang-en { display: revert; }
 .usm-center-value {
   font-family: var(--num); font-size: 15px; font-weight: 650; fill: var(--ink);
 }
-.usm-center-label { font-family: var(--sans); font-size: 9px; fill: var(--ink-3); }
+.usm-center-label { font-family: var(--sans); font-size: var(--fs-xs); fill: var(--ink-3); }
 
 .usm-legend { list-style: none; margin: 0; padding: 0; min-width: 0; }
 .usm-legend li {
@@ -1245,7 +1245,7 @@ html[data-lang="en"] .lang-en { display: revert; }
   list-style: none; display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0;
 }
 .usm-badge {
-  font-size: 11px; padding: 2px 7px; border-radius: 999px;
+  font-size: var(--fs-xs); padding: 2px 7px; border-radius: 999px;
   border: 1px solid var(--line); color: var(--ink-3);
 }
 .usm-badge-warn { color: var(--ink-2); border-color: var(--ink-4, #9aa0a6); }
@@ -1266,7 +1266,7 @@ html[data-lang="en"] .lang-en { display: revert; }
   display: flex; flex-direction: column; gap: 6px;
   padding-top: var(--sp-3); border-top: 1px solid var(--line);
 }
-.usm-changes-when { margin: 0; font-size: 11px; color: var(--ink-3); }
+.usm-changes-when { margin: 0; font-size: var(--fs-xs); color: var(--ink-3); }
 .usm-change-counts {
   list-style: none; margin: 0; padding: 0;
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px var(--sp-3);
@@ -1334,7 +1334,7 @@ html[data-lang="en"] .lang-en { display: revert; }
   color: var(--ink-3); font-size: var(--fs-xs);
 }
 .weekend-table { width: 100%; max-width: 860px; }
-.weekend-table td small { display: block; color: var(--ink-3); font-size: 11px; }
+.weekend-table td small { display: block; color: var(--ink-3); font-size: var(--fs-xs); }
 .weekend-table td.up { color: var(--up); }
 .weekend-table td.down { color: var(--down); }
 .weekend-empty {
