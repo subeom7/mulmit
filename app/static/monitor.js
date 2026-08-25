@@ -85,7 +85,7 @@ const TEXT = {
     "uspage.sub": "서울이 잠든 사이 미국 시장이 움직입니다. 지수·금리·환율은 여기서, 종목별 등락은 아래 히트맵에서 봅니다.",
     "uspage.disclose": "이 값들은 어디서 오나요?",
     "uspage.deep": "지표 자세히 보기 — 시장 위험 · 매크로 · 유동성 · 환율 · 자금시장",
-    "uspage.heatmapNote": "종목 단위로 오늘 무엇이 움직였는지 봅니다",
+    
     "uspage.stressNote": "미 재무부 OFR 공표값과 자체 합성 지수",
     "uspage.copy": "S&P 500 히트맵, 스트레스 지수, 매크로, 유동성, 공식 환율을 한 페이지에서 봅니다.",
     "cryptopage.kicker": "CRYPTO MARKETS", "cryptopage.title": "암호화폐, 가격·심리·파생을 한눈에.",
@@ -265,7 +265,7 @@ const TEXT = {
     "uspage.sub": "US markets move while Seoul sleeps. Indices, yields and FX live here; what individual names did is in the heatmap below.",
     "uspage.disclose": "Where do these numbers come from?",
     "uspage.deep": "Detailed indicators — risk · macro · liquidity · FX · funding",
-    "uspage.heatmapNote": "What moved today, name by name",
+    
     "uspage.stressNote": "U.S. Treasury OFR readings and our own composite",
     "uspage.copy": "The S&P 500 heatmap, stress index, macro, liquidity and official FX on one page.",
     "cryptopage.kicker": "CRYPTO MARKETS", "cryptopage.title": "Crypto: price, sentiment, derivatives — one view.",
@@ -1319,7 +1319,10 @@ const PAGE_FETCHES = {
   usManagers: ["us"],
   usOvernight: ["landing", "us"],
   usEvents: ["us"],
-  calendar: ["landing", "us"],
+  // 경제 캘린더는 홈에만 있다. 한 달치 20건 중 한국 일정이 섞여 있어서
+  // (실측 2026-08-25: 미국 17 · 한국 3) 어느 한쪽 시장 탭의 것이 아니다 —
+  // 미국 탭에 두면 금통위 일정이 미국 페이지에 서게 된다.
+  calendar: ["landing"],
   cryptoOverview: ["landing", "crypto"],
   cryptoSentiment: ["landing", "crypto"],
   cryptoVolatility: ["crypto"],
