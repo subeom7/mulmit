@@ -99,3 +99,43 @@ def test_basis_and_rights_copy_is_never_mode_dependent() -> None:
                 assert "pro-only" not in row and "easy-only" not in row, (
                     f"{page}: 근거 문구를 모드로 감추지 말 것 — {row.strip()[:80]}"
                 )
+
+
+def test_the_crypto_page_bridges_its_vocabulary() -> None:
+    """크립토는 값이 어려운 게 아니라 **말**이 어렵다.
+
+    `section-copy`가 이미 설명을 담고 있으므로 한 줄을 더 쓰면 중복이다. 초보자에게
+    없는 것은 설명이 아니라 **말과 뜻을 잇는 다리**다 — "미결제약정"을 처음 보는
+    사람에게 그건 글자다. 이미 있는 용어 사전(35개 항목, 서버 렌더)으로 보낸다.
+    """
+    source = (STATIC / "crypto.html").read_text(encoding="utf-8")
+    hints = re.findall(r'class="easy-only term-hints"', source)
+    assert len(hints) >= 8, f"용어 다리가 {len(hints)}개 섹션에만 있다"
+
+    anchors = set(re.findall(r'href="/glossary#([a-z-]+)"', source))
+    assert {"funding", "open-interest", "liquidation", "dominance"} <= anchors, (
+        f"핵심 용어가 빠졌다: {sorted(anchors)}"
+    )
+
+
+def test_the_glossary_actually_has_those_anchors() -> None:
+    """링크가 사전에 없는 앵커를 가리키면 눌러도 아무 데도 안 간다.
+
+    화면이 링크처럼 보이는데 링크가 아닌 상태 — 이 저장소가 반복해서 피하는 것이다.
+    """
+    from app import glossary
+
+    known = {term for _key, _meta, terms in glossary.grouped_terms() for term, _entry in terms}
+    source = (STATIC / "crypto.html").read_text(encoding="utf-8")
+    used = set(re.findall(r'href="/glossary#([a-z-]+)"', source))
+    assert used <= known, f"사전에 없는 앵커: {sorted(used - known)}"
+
+
+def test_the_perp_cards_hold_the_later_numbers_back() -> None:
+    """거래대금과 예상 펀딩은 앞의 둘을 읽은 다음에 오는 값이다.
+
+    넷을 한꺼번에 세워 두면 처음 보는 사람은 어디부터 볼지 정하는 데 먼저 지친다.
+    """
+    source = (STATIC / "monitor.js").read_text(encoding="utf-8")
+    line = next(row for row in source.splitlines() if 't("crypto.predicted")' in row and "meta.append" in row)
+    assert line.rstrip().endswith("true));"), f"예상 펀딩이 전문가 전용이 아니다: {line.strip()}"

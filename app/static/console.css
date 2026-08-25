@@ -296,6 +296,12 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 .ksi-market { padding: var(--sp-2) var(--sp-4) 0; margin: 0; font-size: var(--fs-xs); }
 .ksi-market.up { color: var(--up); }
 .ksi-market.down { color: var(--down); }
+/* 쉬움 모드의 용어 다리. 크립토는 값이 어려운 게 아니라 **말**이 어렵다 —
+   "미결제약정"을 처음 보는 사람에게 그건 글자다. 설명을 한 줄 더 쓰는 대신
+   이미 있는 용어 사전으로 보낸다(35개 항목, 서버 렌더). */
+.term-hints { margin: -6px 0 12px; color: var(--faint); font-size: var(--fs-xs); }
+.term-hints a { color: var(--muted); text-decoration: none; border-bottom: 1px dotted var(--line-strong); }
+.term-hints a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
 .tile-spark.up { color: var(--up); }
 .tile-spark.down { color: var(--down); }
