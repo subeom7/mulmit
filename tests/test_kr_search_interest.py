@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import datetime as dt
 import re
+import statistics
 
 import pytest
 
@@ -577,3 +578,89 @@ def test_the_stock_page_sparkline_keeps_its_aspect_ratio() -> None:
     match = re.search(r"\.ksi-spark svg\s*\{([^}]*)\}", source)
     assert match, ".ksi-spark svg 규칙이 있어야 한다"
     assert "width: 100%" not in match.group(1), "폭을 늘리면 비율이 깨진다"
+
+
+def _trending(start: dt.date, first: float, last: float, days: int = 90) -> list[float]:
+    """창 안에서 꾸준히 기울어지는 계열 — 추세장을 흉내 낸다."""
+    step = (last - first) / max(1, days - 1)
+    return [first + step * i for i in range(days)]
+
+
+def test_a_falling_market_does_not_drag_every_stock_below_one(open_lane, roster):
+    """추세가 있으면 창 전체 중앙값은 기준선이 될 수 없다.
+
+    2026-08-25 실측: 국내 주식 검색 관심이 90일 동안 46% 줄었고(전 종목 합산
+    중앙값 1.65 → 0.90), 그래서 **평일인데도** 열 종목 중 아홉이 1 미만으로
+    읽혔다. 그 상태에서 "×1.0 = 평소"는 거짓말이다.
+
+    창을 최근으로 좁히면 제자리로 온다(실측: 13주 0.78 · 8주 0.88 · 6주 0.96 ·
+    4주 1.00). 여기서는 절반으로 떨어지는 계열을 넣고, 마지막 값이 **최근**
+    기준선과 견줘 1 근처인지 본다.
+    """
+    end = dt.date(2026, 8, 24)
+    start = end - dt.timedelta(days=89)
+    provider = FakeProvider({"삼성전자": _trending(start, 100.0, 50.0)})
+    payload = kr_search_interest.build(
+        ["005930"], today=end + dt.timedelta(days=1), provider=provider
+    )
+    stock = payload["stocks"][0]
+
+    # 창 전체를 썼다면 얼마였을지 직접 계산해 견준다. 일정한 기울기로 반토막
+    # 나는 계열이라 어느 창을 써도 1에는 못 미치지만, 좁힌 쪽이 **뚜렷하게**
+    # 덜 끌려가야 한다. (실제 데이터는 최근이 평평해서 0.96까지 올라왔다.)
+    series = [float(point["ratio"]) for point in stock["series"]]
+    weekday = dt.date.fromisoformat(stock["series"][-1]["period"]).weekday()
+    same = [
+        float(point["ratio"]) for point in stock["series"][:-1]
+        if dt.date.fromisoformat(point["period"]).weekday() == weekday
+    ]
+    whole_window = series[-1] / statistics.median(same)
+
+    assert stock["vs_baseline"] > whole_window + 0.1, (
+        f"좁힌 창이 별로 낫지 않다 (좁힘 ×{stock['vs_baseline']} 대 전체 ×{whole_window:.2f})"
+    )
+    assert stock["compared_to"]["window_weeks"] == kr_search_interest.BASELINE_WEEKDAY_SAMPLES
+
+
+def test_the_market_wide_drift_is_reported_separately(open_lane, roster):
+    """좁힌 기준선이 버리는 정보를 따로 낸다.
+
+    개별 배수만 보면 "다들 평소만큼"인데 시장 전체는 반으로 식었을 수 있다.
+    그 사실이 어디에도 없으면 화면이 절반만 말하는 것이다.
+    """
+    end = dt.date(2026, 8, 24)
+    start = end - dt.timedelta(days=89)
+    provider = FakeProvider({
+        name: _trending(start, 100.0, 50.0)
+        for name in ("삼성전자", "SK하이닉스", "NAVER", "LG화학")
+    })
+    payload = kr_search_interest.build(
+        ["005930", "000660", "035420", "051910"],
+        today=end + dt.timedelta(days=1), provider=provider,
+    )
+    market = payload["market"]
+    assert market is not None
+    assert market["change_percent"] < -20, f"반으로 식은 시장을 못 잡았다: {market}"
+    assert market["stocks_counted"] == 4
+
+
+def test_the_drift_is_a_median_of_ratios_not_of_values(open_lane, roster):
+    """값을 그냥 합치면 삼성전자 하나가 전체를 정한다.
+
+    종목마다 크기가 30배씩 차이 난다. 큰 종목만 안 움직이고 나머지가 반으로
+    식으면, 값 합산은 "거의 안 변했다"고 말한다.
+    """
+    end = dt.date(2026, 8, 24)
+    start = end - dt.timedelta(days=89)
+    provider = FakeProvider({
+        "삼성전자": _flat(100.0),          # 크고, 안 움직인다
+        "SK하이닉스": _trending(start, 4.0, 2.0),
+        "NAVER": _trending(start, 3.0, 1.5),
+        "LG화학": _trending(start, 2.0, 1.0),
+    })
+    payload = kr_search_interest.build(
+        ["005930", "000660", "035420", "051910"],
+        today=end + dt.timedelta(days=1), provider=provider,
+    )
+    # 넷 중 셋이 반으로 줄었으므로 비율의 중앙값은 뚜렷한 음수여야 한다.
+    assert payload["market"]["change_percent"] < -20
