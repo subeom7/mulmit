@@ -186,7 +186,7 @@ const TEXT = {
     "ksi.anchorNote": "수준은 {name}를 100으로 둔 상대 위치입니다. 검색량의 절댓값이 아니며, 순위 변동은 전날 대비입니다.",
     "kre.colName": "종목", "kre.colClose": "종가", "kre.colDay": "등락", "kre.colNav": "NAV", "kre.colPremium": "괴리율", "kre.colIndex": "기초지수", "kre.colValue": "거래대금",
     "kre.window": "상장 {total}종목 중 거래대금 상위 {count}", "kre.asof": "기준 {date}",
-    "usm.photos": "사진", "usm.photosCropped": "정사각형으로 자르고 줄여 사용했으며, 동일조건변경허락(BY-SA) 사진의 가공본도 같은 라이선스입니다.", "usm.title": "13F 기관 포트폴리오", "usm.copy": "미국 증권거래위원회에 제출된 13F-HR(분기 기관 보유 신고)을 그대로 옮깁니다. 분기 말 기준이고 45일 안에 내면 되므로 현재 보유와 다를 수 있습니다. 이 서식에는 공매도·채권·현금·해외 상장 주식·사모 지분이 들어오지 않으므로, 여기 보이는 것은 자산 전부가 아니라 미국 상장주식 롱 포지션의 구성입니다. 투자 권유가 아닙니다.", "usm.centerLabel": "미국 상장주식", "usm.rest": "기타", "usm.restCount": "{n}종목", "usm.andMore": "이하 {n}종목", "usm.period": "{date} 기준", "usm.lagged": "신고 지연 {n}일", "usm.options": "옵션 {n}%", "usm.indexed": "지수 상품 {n}%", "usm.manyNames": "보유 {n}종목", "usm.noMajority": "상위 조각이 과반에 못 미침", "usm.filing": "{form} 원문", "usm.failed": "읽지 못한 신고자 {n}곳", "ptr.title": "미 하원 의원 주식 거래", "ptr.copy": "STOCK Act에 따른 주기거래보고(PTR)를 그대로 옮깁니다. 금액은 구간으로만 공시되며, 수기 제출분은 원문 링크로 안내합니다. 상원은 수집 경로가 막혀 있어 포함되지 않습니다.",
+    "usm.photos": "사진", "usm.photosCropped": "정사각형으로 자르고 줄여 사용했으며, 동일조건변경허락(BY-SA) 사진의 가공본도 같은 라이선스입니다.", "usm.changeWindow": "{from} → {to} 사이 변화", "usm.added": "신규", "usm.dropped": "목록에서 빠짐", "usm.increased": "늘림", "usm.decreased": "줄임", "usm.changeNote": "변화는 **보유 주식수** 기준입니다 — 평가액은 주가만 올라도 늘어납니다. 분할·합병 같은 기업행위로도 주식수는 바뀝니다. 목록에서 빠진 것이 곧 매도는 아닙니다: SEC에 비공개를 신청하면 보유한 채로 목록에서 빠집니다. 신고자마다 최신 분기가 다르므로 카드마다 적힌 분기 쌍을 보세요.", "usm.title": "13F 기관 포트폴리오", "usm.copy": "미국 증권거래위원회에 제출된 13F-HR(분기 기관 보유 신고)을 그대로 옮깁니다. 분기 말 기준이고 45일 안에 내면 되므로 현재 보유와 다를 수 있습니다. 이 서식에는 공매도·채권·현금·해외 상장 주식·사모 지분이 들어오지 않으므로, 여기 보이는 것은 자산 전부가 아니라 미국 상장주식 롱 포지션의 구성입니다. 투자 권유가 아닙니다.", "usm.centerLabel": "미국 상장주식", "usm.rest": "기타", "usm.restCount": "{n}종목", "usm.andMore": "이하 {n}종목", "usm.period": "{date} 기준", "usm.lagged": "신고 지연 {n}일", "usm.options": "옵션 {n}%", "usm.indexed": "지수 상품 {n}%", "usm.manyNames": "보유 {n}종목", "usm.noMajority": "상위 조각이 과반에 못 미침", "usm.filing": "{form} 원문", "usm.failed": "읽지 못한 신고자 {n}곳", "ptr.title": "미 하원 의원 주식 거래", "ptr.copy": "STOCK Act에 따른 주기거래보고(PTR)를 그대로 옮깁니다. 금액은 구간으로만 공시되며, 수기 제출분은 원문 링크로 안내합니다. 상원은 수집 경로가 막혀 있어 포함되지 않습니다.",
     "ev.colTicker": "티커",
     "ptr.colDistrict": "지역구", "ptr.colTicker": "티커", "ptr.colOwner": "보유자",
     "ptr.colDate": "거래일", "ptr.colMember": "의원", "ptr.colAsset": "자산", "ptr.colType": "유형", "ptr.colAmount": "금액 구간", "ptr.colFiled": "신고일",
@@ -366,7 +366,7 @@ const TEXT = {
     "ksi.anchorNote": "Level is measured against {name} at 100. It is not an absolute search count, and rank moves are against the previous day.",
     "kre.colName": "Fund", "kre.colClose": "Close", "kre.colDay": "Day", "kre.colNav": "NAV", "kre.colPremium": "Premium", "kre.colIndex": "Underlying index", "kre.colValue": "Value traded",
     "kre.window": "Top {count} of {total} listed, by traded value", "kre.asof": "As of {date}",
-    "usm.photos": "Photos", "usm.photosCropped": "cropped square and resized; adaptations of ShareAlike (BY-SA) photos carry the same licence.", "usm.title": "13F institutional portfolios", "usm.copy": "Form 13F-HR quarterly institutional holdings, relayed verbatim from the SEC. Positions are as of quarter end and may be filed up to 45 days later, so they may differ from current holdings. The form excludes short positions, bonds, cash, non-US listings and private stakes, so this is the composition of a US-listed long book, not a whole portfolio. Not investment advice.", "usm.centerLabel": "US-listed long book", "usm.rest": "Others", "usm.restCount": "{n} names", "usm.andMore": "{n} more named", "usm.period": "As of {date}", "usm.lagged": "{n} days since quarter end", "usm.options": "Options {n}%", "usm.indexed": "Index products {n}%", "usm.manyNames": "{n} holdings", "usm.noMajority": "Named slices are not a majority", "usm.filing": "{form} filing", "usm.failed": "{n} filers unread", "ptr.title": "US House stock trades", "ptr.copy": "Periodic transaction reports under the STOCK Act, relayed verbatim. Amounts are disclosed only as ranges; scanned paper filings link to the original. The Senate is not included because its portal blocks server collection.",
+    "usm.photos": "Photos", "usm.photosCropped": "cropped square and resized; adaptations of ShareAlike (BY-SA) photos carry the same licence.", "usm.changeWindow": "Changes between {from} and {to}", "usm.added": "New", "usm.dropped": "Left the list", "usm.increased": "Added to", "usm.decreased": "Trimmed", "usm.changeNote": "Changes are measured in **share counts**, not market value — a position grows in value when the price rises without a single share being bought. Corporate actions such as splits and mergers also move share counts. A holding leaving the list is not necessarily a sale: a filer may request confidential treatment and keep the position off the report. Filers are on different quarters, so read the period pair on each card.", "usm.title": "13F institutional portfolios", "usm.copy": "Form 13F-HR quarterly institutional holdings, relayed verbatim from the SEC. Positions are as of quarter end and may be filed up to 45 days later, so they may differ from current holdings. The form excludes short positions, bonds, cash, non-US listings and private stakes, so this is the composition of a US-listed long book, not a whole portfolio. Not investment advice.", "usm.centerLabel": "US-listed long book", "usm.rest": "Others", "usm.restCount": "{n} names", "usm.andMore": "{n} more named", "usm.period": "As of {date}", "usm.lagged": "{n} days since quarter end", "usm.options": "Options {n}%", "usm.indexed": "Index products {n}%", "usm.manyNames": "{n} holdings", "usm.noMajority": "Named slices are not a majority", "usm.filing": "{form} filing", "usm.failed": "{n} filers unread", "ptr.title": "US House stock trades", "ptr.copy": "Periodic transaction reports under the STOCK Act, relayed verbatim. Amounts are disclosed only as ranges; scanned paper filings link to the original. The Senate is not included because its portal blocks server collection.",
     "ev.colTicker": "Ticker",
     "ptr.colDistrict": "District", "ptr.colTicker": "Ticker", "ptr.colOwner": "Owner",
     "ptr.colDate": "Traded", "ptr.colMember": "Member", "ptr.colAsset": "Asset", "ptr.colType": "Type", "ptr.colAmount": "Amount range", "ptr.colFiled": "Filed",
@@ -1946,6 +1946,68 @@ function renderUsManagers() {
     }
     card.append(badges);
 
+    /* 직전 분기와의 변화.
+     *
+     * 여기서 조심한 것 셋. **주식수로 잰다** — 주가가 오르면 안 사고도 평가액이
+     * 는다. **`청산`이라 쓰지 않는다** — 목록에서 빠진 것이 매도가 아닐 수 있다
+     * (SEC에 비공개를 신청하면 보유한 채로 빠진다). **분기 쌍을 밝힌다** —
+     * 신고자마다 최신 분기가 달라서(퍼싱은 한 분기 밀려 있다) "이번 분기"라는
+     * 말이 사람마다 다른 것을 가리킨다. */
+    const changes = manager.changes;
+    if (changes && changes.counts) {
+      const box = document.createElement("div");
+      box.className = "usm-changes";
+
+      const when = document.createElement("p");
+      when.className = "usm-changes-when";
+      when.textContent = t("usm.changeWindow", {
+        from: changes.from_period || "—", to: changes.to_period || "—",
+      });
+      box.append(when);
+
+      const counts = document.createElement("ul");
+      counts.className = "usm-change-counts";
+      [
+        ["usm.added", changes.counts.added],
+        ["usm.dropped", changes.counts.dropped],
+        ["usm.increased", changes.counts.increased],
+        ["usm.decreased", changes.counts.decreased],
+      ].forEach((pair) => {
+        const li = document.createElement("li");
+        const label = document.createElement("span");
+        label.textContent = t(pair[0]);
+        const value = document.createElement("b");
+        value.textContent = num(pair[1]);
+        li.append(label, value);
+        counts.append(li);
+      });
+      box.append(counts);
+
+      // 이름은 큰 것 몇 개만. 브리지워터는 한 분기에 200종목이 드나든다.
+      [["added", "+", changes.added], ["dropped", "−", changes.dropped]].forEach((group) => {
+        const rows = Array.isArray(group[2]) ? group[2] : [];
+        if (!rows.length) return;
+        const list = document.createElement("ul");
+        list.className = "usm-change-names usm-change-" + group[0];
+        rows.forEach((row) => {
+          const li = document.createElement("li");
+          const sign = document.createElement("span");
+          sign.className = "usm-change-sign";
+          sign.textContent = group[1];
+          const name = document.createElement("span");
+          name.className = "krpf-legend-name";
+          name.textContent = row.issuer;
+          const value = document.createElement("span");
+          value.className = "krpf-legend-pct";
+          value.textContent = usd(row.value);
+          li.append(sign, name, value);
+          list.append(li);
+        });
+        box.append(list);
+      });
+      card.append(box);
+    }
+
     if (manager.person_note) {
       const note = document.createElement("p");
       note.className = "usm-note";
@@ -1981,6 +2043,14 @@ function renderUsManagers() {
    * 숫자의 출처 표기와 같은 급이라 같은 자리에 적는다. 우리가 정사각형으로
    * 자르고 줄였으므로 **변형했다는 사실**도 함께 적는다 — BY-SA 항목은 가공본도
    * 같은 라이선스이기 때문이다. */
+  // 변화가 하나라도 실렸으면 그것을 어떻게 읽어야 하는지 말한다.
+  if (managers.some((manager) => manager.changes)) {
+    const note = document.createElement("span");
+    note.className = "usm-change-note";
+    note.textContent = t("usm.changeNote").replace(/\*\*/g, "");
+    footer.append(note);
+  }
+
   const credited = managers.filter((manager) => manager.portrait && manager.portrait.file);
   if (credited.length) {
     const credit = document.createElement("span");

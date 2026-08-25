@@ -1250,3 +1250,31 @@ html[data-lang="en"] .lang-en { display: revert; }
 @media (max-width: 420px) {
   .usm-grid { grid-template-columns: 1fr; }
 }
+
+/* 직전 분기와의 변화. 카드가 이미 빽빽해서 숫자 넉 줄과 이름 몇 개로 끝낸다. */
+.usm-changes {
+  display: flex; flex-direction: column; gap: 6px;
+  padding-top: var(--sp-3); border-top: 1px solid var(--line);
+}
+.usm-changes-when { margin: 0; font-size: 11px; color: var(--ink-3); }
+.usm-change-counts {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px var(--sp-3);
+}
+.usm-change-counts li {
+  display: flex; justify-content: space-between; gap: var(--sp-2);
+  font-size: var(--fs-xs); color: var(--ink-3);
+}
+.usm-change-counts b { font-family: var(--num); color: var(--ink-2); font-weight: 650; }
+.usm-change-names { list-style: none; margin: 0; padding: 0; min-width: 0; }
+.usm-change-names li {
+  display: flex; align-items: center; gap: var(--sp-2);
+  font-size: var(--fs-xs); padding: 1px 0; min-width: 0;
+}
+.usm-change-sign {
+  flex: 0 0 auto; width: 9px; text-align: center;
+  font-family: var(--num); color: var(--ink-3);
+}
+.usm-change-added .usm-change-sign { color: var(--up, #4ade80); }
+.usm-change-dropped .usm-change-sign { color: var(--down, #f87171); }
+.usm-change-note { display: block; width: 100%; color: var(--ink-3); line-height: 1.6; }
