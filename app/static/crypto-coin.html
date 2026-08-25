@@ -245,7 +245,12 @@ let interval = localStorageGet("mulmit.coinInterval") || "1h";
 let studyMa = localStorageGet("mulmit.chart.ma") !== "0";
 let studyBb = localStorageGet("mulmit.chart.bb") === "1";
 let studyPane = localStorageGet("mulmit.chart.pane") || "none";
-let candles = [], lastPayload = null, candleFetchedAt = 0, hoverIndex = null;
+// 지표는 캔들에서 나온 값이라 **캔들과 함께 다닌다**.
+//
+// 갱신할 때 `candles=false`로 물으면 서버가 캔들도 지표도 빼고 준다(대역폭
+// 절약). 캔들은 여기 남겨 두면서 지표는 `lastPayload`를 통째로 갈아 끼우는
+// 바람에 잃고 있었다 — 버튼은 켜진 채로 그림만 사라졌다. 에러도 없다.
+let candles = [], indicators = null, lastPayload = null, candleFetchedAt = 0, hoverIndex = null;
 
 function localStorageGet(key) { try { return window.localStorage.getItem(key); } catch { return null; } }
 function localStorageSet(key, value) { try { window.localStorage.setItem(key, value); } catch { /* private mode */ } }
@@ -450,7 +455,7 @@ function renderToolbar(options) {
       if (interval === option.id) return;
       interval = option.id; localStorageSet("mulmit.coinInterval", interval);
       [...bar.querySelectorAll("button")].forEach((b) => b.classList.toggle("active", b.dataset.interval === interval));
-      candles = []; drawChart(); load(true);
+      candles = []; indicators = null; drawChart(); load(true);
     });
     return button;
   }));
@@ -529,7 +534,7 @@ function drawChart() {
     return;
   }
   stateNode.hidden = true; svg.removeAttribute("hidden");
-  const ind = lastPayload?.chart?.indicators || null;
+  const ind = indicators;
   const overlays = [];
   if (ind && studyMa) overlays.push([ind.ma?.fast?.values, "cc-ma-fast"], [ind.ma?.slow?.values, "cc-ma-slow"]);
   if (ind && studyBb) overlays.push([ind.bollinger?.upper, "cc-bb"], [ind.bollinger?.lower, "cc-bb"], [ind.bollinger?.middle, "cc-bb"]);
@@ -734,7 +739,11 @@ async function load(withCandles) {
     renderStudies();
     renderHead(data);
     if (needCandles && Array.isArray(data.chart?.candles) && data.chart.candles.length) {
-      candles = data.chart.candles; candleFetchedAt = Date.now(); drawChart();
+      candles = data.chart.candles;
+      // 같은 응답에서 온 것만 쓴다. 다른 구간의 지표를 이 캔들 위에 그리면
+      // 선이 캔들과 어긋난 채로 멀쩡해 보인다.
+      indicators = data.chart.indicators || null;
+      candleFetchedAt = Date.now(); drawChart();
     } else if (candles.length && data.market?.price?.value != null) {
       const live = data.market.price.value, last = candles[candles.length - 1];
       last.c = live; last.h = Math.max(last.h, live); last.l = Math.min(last.l, live);
