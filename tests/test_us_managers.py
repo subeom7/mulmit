@@ -391,3 +391,46 @@ def test_portraits_are_served_as_images_not_as_text():
         assert response.status_code == 200, portrait.file
         assert response.headers["content-type"] == "image/webp", portrait.file
         assert response.content[:4] == b"RIFF" and response.content[8:12] == b"WEBP"
+
+# --- 9. 배포해도 화면이 안 바뀌는 사고 ---------------------------------------
+
+def test_the_payload_declares_its_shape():
+    """배치가 채우는 lane은 코드가 배포돼도 화면이 안 바뀐다 — 저장된 blob이
+    옛 모양 그대로이기 때문이다.
+
+    인물 사진을 붙인 날 실제로 그랬다(2026-08-25): 배포는 성공했고 코드도
+    맞았는데 라이브는 **전원 이니셜**이었다. TTL이 24시간이라 그냥 뒀으면
+    하루 동안 그 상태였을 것이다.
+    """
+    assert isinstance(us_managers.SCHEMA, int)
+    source = (Path(__file__).resolve().parents[1] / "app" / "us_managers.py").read_text(encoding="utf-8")
+    assert '"schema": SCHEMA' in source, "payload가 자기 모양을 밝히지 않는다"
+
+
+def test_ingest_rebuilds_when_the_shape_changed(monkeypatch):
+    """신선한 것만으로는 건너뛰면 안 된다 — 모양이 같아야 건너뛴다.
+
+    캐시 키를 올리는 방법도 있지만 그러면 새 키에 blob이 없어 다음 수집까지
+    503이 된다. 고치려다 더 오래 비우는 셈이라 이 길을 골랐다.
+    """
+    from app import ingest
+
+    monkeypatch.setattr(ingest.config, "SEC_EDGAR_ENABLED", True)
+    monkeypatch.setattr(ingest.config, "SEC_EDGAR_USER_AGENT", "test <t@example.com>")
+
+    calls: list[bool] = []
+    monkeypatch.setattr(ingest.us_managers, "refresh", lambda: calls.append(True) or {"managers": 6})
+
+    # 옛 모양이 저장돼 있으면 TTL이 남아 있어도 다시 걷는다.
+    monkeypatch.setattr(ingest.store, "load_report", lambda *a, **k: {"schema": None, "managers": []})
+    assert ingest.refresh_us_managers() == {"managers": 6}
+    assert calls == [True]
+
+    # 같은 모양이면 건너뛴다.
+    calls.clear()
+    monkeypatch.setattr(
+        ingest.store, "load_report",
+        lambda *a, **k: {"schema": us_managers.SCHEMA, "managers": []},
+    )
+    assert ingest.refresh_us_managers() == {"skipped": "fresh"}
+    assert calls == []

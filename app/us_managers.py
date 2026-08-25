@@ -52,6 +52,19 @@ log = logging.getLogger(__name__)
 
 CACHE_KEY = "sec_13f_managers_v1"
 
+#: **payload의 모양이 바뀔 때마다 올린다.**
+#:
+#: 배치가 채우는 lane은 코드가 배포돼도 화면이 안 바뀐다 — 저장된 blob이 옛
+#: 모양 그대로이기 때문이다. 인물 사진을 붙인 날 실제로 그랬다(2026-08-25):
+#: 배포는 성공했고 코드도 맞았는데 라이브는 **전원 이니셜**이었고, 원인을 찾는
+#: 데 시간이 걸렸다. TTL이 24시간이라 그냥 두면 하루 동안 그 상태다.
+#:
+#: 캐시 키를 올리는 방법도 있지만 그러면 새 키에 blob이 없어 **다음 수집까지
+#: 503**이 된다 — 고치려다 더 오래 비운다. 대신 ingest가 저장된 값과 이 번호를
+#: 견줘 다르면 TTL이 남아 있어도 다시 걷게 한다. 화면은 그동안 옛 모양으로나마
+#: 계속 뜨고, 다음 주기에 스스로 낫는다.
+SCHEMA = 1
+
 #: 파이에 이름을 붙일 조각의 기본 개수. 과반에 못 미치면 아래에서 늘린다.
 BASE_SLICES = 20
 
@@ -316,6 +329,7 @@ def refresh(provider: SecEdgarProvider | None = None, *, today: dt.date | None =
 
     payload = {
         "generated_at": dt.datetime.now(dt.UTC).isoformat().replace("+00:00", "Z"),
+        "schema": SCHEMA,
         "managers": built,
         "failed": failed,
         "count": len(built),
