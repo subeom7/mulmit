@@ -200,6 +200,30 @@ notes: >
 | 금지 | iframe 숫자 추출, 스크래핑, 서버 fallback, TradingView 데이터처럼 보이는 자체 API 생성 |
 | 공식 근거 | [Widgets](https://www.tradingview.com/widget/), [Stock Heatmap docs](https://www.tradingview.com/widget-docs/widgets/heatmaps/stock-heatmap/), [Widget data FAQ](https://www.tradingview.com/widget-docs/faq/data/), [Policies](https://www.tradingview.com/policies/) |
 
+#### Advanced Charts 승인 대기 — **승인 전 사용은 기각** (2026-08-25)
+
+운영자 질문: "답이 없는데 그냥 리스크 감수하고 붙이고 회신 오면 결정할까?"
+
+**아직 3일이다.** 신청 프로필은 2026-08-22 18:45에 만들어졌고 이 판정은 08-25이다.
+B2B 라이브러리 승인에 3일은 짧고 주말이 끼어 있다 — "답이 없다"고 부를 시점이 아니다.
+
+**그리고 이것은 리스크 감수의 문제가 아니다.** Advanced Charts 라이브러리는 공개
+배포가 아니라 **승인 후 비공개 저장소 접근권**으로 받는다. 지금 붙이려면 비공인
+미러에서 가져와야 하고, 그것은 해석이 갈리는 회색지대가 아니라 **명백한 무단
+사용**이다. 이 문서의 다른 판정들(Getty §3.31, FnGuide §6.6)은 *"우리 쓰임새가 범위
+안인가"* 라는 판단 문제였지만, 이건 *"아직 써도 되는가"* 이고 답이 **"승인 후에"** 라고
+명시돼 있다.
+
+계약서 원문(v.0626.FAC)에 **건당 $50,000**이 있다. 더 나쁜 것은 승인 전 사용이 드러나면
+**지금 기다리는 승인 자체가 날아간다**는 점이다.
+
+**기다려서 잃는 것이 적다.** 자체 SVG 차트에 이평선·볼린저·RSI·MACD가 이미 있고
+(`app/crypto_indicators.py`), Advanced Charts로 실제로 얻는 것은 **선그리기**다.
+
+**후속**: 회신이 없으면 **2026-09-05 이후** 정중한 후속 문의를 넣는다. 3일 만에
+재촉하지 않는다. 그때도 없으면 선그리기를 자체 구현하는 쪽을 검토한다(수평선·추세선·
+`localStorage` 저장 — 의존성도 라이선스도 없다).
+
 후속 작업:
 
 - ~~Privacy 문서에 외부 위젯이 페이지 URL, 위젯 종류·심볼, IP 등 공급자 문서에 적힌 정보를 처리할 수 있음을 알린다.~~ **완료 (2026-08-17).** `/privacy` §4에 위젯이 사용자 브라우저에서 직접 로드되며 TradingView가 IP·페이지 URL·브라우저 정보를 받는다는 사실과 차단 방법을 기재했다.
