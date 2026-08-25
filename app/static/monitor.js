@@ -4486,7 +4486,10 @@ function renderCryptoSentiment() {
   $("#cfng-score").textContent = String(data.value);
   const staleText = data.freshness?.status === "stale" ? ` · ${t("badge.stale")}` : "";
   $("#cfng-band").textContent = `${localValue(data.classification, state.lang)} · ${t("date.asof")} ${data.as_of}${staleText}`;
-  $("#cfng-marker").style.left = `calc(${Math.max(0, Math.min(100, data.value))}% - 1.5px)`;
+  paintGauge($("#cfng-marker")?.parentElement, {
+    score: data.value, previous: data.previous?.value ?? null,
+    min: data.scale?.min ?? 0, max: data.scale?.max ?? 100,
+  });
 
   // Publisher's condition: attribution right next to the displayed value.
   const attribution = $("#cfng-attribution"); attribution.replaceChildren();
@@ -4775,6 +4778,52 @@ function renderCryptoStructure() {
   footer.append(attribution, method, disclaimer);
 }
 
+// 게이지 하나를 칠한다. 길이가 값을 말하고, 어제 자리가 있으면 남긴다.
+// 처음 그릴 때는 어제 자리에서 오늘 자리로 움직인다 — 이력이 없는 지수는
+// 0에서 올라온다(가운데에서 시작하면 어제가 50이었다는 뜻이 되어 버린다).
+function paintGauge(track, { score, previous = null, min = 0, max = 100 } = {}) {
+  if (!track) return;
+  const value = safeNumber(score); if (value === null) return;
+  const span = (max - min) || 1;
+  const pin = (raw) => Math.max(0, Math.min(100, ((raw - min) / span) * 100));
+  const target = pin(value);
+
+  let lit = track.querySelector(".gauge-lit");
+  if (!lit) { lit = document.createElement("span"); lit.className = "gauge-lit"; track.prepend(lit); }
+  const marker = track.querySelector("i");
+
+  const before = safeNumber(previous);
+  const from = before === null ? null : pin(before);
+  let ghost = track.querySelector(".gauge-ghost"), trail = track.querySelector(".gauge-trail");
+  if (from === null) { ghost?.remove(); trail?.remove(); }
+  else {
+    if (!ghost) { ghost = document.createElement("span"); ghost.className = "gauge-ghost"; track.append(ghost); }
+    if (!trail) { trail = document.createElement("span"); trail.className = "gauge-trail"; track.append(trail); }
+    ghost.style.left = `${from}%`;
+    trail.style.left = `${Math.min(from, target)}%`;
+    trail.style.width = `${Math.abs(target - from)}%`;
+  }
+
+  const place = (at) => {
+    lit.style.clipPath = `inset(0 ${100 - at}% 0 0 round 999px)`;
+    if (marker) marker.style.left = `${at}%`;
+  };
+  const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const painted = track.dataset.gaugeAt;
+  if (painted !== undefined && painted !== String(target) && marker && !still) {
+    marker.classList.remove("changed"); void marker.offsetWidth; marker.classList.add("changed");
+  }
+  if (still || painted !== undefined) place(target);
+  else {
+    place(from === null ? 0 : from);
+    // 리플로우로 시작 자리를 확정한 뒤 곧바로 목표를 쓴다. rAF로 미루면
+    // 백그라운드 탭에서 콜백이 돌지 않아 마커가 시작 자리에 그대로 멈춘다 —
+    // 애니메이션이 아니라 표시되는 값이 틀리게 된다(실측으로 그렇게 나왔다).
+    void track.offsetWidth;
+    place(target);
+  }
+  track.dataset.gaugeAt = String(target);
+}
 function renderCryptoGas() {
   const section = $("#crypto-gas"); if (!section) return;
   const stateNode = $("#cgas-state"), grid = $("#cgas-grid"), footer = $("#cgas-footer");
@@ -5309,7 +5358,10 @@ function renderStressIndex() {
 
   $("#stress-score").textContent = num(data.score);
   $("#stress-band").textContent = `${localValue(data.band, state.lang)} · ${t("date.asof")} ${dateText(data.as_of)}`;
-  $("#stress-marker").style.left = `calc(${Math.max(0, Math.min(100, data.score))}% - 1.5px)`;
+  // 이 지수는 이력을 내려주지 않는다(components만 있다). 어제 자리를 못 그린다.
+  paintGauge($("#stress-marker")?.parentElement, {
+    score: data.score, min: data.scale?.min ?? 0, max: data.scale?.max ?? 100,
+  });
 
   const table = $("#stress-table");
   const heads = ["stress.colInput", "stress.colValue", "stress.colPct", "stress.colScore", "stress.colDir"];
@@ -5375,7 +5427,12 @@ function renderSentimentIndex() {
 
   $("#sentiment-score").textContent = num(data.score);
   $("#sentiment-band").textContent = `${localValue(data.band, state.lang)} · ${t("date.asof")} ${dateText(data.as_of)}`;
-  $("#sentiment-marker").style.left = `calc(${Math.max(0, Math.min(100, data.score))}% - 1.5px)`;
+  // observations는 날짜 오름차순이고 마지막이 오늘 값이다 — 그 앞이 어제.
+  const history = Array.isArray(data.observations) ? data.observations : [];
+  paintGauge($("#sentiment-marker")?.parentElement, {
+    score: data.score, previous: history.length > 1 ? history[history.length - 2].value : null,
+    min: data.scale?.min ?? 0, max: data.scale?.max ?? 100,
+  });
 
   const chartHost = $("#sentiment-chart");
   if (chartHost) {
