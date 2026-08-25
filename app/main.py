@@ -61,6 +61,7 @@ from . import (
     us_managers,
     us_overnight,
     us_ptr,
+    weekend_page,
 )
 from .data import DataUnavailable, RateLimited
 from .insider_filings import (
@@ -609,6 +610,24 @@ def news_feed_page() -> HTMLResponse:
     for key, value in filled.items():
         page = page.replace("{{" + key + "}}", value)
     return HTMLResponse(page, headers={"Cache-Control": "public, max-age=300"})
+
+
+@app.get("/weekend", include_in_schema=False)
+def weekend_page_view() -> HTMLResponse:
+    """주말 참고가 전용 페이지. 서버에서 렌더한다.
+
+    이 페이지의 존재 이유가 색인이라 JS로 채우면 뜻이 없다 — `주말 삼성전자
+    주가`로 들어온 크롤러가 빈 화면을 읽으면 그 질의를 영영 못 잡는다.
+    `/news`·`/glossary`와 같은 이유로 같은 선택이다.
+
+    캐시는 짧게. 값이 5초 TTL 뒤에서 움직이므로 한 시간을 물고 있으면 주말
+    내내 같은 숫자를 보여 준다.
+    """
+    page = weekend_page.template()
+    page = page.replace("{{JSONLD}}", weekend_page.json_ld())
+    for key, value in weekend_page.render().items():
+        page = page.replace("{{" + key + "}}", value)
+    return HTMLResponse(page, headers={"Cache-Control": "public, max-age=120"})
 
 
 @app.get("/glossary", include_in_schema=False)
