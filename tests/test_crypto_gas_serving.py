@@ -51,39 +51,10 @@ class SlowHl:
         }
 
 
-def _settle_background_refresh(timeout: float = 5.0) -> None:
-    """배경 새로고침이 끝날 때까지 기다린다.
-
-    `_refresh_in_background`는 `_build_and_store()`가 **끝난 뒤** `finally`에서
-    플래그를 내린다. 그래서 플래그가 내려갔다는 것은 저장까지 마쳤다는 뜻이다.
-    """
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        with crypto_gas._snapshot_lock:
-            if not crypto_gas._refreshing:
-                return
-        time.sleep(0.01)
-    raise AssertionError("배경 새로고침이 시간 안에 끝나지 않았다")
-
-
 @pytest.fixture(autouse=True)
 def clean_snapshot():
-    """스냅샷 상태를 테스트마다 비운다 — **그리고 스레드를 넘기지 않는다.**
-
-    `reset_snapshot()`만으로는 부족했다. 이 모듈의 몇몇 테스트는 배경 새로고침
-    스레드를 띄우는데, 그 스레드가 **자기 테스트보다 오래 살아남아** 다음
-    테스트가 도는 동안 `_snapshot_at`을 갱신한다. 그러면 다음 테스트가 방금
-    만든 값을 "아직 신선하다"고 오해하고, 새로 만들어야 할 자리에서 옛것을
-    내보낸다.
-
-    2026-08-25에 CI에서 `test_a_strip_too_old_to_trust_is_rebuilt_in_the_request`가
-    `build-1` 대 `build-2`로 깨졌다. 로컬에서는 통과했고 재실행하면 통과했다 —
-    **머지된 뒤에야 main에서 터지는 종류**라 배포가 조용히 막힌다. 이 저장소는
-    머지가 곧 배포라서 플레이크 하나가 배포 실패와 같은 값이다.
-    """
     crypto_gas.reset_snapshot()
     yield
-    _settle_background_refresh()
     crypto_gas.reset_snapshot()
 
 
@@ -177,8 +148,6 @@ def test_only_one_refresh_runs_at_a_time(monkeypatch):
         crypto_gas.snapshot()
     time.sleep(0.2)
     hold.set()
-    # 스레드를 다음 테스트로 넘기지 않는다 — 넘기면 그 테스트가 플레이크가 된다.
-    _settle_background_refresh()
     assert len(builds) == 2, f"five expired reads started {len(builds) - 1} refreshes"
 
 
