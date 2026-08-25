@@ -25,6 +25,7 @@ from . import (
     __version__,
     bio,
     config,
+    covered_pages,
     crypto_board,
     crypto_coin,
     crypto_coin_page,
@@ -387,15 +388,24 @@ def market_monitor() -> FileResponse:
 
 
 @app.get("/analytics", include_in_schema=False)
-def stock_analytics() -> FileResponse:
+def stock_analytics() -> HTMLResponse:
     """종목 찾기 진입 페이지. 종목 데이터는 여기서 그리지 않는다.
 
     예전에는 이 페이지가 국내·미국 종목을 각자 다른 모양으로 직접 렌더했고,
     그 두 벌이 `/stock/{심볼}`이 그리는 것과 같은 payload를 세 번째로 그리는
     셈이었다. 한쪽만 고쳐서 다른 쪽이 조용히 깨지는 사고가 실제로 났다.
     지금은 찾아서 보내 주기만 한다.
+
+    다만 **링크 목록은 서버가 그린다**. 사이트맵에만 있는 URL은 구글이 찾아도
+    가져가지 않는다(2026-08-25 Search Console: Discovered 2,954 대 Crawled 2).
+    홈에서 한 번, 여기서 한 번 — 두 걸음이면 모든 종목 페이지에 길이 닿는다.
     """
-    return FileResponse(config.STATIC_DIR / "analytics.html")
+    page = (config.STATIC_DIR / "analytics.html").read_text(encoding="utf-8")
+    page = page.replace("{{COVERED}}", covered_pages.render_index())
+    page = page.replace("{{EXAMPLES}}", covered_pages.render_examples())
+    # 캐시 지시를 직접 달지 않는다 — 페이지 HTML은 미들웨어가 no-cache로 잡는다.
+    # 여기서 max-age를 붙이면 수정이 사용자에게 늦게 도착한다.
+    return HTMLResponse(page)
 
 
 @app.get("/favicon.ico", include_in_schema=False)
@@ -527,24 +537,9 @@ def sitemap_stocks() -> PlainResponse:
     준다. 사이트맵은 "이건 지금 볼 것이 있다"는 약속이고, 그 약속만 지킨다.
     수집이 진행되면 이 목록은 저절로 늘어난다.
     """
-    with_data = set(store.list_kr_codes_with_series())
-    urls = [
-        f"https://mulmit.com/stock/{code}"
-        for code, _name in store.list_kr_codes()
-        if code in with_data
-    ]
-    urls += [
-        f"https://mulmit.com/stock/{row['ticker']}"
-        for row in store.list_insider_companies(status="ok")
-    ]
-    # 코인 상세도 같은 사이트맵에 올린다. 지금까지 아예 빠져 있어서 구글이 존재를
-    # 모르는 상태였다(2026-08-24 확인). 큐레이션된 목록이라 값이 없는 페이지가
-    # 섞이지 않는다 — 종목과 달리 여기서는 전수가 곧 "볼 것이 있는" 목록이다.
-    if data_rights.crypto_section_enabled():
-        urls += [
-            f"https://mulmit.com/crypto/{symbol}"
-            for symbol in crypto_coin.curated_symbols()
-        ]
+    # 화면의 링크 목록과 **같은 것**을 쓴다. 갈라지면 구글에는 있다고 말해 놓고
+    # 사이트 안에는 그리로 가는 길이 없는 상태가 된다 — 2026-08-25에 그랬다.
+    urls = covered_pages.urls()
     lines = ['<?xml version="1.0" encoding="UTF-8"?>']
     lines.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
     lines.extend(

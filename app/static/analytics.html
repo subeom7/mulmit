@@ -55,6 +55,19 @@
     font-variant-numeric: tabular-nums;
   }
   .lookup-examples a:hover { color: var(--accent); border-color: var(--accent); }
+  /* 크롤러가 따라갈 링크 목록. 사람에게도 쓸모가 있어야 하므로 이름을 앞에,
+     코드를 뒤에 둔다 — 이름으로 찾고 코드로 확인한다. */
+  .covered-panel { padding: var(--sp-4); }
+  .covered-group + .covered-group { margin-top: var(--sp-4); }
+  .covered-group h3 { margin: 0 0 var(--sp-2); font-size: var(--fs-xs); color: var(--faint);
+    text-transform: uppercase; letter-spacing: .05em; }
+  .covered-group h3 b { color: var(--muted); }
+  .covered-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .covered-list a { display: inline-flex; gap: 6px; align-items: baseline; padding: 4px 9px;
+    border: 1px solid var(--line); border-radius: 6px; color: var(--muted);
+    text-decoration: none; font-size: var(--fs-xs); }
+  .covered-list a:hover { color: var(--accent); border-color: var(--accent); }
+  .covered-sym { color: var(--faint); font-variant-numeric: tabular-nums; }
   </style>
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
   <link rel="stylesheet" href="/static/tokens.css?v=ccb2656202">
@@ -112,16 +125,23 @@
             <span class="lang-ko">국내는 금융위원회 상장 로스터, 미국은 공시 수집 대상 티커, 코인은 Hyperliquid 상장 무기한선물에서 찾습니다.</span>
             <span class="lang-en">Korean names come from the FSC listing roster, US tickers from the filing roster, coins from Hyperliquid-listed perpetuals.</span>
           </p>
-          <div class="lookup-examples">
-            <a href="/stock/005930">삼성전자</a>
-            <a href="/stock/000660">SK하이닉스</a>
-            <a href="/stock/035420">NAVER</a>
-            <a href="/stock/AAPL">AAPL</a>
-            <a href="/stock/NVDA">NVDA</a>
-            <a href="/stock/MSFT">MSFT</a>
-          </div>
+          <!-- 예시도 실제로 값이 있는 종목에서 뽑는다. 손으로 적어 두면 수집이
+               안 된 종목을 가리킬 수 있고, 그건 빈 페이지로 가는 길이다. -->
+          <div class="lookup-examples">{{EXAMPLES}}</div>
         </div>
       </div>
+    </section>
+
+    <!-- 크롤 경로. 사이트맵에만 있는 URL은 구글이 찾아도 가져가지 않는다
+         (2026-08-25 Search Console: Discovered 2,954 대 Crawled 2). 홈에서
+         한 번, 여기서 한 번 — 두 걸음이면 모든 종목 페이지에 링크로 닿는다.
+         자바스크립트로 그리면 아무 소용이 없다: 크롤러가 링크를 못 본다. -->
+    <section class="console-section" aria-labelledby="covered-title">
+      <header>
+        <h2 id="covered-title"><span class="lang-ko">지금 볼 수 있는 종목</span><span class="lang-en">Companies with data</span></h2>
+        <span class="sec-note"><span class="lang-ko">수집이 끝난 것만 — 목록은 수집이 진행되면서 늘어납니다</span><span class="lang-en">Only what has been collected — this list grows as collection proceeds</span></span>
+      </header>
+      <div class="panel covered-panel">{{COVERED}}</div>
     </section>
 
     <section class="console-section" aria-labelledby="shows-title">
