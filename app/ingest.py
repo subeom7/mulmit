@@ -740,11 +740,14 @@ def refresh_us_managers(*, force: bool = False) -> dict:
         return {"skipped": "disabled"}
     if not config.SEC_EDGAR_USER_AGENT:
         return {"skipped": "not_configured"}
-    if (
-        not force
-        and store.load_report(us_managers.CACHE_KEY, config.US_MANAGERS_MAX_AGE) is not None
-    ):
+    cached = store.load_report(us_managers.CACHE_KEY, config.US_MANAGERS_MAX_AGE)
+    # 신선한 것만으로는 부족하다 — **모양이 지금 코드와 같아야** 건너뛴다.
+    # 배포 뒤에도 화면이 옛 모양으로 남는 사고를 여기서 막는다(us_managers.SCHEMA).
+    if not force and cached is not None and cached.get("schema") == us_managers.SCHEMA:
         return {"skipped": "fresh"}
+    if cached is not None and cached.get("schema") != us_managers.SCHEMA:
+        log.info("13F payload 모양이 바뀌었다(저장 %s, 현재 %s) — 다시 걷는다",
+                 cached.get("schema"), us_managers.SCHEMA)
     try:
         result = us_managers.refresh()
         log.info("13F 포트폴리오 갱신: %s", result)
