@@ -4407,17 +4407,20 @@ function renderCryptoOverview() {
     }
 
     const meta = document.createElement("dl"); meta.className = "kro-meta";
-    const row = (labelText, valueText) => {
+    const row = (labelText, valueText, proOnly) => {
       const wrap = document.createElement("div");
+      if (proOnly) wrap.className = "pro-only";
       const dt = document.createElement("dt"); dt.textContent = labelText;
       const dd = document.createElement("dd"); dd.textContent = valueText;
       wrap.append(dt, dd); return wrap;
     };
     meta.append(row(t("crypto.funding"), cryptoFundingText(card.funding)));
     meta.append(row(t("crypto.oi"), cryptoUsd(safeNumber(card.open_interest?.usd), { compact: true })));
-    meta.append(row(t("crypto.volume"), cryptoUsd(safeNumber(card.volume_24h_usd), { compact: true })));
+    // 거래대금과 예상 펀딩은 앞의 둘을 읽은 다음에 오는 값이다. 넷을 한꺼번에
+    // 세워 두면 처음 보는 사람은 어디부터 볼지 정하는 데 먼저 지친다.
+    meta.append(row(t("crypto.volume"), cryptoUsd(safeNumber(card.volume_24h_usd), { compact: true }), true));
     const predicted = cryptoPredictedText(card.predicted_funding);
-    if (predicted) meta.append(row(t("crypto.predicted"), predicted));
+    if (predicted) meta.append(row(t("crypto.predicted"), predicted, true));
     const badges = document.createElement("div"); badges.className = "kro-badges";
     if (card.signal && safeNumber(card.signal.heat) !== null) {
       const chip = document.createElement("span");
