@@ -27,15 +27,24 @@ def _section_ids(page: str) -> list[str]:
     return re.findall(r'<section class="console-section" id="([^"]+)"', html)
 
 
-def test_the_calendar_follows_the_overnight_cards_on_the_us_page() -> None:
+def test_the_us_page_does_not_repeat_what_the_home_page_shows() -> None:
+    """같은 섹션을 두 페이지에 두면 어느 쪽이 진짜인지 읽는 사람이 정해야 한다.
+
+    2026-08-25 운영자 지적. 히트맵과 경제 캘린더가 홈과 `/us`에 **같은 id·같은
+    렌더러**로 두 벌 있었다. 특히 경제 캘린더는 한 달치 20건 중 한국 일정이
+    섞여 있어서(실측: 미국 17 · 한국 3) 미국 탭에 두면 금통위 일정이 미국
+    페이지에 서게 된다.
+
+    둘 다 홈에 남긴다 — 홈은 세 시장을 다 다루는 자리이고, 히트맵은 들어오자마자
+    눈에 들어오는 유일한 요소다.
+    """
     ids = _section_ids("us.html")
-    for wanted in ("us-overnight", "econ-calendar", "constituent-heatmap"):
-        assert wanted in ids, f"{wanted} 섹션이 /us에서 사라졌다"
-    assert ids.index("us-overnight") < ids.index("econ-calendar"), (
-        "경제 캘린더는 야간 카드 뒤에 온다 — 카드를 본 다음 다음 발표를 묻는 순서다"
-    )
-    assert ids.index("econ-calendar") < ids.index("constituent-heatmap"), (
-        "히트맵보다 앞이다. 뒤로 밀면 옮기기 전 자리로 돌아간 것이다"
+    assert "econ-calendar" not in ids, "경제 캘린더는 홈에만 둔다"
+    assert "constituent-heatmap" not in ids, "히트맵은 홈에만 둔다"
+
+    home = _section_ids("landing.html")
+    assert "econ-calendar" in home and "constituent-heatmap" in home, (
+        "빼기만 하고 남기지 않으면 기능이 사라진다"
     )
 
 

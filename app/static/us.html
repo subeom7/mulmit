@@ -122,33 +122,6 @@
       <footer class="kro-footer" id="uso-footer" hidden></footer>
     </section>
 
-    <section class="console-section" id="econ-calendar" hidden aria-labelledby="cal-title">
-      <header>
-        <h2 id="cal-title" data-i18n="cal.title">경제 캘린더</h2>
-      </header>
-      <p class="section-copy" data-i18n="cal.copy" style="margin:0 0 12px">다가오는 미국 데이터 발표와 FOMC·금통위 일정입니다. 기관이 공표한 예정일이며 변경될 수 있습니다.</p>
-      <div class="panel">
-        <div id="cal-body"></div>
-        <footer class="panel-footer" id="cal-footer"></footer>
-      </div>
-    </section>
-
-    <section class="console-section" id="constituent-heatmap" aria-labelledby="tv-title">
-      <header>
-        <h2 id="tv-title" data-i18n="tv.title">S&amp;P 500 종목 히트맵</h2>
-        <span class="sec-note" data-i18n="uspage.heatmapNote">종목 단위로 오늘 무엇이 움직였는지 봅니다</span>
-        <div class="segmented" id="tv-period" role="group" aria-label="Heatmap performance period">
-          <button type="button" data-period="1d">1D</button><button type="button" data-period="1w">1W</button>
-          <button type="button" data-period="1m">1M</button><button type="button" data-period="1y">1Y</button>
-        </div>
-      </header>
-      <div class="panel tv-panel">
-        <div class="notice-line"><span class="status-badge info" data-i18n="tv.embed">외부 위젯</span><span data-i18n="tv.notice">이 영역은 TradingView가 직접 제공하며 Mulmit API 데이터가 아닙니다.</span></div>
-        <div id="tradingview-host" class="tradingview-host lazy-host" data-lazy="tradingview"><div class="state-block" data-i18n="status.viewport">화면에 표시되면 불러옵니다</div></div>
-        <footer class="panel-footer"><a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView</a><span data-i18n="tv.terms">데이터·표시 조건은 제공자 정책을 따릅니다.</span></footer>
-      </div>
-    </section>
-
     <!-- 13F는 분기 서식이고 45일 지연이 있다. 그리고 공매도·채권·현금·해외
          상장·사모 지분이 안 들어온다 - 그래서 "자산 전부"가 아니라 "미국 상장주식
          롱 포지션의 구성"이라고 섹션 머리에서 못 박는다. -->
@@ -315,7 +288,7 @@
 
   <script>window.MULMIT_PAGE = "us";</script>
   <script src="/static/console.js?v=fafc741bcd" defer></script>
-  <script src="/static/monitor.js?v=7f657c45b0" defer></script>
+  <script src="/static/monitor.js?v=ef9ea19437" defer></script>
   <script src="/static/search.js?v=e2093e0d4d" defer></script>
 </body>
 </html>
