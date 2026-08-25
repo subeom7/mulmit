@@ -203,7 +203,7 @@ const TEXT = {
     "cal.shortNote": "기관이 공표한 예정일 · 변경될 수 있습니다",
     "cal.empty": "이 달에는 예정된 발표가 없습니다.", "cal.allEvents": "전체 일정 {n}건 표로 보기",
     "sector.title": "섹터 자금 흐름", "sector.caption": "S&P 500 섹터 ETF 기간 수익률", "sector.name": "섹터", "sector.return": "수익률", "sector.interpretation": "플러스 섹터가 넓게 퍼질수록 상승 참여 폭이 넓다는 뜻입니다. ETF 수익률은 자금 유입액과 같지 않습니다.",
-    "tv.title": "S&P 500 종목 히트맵", "tv.embed": "외부 위젯", "tv.notice": "이 히트맵은 TradingView가 직접 그립니다. Mulmit이 계산한 값이 아닙니다.",
+    "tv.activate": "클릭하면 히트맵을 조작합니다", "tv.activateAria": "히트맵 조작 열기 — 열기 전에는 휠이 페이지 스크롤에 쓰입니다", "tv.title": "S&P 500 종목 히트맵", "tv.embed": "외부 위젯", "tv.notice": "이 히트맵은 TradingView가 직접 그립니다. Mulmit이 계산한 값이 아닙니다.",
     "tv.terms": "데이터·표시 조건은 제공자 정책을 따릅니다.", "corr.title": "자산군 상관관계", "corr.note": "서로 다른 시장 시간대는 동시 일간 수익률 상관을 왜곡할 수 있습니다.", "corr.scale": "+1은 같은 방향, 0은 약한 선형 관계, −1은 반대 방향입니다. 상관은 인과관계가 아닙니다.",
     "period.label": "기간", "method.title": "숫자를 다루는 원칙", "method.one.title": "숫자마다 출처가 붙습니다", "method.one.copy": "어디서 받은 값인지, 언제 기준인지, 얼마나 오래된 값인지 함께 보여줍니다.",
     "method.two.title": "단위를 바꾸지 않습니다", "method.two.copy": "받은 그대로의 단위로 보여줍니다. 보기 좋으라고 배율을 손대지 않습니다.", "method.three.title": "없는 값은 만들지 않습니다",
@@ -383,7 +383,7 @@ const TEXT = {
     "cal.shortNote": "As announced by the institutions · dates can change",
     "cal.empty": "No scheduled releases this month.", "cal.allEvents": "All {n} dates as a table",
     "sector.title": "Sector flow", "sector.caption": "S&P 500 sector ETF period returns", "sector.name": "Sector", "sector.return": "Return", "sector.interpretation": "Broader positive participation can confirm a wider advance. ETF returns are not the same thing as fund-flow dollars.",
-    "tv.title": "S&P 500 constituent heatmap", "tv.embed": "Third-party widget", "tv.notice": "TradingView serves this embed directly; it is not Mulmit API data.",
+    "tv.activate": "Click to interact with the heatmap", "tv.activateAria": "Enable heatmap controls — until then the wheel scrolls the page", "tv.title": "S&P 500 constituent heatmap", "tv.embed": "Third-party widget", "tv.notice": "TradingView serves this embed directly; it is not Mulmit API data.",
     "tv.terms": "Provider data and display terms apply.", "corr.title": "Cross-asset correlation", "corr.note": "Different market hours can distort same-day return correlations.", "corr.scale": "+1 moves together, 0 indicates a weak linear link, and −1 moves oppositely. Correlation is not causation.",
     "period.label": "Period", "method.title": "How we handle numbers", "method.one.title": "Every number names its source", "method.one.copy": "You can see where a value came from, what date it is for, and how old it is.",
     "method.two.title": "Units stay as published", "method.two.copy": "We show the units we received. Nothing is rescaled to look neater.", "method.three.title": "No invented numbers",
@@ -5417,6 +5417,38 @@ function renderTradingView() {
   const blockColors = { "1d": "change", "1w": "Perf.W", "1m": "Perf.1M", "1y": "Perf.Y" };
   script.textContent = JSON.stringify({ exchanges: [], dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: blockColors[state.tvPeriod], locale: state.lang, symbolUrl: "", colorTheme: "dark", hasTopBar: true, isDataSetEnabled: true, isZoomEnabled: true, hasSymbolTooltip: true, isMonoSize: false, width: "100%", height: "100%" });
   container.append(widget, script); host.append(container);
+
+  /* 휠을 위젯이 가져가지 못하게 막을 덮는다 — **클릭해야 조작이 열린다.**
+   *
+   * TradingView 히트맵은 `isZoomEnabled`라 iframe 위에서 휠을 확대에 쓴다. 그
+   * iframe은 교차 출처라 우리가 그 안의 핸들러를 손댈 수 없고, 결과가 둘 다
+   * 나쁘다 — ① 히트맵을 지나쳐 내려가려던 사람의 스크롤이 확대에 먹히고
+   * ② 위젯이 그만 먹는 순간 페이지가 갑자기 뛴다(이슈 #247. 실측 2026-08-25:
+   * 커서를 히트맵 위에 두고 휠 5번에 페이지가 500px 내려갔다).
+   *
+   * `overscroll-behavior`로는 못 막는다 — 그건 스크롤 컨테이너의 연쇄를 막는
+   * 속성이고, 여기서 휠을 쥐고 있는 것은 **다른 출처의 문서**다. 그래서 우리가
+   * 통제할 수 있는 유일한 지점, 즉 **iframe에 이벤트가 닿기 전**에 막을 세운다.
+   *
+   * 지도 임베드가 오래 쓰는 방식이고, 기본값이 옳은 쪽으로 뒤집힌다 —
+   * 아무것도 안 하면 페이지가 정상적으로 스크롤되고, 조작하려는 사람만 한 번
+   * 클릭한다. 포인터가 떠나면 다시 잠근다. */
+  const shield = document.createElement("button");
+  shield.type = "button";
+  shield.className = "tv-shield";
+  shield.textContent = t("tv.activate");
+  shield.setAttribute("aria-label", t("tv.activateAria"));
+  host.append(shield);
+
+  const activate = () => { host.classList.add("tv-active"); shield.hidden = true; };
+  const release = () => { host.classList.remove("tv-active"); shield.hidden = false; };
+  shield.addEventListener("click", activate);
+  // 키보드로도 열려야 한다 — 마우스에만 있는 기능을 만들지 않는다.
+  shield.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activate(); }
+  });
+  host.addEventListener("mouseleave", release);
+  host.__tvRelease = release;
 }
 
 function correlationColor(value) {

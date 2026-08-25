@@ -1284,3 +1284,29 @@ html[data-lang="en"] .lang-en { display: revert; }
 .usm-change-added .usm-change-sign { color: var(--up, #4ade80); }
 .usm-change-dropped .usm-change-sign { color: var(--down, #f87171); }
 .usm-change-note { display: block; width: 100%; color: var(--ink-3); line-height: 1.6; }
+
+/* 히트맵 활성화 막 (이슈 #247).
+ *
+ * 열기 전에는 iframe이 포인터 이벤트를 아예 못 받는다 — 휠은 평소대로 페이지를
+ * 스크롤한다. 한 번 클릭하면 막이 사라지고 확대·툴팁이 열린다. 포인터가 영역을
+ * 떠나면 다시 잠긴다. */
+.tv-panel .tradingview-host { position: relative; }
+.tv-panel .tradingview-host:not(.tv-active) .tradingview-widget-container { pointer-events: none; }
+
+.tv-shield {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: var(--sp-4);
+  border: 0; border-radius: 8px; background: transparent;
+  color: var(--ink-2); font: inherit; font-size: var(--fs-xs);
+  cursor: pointer; transition: background .14s ease;
+}
+.tv-shield::before {
+  content: ""; position: absolute; inset: 0; border-radius: 8px;
+  background: transparent; transition: background .14s ease;
+}
+.tv-shield > * { position: relative; }
+.tv-shield:hover, .tv-shield:focus-visible {
+  background: color-mix(in srgb, var(--panel) 42%, transparent);
+}
+.tv-shield:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
