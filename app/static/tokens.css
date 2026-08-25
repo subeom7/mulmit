@@ -149,6 +149,10 @@ h1, h2, p, .console-sub, .section-copy, .sec-note, .intro-copy,
 .feed-soon, .jump-nav a { font-size: var(--fs-xs); }
 .accessible-table td.range { font-size: var(--fs-xs); }
 .comparison-legend, .notice-line, .select-label, .select-label select { font-size: var(--fs-xs); }
+/* 기간 토글(1D/1W)은 9px로 짜여 있었다. 헤더 안에 있는 것만 12px로 올리는
+   예외가 있어서, 헤더 밖에 선 토글(#ksi-sort "평소 대비"/"관심도 수준")은
+   9px 그대로 낱말을 찍고 있었다. 낱말은 글리프보다 크기를 더 탄다. */
+.segmented button { font-size: var(--fs-xs); }
 .comparison-card p { font-size: var(--fs-xs); color: var(--ink-2); }
 /* /crypto — 전체 시장 보드 표, 청산 카드, 국면 게이지, 요약 스트립. */
 .cboard-sym, .cboard-table td, .cboard-table th { font-size: var(--fs-xs); }
