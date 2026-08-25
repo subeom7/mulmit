@@ -434,3 +434,122 @@ def test_ingest_rebuilds_when_the_shape_changed(monkeypatch):
     )
     assert ingest.refresh_us_managers() == {"skipped": "fresh"}
     assert calls == []
+
+# --- 10. 분기 간 변화 --------------------------------------------------------
+#
+# 이 기능은 함정 위에 지어졌다. 실측(2026-08-25)으로 확인한 것만 묶는다.
+
+def _pf(holdings, period):
+    return _portfolio(holdings, period=period)
+
+
+def _h(issuer, cusip, value, shares):
+    return ManagerHolding(issuer=issuer, cusip=cusip, value_usd=value,
+                          shares=shares, is_option=False)
+
+
+def test_a_renamed_issuer_is_not_a_trade():
+    """이 검사가 이 기능의 존재 이유다.
+
+    버크셔가 `BANK AMERICA CORP`를 `BANK OF AMER CORP`로 고쳐 적었다. 이름으로
+    맞추면 **275억 달러어치를 전량 매도하고 같은 분기에 새로 산 것**으로 보인다
+    (실측 2026-08-25). CUSIP은 표기 변경을 타지 않는다.
+    """
+    prev = _pf([_h("BANK AMERICA CORP", "060505104", 25_039e6, 1000)], dt.date(2026, 3, 31))
+    cur = _pf([_h("BANK OF AMER CORP", "060505104", 27_544e6, 1000)], dt.date(2026, 6, 30))
+
+    changes = us_managers._changes(cur, prev)
+
+    assert changes["counts"]["added"] == 0, "이름이 바뀐 것을 신규로 셌다"
+    assert changes["counts"]["dropped"] == 0, "이름이 바뀐 것을 청산으로 셌다"
+    assert changes["counts"]["unchanged"] == 1
+
+
+def test_a_price_move_alone_is_not_a_change():
+    """평가액이 아니라 **주식수**로 잰다."""
+    prev = _pf([_h("APPLE INC", "037833100", 100e6, 500)], dt.date(2026, 3, 31))
+    cur = _pf([_h("APPLE INC", "037833100", 140e6, 500)], dt.date(2026, 6, 30))
+
+    counts = us_managers._changes(cur, prev)["counts"]
+
+    assert counts["increased"] == 0 and counts["decreased"] == 0
+    assert counts["unchanged"] == 1
+
+
+def test_new_and_dropped_are_found_by_cusip():
+    prev = _pf([_h("OLD CO", "111111111", 90e6, 10)], dt.date(2026, 3, 31))
+    cur = _pf([_h("NEW CO", "222222222", 50e6, 20)], dt.date(2026, 6, 30))
+
+    changes = us_managers._changes(cur, prev)
+
+    assert [row["issuer"] for row in changes["added"]] == ["NEW CO"]
+    assert [row["issuer"] for row in changes["dropped"]] == ["OLD CO"]
+    assert changes["counts"] == {"added": 1, "dropped": 1, "increased": 0,
+                                 "decreased": 0, "unchanged": 0}
+
+
+def test_share_moves_are_counted_in_both_directions():
+    prev = _pf([_h("UP", "1", 10e6, 100), _h("DOWN", "2", 10e6, 100)], dt.date(2026, 3, 31))
+    cur = _pf([_h("UP", "1", 10e6, 150), _h("DOWN", "2", 10e6, 40)], dt.date(2026, 6, 30))
+
+    counts = us_managers._changes(cur, prev)["counts"]
+
+    assert counts["increased"] == 1
+    assert counts["decreased"] == 1
+
+
+def test_the_period_pair_travels_with_the_change():
+    """신고자마다 최신 분기가 다르다 — 퍼싱은 한 분기 밀려 있다(실측 147일).
+    "이번 분기"라고만 쓰면 카드마다 다른 것을 가리킨다."""
+    prev = _pf([_h("A", "1", 1e6, 1)], dt.date(2025, 12, 31))
+    cur = _pf([_h("A", "1", 1e6, 1)], dt.date(2026, 3, 31))
+
+    changes = us_managers._changes(cur, prev)
+
+    assert changes["from_period"] == "2025-12-31"
+    assert changes["to_period"] == "2026-03-31"
+
+
+def test_only_a_few_names_are_listed():
+    """브리지워터는 한 분기에 200종목이 드나든다(실측 신규 214·빠짐 210).
+    이름을 다 적으면 카드가 목록이 된다 — 개수로 말하고 큰 것만 적는다."""
+    prev = _pf([_h("KEEP", "0", 1e6, 1)], dt.date(2026, 3, 31))
+    cur = _pf(
+        [_h("KEEP", "0", 1e6, 1)]
+        + [_h(f"N{i}", str(i + 1), (100 - i) * 1e6, 1) for i in range(40)],
+        dt.date(2026, 6, 30),
+    )
+
+    changes = us_managers._changes(cur, prev)
+
+    assert changes["counts"]["added"] == 40
+    assert len(changes["added"]) == us_managers.NAMED_CHANGES
+    # 큰 것부터 적는다.
+    assert changes["added"][0]["issuer"] == "N0"
+
+
+def test_no_previous_quarter_means_no_change_block():
+    """직전 분기를 못 읽어도 현재 구성까지 잃을 이유는 없다."""
+    cur = _pf([_h("A", "1", 1e6, 1)], dt.date(2026, 6, 30))
+
+    assert us_managers._changes(cur, None) is None
+
+
+def test_the_screen_does_not_call_it_a_sale():
+    """목록에서 빠진 것이 곧 매도는 아니다 — 비공개 신청이면 보유한 채로 빠진다.
+
+    그래서 화면 문구가 `청산`이나 `매도`가 아니어야 한다.
+    """
+    monitor = _static("monitor.js")
+    assert '"usm.dropped": "목록에서 빠짐"' in monitor
+    assert '"usm.dropped": "Left the list"' in monitor
+    # 주의문이 세 가지 사정을 다 말해야 한다.
+    assert "비공개" in monitor
+    assert "분할" in monitor
+    assert "주식수" in monitor
+
+
+def test_the_schema_was_bumped_for_the_new_shape():
+    """payload에 `changes`가 생겼다 — 모양이 바뀌면 번호를 올려야 배치가
+    저장된 옛 blob을 스스로 다시 걷는다."""
+    assert us_managers.SCHEMA >= 2

@@ -63,7 +63,7 @@ CACHE_KEY = "sec_13f_managers_v1"
 #: 503**이 된다 — 고치려다 더 오래 비운다. 대신 ingest가 저장된 값과 이 번호를
 #: 견줘 다르면 TTL이 남아 있어도 다시 걷게 한다. 화면은 그동안 옛 모양으로나마
 #: 계속 뜨고, 다음 주기에 스스로 낫는다.
-SCHEMA = 1
+SCHEMA = 2
 
 #: 파이에 이름을 붙일 조각의 기본 개수. 과반에 못 미치면 아래에서 늘린다.
 BASE_SLICES = 20
@@ -219,6 +219,68 @@ def _slice_count(holdings: list[dict[str, Any]], total: float) -> tuple[int, boo
     return capped, (reached / total) <= 0.5
 
 
+#: 카드에 이름을 적을 신규·청산 종목 수. 나머지는 개수로만 말한다.
+NAMED_CHANGES = 3
+
+
+def _changes(
+    current: ManagerPortfolio, previous: ManagerPortfolio | None
+) -> dict[str, Any] | None:
+    """직전 분기와 견줘 무엇이 바뀌었는지.
+
+    **CUSIP으로 맞춘다.** 이름으로 맞추면 신고자가 표기를 바꿀 때마다 유령
+    매매가 생긴다 — 실측(2026-08-25)으로 버크셔가 `BANK AMERICA CORP`를
+    `BANK OF AMER CORP`로 고쳐 적었고, 이름 기준으로는 **275억 달러어치를
+    전량 매도하고 같은 분기에 새로 산 것**으로 보였다. CUSIP으로 바꾸니 그
+    분기의 진짜 변화는 신규 1건·청산 1건이었다.
+
+    **평가액이 아니라 주식수로 잰다.** 주가가 20% 오르면 한 주도 안 사고
+    평가액이 20% 는다. 다만 주식수도 완전하지는 않다 — 분할·합병 같은
+    기업행위로도 움직인다. 분할을 자동으로 가려내려 해 봤지만 **진짜 거래를
+    분할로 오인한다**(브리지워터가 KLA를 3배로 늘린 것을 `x3.02` 분할로
+    잡았다). 그래서 가려내지 않고 **주의문으로 밝힌다.**
+
+    목록에서 사라진 것이 곧 매도도 아니다. SEC에 비공개를 신청하면 보유한
+    채로 목록에서 빠진다. 그래서 `청산`이라 부르지 않고 `목록에서 빠짐`으로
+    적는다.
+    """
+    if previous is None or not previous.holdings:
+        return None
+
+    def keyed(portfolio: ManagerPortfolio) -> dict[str, Any]:
+        return {(h.cusip or h.issuer): h for h in portfolio.holdings}
+
+    now, before = keyed(current), keyed(previous)
+    added = [k for k in now if k not in before]
+    dropped = [k for k in before if k not in now]
+    kept = [k for k in now if k in before]
+
+    increased = [k for k in kept if (now[k].shares or 0) > (before[k].shares or 0)]
+    decreased = [k for k in kept if (now[k].shares or 0) < (before[k].shares or 0)]
+
+    def name_rows(keys: list[str], source: dict[str, Any], limit: int) -> list[dict[str, Any]]:
+        ordered = sorted(keys, key=lambda k: -source[k].value_usd)[:limit]
+        return [
+            {"issuer": source[k].issuer, "value": source[k].value_usd,
+             "shares": source[k].shares}
+            for k in ordered
+        ]
+
+    return {
+        "from_period": previous.period.isoformat() if previous.period else None,
+        "to_period": current.period.isoformat() if current.period else None,
+        "added": name_rows(added, now, NAMED_CHANGES),
+        "dropped": name_rows(dropped, before, NAMED_CHANGES),
+        "counts": {
+            "added": len(added),
+            "dropped": len(dropped),
+            "increased": len(increased),
+            "decreased": len(decreased),
+            "unchanged": len(kept) - len(increased) - len(decreased),
+        },
+    }
+
+
 def _portrait_payload(slug: str) -> dict[str, Any] | None:
     portrait = PORTRAITS.get(slug)
     if portrait is None:
@@ -233,7 +295,8 @@ def _portrait_payload(slug: str) -> dict[str, Any] | None:
     }
 
 
-def _build_manager(manager: Manager, portfolio: ManagerPortfolio, today: dt.date) -> dict[str, Any]:
+def _build_manager(manager: Manager, portfolio: ManagerPortfolio, today: dt.date,
+                   previous: ManagerPortfolio | None = None) -> dict[str, Any]:
     total = portfolio.total_usd
     rows = [
         {
@@ -273,6 +336,7 @@ def _build_manager(manager: Manager, portfolio: ManagerPortfolio, today: dt.date
         "fund": {"ko": manager.fund_ko, "en": manager.fund_en},
         "person": {"ko": manager.person_ko, "en": manager.person_en},
         "portrait": _portrait_payload(manager.slug),
+        "changes": _changes(portfolio, previous),
         "person_note": (
             {"ko": manager.person_note_ko, "en": manager.person_note_en}
             if manager.person_note_ko else None
@@ -317,12 +381,16 @@ def refresh(provider: SecEdgarProvider | None = None, *, today: dt.date | None =
     failed: list[dict[str, str]] = []
     for manager in MANAGERS:
         try:
-            portfolio = provider.fetch_latest_13f(manager.cik)
+            # 두 분기를 걷는다. 직전 분기를 못 읽어도 현재 구성은 낸다 —
+            # 변화를 포기하는 것이 화면 전체를 잃는 것보다 낫다.
+            recent = provider.fetch_recent_13f(manager.cik, limit=2)
         except (EdgarNotFound, DataUnavailable, DataError, RateLimited) as exc:
             log.warning("13F 실패 %s: %s", manager.slug, exc)
             failed.append({"slug": manager.slug, "reason": type(exc).__name__})
             continue
-        built.append(_build_manager(manager, portfolio, today))
+        portfolio = recent[0]
+        previous = recent[1] if len(recent) > 1 else None
+        built.append(_build_manager(manager, portfolio, today, previous))
 
     if not built:
         raise DataUnavailable("no 13F portfolio could be read")

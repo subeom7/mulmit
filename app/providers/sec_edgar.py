@@ -285,12 +285,22 @@ def _local(tag: str) -> str:
 def _parse_info_table(
     blocks: list[ElementTree.Element],
 ) -> tuple[tuple[ManagerHolding, ...], int, float]:
-    """행을 **발행사 단위로 합친다.**
+    """행을 **CUSIP 단위로 합친다.**
 
     한 종목이 여러 행으로 쪼개져 오는 제출자가 있다 — 운용 재량(sole/shared)
-    구분이나 계좌 구분 때문이다. 버크셔의 최근 제출은 89행이지만 발행사는
-    26곳뿐이다(실측 2026-08-24). 합치지 않으면 애플이 파이에 여러 조각으로
+    구분이나 계좌 구분 때문이다. 버크셔의 최근 제출은 89행이지만 종목은
+    26개뿐이다(실측 2026-08-24). 합치지 않으면 애플이 파이에 여러 조각으로
     나타난다.
+
+    **키를 이름에서 CUSIP으로 바꿨다(2026-08-25).** 이름으로 묶으면 같은 분기
+    안에서는 맞아떨어지지만 **분기를 견줄 때 무너진다** — 신고자가 표기를
+    바꾸기 때문이다. 실측으로 버크셔가 `BANK AMERICA CORP`를 `BANK OF AMER
+    CORP`로, `CHUBB LTD SWITZ`를 `CHUBB LIMITED`로 바꿔 적었고, 이름으로
+    맞추면 **275억 달러어치를 전량 매도하고 같은 분기에 새로 샀다**는 그림이
+    나온다. 피셔도 같다(`JDCOM INC ADR` -> `JD COM INC ADR`). CUSIP은 그런
+    표기 변경을 타지 않는다.
+
+    표시할 이름은 그 분기의 신고에 적힌 것을 그대로 쓴다 — 우리가 고르지 않는다.
     """
     merged: dict[str, dict[str, Any]] = {}
     options_value = 0.0
@@ -303,8 +313,11 @@ def _parse_info_table(
                 fields[name] = (node.text or "").strip()
 
         issuer = " ".join(fields.get("nameOfIssuer", "").split()).upper()
+        cusip = fields.get("cusip", "").strip().upper()
         if not issuer:
             continue
+        # CUSIP이 비면 이름으로 떨어진다 — 합치기라도 해야 파이가 쪼개지지 않는다.
+        key = cusip or issuer
         try:
             value = float(fields.get("value", "") or 0)
         except ValueError:
@@ -319,8 +332,8 @@ def _parse_info_table(
             options_value += value
 
         row = merged.setdefault(
-            issuer,
-            {"issuer": issuer, "cusip": fields.get("cusip", ""), "value": 0.0,
+            key,
+            {"issuer": issuer, "cusip": cusip, "value": 0.0,
              "shares": 0.0, "is_option": False},
         )
         row["value"] += value
@@ -690,6 +703,16 @@ class SecEdgarProvider:
         return rows
 
     def fetch_latest_13f(self, cik: str) -> ManagerPortfolio:
+        return self.fetch_recent_13f(cik, limit=1)[0]
+
+    def fetch_recent_13f(self, cik: str, *, limit: int = 2) -> tuple[ManagerPortfolio, ...]:
+        """최근 분기부터 `limit`개를 최신순으로 읽는다.
+
+        **정정 신고를 올바로 다루는 것이 여기의 요점이다.** 13F-HR/A는 같은
+        분기를 다시 낸 것이라, 제출 순서대로 두 개를 집으면 **같은 분기를 서로
+        빼게 되어 변화가 0으로 나온다**. 그래서 분기(reportDate)로 묶고 분기마다
+        **가장 최근에 제출된 것** 하나만 쓴다 — 정정이 있으면 정정본이 이긴다.
+        """
         cik = normalize_cik(cik)
         payload = self._request_json(f"{SEC_DATA_BASE}/submissions/CIK{int(cik):010d}.json")
         if not isinstance(payload, dict):
@@ -700,27 +723,53 @@ class SecEdgarProvider:
         if not isinstance(forms, list):
             raise DataUnavailable(f"EDGAR submissions for CIK {cik} has no recent filings")
 
+        accessions = recent.get("accessionNumber") or []
+        filed_dates = recent.get("filingDate") or []
+        periods = recent.get("reportDate") or []
+
+        # 분기별로 첫 등장(=가장 최근 제출)만 남긴다. `recent`는 최신순이다.
+        chosen: list[tuple[str, str, str, str]] = []
+        seen: set[str] = set()
         for index, form in enumerate(forms):
             if form not in FORM_13F:
                 continue
-            accession = str((recent.get("accessionNumber") or [])[index]).replace("-", "")
+            period = str(periods[index] if index < len(periods) else "")
+            if not period or period in seen:
+                continue
+            seen.add(period)
+            chosen.append((
+                str(form), str(filed_dates[index]), period,
+                str(accessions[index]).replace("-", ""),
+            ))
+            if len(chosen) >= limit:
+                break
+
+        if not chosen:
+            raise EdgarNotFound(f"CIK {cik} has no recent 13F-HR")
+
+        built: list[ManagerPortfolio] = []
+        for form, filed, period, accession in chosen:
             holdings, rows, options = self._fetch_13f_table(cik, accession)
             if not holdings:
+                if built:
+                    # 최신 분기는 읽혔는데 직전 분기만 못 읽는 경우가 있다.
+                    # 변화는 포기하되 현재 구성까지 잃을 이유는 없다.
+                    break
                 raise DataUnavailable(f"13F information table unreadable for CIK {cik}")
             scale, holdings, options = _normalise_scale(holdings, options)
-            return ManagerPortfolio(
+            built.append(ManagerPortfolio(
                 cik=cik,
                 name=str(payload.get("name") or ""),
-                form=str(form),
-                filed=_date(str((recent.get("filingDate") or [])[index])),
-                period=_date(str((recent.get("reportDate") or [])[index])),
+                form=form,
+                filed=_date(filed),
+                period=_date(period),
                 accession=accession,
                 holdings=holdings,
                 row_count=rows,
                 value_scale=scale,
                 options_value_usd=options,
-            )
-        raise EdgarNotFound(f"CIK {cik} has no recent 13F-HR")
+            ))
+        return tuple(built)
 
     def _fetch_13f_table(
         self, cik: str, accession: str
