@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
   <link rel="stylesheet" href="/static/monitor.css?v=ac261e7f9d">
   <link rel="stylesheet" href="/static/tokens.css?v=21e3aaf57a">
-  <link rel="stylesheet" href="/static/console.css?v=45079fbac0">
+  <link rel="stylesheet" href="/static/console.css?v=dc4dcb6596">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -69,6 +69,9 @@
       <div>
         <h1><span data-i18n="console.title">지금 시장</span> <span class="console-h1-sub" data-i18n="console.scope">한국 · 미국 · 암호화폐</span></h1>
         <p class="console-sub" data-i18n="console.sub">한국장이 닫혀 있어도 삼성전자·SK하이닉스·코스피200은 해외 시장에서 24시간 거래됩니다. 그 가격을 원화로 환산해 마지막 종가와 비교합니다.</p>
+        <!-- 이 문장이 답하는 질의(`주말 삼성전자 주가`)의 착지점. 홈에서
+             직접 링크해야 크롤러가 그 페이지를 제대로 찾는다. -->
+        <p class="console-sub"><a href="/weekend"><span class="lang-ko">주말에 삼성전자·SK하이닉스는 얼마인가요? →</span><span class="lang-en">What are Korean stocks doing this weekend? →</span></a></p>
       </div>
       <div class="console-meta">
         <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
