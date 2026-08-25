@@ -291,6 +291,11 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
 /* 쉬움 모드의 한 줄. 숫자가 무슨 뜻인지 그 자리에서 말한다 — 용어 사전으로
    보내면 대부분 안 간다. */
 .ksi-help { padding: var(--sp-3) var(--sp-4) 0; margin: 0; color: var(--muted); font-size: var(--fs-xs); }
+/* 시장 전체 흐름. 개별 배수에서 빠진 정보라 표 위에 둔다 — 표를 읽기 전에
+   "오늘은 다들 식은 날인가"를 먼저 알아야 각 줄이 제 뜻으로 읽힌다. */
+.ksi-market { padding: var(--sp-2) var(--sp-4) 0; margin: 0; font-size: var(--fs-xs); }
+.ksi-market.up { color: var(--up); }
+.ksi-market.down { color: var(--down); }
 
 .tile-spark.up { color: var(--up); }
 .tile-spark.down { color: var(--down); }

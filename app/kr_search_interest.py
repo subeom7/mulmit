@@ -64,6 +64,20 @@ LAG_DAYS = 1
 # 표본이 이보다 적으면 중앙값이 흔들려서 배수가 뜻을 잃는다 — 그때는 숫자를
 # 내지 않는다. 90일 창이면 요일당 12~13개가 모인다.
 MIN_WEEKDAY_SAMPLES = 4
+# 기준선은 **최근** 같은 요일 몇 개만 본다.
+#
+# 처음엔 90일 창 전체의 같은 요일 중앙값을 썼다. 추세가 없을 때는 맞지만,
+# 추세가 있으면 기준선이 창 한가운데에 놓여서 모든 종목이 한쪽으로 쏠린다 —
+# 2026-08-25 실측: 국내 주식 검색 관심이 90일 동안 **46% 줄었고**(전 종목 합산
+# 중앙값 1.65 → 0.90), 그래서 열 종목 중 아홉이 1 미만으로 읽혔다. 평일인데도
+# 그랬다. 그 상태에서 "×1.0 = 평소"는 거짓말이다.
+#
+# 창을 좁히면 중앙값이 제자리로 온다(실측: 13주 0.78 · 8주 0.88 · 6주 0.96 ·
+# 4주 1.00). 4주는 표본이 하한선과 같아 매 판정이 아슬아슬하므로 6을 쓴다.
+#
+# 좁히면서 버려지는 정보 — 시장 전체가 얼마나 식었는가 — 는 payload의
+# `market` 블록으로 따로 낸다. 개별 종목의 기준선에 섞어 두면 둘 다 못 읽는다.
+BASELINE_WEEKDAY_SAMPLES = 6
 _KST = dt.timezone(dt.timedelta(hours=9))
 
 _DEFAULT_PROVIDER: DatalabProvider | None = None
@@ -170,11 +184,15 @@ def _describe(series: list[dict[str, Any]]) -> dict[str, Any]:
     multiple: float | None = None
     percentile: float | None = None
     if len(same_weekday) >= MIN_WEEKDAY_SAMPLES:
-        baseline = statistics.median(same_weekday)
+        # 최근 것만. 창 전체를 쓰면 추세가 기준선을 끌고 간다(위 주석).
+        recent = same_weekday[-BASELINE_WEEKDAY_SAMPLES:]
+        baseline = statistics.median(recent)
         # 기준선이 0이면(그 요일 내내 검색이 거의 없었다면) 배수는 뜻이 없다.
         multiple = round(latest / baseline, 2) if baseline > 0 else None
-        below = sum(1 for value in same_weekday if value < latest)
-        percentile = round(below / len(same_weekday) * 100.0, 1)
+        # 백분위도 같은 표본에서 센다 — 배수와 다른 창을 쓰면 두 숫자가
+        # 서로 다른 질문에 답하게 된다.
+        below = sum(1 for value in recent if value < latest)
+        percentile = round(below / len(recent) * 100.0, 1)
 
     return {
         "latest": round(latest, 2),
@@ -184,7 +202,11 @@ def _describe(series: list[dict[str, Any]]) -> dict[str, Any]:
         "vs_baseline": multiple,
         "points": len(values),
         # 무엇에 견줬는지 밝힌다 — 같은 요일 몇 개인지 모르면 배수를 읽을 수 없다.
-        "compared_to": {"weekday": latest_day, "samples": len(same_weekday)},
+        "compared_to": {
+            "weekday": latest_day,
+            "samples": len(recent) if baseline is not None else len(same_weekday),
+            "window_weeks": BASELINE_WEEKDAY_SAMPLES,
+        },
         "at_window_high": latest >= peak,
     }
 
@@ -211,6 +233,38 @@ def _level_series(stock: dict[str, float], anchor: dict[str, float]) -> dict[str
         if base:
             out[day] = value / base * 100.0
     return out
+
+
+def _market_drift(stocks: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """시장 전체의 검색 관심이 창 안에서 얼마나 움직였나.
+
+    개별 종목의 기준선을 최근으로 좁히면서 버려지는 정보가 이것이다. 좁힌 덕에
+    "이 종목이 요즘 평소보다 튀는가"는 제대로 읽히지만, "시장 전체가 식었는가"는
+    각 종목의 배수에서 사라진다. 2026-08-25 실측으로 90일 동안 46%가 줄었는데,
+    그건 개별 종목 이야기가 아니라 시장 이야기다.
+
+    창의 앞 30일과 뒤 30일의 중앙값을 견준다. 종목마다 크기가 다르므로 **종목별로
+    먼저 비율을 내고** 그 비율들의 중앙값을 쓴다 — 값을 그냥 합치면 삼성전자 하나가
+    전체를 정한다.
+    """
+    span = 30
+    ratios: list[float] = []
+    for row in stocks:
+        values = [float(point["ratio"]) for point in row.get("series") or []]
+        if len(values) < span * 2:
+            continue
+        early = statistics.median(values[:span])
+        late = statistics.median(values[-span:])
+        if early > 0:
+            ratios.append(late / early)
+    if len(ratios) < 3:
+        return None
+    change = statistics.median(ratios)
+    return {
+        "window_days": span * 2,
+        "change_percent": round((change - 1.0) * 100.0, 1),
+        "stocks_counted": len(ratios),
+    }
 
 
 def _attach_level_ranks(stocks: list[dict[str, Any]]) -> None:
@@ -390,6 +444,8 @@ def build(
         "count": len(stocks),
         # 수준의 기준이 무엇인지 밝히지 않으면 100이 절댓값처럼 읽힌다.
         "anchor": {"code": anchor_entry["code"], "name": anchor_entry["name"]},
+        # 개별 종목의 기준선을 최근으로 좁히면서 버려지는 정보. 여기서 따로 낸다.
+        "market": _market_drift(stocks),
         "basis_ko": (
             f"네이버 통합검색 {WINDOW_DAYS}일 검색 추이입니다. 값은 절댓값이 아니라 "
             "요청 기간의 최댓값을 100으로 둔 상대값입니다. 주식 검색은 주말에 평일의 10~20%로 "
