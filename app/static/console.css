@@ -260,6 +260,10 @@ a.tile:hover { border-color: var(--line-strong); background: var(--panel-2); tra
  *
  * 순위 칸에는 숫자와 변동 배지가 함께 선다. 변동은 어제 대비이고 하루에 한 번만
  * 바뀌므로 깜빡이지 않는다 — 초 단위로 움직이면 없는 움직임을 그리는 것이다. */
+/* 순위는 크기를 견주는 값이 아니라 이름표다. 오른쪽 정렬은 자릿수가 다른
+   1과 10을 어긋나 보이게 하고(1~9는 오른쪽 끝, 10만 왼쪽으로 삐져나온다),
+   순위 변동 배지가 붙으면 그 줄만 더 밀린다. 가운데로 둔다. */
+.accessible-table th.ksi-rank, .accessible-table td.ksi-rank { text-align: center; }
 .ksi-rank { white-space: nowrap; }
 .ksi-rank b { font: 700 var(--fs-sm)/1 var(--num); font-variant-numeric: tabular-nums; }
 .ksi-move { margin-left: 4px; font: 650 var(--fs-xs)/1 var(--num); font-variant-numeric: tabular-nums; }

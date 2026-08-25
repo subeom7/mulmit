@@ -18,7 +18,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
   <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/monitor.css?v=08cab506e0">
+  <link rel="stylesheet" href="/static/monitor.css?v=856db63f75">
   <style>
     .stock-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 26px 0 18px; border-bottom: 1px solid var(--line); }
     .stock-head h1 { margin: 0; font-size: clamp(26px, 4vw, 40px); letter-spacing: -.04em; }
@@ -32,7 +32,7 @@
     .stock-section { margin: 34px 0; }
     .stock-section h2 { margin: 0 0 4px; font-size: 16px; letter-spacing: -.02em; }
     .stock-section .sub { margin: 0 0 12px; color: var(--muted); font-size: var(--fs-xs); }
-    .stock-note { color: var(--faint); font-size: var(--fs-xs); }
+    .stock-note { margin: 10px 0; color: var(--faint); font-size: var(--fs-xs); }
     /* 내용 폭으로 선다. 100%로 두면 남는 공간이 열에 나눠지면서 값이 자기 칸의
        왼쪽 끝에 붙고, 눈이 값에서 값으로 건너뛰는 거리가 멀어진다. 사이트의 다른
        표(.accessible-table)는 이미 같은 이유로 auto다 — 이 페이지만 남아 있었다.
@@ -41,6 +41,10 @@
     .stock-table th, .stock-table td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
     .stock-table th { color: var(--faint); font: 650 var(--fs-xs)/1.4 var(--num); font-variant-numeric: tabular-nums; text-transform: uppercase; letter-spacing: .05em; }
     .stock-table td.num, .stock-table th.num { text-align: right; }
+    /* 모든 칸에 좌우 9px가 있어서 첫 열이 h2보다 9px 안쪽에서 시작했다.
+       표가 제목선에서 어긋나 보이는 이유가 이것뿐이다 — 마지막 칸의 오른쪽
+       여백은 표가 auto 폭이라 눈에 띄지 않으므로 첫 칸만 되돌린다. */
+    .stock-table th:first-child, .stock-table td:first-child { padding-left: 0; }
     .stock-table td.down { color: var(--red); } .stock-table td.up { color: var(--green); }
     .state-line { padding: 14px; border: 1px dashed var(--line); border-radius: 9px; color: var(--faint); font-size: var(--fs-xs); }
     .stock-links { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 8px; }
@@ -76,8 +80,8 @@
   .doc-link:hover, .doc-link:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
 </style>
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
-  <link rel="stylesheet" href="/static/tokens.css?v=ccb2656202">
-  <link rel="stylesheet" href="/static/console.css?v=8ce954b151">
+  <link rel="stylesheet" href="/static/tokens.css?v=21e3aaf57a">
+  <link rel="stylesheet" href="/static/console.css?v=45079fbac0">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -157,8 +161,11 @@
     </section>
 
     <section class="stock-section">
+      <!-- 문장은 버튼과 같은 줄에 두지 않는다. flex 항목으로 들어가 있어서
+           30px 높이 버튼들 사이에 한 줄짜리 글이 끼고, 폭이 좁아지면 글자
+           단위로 접혔다. 문장은 문장 자리에, 버튼은 버튼 줄에 둔다. -->
+      <p id="no-risk-note" class="stock-note" hidden></p>
       <div class="stock-links">
-        <span id="no-risk-note" class="stock-note" hidden></span>
         <a href="/kr">한국 시장 대시보드</a>
         <a href="/us">미국·글로벌 대시보드</a>
       </div>

@@ -2418,7 +2418,7 @@ function renderKrSearchInterest() {
   const scroll = document.createElement("div"); scroll.className = "table-scroll";
   const table = document.createElement("table"); table.className = "accessible-table kridx-table";
   table.innerHTML = `<thead><tr>
-    <th scope="col" class="num">${t("ksi.colRank")}</th>
+    <th scope="col" class="num ksi-rank">${t("ksi.colRank")}</th>
     <th scope="col">${t("krev.colCode")}</th><th scope="col">${t("kre.colName")}</th>
     <th scope="col" class="num">${t("ksi.colLevel")}</th>
     <th scope="col" class="num">${t("ksi.colVs")}</th><th scope="col" class="num pro-only">${t("ksi.colPercentile")}</th>
