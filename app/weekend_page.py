@@ -46,12 +46,33 @@ def _esc(value: Any) -> str:
     return html.escape(str(value if value is not None else ""), quote=True)
 
 
-def _won(value: Any) -> str:
-    """원화. 소수점은 버린다 — 참고가에 원 단위 정밀도를 주장하지 않는다."""
+#: 이 페이지가 답하는 질문은 "주말에 한국 주식 얼마인가"다.
+#:
+#: ADR과 미국 ETF 카드는 같은 lane에 있지만 **다른 질문에 답한다.** SK하이닉스
+#: ADR의 `vs_official_percent`는 실측 30.5%인데, 그것은 고장이 아니라 **ADR
+#: 프리미엄**이다(원주 1주 = ADR 10주). 그 값을 이 표에 넣으면 원화 두 값이
+#: 30% 벌어진 채 나란히 놓여 **깨진 것처럼 보인다** — 여기 온 사람은 프리미엄을
+#: 물으러 온 것이 아니다. EWY는 값이 아예 `null`이다. 둘 다 `/kr`에서 제 맥락과
+#: 함께 본다.
+PAGE_KINDS = ("equity", "index")
+
+
+def _amount(value: Any, unit: Any) -> str:
+    """금액 또는 지수. **단위는 페이로드가 들고 있는 것을 쓴다.**
+
+    처음엔 원화라고 가정하고 "원"을 붙였다가 **코스피 200에 `1,054원`** 이 찍혔다
+    (2026-08-25 라이브 실측). 지수의 단위는 `pt`이고, 그 사실이 카드에 이미
+    적혀 있었다 — 읽지 않은 쪽이 틀렸다.
+    """
     try:
-        return f"{round(float(value)):,}원"
+        number = float(value)
     except (TypeError, ValueError):
         return "—"
+    if str(unit or "").upper() == "KRW":
+        return f"{round(number):,}원"
+    if str(unit or "") == "pt":
+        return f"{number:,.2f}pt"
+    return f"{number:,.2f} {_esc(unit)}".strip()
 
 
 def _pct(value: Any) -> str:
@@ -79,9 +100,15 @@ def _row(card: dict[str, Any]) -> str:
     implied = card.get("implied") or {}
     reference = card.get("session_reference") or {}
 
-    close = _won(official.get("close")) if official.get("status") == "ok" else "—"
+    close = (
+        _amount(official.get("close"), official.get("unit"))
+        if official.get("status") == "ok" else "—"
+    )
     close_date = _esc(official.get("date") or "")
-    now_value = _won(implied.get("value")) if implied.get("status") == "ok" else "—"
+    now_value = (
+        _amount(implied.get("value"), implied.get("unit"))
+        if implied.get("status") == "ok" else "—"
+    )
     # 마감 이후 얼마나 움직였나 — 이 페이지가 답하는 바로 그 숫자다.
     moved = reference.get("vs_percent") if reference.get("status") == "ok" else None
 
@@ -148,7 +175,10 @@ def render() -> dict[str, str]:
         log.warning("weekend page SSR failed", exc_info=True)
         return _closed("지금은 값을 불러올 수 없습니다.")
 
-    cards = [c for c in (payload.get("cards") or []) if isinstance(c, dict)]
+    cards = [
+        c for c in (payload.get("cards") or [])
+        if isinstance(c, dict) and c.get("kind") in PAGE_KINDS
+    ]
     rows = "".join(_row(card) for card in cards)
 
     official_dates = sorted({

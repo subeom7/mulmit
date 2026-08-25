@@ -165,3 +165,66 @@ def test_the_weekend_window_matches_the_lane():
     assert "Friday 20:00 through Monday 08:00 KST" in source, (
         "lane의 세션 창이 바뀌었다 — 페이지의 '금요일 20시부터 월요일 8시'도 함께 고쳐라"
     )
+
+# --- 5. 단위와 범위 ----------------------------------------------------------
+#
+# 배포하고 라이브를 보다가 나온 것들이다. 둘 다 값은 진짜인데 **표시가 거짓**인
+# 종류라, 테스트가 초록인 채로 나갔다.
+
+def test_an_index_is_not_priced_in_won():
+    """라이브에 **`코스피 200 → 1,054원`** 이 찍혔다(2026-08-25).
+
+    지수의 단위는 `pt`이고 그 사실이 카드에 이미 적혀 있었다 — 읽지 않은 쪽이
+    틀렸다. 단위는 가정하지 않고 페이로드가 들고 있는 것을 쓴다.
+    """
+    from app.weekend_page import _amount
+
+    assert _amount(257000.0, "KRW") == "257,000원"
+    assert _amount(1054.01, "pt") == "1,054.01pt"
+    assert "원" not in _amount(1054.01, "pt")
+    assert _amount(None, "KRW") == "—"
+
+
+def test_the_adr_card_stays_off_this_page():
+    """SK하이닉스 ADR의 `vs_official_percent`는 실측 **30.5%** 다 — 고장이 아니라
+    ADR 프리미엄이다(원주 1주 = ADR 10주).
+
+    그 값을 이 표에 넣으면 원화 두 값이 30% 벌어진 채 나란히 놓여 **깨진 것처럼
+    보인다.** 여기 온 사람은 프리미엄을 물으러 온 것이 아니다. EWY는 값이 아예
+    `null`이라 빈 줄이 된다. 둘 다 `/kr`에서 제 맥락과 함께 본다.
+    """
+    from app import weekend_page
+
+    assert "adr" not in weekend_page.PAGE_KINDS
+    assert "us_etf" not in weekend_page.PAGE_KINDS
+    assert set(weekend_page.PAGE_KINDS) == {"equity", "index"}
+
+
+def test_only_the_scoped_kinds_reach_the_table():
+    from unittest import mock
+
+    from app import weekend_page
+
+    cards = [
+        {"id": "a", "kind": "equity", "label": {"ko": "삼성전자"}, "code": "005930",
+         "official": {"status": "ok", "close": 257000.0, "unit": "KRW", "date": "2026-08-24"},
+         "implied": {"status": "ok", "value": 257992.7, "unit": "KRW"},
+         "session_reference": {"status": "ok", "vs_percent": 0.4}},
+        {"id": "b", "kind": "index", "label": {"ko": "코스피 200"},
+         "official": {"status": "ok", "close": 1054.01, "unit": "pt", "date": "2026-08-24"},
+         "implied": {"status": "ok", "value": 1063.3, "unit": "pt"},
+         "session_reference": {"status": "ok", "vs_percent": 0.11}},
+        {"id": "c", "kind": "adr", "label": {"ko": "SK하이닉스 ADR"},
+         "official": {"status": "ok", "close": 1671000.0, "unit": "KRW", "date": "2026-08-24"},
+         "implied": {"status": "ok", "value": 2180933.8, "unit": "KRW"},
+         "session_reference": {"status": "ok", "vs_percent": -0.9}},
+    ]
+    payload = {"cards": cards, "session": {"active": True},
+               "disclaimer": {"ko": "x"}, "source": {}}
+    with mock.patch.object(weekend_page.data_rights, "hip3_public_display_enabled", lambda: True),          mock.patch.object(weekend_page.kr_overnight, "build_kr_overnight", lambda: payload):
+        rows = weekend_page.render()["ROWS"]
+
+    assert "삼성전자" in rows and "코스피 200" in rows
+    assert "ADR" not in rows, "ADR 카드가 표에 들어왔다"
+    assert "1,054.01pt" in rows, "지수가 pt로 나오지 않는다"
+    assert "1,054원" not in rows
