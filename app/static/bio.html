@@ -46,6 +46,10 @@
       <span class="session-badge" id="session-badge" hidden title=""><i></i><span></span></span>
       <span class="mast-ticker" id="mast-ticker" hidden title=""></span>
       <span class="connection-badge" id="connection-badge" role="status" aria-live="polite"><i></i><span data-i18n="status.connecting">연결 중</span></span>
+      <div class="mode-switch" id="mode-switch" role="group" data-i18n-aria="mode.label" aria-label="표시 수준">
+        <button type="button" data-mode="easy" aria-pressed="true" data-i18n="mode.easy">쉬움</button>
+        <button type="button" data-mode="pro" aria-pressed="false" data-i18n="mode.pro">전문가</button>
+      </div>
       <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
     </div>
   </header>
@@ -221,7 +225,8 @@
     </article>
   </template>
   <script>window.MULMIT_PAGE = "bio";</script>
-  <script src="/static/monitor.js?v=b24994ce11" defer></script>
+  <script src="/static/console.js?v=fafc741bcd" defer></script>
+  <script src="/static/monitor.js?v=91e0e435d2" defer></script>
   <script src="/static/search.js?v=e2093e0d4d" defer></script>
 </body>
 </html>

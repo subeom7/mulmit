@@ -4175,10 +4175,17 @@ function renderBioTrialsView({ section: sectionId, prefix, keep }) {
     const tr = document.createElement("tr");
     const study = document.createElement("span"); study.className = "bio-title";
     const link = document.createElement("a"); link.href = row.url; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = row.title || row.nct_id;
-    const id = document.createElement("small"); id.textContent = ` ${row.nct_id}${safeNumber(row.enrollment) !== null ? ` · ${t("bio.enrollment", { n: row.enrollment })}` : ""}`;
+    // 등록번호는 원문을 대조할 때 쓰는 식별자다. 제목이 이미 등록부로 가는
+    // 링크라, 쉬움 모드에서는 접고 환자 수만 남긴다.
+    const id = document.createElement("small");
+    const nct = document.createElement("span"); nct.className = "pro-only"; nct.textContent = ` ${row.nct_id}`;
+    id.append(nct);
+    if (safeNumber(row.enrollment) !== null) id.append(document.createTextNode(` · ${t("bio.enrollment", { n: row.enrollment })}`));
     study.append(link, id);
     if (row.publications && safeNumber(row.publications.count) !== null && row.publications.count > 0) {
-      const pub = document.createElement("small"); pub.className = "bio-pub";
+      // 서지 줄(학술지·게재일)은 임상을 따라 읽는 사람에게만 쓸모가 있다.
+      // 쉬움 모드에서는 접어 표를 시험 이름 중심으로 남긴다.
+      const pub = document.createElement("small"); pub.className = "bio-pub pro-only";
       const plink = document.createElement("a"); plink.href = row.publications.search_url; plink.target = "_blank"; plink.rel = "noopener noreferrer"; plink.textContent = `${t("bio.pub.source")} · ${row.publications.count === 1 ? t("bio.pub.linkOne") : t("bio.pub.link", { n: row.publications.count })}`;
       pub.append(plink);
       const first = Array.isArray(row.publications.articles) ? row.publications.articles[0] : null;
@@ -5450,7 +5457,9 @@ function renderStressIndex() {
 
   const table = $("#stress-table");
   const heads = ["stress.colInput", "stress.colValue", "stress.colPct", "stress.colScore", "stress.colDir"];
-  $("thead", table).innerHTML = `<tr>${heads.map((key) => `<th scope="col">${t(key)}</th>`).join("")}</tr>`;
+  // 백분위는 점수를 만들기 위한 중간값이라 쉬움 모드에서는 접는다 — 점수와
+  // 방향만으로 읽을 수 있다. 검색 관심도 표가 이미 같은 선을 긋고 있다.
+  $("thead", table).innerHTML = `<tr>${heads.map((key) => `<th scope="col"${key.endsWith("colPct") ? " class=\"pro-only\"" : ""}>${t(key)}</th>`).join("")}</tr>`;
   const tbody = $("tbody", table); tbody.replaceChildren();
   for (const item of data.components || []) {
     const row = document.createElement("tr");
@@ -5464,6 +5473,7 @@ function renderStressIndex() {
     cells.forEach((text, index) => {
       const cell = document.createElement("td");
       if (index >= 1 && index <= 3) cell.className = "num";
+      if (index === 2) cell.classList.add("pro-only");   // 백분위 — 머리와 같이 접힌다
       cell.textContent = text;
       // The direction of each input is the part a reader most needs explained.
       if (index === 0) cell.title = localValue(item.rationale, state.lang);
@@ -5536,7 +5546,9 @@ function renderSentimentIndex() {
 
   const table = $("#sentiment-table");
   const heads = ["sentiment.colInput", "sentiment.colValue", "sentiment.colPct", "sentiment.colScore", "sentiment.colDir"];
-  $("thead", table).innerHTML = `<tr>${heads.map((key) => `<th scope="col">${t(key)}</th>`).join("")}</tr>`;
+  // 백분위는 점수를 만들기 위한 중간값이라 쉬움 모드에서는 접는다 — 점수와
+  // 방향만으로 읽을 수 있다. 검색 관심도 표가 이미 같은 선을 긋고 있다.
+  $("thead", table).innerHTML = `<tr>${heads.map((key) => `<th scope="col"${key.endsWith("colPct") ? " class=\"pro-only\"" : ""}>${t(key)}</th>`).join("")}</tr>`;
   const tbody = $("tbody", table); tbody.replaceChildren();
   for (const item of data.components || []) {
     const row = document.createElement("tr");
@@ -5550,6 +5562,7 @@ function renderSentimentIndex() {
     cells.forEach((text, index) => {
       const cell = document.createElement("td");
       if (index >= 1 && index <= 3) cell.className = "num";
+      if (index === 2) cell.classList.add("pro-only");   // 백분위 — 머리와 같이 접힌다
       cell.textContent = text;
       if (index === 0) cell.title = `${localValue(item.rationale, state.lang)} — ${localValue(item.derivation, state.lang)}`;
       row.append(cell);

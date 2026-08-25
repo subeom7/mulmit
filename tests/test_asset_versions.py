@@ -13,6 +13,7 @@ main은 `-49`를 가리키는데 `monitor.js` 내용만 바뀌었다. 브라우�
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -41,6 +42,28 @@ def test_every_asset_reference_carries_its_content_hash(page: str):
         if versions.get(name) != found
     ]
     assert not wrong, f"{page}의 자산 버전이 내용과 어긋난다: {wrong}. {FIX}"
+
+
+UNSTAMPED = re.compile(r'(?:src|href)="(/static/[A-Za-z0-9_.-]+\.(?:js|css))(?!\?v=)')
+
+
+@pytest.mark.parametrize("page", PAGES)
+def test_no_asset_reference_ships_without_a_hash(page: str):
+    """해시가 **없는** 참조는 스탬퍼도 위 테스트도 보지 못한다.
+
+    `stamp_assets.REFERENCE`가 `?v=`를 요구하기 때문이다 — 새 `<script>`를
+    `?v=` 없이 붙이면 스탬퍼가 건너뛰고, 위 테스트도 찾을 게 없어 통과한다.
+    그대로 배포되면 브라우저가 그 파일을 영구히 캐시한다.
+
+    2026-08-26에 실제로 그랬다. `/bio`에 console.js를 추가하면서 `?v=`를 안
+    붙였는데 `stamp_assets --check`가 "ok"라고 답했다. 통과하는 검사가 아무것도
+    보고 있지 않았던 것이다.
+    """
+    text = (STATIC / page).read_text(encoding="utf-8")
+    bare = UNSTAMPED.findall(text)
+    assert not bare, (
+        f"{page}에 해시 없는 자산 참조가 있다: {bare} — `?v=0`을 붙이고 {FIX} 를 돌리라"
+    )
 
 
 @pytest.mark.parametrize("page", PAGES)
