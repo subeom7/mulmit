@@ -1117,7 +1117,7 @@ function renderMetricCards() {
 }
 
 function createSvg(tag, attrs = {}) { const node = document.createElementNS("http://www.w3.org/2000/svg", tag); Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value)); return node; }
-function lineChart(series, color = null, normalize = false) {
+function lineChart(series, color = null, normalize = false, onScrub = null) {
   const points = series.filter((point) => point.value !== null); if (points.length < 2) return null;
   const values = normalize ? points.map((point) => ({ ...point, value: point.value / points[0].value * 100 })) : points;
   if (!values.every((point) => Number.isFinite(point.value))) return null;
@@ -1131,7 +1131,46 @@ function lineChart(series, color = null, normalize = false) {
   const area = createSvg("polygon", { points: `${pad},${height - pad} ${coords} ${width - pad},${height - pad}`, class: "area" });
   const line = createSvg("polyline", { points: coords, class: "line" }); if (color) line.style.stroke = color;
   const dot = createSvg("circle", { cx: x(values.length - 1), cy: y(values.at(-1).value), r: 3.5, class: "dot" }); if (color) dot.style.fill = color;
-  svg.append(area, line, dot); return svg;
+  svg.append(area, line, dot);
+  if (onScrub) attachScrub(svg, { values, x, y, width, height, pad, onScrub });
+  return svg;
+}
+
+// 차트 위를 훑으면 그날 값을 되돌려 준다. 옵션으로만 붙는다 — lineChart는 지표
+// 카드와 비교 차트에서도 쓰이고, 그쪽은 훑을 대상이 아니다.
+//
+// 마우스·펜만 받는다. 터치까지 받으면 세로 스크롤을 가로채게 되는데, 이 기능은
+// 없어도 아래 표에 같은 숫자가 다 있다. 스크롤을 뺏을 만한 값어치는 아니다.
+function attachScrub(svg, { values, x, y, width, height, pad, onScrub }) {
+  const guide = createSvg("line", { y1: 0, y2: height, class: "scrub-guide" });
+  const head = createSvg("circle", { r: 4, class: "scrub-dot" });
+  const layer = createSvg("rect", { x: 0, y: 0, width, height, class: "scrub-layer" });
+  guide.style.display = head.style.display = "none";
+  svg.append(guide, head, layer);
+
+  let shown = null;
+  const clear = () => {
+    if (shown === null) return;
+    shown = null; guide.style.display = head.style.display = "none"; onScrub(null);
+  };
+  layer.addEventListener("pointermove", (event) => {
+    if (event.pointerType === "touch") return;
+    const box = svg.getBoundingClientRect(); if (!box.width) return;
+    // viewBox 안의 x로 바꾼 뒤 점 간격으로 나눈다. preserveAspectRatio가 none이라
+    // 가로는 화면 폭에 그대로 늘어나므로 비율로만 환산하면 된다.
+    const inView = (event.clientX - box.left) / box.width * width;
+    const span = Math.max(1, values.length - 1);
+    const index = Math.max(0, Math.min(span, Math.round((inView - pad) / (width - pad * 2) * span)));
+    if (index === shown) return;
+    shown = index;
+    const point = values[index];
+    guide.setAttribute("x1", x(index)); guide.setAttribute("x2", x(index));
+    head.setAttribute("cx", x(index)); head.setAttribute("cy", y(point.value));
+    guide.style.display = head.style.display = "";
+    onScrub(point);
+  });
+  layer.addEventListener("pointerleave", clear);
+  layer.addEventListener("pointercancel", clear);
 }
 
 // Why a chart slot is empty, in the asset lane's own words (see app/hip3_history.py).
@@ -4512,8 +4551,16 @@ function renderCryptoSentiment() {
   const chartHost = $("#cfng-chart");
   if (chartHost) {
     chartHost.replaceChildren();
-    const chart = lineChart((data.observations || []).map((item) => ({ date: item.date, value: safeNumber(item.value) })).filter((item) => item.date && item.value !== null));
+    // 차트를 훑으면 게이지가 그날 자리로 간다. 이 지수가 지금까지 뭘 했는지를
+    // 게이지 자체가 말하게 하는 유일한 방법이고, 쓰는 값은 전부 실제 관측치다.
+    const chart = lineChart(
+      (data.observations || []).map((item) => ({ date: item.date, value: safeNumber(item.value) })).filter((item) => item.date && item.value !== null),
+      null, false, (point) => scrubGauge(body, point),
+    );
     if (chart) chartHost.append(chart); else { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = t("status.noSeries"); chartHost.append(empty); }
+    // 읽기 줄을 지금 만들어 자리를 잡아 둔다. 첫 훑기 때 생기게 두면 그 순간
+    // 차트와 표가 한 줄만큼 아래로 밀린다(실측으로 그렇게 나왔다).
+    if (chart) scrubGauge(body, null);
   }
 
   const table = $("#cfng-table");
@@ -4823,7 +4870,45 @@ function paintGauge(track, { score, previous = null, min = 0, max = 100 } = {}) 
     place(target);
   }
   track.dataset.gaugeAt = String(target);
+  track.dataset.gaugeMin = String(min); track.dataset.gaugeMax = String(max);
 }
+
+// 이력 차트를 훑는 동안 게이지를 그날 자리로 옮긴다. point가 null이면 오늘로.
+//
+// 여기서 조심할 것은 **오늘 값처럼 읽히지 않게** 하는 것이다. 마커만 옮기면
+// 옆의 큰 숫자는 그대로 오늘 값이라, 둘이 다른 날을 가리키면서 같은 것처럼
+// 보인다. 그래서 큰 숫자를 흐리고, 훑는 날짜와 값을 따로 적는다.
+function scrubGauge(section, point) {
+  const track = $(".stress-scale", section); if (!track) return;
+  const home = safeNumber(track.dataset.gaugeAt); if (home === null) return;
+  const lit = track.querySelector(".gauge-lit"), marker = track.querySelector("i");
+  const score = $(".stress-score", section);
+
+  let readout = $(".gauge-readout", section);
+  if (!readout) {
+    readout = document.createElement("p"); readout.className = "gauge-readout";
+    // 비어 있어도 자리를 차지한다(CSS의 min-height). 훑을 때 나타났다 사라지면
+    // 그때마다 아래 차트와 표가 한 줄씩 위아래로 튄다.
+    readout.setAttribute("aria-live", "polite");
+    (track.parentElement || section).append(readout);
+  }
+
+  const place = (at) => {
+    if (lit) lit.style.clipPath = `inset(0 ${100 - at}% 0 0 round 999px)`;
+    if (marker) marker.style.left = `${at}%`;
+  };
+  const value = point ? safeNumber(point.value) : null;
+  if (value === null) {
+    place(home); readout.textContent = "";
+    score?.classList.remove("scrubbing"); track.classList.remove("scrubbing");
+    return;
+  }
+  const min = safeNumber(track.dataset.gaugeMin) ?? 0, max = safeNumber(track.dataset.gaugeMax) ?? 100;
+  place(Math.max(0, Math.min(100, (value - min) / ((max - min) || 1) * 100)));
+  readout.textContent = `${t("date.asof")} ${dateText(point.date)} · ${value}`;
+  score?.classList.add("scrubbing"); track.classList.add("scrubbing");
+}
+
 function renderCryptoGas() {
   const section = $("#crypto-gas"); if (!section) return;
   const stateNode = $("#cgas-state"), grid = $("#cgas-grid"), footer = $("#cgas-footer");
@@ -5437,8 +5522,16 @@ function renderSentimentIndex() {
   const chartHost = $("#sentiment-chart");
   if (chartHost) {
     chartHost.replaceChildren();
-    const chart = lineChart((data.observations || []).map((item) => ({ date: item.date, value: safeNumber(item.value) })).filter((item) => item.date && item.value !== null));
+    // 차트를 훑으면 게이지가 그날 자리로 간다. 이 지수가 지금까지 뭘 했는지를
+    // 게이지 자체가 말하게 하는 유일한 방법이고, 쓰는 값은 전부 실제 관측치다.
+    const chart = lineChart(
+      (data.observations || []).map((item) => ({ date: item.date, value: safeNumber(item.value) })).filter((item) => item.date && item.value !== null),
+      null, false, (point) => scrubGauge(body, point),
+    );
     if (chart) chartHost.append(chart); else { const empty = document.createElement("div"); empty.className = "chart-empty"; empty.textContent = t("status.noSeries"); chartHost.append(empty); }
+    // 읽기 줄을 지금 만들어 자리를 잡아 둔다. 첫 훑기 때 생기게 두면 그 순간
+    // 차트와 표가 한 줄만큼 아래로 밀린다(실측으로 그렇게 나왔다).
+    if (chart) scrubGauge(body, null);
   }
 
   const table = $("#sentiment-table");
