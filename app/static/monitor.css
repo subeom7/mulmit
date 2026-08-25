@@ -424,17 +424,64 @@ button:focus-visible, a:focus-visible, select:focus-visible {
 .stress-score { display: flex; align-items: baseline; gap: 12px; }
 .stress-score strong { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; }
 .stress-score span { font-size: 14px; color: var(--muted); }
+/* 게이지. 6px 색 띠 전체를 켜 두고 3px 눈금 하나로 값을 가리키고 있었다 —
+   띠가 전부 밝으니 눈이 잡을 곳이 없고, 눈금은 너무 가늘어 어디에 있는지
+   찾아야 했다. 길이가 값을 말하게 한다: 범위 전체는 꺼 두고(::before), 0부터
+   현재값까지만 켠다(.gauge-lit). 어제 자리가 있는 지수는 그 자리를 남기고
+   사이를 실로 잇는다 — 얼마나 움직였는지가 띠 위에 그대로 보인다. */
 .stress-scale {
-  position: relative; height: 6px; margin: 12px 0 6px; border-radius: 999px;
+  position: relative; height: 12px; margin: 14px 0 8px; border-radius: 999px;
+  background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--line);
+}
+.stress-scale::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; opacity: .16;
   background: linear-gradient(90deg, var(--green), var(--amber), var(--red));
 }
+.gauge-lit {
+  position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(90deg, var(--green), var(--amber), var(--red));
+  clip-path: inset(0 100% 0 0 round 999px);
+  transition: clip-path .75s cubic-bezier(.22, .9, .28, 1);
+}
 .stress-scale i {
-  position: absolute; top: -4px; width: 3px; height: 14px; border-radius: 2px;
-  background: var(--ink); box-shadow: 0 0 0 2px var(--panel);
+  position: absolute; top: 50%; width: 4px; height: 22px; margin-left: -2px;
+  border-radius: 3px; background: var(--ink); transform: translateY(-50%);
+  box-shadow: 0 0 0 2px var(--panel), 0 2px 7px rgba(0, 0, 0, .55);
+  transition: left .75s cubic-bezier(.22, .9, .28, 1);
+}
+/* 어제 자리와 그 사이의 실. 이력이 없는 지수에는 그리지 않는다.
+   자국은 켜진 구간 위에도 꺼진 구간 위에도 보여야 한다 — 흐린 회색이면 값이
+   오른 날에만 밝은 띠 아래 깔려 사라진다. 마커와 같은 수법으로 밝은 심지에
+   어두운 테를 둘러 어느 바탕에서나 읽히게 한다. */
+.gauge-ghost {
+  position: absolute; top: 50%; width: 2px; height: 15px; margin-left: -1px;
+  border-radius: 2px; background: var(--ink); opacity: .5;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .5);
+  transform: translateY(-50%);
+}
+.gauge-trail {
+  position: absolute; top: 50%; height: 3px; border-radius: 999px;
+  background: rgba(255, 255, 255, .5); box-shadow: 0 0 0 1px rgba(0, 0, 0, .4);
+  transform: translateY(-50%);
+  transition: left .75s cubic-bezier(.22, .9, .28, 1), width .75s cubic-bezier(.22, .9, .28, 1);
+}
+/* 값이 실제로 바뀌었을 때만 한 번 번쩍인다. 하루 한 번 갱신되는 지수에
+   쉬지 않는 애니메이션을 붙이면 실시간으로 움직이는 값처럼 읽힌다. */
+.stress-scale i.changed { animation: gauge-bump .7s ease-out 1; }
+@keyframes gauge-bump {
+  0% { box-shadow: 0 0 0 2px var(--panel), 0 0 0 0 rgba(255, 255, 255, .55); }
+  100% { box-shadow: 0 0 0 2px var(--panel), 0 0 0 11px rgba(255, 255, 255, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gauge-lit, .stress-scale i, .gauge-trail { transition: none; }
+  .stress-scale i.changed { animation: none; }
 }
 .stress-scale-note { margin: 0; font-size: 11.5px; color: var(--faint); }
 /* Risk appetite runs the other way: red (risk-off) on the left, green (risk-on) on the right. */
-.sentiment-scale { background: linear-gradient(90deg, var(--red), var(--amber), var(--green)); }
+.sentiment-scale::before, .sentiment-scale .gauge-lit,
+.fng-scale::before, .fng-scale .gauge-lit {
+  background: linear-gradient(90deg, var(--red), var(--amber), var(--green));
+}
 .sentiment-chart { height: 120px; margin: 6px 0 14px; }
 .stress-method, .stress-disclaimer {
   font-size: 11.5px; line-height: 1.6; color: var(--muted); margin: 12px 0 0;
@@ -569,7 +616,6 @@ a.feed-text:hover { color: var(--ink); }
 .fng-attribution { margin: 8px 0 12px; color: var(--muted); font: 650 10.5px/1.4 var(--num); font-variant-numeric: tabular-nums; }
 .fng-attribution a { color: var(--accent); text-decoration: none; }
 .fng-attribution a:hover { text-decoration: underline; }
-.fng-scale { background: linear-gradient(90deg, var(--red), var(--amber), var(--green)); }
 .fng-deltas { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
 .fng-deltas span { padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 650 10px/1.3 var(--num); font-variant-numeric: tabular-nums; }
 .fng-deltas span.up { color: var(--green); }
