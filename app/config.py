@@ -339,6 +339,12 @@ DART_MAX_AGE = _int("DART_MAX_AGE", 60 * 60 * 12)
 KR_EVENTS_MAX_AGE = _int("KR_EVENTS_MAX_AGE", 60 * 15)
 # 법인코드 매핑(zip)은 거의 안 바뀐다.
 DART_CORP_MAX_AGE = _int("DART_CORP_MAX_AGE", 60 * 60 * 24 * 7)
+# DART 재무·소유보고 사전수집. 종목 하나당 DART 호출이 3~4번(재무 2~3 + 소유보고 1)
+# 이고 캐시 수명이 12시간이라, 8×96주기 = 하루 768건이면 320종목을 두 번 덮는다.
+# 이게 없으면 그 두 블록은 **사람이 페이지를 열어야만** 채워진다 — 2026-08-26에
+# 크롤러 요청이 그 일을 하고 있었고(콜드 3.5초의 정체), 그걸 막으면서 채우는
+# 경로까지 같이 사라졌다.
+KR_DART_PRECOLLECT_PER_RUN = _int("KR_DART_PRECOLLECT_PER_RUN", 8)
 
 # 미 하원 PTR(STOCK Act) — 법정 공시 relay. 키는 없고 게이트만 있다.
 US_PTR_ENABLED = _bool("US_PTR_ENABLED", False)
