@@ -2,7 +2,8 @@
 
 작성일: 2026-08-18. 운영자 위시리스트 전체를 등록부 원칙(도달 가능 ≠ 재배포 가능,
 fail-closed, 수치 발명 금지)으로 판정한 문서다. 실행 순서의 단일 진실.
-관련: `docs/DATA_SOURCE_REGISTER.md`, `docs/PLAN_KR_SECTIONS.md`(hlkr 매핑),
+관련: `docs/DIRECTION.md`(제품 방향 — 왜·무엇의 단일 진실),
+`docs/DATA_SOURCE_REGISTER.md`, `docs/PLAN_KR_SECTIONS.md`(hlkr 매핑),
 `docs/PLAN_SITE_SPLIT.md`(리디자인).
 
 ## 확정 실행 순서 (2026-08-18 합의)
