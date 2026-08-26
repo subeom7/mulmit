@@ -21,6 +21,18 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#0a0c0f">
+  <script>
+    /* 저장된 언어를 본문이 그려지기 전에 적용한다.
+       종목 페이지와 달리 이 페이지는 console.js를 부르지 않는다 —
+       그쪽은 <html lang>을 data-lang으로 미러링해 주지만 여기는 그 미러가
+       없으므로 둘 다 직접 세운다. .lang-ko/.lang-en 규칙은 data-lang을 본다. */
+    try {
+      if (localStorage.getItem("monitor.locale") === "en") {
+        document.documentElement.lang = "en";
+        document.documentElement.dataset.lang = "en";
+      }
+    } catch (e) { /* 저장소가 막힌 브라우저 — 기본 한국어 */ }
+  </script>
   <script src="/static/pwa.js?v=454c53046c" defer></script>
   <link rel="stylesheet" href="/static/monitor.css?v=0a2b7df756">
   <style>
@@ -116,20 +128,22 @@
       <span><strong>Mulmit</strong></span>
     </a>
     <nav class="view-switch" aria-label="View">
-      <a class="view-tab" href="/">홈</a>
-      <a class="view-tab" href="/kr">한국</a>
-      <a class="view-tab" href="/us">미국·글로벌</a>
-      <a class="view-tab active" href="/crypto">암호화폐</a>
-      <a class="view-tab" href="/analytics">종목 분석</a>
+      <a class="view-tab" href="/"><span class="lang-ko">홈</span><span class="lang-en">Home</span></a>
+      <a class="view-tab" href="/kr"><span class="lang-ko">한국</span><span class="lang-en">Korea</span></a>
+      <a class="view-tab" href="/us"><span class="lang-ko">미국·글로벌</span><span class="lang-en">US &amp; Global</span></a>
+      <a class="view-tab active" href="/crypto"><span class="lang-ko">암호화폐</span><span class="lang-en">Crypto</span></a>
+      <a class="view-tab" href="/analytics"><span class="lang-ko">종목 분석</span><span class="lang-en">Stock analytics</span></a>
     </nav>
-    <div class="mast-actions"></div>
+    <div class="mast-actions">
+      <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
+    </div>
   </header>
 
   <main id="main" class="shell">
     <div class="coin-head">
       <h1 id="coin-name">{{NAME}}</h1>
       <code id="coin-symbol">{{SYMBOL}}-PERP</code>
-      <span class="market-tag">HYPERLIQUID · 무기한선물</span>
+      <span class="market-tag"><span class="lang-ko">HYPERLIQUID · 무기한선물</span><span class="lang-en">HYPERLIQUID · PERPETUAL</span></span>
     </div>
 
     <!-- 크롤러가 읽는 본문. 서버가 저장된 값으로 채운다 — 이 페이지는 사이트맵에
@@ -140,36 +154,36 @@
     <div class="coin-price">
       <strong id="coin-last">—</strong>
       <em id="coin-change">—</em>
-      <small id="coin-asof">불러오는 중</small>
+      <small id="coin-asof"><span class="lang-ko">불러오는 중</span><span class="lang-en">Loading</span></small>
     </div>
     <div class="risk-strip" role="note" style="margin-top:10px">
-      <span class="status-badge warn">현물가격 아님</span>
-      <span class="status-badge warn">무기한선물</span>
-      <span class="status-badge warn">USD 기준 · 원화 아님</span>
-      <span class="status-badge warn">투자 권유 아님</span>
+      <span class="status-badge warn"><span class="lang-ko">현물가격 아님</span><span class="lang-en">Not a spot price</span></span>
+      <span class="status-badge warn"><span class="lang-ko">무기한선물</span><span class="lang-en">Perpetual futures</span></span>
+      <span class="status-badge warn"><span class="lang-ko">USD 기준 · 원화 아님</span><span class="lang-en">Quoted in USD, not KRW</span></span>
+      <span class="status-badge warn"><span class="lang-ko">투자 권유 아님</span><span class="lang-en">Not investment advice</span></span>
     </div>
 
-    <div id="coin-state" class="state-line" style="margin-top:14px">시세를 불러오는 중입니다…</div>
+    <div id="coin-state" class="state-line" style="margin-top:14px"><span class="lang-ko">시세를 불러오는 중입니다…</span><span class="lang-en">Loading prices…</span></div>
     <div class="coin-kpis" id="coin-kpis" hidden></div>
 
     <section class="coin-section" id="sec-signal" hidden>
-      <h2>시장 국면</h2>
-      <p class="sub">가격·펀딩을 요약한 <strong>상태 지표</strong>입니다. 매수·매도 신호가 아니며, 어떤 값에서도 시장은 양방향으로 움직일 수 있습니다.</p>
+      <h2><span class="lang-ko">시장 국면</span><span class="lang-en">Market regime</span></h2>
+      <p class="sub"><span class="lang-ko">가격·펀딩을 요약한 <strong>상태 지표</strong>입니다. 매수·매도 신호가 아니며, 어떤 값에서도 시장은 양방향으로 움직일 수 있습니다.</span><span class="lang-en">A <strong>state indicator</strong> summarising price and funding. It is not a buy or sell signal; at any value the market can move either way.</span></p>
       <div class="sig-top">
         <div class="sig-gauge">
-          <small>과열도</small>
+          <small><span class="lang-ko">과열도</span><span class="lang-en">Heat</span></small>
           <strong id="sig-heat">—</strong>
           <div class="sig-bar"><i id="sig-heat-bar"></i></div>
           <span id="sig-heat-band">—</span>
         </div>
         <div class="sig-gauge">
-          <small>추세</small>
+          <small><span class="lang-ko">추세</span><span class="lang-en">Trend</span></small>
           <strong id="sig-dir">—</strong>
           <div class="sig-bar center"><i id="sig-dir-bar"></i></div>
           <span id="sig-dir-band">—</span>
         </div>
         <div class="sig-gauge">
-          <small>24시간 변화</small>
+          <small><span class="lang-ko">24시간 변화</span><span class="lang-en">24h change</span></small>
           <strong id="sig-delta">—</strong>
           <svg id="sig-spark" class="sig-spark" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true"></svg>
           <span id="sig-flow">—</span>
@@ -182,12 +196,12 @@
     </section>
 
     <section class="coin-section" id="sec-chart">
-      <h2>가격 차트</h2>
-      <p class="sub" id="chart-sub">Hyperliquid 자체 DEX 무기한선물 캔들입니다. 현물 거래소 차트가 아닙니다.</p>
+      <h2><span class="lang-ko">가격 차트</span><span class="lang-en">Price chart</span></h2>
+      <p class="sub" id="chart-sub"><span class="lang-ko">Hyperliquid 자체 DEX 무기한선물 캔들입니다. 현물 거래소 차트가 아닙니다.</span><span class="lang-en">Candles from Hyperliquid's own DEX perpetual. Not a spot-exchange chart.</span></p>
       <div class="chart-toolbar" id="chart-toolbar" role="group" aria-label="캔들 간격"></div>
       <div class="chart-studies" id="chart-studies" role="group" aria-label="보조지표"></div>
       <div class="chart-wrap" id="chart-wrap">
-        <div class="chart-state" id="chart-state">차트를 불러오는 중입니다…</div>
+        <div class="chart-state" id="chart-state"><span class="lang-ko">차트를 불러오는 중입니다…</span><span class="lang-en">Loading chart…</span></div>
         <svg id="chart-svg" hidden role="img" aria-label="가격 캔들 차트"></svg>
         <div class="chart-tip" id="chart-tip" hidden></div>
       </div>
@@ -196,32 +210,32 @@
     </section>
 
     <section class="coin-section" id="sec-krw" hidden>
-      <h2>원화 시세 · 김치프리미엄</h2>
-      <p class="sub">업비트 원화 시장의 체결가와, 같은 코인의 해외 기준가 대비 괴리입니다. USDT 기준은 환율이 필요 없고, 공식환율 기준은 한국은행 고시(일별)를 씁니다.</p>
+      <h2><span class="lang-ko">원화 시세 · 김치프리미엄</span><span class="lang-en">KRW price · Kimchi premium</span></h2>
+      <p class="sub"><span class="lang-ko">업비트 원화 시장의 체결가와, 같은 코인의 해외 기준가 대비 괴리입니다. USDT 기준은 환율이 필요 없고, 공식환율 기준은 한국은행 고시(일별)를 씁니다.</span><span class="lang-en">Upbit KRW trade prices against the same coin's offshore reference. The USDT basis needs no FX; the official basis uses the Bank of Korea daily rate.</span></p>
       <div class="coin-kpis" id="krw-kpis"></div>
       <p class="coin-note" id="krw-note"></p>
       <p class="coin-note" id="krw-rights"></p>
     </section>
 
     <section class="coin-section" id="sec-deriv" hidden>
-      <h2>파생 지표</h2>
-      <p class="sub">펀딩비는 시간당 지급률이며 연율(APR)은 × 24 × 365 환산입니다. 양수는 롱이 숏에 지불 — 롱 쏠림입니다.</p>
+      <h2><span class="lang-ko">파생 지표</span><span class="lang-en">Derivatives</span></h2>
+      <p class="sub"><span class="lang-ko">펀딩비는 시간당 지급률이며 연율(APR)은 × 24 × 365 환산입니다. 양수는 롱이 숏에 지불 — 롱 쏠림입니다.</span><span class="lang-en">Funding is an hourly rate; the APR is × 24 × 365. Positive means longs pay shorts — the book leans long.</span></p>
       <div class="table-scroll"><table class="coin-table" id="deriv-table"><thead></thead><tbody></tbody></table></div>
       <p class="coin-note" id="deriv-note"></p>
     </section>
 
     <section class="coin-section" id="sec-news" hidden>
-      <h2>관련 뉴스</h2>
-      <p class="sub">GDELT가 수집한 기사 중 제목에 이 코인이 잡힌 헤드라인입니다. 제목·출처·링크까지만 전달합니다.</p>
+      <h2><span class="lang-ko">관련 뉴스</span><span class="lang-en">Related news</span></h2>
+      <p class="sub"><span class="lang-ko">GDELT가 수집한 기사 중 제목에 이 코인이 잡힌 헤드라인입니다. 제목·출처·링크까지만 전달합니다.</span><span class="lang-en">Headlines from GDELT whose titles mention this coin. Title, source and link only.</span></p>
       <ul class="coin-news" id="news-list"></ul>
       <p class="coin-note" id="news-note"></p>
     </section>
 
     <section class="coin-section">
       <div class="coin-links">
-        <a href="/crypto">← 암호화폐 대시보드</a>
-        <a href="/crypto#crypto-board">HL 전체 시장 보드</a>
-        <a id="link-venue" href="https://app.hyperliquid.xyz/trade/{{SYMBOL}}" target="_blank" rel="noopener noreferrer">Hyperliquid 마켓 페이지 ↗</a>
+        <a href="/crypto"><span class="lang-ko">← 암호화폐 대시보드</span><span class="lang-en">← Crypto dashboard</span></a>
+        <a href="/crypto#crypto-board"><span class="lang-ko">HL 전체 시장 보드</span><span class="lang-en">HL market board</span></a>
+        <a id="link-venue" href="https://app.hyperliquid.xyz/trade/{{SYMBOL}}" target="_blank" rel="noopener noreferrer"><span class="lang-ko">Hyperliquid 마켓 페이지 ↗</span><span class="lang-en">Hyperliquid market page ↗</span></a>
       </div>
       <p class="coin-note" id="method-note"></p>
       <p class="coin-note" id="disclaimer-note"></p>
@@ -229,9 +243,9 @@
 
     <footer class="site-footer">
       <nav aria-label="Legal">
-        <a href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a><a href="/disclaimer">면책 고지</a>
+        <a href="/privacy"><span class="lang-ko">개인정보처리방침</span><span class="lang-en">Privacy</span></a><a href="/terms"><span class="lang-ko">이용약관</span><span class="lang-en">Terms</span></a><a href="/disclaimer"><span class="lang-ko">면책 고지</span><span class="lang-en">Disclaimer</span></a>
       </nav>
-      <p>Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다. 데이터는 공개 원천의 전달값입니다.</p>
+      <p><span class="lang-ko">Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다. 데이터는 공개 원천의 전달값입니다.</span><span class="lang-en">Mulmit is an information service, not investment advice or a solicitation. Values are passed through from public sources.</span></p>
     </footer>
   </main>
 
@@ -241,6 +255,26 @@
 // 차트는 외부 위젯 없이 같은 응답의 캔들을 직접 그린다 — 표시 거래소가 섞이지 않는다.
 const SYMBOL = "{{SYMBOL}}";
 const $id = (x) => document.getElementById(x);
+  // 언어는 <head>에서 이미 정해졌다. 여기서는 읽기만 한다.
+  // 토글은 저장하고 새로고침한다 — 이 페이지도 한 번 그리고 끝난다.
+  const EN = document.documentElement.lang === "en";
+  const t = (ko, en) => (EN ? en : ko);
+  // API는 {ko, en} 쌍을 준다 — 페이지가 .ko만 읽고 있었다(2026-08-26 실측:
+  // 영어 모드에서 국면 라벨·구성요소·해석 문장이 그대로 한국어로 남았다).
+  const L = (pair, fallback = "") => (pair ? (EN ? pair.en || pair.ko : pair.ko) || fallback : fallback);
+  // basis_ko / basis_en은 쌍이 아니라 평평한 두 필드다. 같은 이유로 따로 본다.
+  const B = (o) => (o ? (EN ? o.basis_en || o.basis_ko : o.basis_ko) || "" : "");
+  // 날짜·시각도 로케일을 따른다. ko-KR로 고정하면 영어 화면에 "오후"가 남는다.
+  const LOCALE = EN ? "en-US" : "ko-KR";
+
+  const localeButton = $id("locale-toggle");
+  if (localeButton) {
+    localeButton.textContent = EN ? "KO" : "EN";
+    localeButton.addEventListener("click", () => {
+      try { localStorage.setItem("monitor.locale", EN ? "ko" : "en"); } catch (e) { /* 저장소 없음 */ }
+      location.reload();
+    });
+  }
 const REFRESH_MS = 15000, CANDLE_MS = 60000;
 let interval = localStorageGet("mulmit.coinInterval") || "1h";
 // Overlays default on, the extra pane off: a first look should show the trend
@@ -275,7 +309,7 @@ function usd(v) {
 }
 const signed = (v, d = 2) => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + nf(Math.abs(v), d) + "%";
 const cls = (v) => v == null ? "" : v > 0 ? "up" : v < 0 ? "down" : "";
-const timeText = (iso) => { if (!iso) return "—"; const d = new Date(iso); return isNaN(d) ? "—" : d.toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" }); };
+const timeText = (iso) => { if (!iso) return "—"; const d = new Date(iso); return isNaN(d) ? "—" : d.toLocaleString(LOCALE, { dateStyle: "medium", timeStyle: "short" }); };
 
 async function fetchJson(url) {
   const res = await fetch(url, { headers: { Accept: "application/json" } });
@@ -291,19 +325,19 @@ function renderHead(data) {
   const changeNode = $id("coin-change");
   changeNode.textContent = change == null ? "—" : `${signed(change)} · 24h`;
   changeNode.className = cls(change);
-  $id("coin-asof").textContent = `기준 ${timeText(market.freshness?.as_of)}${market.freshness?.status === "stale" ? " · 지연" : ""}`;
+  $id("coin-asof").textContent = t(`기준 ${timeText(market.freshness?.as_of)}${market.freshness?.status === "stale" ? " · 지연" : ""}`, `As of ${timeText(market.freshness?.as_of)}${market.freshness?.status === "stale" ? " · delayed" : ""}`);
   $id("coin-state").hidden = true;
 
   const funding = market.funding || {}, oi = market.open_interest || {};
   const cards = [
-    ["펀딩 (1시간)", funding.hourly_percent == null ? "—" : `${funding.hourly_percent > 0 ? "+" : ""}${nf(funding.hourly_percent, 4)}%`,
-      funding.apr_percent == null ? null : `연율 ${signed(funding.apr_percent)}${funding.heat && funding.heat !== "normal" ? ` · ${funding.heat === "high" ? "과열" : "다소 높음"}` : ""}`,
+    [t("펀딩 (1시간)", "Funding (1h)"), funding.hourly_percent == null ? "—" : `${funding.hourly_percent > 0 ? "+" : ""}${nf(funding.hourly_percent, 4)}%`,
+      funding.apr_percent == null ? null : `${t("연율", "APR")} ${signed(funding.apr_percent)}${funding.heat && funding.heat !== "normal" ? ` · ${funding.heat === "high" ? t("과열", "Hot") : t("다소 높음", "Somewhat high")}` : ""}`,
       cls(funding.apr_percent)],
-    ["펀딩 방향", funding.side === "longs_pay" ? "롱이 지불" : funding.side === "shorts_pay" ? "숏이 지불" : "—", "양수 = 롱 쏠림", ""],
-    ["미결제약정", usd(oi.usd), oi.base_units == null ? null : `${nf(oi.base_units, 0)} ${data.symbol}`, ""],
-    ["24h 거래대금", usd(market.volume_24h_usd), market.liquidity_status === "thin" ? "얇은 시장" : null, ""],
-    ["마크 / 오라클", price(market.price?.mark), market.price?.oracle == null ? null : `오라클 ${price(market.price.oracle)}`, ""],
-    ["프리미엄", market.premium_percent == null ? "—" : signed(market.premium_percent, 4), "마크 대 오라클", cls(market.premium_percent)],
+    [t("펀딩 방향", "Funding side"), funding.side === "longs_pay" ? t("롱이 지불", "Longs pay") : funding.side === "shorts_pay" ? t("숏이 지불", "Shorts pay") : "—", t("양수 = 롱 쏠림", "Positive = leaning long"), ""],
+    [t("미결제약정", "Open interest"), usd(oi.usd), oi.base_units == null ? null : `${nf(oi.base_units, 0)} ${data.symbol}`, ""],
+    [t("24h 거래대금", "24h volume"), usd(market.volume_24h_usd), market.liquidity_status === "thin" ? t("얇은 시장", "Thin market") : null, ""],
+    [t("마크 / 오라클", "Mark / oracle"), price(market.price?.mark), market.price?.oracle == null ? null : t(`오라클 ${price(market.price.oracle)}`, `Oracle ${price(market.price.oracle)}`), ""],
+    [t("프리미엄", "Premium"), market.premium_percent == null ? "—" : signed(market.premium_percent, 4), t("마크 대 오라클", "Mark vs oracle"), cls(market.premium_percent)],
   ];
   const grid = $id("coin-kpis");
   grid.replaceChildren(...cards.filter(([, value]) => value !== "—" || true).map(([title, value, note, klass]) => {
@@ -321,7 +355,7 @@ function renderHead(data) {
   const thead = table.querySelector("thead"), tbody = table.querySelector("tbody");
   thead.replaceChildren(); tbody.replaceChildren();
   const head = document.createElement("tr");
-  ["거래소", "예상 펀딩 (연율)", "지급 주기", "시간당"].forEach((label, idx) => {
+  [t("거래소", "Venue"), t("예상 펀딩 (연율)", "Predicted funding (APR)"), t("지급 주기", "Interval"), t("시간당", "per hour")].forEach((label, idx) => {
     const th = document.createElement("th"); th.scope = "col"; th.textContent = label; if (idx) th.className = "num"; head.append(th);
   });
   thead.append(head);
@@ -329,16 +363,16 @@ function renderHead(data) {
     const tr = document.createElement("tr");
     const venue = document.createElement("td"); venue.textContent = row.venue_label || row.venue || "—";
     const apr = document.createElement("td"); apr.className = `num ${cls(row.apr_percent)}`.trim(); apr.textContent = signed(row.apr_percent);
-    const iv = document.createElement("td"); iv.className = "num"; iv.textContent = row.interval_hours == null ? "—" : `${nf(row.interval_hours, 0)}시간`;
+    const iv = document.createElement("td"); iv.className = "num"; iv.textContent = row.interval_hours == null ? "—" : t(`${nf(row.interval_hours, 0)}시간`, `${nf(row.interval_hours, 0)}h`);
     const hourly = document.createElement("td"); hourly.className = "num"; hourly.textContent = row.rate == null ? "—" : `${nf(row.rate * 100, 4)}%`;
     tr.append(venue, apr, iv, hourly); tbody.append(tr);
   });
   section.hidden = rows.length === 0;
-  $id("deriv-note").textContent = rows.length ? "Binance·Bybit 값은 Hyperliquid가 공표하는 예상값이며 Mulmit이 해당 거래소를 조회하지 않습니다." : "";
+  $id("deriv-note").textContent = rows.length ? t("Binance·Bybit 값은 Hyperliquid가 공표하는 예상값이며 Mulmit이 해당 거래소를 조회하지 않습니다.", "Binance and Bybit figures are Hyperliquid's published estimates; Mulmit does not query those venues.") : "";
   renderSignal(data.signal);
   renderKrw(data.krw);
-  $id("method-note").textContent = data.methodology?.ko || "";
-  $id("disclaimer-note").textContent = data.disclaimer?.ko || "";
+  $id("method-note").textContent = L(data.methodology);
+  $id("disclaimer-note").textContent = L(data.disclaimer);
   if (data.links?.venue) $id("link-venue").href = data.links.venue;
 }
 
@@ -358,7 +392,7 @@ function renderSignalHistory(history) {
   const delta = $id("sig-delta"), spark = $id("sig-spark"), flow = $id("sig-flow");
   const changes = history?.changes || null;
   const points = (history?.recent || []).map((row) => row.heat).filter((v) => typeof v === "number");
-  if (!changes || changes.status === "collecting") { delta.textContent = "수집 중"; delta.className = ""; spark.replaceChildren(); flow.textContent = `표본 ${changes?.samples ?? 0}개 · 다음 샘플부터 표시됩니다`; return; }
+  if (!changes || changes.status === "collecting") { delta.textContent = t("수집 중", "Collecting"); delta.className = ""; spark.replaceChildren(); flow.textContent = t(`표본 ${changes?.samples ?? 0}개 · 다음 샘플부터 표시됩니다`, `${changes?.samples ?? 0} samples · shown from the next sample`); return; }
   const move = changes.heat_24h_points;
   delta.textContent = move == null ? "—" : `${move > 0 ? "+" : move < 0 ? "−" : "±"}${nf(Math.abs(move), 1)}`;
   delta.className = cls(move);
@@ -371,12 +405,12 @@ function renderSignalHistory(history) {
     spark.append(path);
   }
   const parts = [];
-  if (changes.flow_label) parts.push(changes.flow_label.ko);
+  if (changes.flow_label) parts.push(L(changes.flow_label));
   if (changes.oi_usd_24h_percent != null) parts.push(`OI ${signed(changes.oi_usd_24h_percent, 1)}`);
   flow.textContent = parts.join(" · ") || "—";
 }
 
-const won = (v, digits = 0) => v == null ? "—" : "₩" + Number(v).toLocaleString("ko-KR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+const won = (v, digits = 0) => v == null ? "—" : "₩" + Number(v).toLocaleString(LOCALE, { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
 function renderKrw(krw) {
   const section = $id("sec-krw");
@@ -384,11 +418,11 @@ function renderKrw(krw) {
   section.hidden = false;
   const usdt = krw.usdt || {}, fx = krw.fx || {};
   const cards = [
-    ["업비트 원화가", won(krw.krw, krw.krw >= 1000 ? 0 : 2), krw.change_24h_percent == null ? null : `${signed(krw.change_24h_percent)} · 24h`, cls(krw.change_24h_percent)],
-    ["USDT 기준 프리미엄", krw.premium_usdt_basis_percent == null ? "—" : signed(krw.premium_usdt_basis_percent), "환율 불필요 · 실시간", cls(krw.premium_usdt_basis_percent)],
-    ["공식환율 기준", krw.premium_official_basis_percent == null ? "—" : signed(krw.premium_official_basis_percent), fx.date ? `한국은행 고시 ${fx.date}` : "고시환율 없음", cls(krw.premium_official_basis_percent)],
-    ["USDT/KRW", won(usdt.krw, 0), usdt.tether_premium_percent == null ? null : `테더 프리미엄 ${signed(usdt.tether_premium_percent)}`, cls(usdt.tether_premium_percent)],
-    ["업비트 24h 거래대금", krw.volume_24h_krw == null ? "—" : `₩${nf(krw.volume_24h_krw / 1e8, 0)}억`, null, ""],
+    [t("업비트 원화가", "Upbit KRW price"), won(krw.krw, krw.krw >= 1000 ? 0 : 2), krw.change_24h_percent == null ? null : `${signed(krw.change_24h_percent)} · 24h`, cls(krw.change_24h_percent)],
+    [t("USDT 기준 프리미엄", "Premium, USDT basis"), krw.premium_usdt_basis_percent == null ? "—" : signed(krw.premium_usdt_basis_percent), t("환율 불필요 · 실시간", "No FX needed · live"), cls(krw.premium_usdt_basis_percent)],
+    [t("공식환율 기준", "Official FX basis"), krw.premium_official_basis_percent == null ? "—" : signed(krw.premium_official_basis_percent), fx.date ? t(`한국은행 고시 ${fx.date}`, `Bank of Korea rate ${fx.date}`) : t("고시환율 없음", "No official FX rate"), cls(krw.premium_official_basis_percent)],
+    ["USDT/KRW", won(usdt.krw, 0), usdt.tether_premium_percent == null ? null : t(`테더 프리미엄 ${signed(usdt.tether_premium_percent)}`, `Tether premium ${signed(usdt.tether_premium_percent)}`), cls(usdt.tether_premium_percent)],
+    [t("업비트 24h 거래대금", "Upbit 24h volume"), krw.volume_24h_krw == null ? "—" : t(`₩${nf(krw.volume_24h_krw / 1e8, 0)}억`, `₩${nf(krw.volume_24h_krw / 1e8, 0)}00M`), null, ""],
   ];
   $id("krw-kpis").replaceChildren(...cards.map(([title, value, note, klass]) => {
     const box = document.createElement("div"); box.className = "coin-kpi";
@@ -398,8 +432,8 @@ function renderKrw(krw) {
     if (note) { const span = document.createElement("span"); span.textContent = note; box.append(span); }
     return box;
   }));
-  $id("krw-note").textContent = krw.methodology?.ko || "";
-  $id("krw-rights").textContent = [krw.rights?.notice_ko || krw.rights?.notice, krw.disclaimer?.ko].filter(Boolean).join(" ");
+  $id("krw-note").textContent = L(krw.methodology);
+  $id("krw-rights").textContent = [(EN ? krw.rights?.notice || krw.rights?.notice_ko : krw.rights?.notice_ko || krw.rights?.notice), L(krw.disclaimer)].filter(Boolean).join(" ");
 }
 
 function renderSignal(signal) {
@@ -411,27 +445,27 @@ function renderSignal(signal) {
   const heatBar = $id("sig-heat-bar");
   heatBar.style.width = `${Math.max(0, Math.min(100, heat.score || 0))}%`;
   heatBar.style.background = HEAT_TONE[heat.band] || "var(--accent)";
-  $id("sig-heat-band").textContent = heat.label?.ko || "—";
+  $id("sig-heat-band").textContent = L(heat.label, "—");
   $id("sig-dir").textContent = dir.score == null ? "—" : `${dir.score > 0 ? "+" : dir.score < 0 ? "−" : ""}${nf(Math.abs(dir.score), 0)}`;
   const dirBar = $id("sig-dir-bar"), score = Math.max(-100, Math.min(100, dir.score || 0));
   dirBar.style.left = `${score >= 0 ? 50 : 50 + score / 2}%`;
   dirBar.style.width = `${Math.abs(score) / 2}%`;
   dirBar.style.background = score > 0 ? "var(--green)" : score < 0 ? "var(--red)" : "var(--muted)";
-  $id("sig-dir-band").textContent = dir.label?.ko || "—";
-  $id("sig-reading").textContent = signal.reading?.ko || "";
+  $id("sig-dir-band").textContent = L(dir.label, "—");
+  $id("sig-reading").textContent = L(signal.reading);
   renderSignalHistory(signal.history);
 
   const table = $id("sig-table"), thead = table.querySelector("thead"), tbody = table.querySelector("tbody");
   thead.replaceChildren(); tbody.replaceChildren();
   const head = document.createElement("tr");
-  ["구성요소", "현재 값", "과열 기여", "가중치"].forEach((label, idx) => { const th = document.createElement("th"); th.scope = "col"; th.textContent = label; if (idx >= 2) th.className = "num"; head.append(th); });
+  [t("구성요소", "Component"), t("현재 값", "Current"), t("과열 기여", "Heat contribution"), t("가중치", "Weight")].forEach((label, idx) => { const th = document.createElement("th"); th.scope = "col"; th.textContent = label; if (idx >= 2) th.className = "num"; head.append(th); });
   thead.append(head);
   (signal.components || []).forEach((component) => {
     const tr = document.createElement("tr");
-    const name = document.createElement("td"); name.textContent = component.label?.ko || component.id;
+    const name = document.createElement("td"); name.textContent = L(component.label, component.id);
     const value = document.createElement("td");
     const cell = document.createElement("span"); cell.className = "sig-cell";
-    cell.textContent = component.note?.ko || "—";
+    cell.textContent = L(component.note, "—");
     value.append(cell);
     const contrib = document.createElement("td"); contrib.className = "num";
     const bar = document.createElement("span"); bar.className = "sig-contrib";
@@ -443,8 +477,8 @@ function renderSignal(signal) {
     const weight = document.createElement("td"); weight.className = "num"; weight.textContent = component.weight == null ? "—" : `${nf(component.weight * 100, 0)}%`;
     tr.append(name, value, contrib, weight); tbody.append(tr);
   });
-  $id("sig-method").textContent = signal.methodology?.ko || "";
-  $id("sig-disclaimer").textContent = signal.disclaimer?.ko || "";
+  $id("sig-method").textContent = L(signal.methodology);
+  $id("sig-disclaimer").textContent = L(signal.disclaimer);
 }
 
 function renderToolbar(options) {
@@ -452,7 +486,7 @@ function renderToolbar(options) {
   if (bar.dataset.ready === "1") { [...bar.querySelectorAll("button")].forEach((b) => b.classList.toggle("active", b.dataset.interval === interval)); return; }
   bar.replaceChildren(...options.map((option) => {
     const button = document.createElement("button"); button.type = "button"; button.dataset.interval = option.id;
-    button.textContent = option.label?.ko || option.id;
+    button.textContent = L(option.label, option.id);
     button.classList.toggle("active", option.id === interval);
     button.addEventListener("click", () => {
       if (interval === option.id) return;
@@ -466,8 +500,8 @@ function renderToolbar(options) {
 }
 
 const STUDY_BUTTONS = [
-  { id: "ma", label: "이평선 20·50", colour: "#f5b942" },
-  { id: "bb", label: "볼린저 20·2σ", colour: "#9aa4b8" },
+  { id: "ma", label: t("이평선 20·50", "MA 20/50"), colour: "#f5b942" },
+  { id: "bb", label: t("볼린저 20·2σ", "Bollinger 20/2σ"), colour: "#9aa4b8" },
   { id: "rsi", label: "RSI 14", colour: "#42a5ff", pane: true },
   { id: "macd", label: "MACD", colour: "#2dd4a3", pane: true },
 ];
@@ -485,7 +519,7 @@ function renderStudies() {
   }
   const label = document.createElement("span");
   label.className = "group-label";
-  label.textContent = "보조지표";
+  label.textContent = t("보조지표", "Studies");
   const buttons = STUDY_BUTTONS.map((option) => {
     const button = document.createElement("button");
     button.type = "button";
@@ -533,7 +567,7 @@ function drawChart() {
   if (!candles.length) {
     svg.setAttribute("hidden", "");
     stateNode.hidden = false;
-    stateNode.textContent = lastPayload?.chart?.error ? "차트 데이터를 불러오지 못했습니다 · 잠시 후 다시 시도해 주세요." : "차트를 불러오는 중입니다…";
+    stateNode.textContent = lastPayload?.chart?.error ? t("차트 데이터를 불러오지 못했습니다 · 잠시 후 다시 시도해 주세요.", "Could not load chart data · please try again shortly.") : t("차트를 불러오는 중입니다…", "Loading chart…");
     return;
   }
   stateNode.hidden = true; svg.removeAttribute("hidden");
@@ -653,7 +687,7 @@ function drawChart() {
   [[0, first], [candles.length - 1, last]].forEach(([i, c], idx) => {
     const label = el("text", { x: idx ? (padL + plotW).toFixed(1) : padL.toFixed(1), y: axisY, class: "cc-axis" });
     if (idx) label.setAttribute("text-anchor", "end");
-    label.textContent = new Date(c.t).toLocaleString("ko-KR", interval === "1d" ? { dateStyle: "medium" } : { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    label.textContent = new Date(c.t).toLocaleString(LOCALE, interval === "1d" ? { dateStyle: "medium" } : { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
     svg.append(label);
   });
 
@@ -673,15 +707,15 @@ function drawChart() {
     tip.hidden = false;
     tip.innerHTML = "";
     const when = document.createElement("div");
-    when.textContent = new Date(c.t).toLocaleString("ko-KR", interval === "1d" ? { dateStyle: "medium" } : { dateStyle: "short", timeStyle: "short" });
+    when.textContent = new Date(c.t).toLocaleString(LOCALE, interval === "1d" ? { dateStyle: "medium" } : { dateStyle: "short", timeStyle: "short" });
     tip.append(when);
-    [["시", c.o], ["고", c.h], ["저", c.l], ["종", c.c]].forEach(([label, value]) => {
+    [[t("시", "O"), c.o], [t("고", "H"), c.h], [t("저", "L"), c.l], [t("종", "C"), c.c]].forEach(([label, value]) => {
       const line = document.createElement("div");
       const b = document.createElement("b"); b.textContent = `${label} `;
       line.append(b, document.createTextNode(price(value)));
       tip.append(line);
     });
-    if (c.v != null) { const line = document.createElement("div"); const b = document.createElement("b"); b.textContent = "거래량 "; line.append(b, document.createTextNode(`${nf(c.v, 2)} ${SYMBOL}`)); tip.append(line); }
+    if (c.v != null) { const line = document.createElement("div"); const b = document.createElement("b"); b.textContent = t("거래량 ", "Vol "); line.append(b, document.createTextNode(`${nf(c.v, 2)} ${SYMBOL}`)); tip.append(line); }
     const study = (label, text) => {
       const line = document.createElement("div");
       const b = document.createElement("b"); b.textContent = `${label} `;
@@ -696,7 +730,7 @@ function drawChart() {
     }
     if (ind && studyBb) {
       const upper = at(ind.bollinger?.upper), lower = at(ind.bollinger?.lower);
-      if (upper != null && lower != null) study("볼린저", `${price(lower)} ~ ${price(upper)}`);
+      if (upper != null && lower != null) study(t("볼린저", "Bollinger"), `${price(lower)} ~ ${price(upper)}`);
     }
     if (ind && studyPane === "rsi") {
       const value = at(ind.rsi?.values);
@@ -704,7 +738,7 @@ function drawChart() {
     }
     if (ind && studyPane === "macd") {
       const line = at(ind.macd?.line), signal = at(ind.macd?.signal);
-      if (line != null && signal != null) study("MACD", `${nf(line, 4)} · 시그널 ${nf(signal, 4)}`);
+      if (line != null && signal != null) study("MACD", t(`${nf(line, 4)} · 시그널 ${nf(signal, 4)}`, `${nf(line, 4)} · signal ${nf(signal, 4)}`));
     }
     const left = (cx / width) * rect.width;
     tip.style.left = `${Math.min(rect.width - tip.offsetWidth - 8, Math.max(4, left + 12))}px`;
@@ -716,14 +750,14 @@ function drawChart() {
 
   const stats = lastPayload?.chart?.stats || {};
   $id("chart-stats").textContent = [
-    `구간 ${stats.candles || candles.length}개 캔들`,
-    stats.change_percent == null ? null : `구간 변동 ${signed(stats.change_percent)}`,
-    stats.high == null ? null : `고가 ${price(stats.high)}`,
-    stats.low == null ? null : `저가 ${price(stats.low)}`,
-    lastPayload?.chart?.as_of ? `캔들 기준 ${timeText(lastPayload.chart.as_of)}` : null,
+    t(`구간 ${stats.candles || candles.length}개 캔들`, `${stats.candles || candles.length} candles in range`),
+    stats.change_percent == null ? null : t(`구간 변동 ${signed(stats.change_percent)}`, `Range change ${signed(stats.change_percent)}`),
+    stats.high == null ? null : t(`고가 ${price(stats.high)}`, `High ${price(stats.high)}`),
+    stats.low == null ? null : t(`저가 ${price(stats.low)}`, `Low ${price(stats.low)}`),
+    lastPayload?.chart?.as_of ? t(`캔들 기준 ${timeText(lastPayload.chart.as_of)}`, `Candles as of ${timeText(lastPayload.chart.as_of)}`) : null,
   ].filter(Boolean).join(" · ");
   const anyStudy = ind && (studyMa || studyBb || studyPane !== "none");
-  $id("chart-basis").textContent = anyStudy ? (ind.basis_ko || "") : "";
+  $id("chart-basis").textContent = anyStudy ? B(ind) : "";
 }
 
 function showFatal(message) {
@@ -755,10 +789,10 @@ async function load(withCandles) {
       drawChart();
     }
   } catch (error) {
-    if (error.status === 404) { showFatal("Hyperliquid에 상장된 시장이 아닙니다."); return; }
+    if (error.status === 404) { showFatal(t("Hyperliquid에 상장된 시장이 아닙니다.", "This market is not listed on Hyperliquid.")); return; }
     const code = error.body?.detail?.code;
-    if (code === "crypto_section_disabled" || code === "hip3_public_display_pending_rights") { showFatal("이 배포에서는 암호화폐 표시가 꺼져 있습니다."); return; }
-    if (!lastPayload) showFatal("데이터를 불러오지 못했습니다 · 잠시 후 다시 시도해 주세요.");
+    if (code === "crypto_section_disabled" || code === "hip3_public_display_pending_rights") { showFatal(t("이 배포에서는 암호화폐 표시가 꺼져 있습니다.", "Crypto display is switched off in this deployment.")); return; }
+    if (!lastPayload) showFatal(t("데이터를 불러오지 못했습니다 · 잠시 후 다시 시도해 주세요.", "Could not load data · please try again shortly."));
   }
 }
 
@@ -779,7 +813,7 @@ async function loadNews() {
       item.append(link, meta);
       return item;
     }));
-    $id("news-note").textContent = data.basis_ko || "";
+    $id("news-note").textContent = B(data);
   } catch {
     $id("sec-news").hidden = true;  // the news lane is an enrichment, never a blocker
   }
