@@ -598,7 +598,11 @@ html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
 
 /* 지수군은 표 둘이 나란히 선다. 세로로 쌓으면 오른쪽 절반이 빈 채 길어진다.
  * auto-fit이라 묶음이 하나뿐이거나 화면이 좁으면 저절로 한 줄이 된다. */
-#kridx-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(520px, 1fr)); gap: 0 var(--sp-6); align-items: start; }
+/* 최소 트랙을 `min(520px, 100%)`로 감싼다. 그냥 520px이면 그보다 좁은 화면
+ * (폰 366~390px)에서 트랙이 컨테이너를 뚫고 나가 표의 스크롤 컨테이너 자체가
+ * 화면 밖까지 이어진다 — 안쪽 가로 스크롤을 끝까지 당겨도 마지막 열들이
+ * 영영 화면에 들어오지 못했다(안드로이드 실측 2026-08-26). */
+#kridx-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(520px, 100%), 1fr)); gap: 0 var(--sp-6); align-items: start; }
 #kridx-body .kridx-block { min-width: 0; }
 #kridx-body .kridx-block .kridx-group { margin-top: var(--sp-4); }
 
@@ -1339,4 +1343,26 @@ html[data-lang="en"] .lang-en { display: revert; }
 .weekend-table td.down { color: var(--down); }
 .weekend-empty {
   padding: var(--sp-5) var(--sp-4); color: var(--ink-3); text-align: left;
+}
+
+/* --- 모바일은 값이 먼저다 (안드로이드 실기기 피드백 2026-08-26) ---------------
+ *
+ * 폰에서 인트로 문단과 섹션 설명이 첫 화면을 다 차지해, 가격에 닿기 전에
+ * 글부터 두 화면을 지나야 했다. 지우지 않고 **두 줄로 접는다** —
+ * display:none이면 모바일 우선 색인에서 본문이 통째로 사라지지만, 클램프는
+ * 문서에 그대로 있어 검색엔진과 보조기기 모두 전문을 읽는다. 데스크톱과
+ * 넓은 화면은 이 블록 밖이라 그대로다.
+ *
+ * 경고 칩(.risk-strip)은 접지 않는다 — "실제 체결가 아님" 같은 표기는
+ * 정직성 의무라 값보다 먼저 보여야 한다. 칩은 이미 압축형이다. */
+@media (max-width: 560px) {
+  .console-head .console-sub,
+  .console-section .section-copy {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+  .console-head { padding-bottom: var(--sp-2); margin-bottom: var(--sp-3); }
 }
