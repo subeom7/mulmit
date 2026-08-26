@@ -8,6 +8,7 @@ RateLimited로 올라가며, 종목 태그는 닫힌 사전의 단어 경계 매
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 
 import pytest
@@ -46,19 +47,27 @@ def make_provider(transport=None):
                          retry_backoff=0.0, sleep=lambda _s: None)
 
 
+def _seen(hours_ago: float) -> str:
+    """상대 시각 픽스처 — 달력 날짜를 박으면 통합 피드의 최근성 창
+    (signal_feed MAX_AGE_DAYS=7)을 어느 날 조용히 시효로 넘긴다.
+    2026-08-27 실측: 08-19 고정 픽스처가 8일째 되던 아침 전 PR CI가 빨개졌다."""
+    at = dt.datetime.now(dt.UTC) - dt.timedelta(hours=hours_ago)
+    return at.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 class GkgProvider:
     """refresh()가 쓰는 벌크 경로의 픽스처 — 파싱은 provider 테스트가 따로 고정한다."""
 
     def fetch_latest_gkg_titles(self):
         return [
             {"title": "Samsung Electronics beats estimates", "url": "https://ex.com/a",
-             "domain": "ex.com", "seendate": "2026-08-19T22:15:00Z", "language": "English", "country": ""},
+             "domain": "ex.com", "seendate": _seen(1), "language": "English", "country": ""},
             {"title": "Applebee's opens new branch", "url": "https://ex.com/b",
-             "domain": "ex.com", "seendate": "2026-08-19T22:00:00Z", "language": "English", "country": ""},
+             "domain": "ex.com", "seendate": _seen(1.25), "language": "English", "country": ""},
             {"title": "Nvidia and Microsoft rally", "url": "https://ex.com/c",
-             "domain": "ex.com", "seendate": "2026-08-19T21:00:00Z", "language": "English", "country": ""},
+             "domain": "ex.com", "seendate": _seen(2), "language": "English", "country": ""},
             {"title": "Local bake sale raises funds", "url": "https://ex.com/d",
-             "domain": "ex.com", "seendate": "2026-08-19T20:00:00Z", "language": "English", "country": ""},
+             "domain": "ex.com", "seendate": _seen(3), "language": "English", "country": ""},
         ]
 
 
