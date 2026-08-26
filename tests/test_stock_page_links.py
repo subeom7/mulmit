@@ -77,8 +77,15 @@ def test_the_source_name_is_written_once_in_the_header() -> None:
 
 
 def test_a_row_without_a_document_says_so() -> None:
-    """URL이 없는 행은 빈칸이 아니라 —다. 빈칸은 열이 깨진 것처럼 보인다."""
-    assert 'url ? "열기" : "—"' in _source()
+    """URL이 없는 행은 빈칸이 아니라 —다. 빈칸은 열이 깨진 것처럼 보인다.
+
+    라벨은 2026-08-26에 이중언어가 되면서 `t("열기", "Open")`으로 바뀌었다.
+    지키려는 것은 **없을 때 —가 나온다**는 것이지 라벨 문자열이 아니다.
+    """
+    source = _source()
+    match = re.search(r"url \? ([^:]+) : \"—\"", source)
+    assert match, "URL이 없는 칸이 —로 떨어지지 않는다"
+    assert "열기" in match.group(1), "있을 때의 라벨이 사라졌다"
 
 
 def test_the_link_style_stays_quieter_than_the_value() -> None:

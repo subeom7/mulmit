@@ -20,6 +20,16 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#0a0c0f">
+  <script>
+    /* 저장된 언어를 **본문이 그려지기 전에** 적용한다. console.js가 <html lang>을
+       data-lang으로 미러링하는데, 그걸 세팅하는 주체가 이 페이지에는 없었다 —
+       그래서 EN을 켜 두고 들어와도 한국어가 나왔다(2026-08-26 운영자 지적). */
+    try {
+      if (localStorage.getItem("monitor.locale") === "en") {
+        document.documentElement.lang = "en";
+      }
+    } catch (e) { /* 저장소가 막힌 브라우저 — 기본 한국어로 둔다 */ }
+  </script>
   <script src="/static/pwa.js?v=6a43f0b1e9" defer></script>
   <link rel="stylesheet" href="/static/monitor.css?v=a8c69e8f6a">
   <style>
@@ -94,13 +104,15 @@
       <span><strong>Mulmit</strong></span>
     </a>
     <nav class="view-switch" aria-label="View">
-      <a class="view-tab" href="/">홈</a>
-      <a class="view-tab" href="/kr">한국</a>
-      <a class="view-tab" href="/us">미국·글로벌</a>
-      <a class="view-tab" href="/crypto">암호화폐</a>
-      <a class="view-tab" href="/analytics">종목 분석</a>
+      <a class="view-tab" href="/"><span class="lang-ko">홈</span><span class="lang-en">Home</span></a>
+      <a class="view-tab" href="/kr"><span class="lang-ko">한국</span><span class="lang-en">Korea</span></a>
+      <a class="view-tab" href="/us"><span class="lang-ko">미국·글로벌</span><span class="lang-en">US &amp; Global</span></a>
+      <a class="view-tab" href="/crypto"><span class="lang-ko">암호화폐</span><span class="lang-en">Crypto</span></a>
+      <a class="view-tab" href="/analytics"><span class="lang-ko">종목 분석</span><span class="lang-en">Stock analytics</span></a>
     </nav>
-    <div class="mast-actions"></div>
+    <div class="mast-actions">
+      <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
+    </div>
   </header>
 
   <main id="main" class="shell">
@@ -120,24 +132,24 @@
     <div id="ssr-body">{{SSR}}</div>
 
     <div class="stock-kpis" id="stock-kpis" hidden></div>
-    <div class="table-scroll" style="margin-top:6px"><div id="head-state" class="state-line">데이터를 불러오는 중입니다…</div></div>
+    <div class="table-scroll" style="margin-top:6px"><div id="head-state" class="state-line"><span class="lang-ko">데이터를 불러오는 중입니다…</span><span class="lang-en">Loading…</span></div></div>
 
     <section class="stock-section" id="sec-fund" hidden>
-      <h2>연간 재무제표와 비율</h2>
+      <h2><span class="lang-ko">연간 재무제표와 비율</span><span class="lang-en">Annual financials and ratios</span></h2>
       <p class="sub" id="fund-sub"></p>
       <div class="table-scroll"><table class="stock-table" id="fund-table"><thead></thead><tbody></tbody></table></div>
       <p class="stock-note" id="fund-note"></p>
     </section>
 
     <section class="stock-section" id="sec-insider" hidden>
-      <h2 id="insider-title">내부자 거래</h2>
+      <h2 id="insider-title"><span class="lang-ko">내부자 거래</span><span class="lang-en">Insider trades</span></h2>
       <p class="sub" id="insider-sub"></p>
       <div class="table-scroll"><table class="stock-table" id="insider-table"><thead></thead><tbody></tbody></table></div>
       <p class="stock-note" id="insider-note"></p>
     </section>
 
     <section class="stock-section" id="sec-events" hidden>
-      <h2 id="events-title">공시 이벤트</h2>
+      <h2 id="events-title"><span class="lang-ko">공시 이벤트</span><span class="lang-en">Filing events</span></h2>
       <p class="sub" id="events-sub"></p>
       <div class="table-scroll"><table class="stock-table" id="events-table"><thead></thead><tbody></tbody></table></div>
     </section>
@@ -146,13 +158,13 @@
          않기로 한 설계라(네이버 약관을 아예 안 건드리는 자리) 크롤러에게 줄
          저장본이 없다. 사람에게만 보이는 섹션이다. -->
     <section class="stock-section" id="sec-ksi" hidden>
-      <h2>종목 검색 관심도</h2>
+      <h2><span class="lang-ko">종목 검색 관심도</span><span class="lang-en">Search interest</span></h2>
       <p class="sub" id="ksi-sub"></p>
-      <p class="easy-only ksi-help">×1보다 크면 평소보다 많이 찾아봤다는 뜻입니다. 요일마다 검색량이 크게 달라서 <strong>같은 요일끼리만</strong> 견줍니다.</p>
+      <p class="easy-only ksi-help"><span class="lang-ko">×1보다 크면 평소보다 많이 찾아봤다는 뜻입니다. 요일마다 검색량이 크게 달라서 같은 요일끼리만 견줍니다.</span><span class="lang-en">Above ×1 means more searches than usual. Weekday volume swings a lot, so we compare like weekday with like.</span></p>
       <div class="ksi-row">
-        <div class="stock-kpi"><small>평소 대비</small><strong id="ksi-vs">—</strong><span id="ksi-vs-note" class="pro-only"></span></div>
-        <div class="stock-kpi pro-only"><small>90일 위치</small><strong id="ksi-pct">—</strong><span>백분위</span></div>
-        <div class="stock-kpi"><small>관심도 수준</small><strong id="ksi-level">—</strong><span id="ksi-level-note"></span></div>
+        <div class="stock-kpi"><small><span class="lang-ko">평소 대비</span><span class="lang-en">Vs usual</span></small><strong id="ksi-vs">—</strong><span id="ksi-vs-note" class="pro-only"></span></div>
+        <div class="stock-kpi pro-only"><small><span class="lang-ko">90일 위치</span><span class="lang-en">90-day position</span></small><strong id="ksi-pct">—</strong><span><span class="lang-ko">백분위</span><span class="lang-en">percentile</span></span></div>
+        <div class="stock-kpi"><small><span class="lang-ko">관심도 수준</span><span class="lang-en">Interest level</span></small><strong id="ksi-level">—</strong><span id="ksi-level-note"></span></div>
       </div>
       <div id="ksi-spark" class="ksi-spark"></div>
       <p class="stock-note" id="ksi-note"></p>
@@ -169,16 +181,16 @@
            단위로 접혔다. 문장은 문장 자리에, 버튼은 버튼 줄에 둔다. -->
       <p id="no-risk-note" class="stock-note" hidden></p>
       <div class="stock-links">
-        <a href="/kr">한국 시장 대시보드</a>
-        <a href="/us">미국·글로벌 대시보드</a>
+        <a href="/kr"><span class="lang-ko">한국 시장 대시보드</span><span class="lang-en">Korea dashboard</span></a>
+        <a href="/us"><span class="lang-ko">미국·글로벌 대시보드</span><span class="lang-en">US &amp; Global dashboard</span></a>
       </div>
     </section>
 
     <footer class="site-footer">
       <nav aria-label="Legal">
-        <a href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a><a href="/disclaimer">면책 고지</a>
+        <a href="/privacy"><span class="lang-ko">개인정보처리방침</span><span class="lang-en">Privacy</span></a><a href="/terms"><span class="lang-ko">이용약관</span><span class="lang-en">Terms</span></a><a href="/disclaimer"><span class="lang-ko">면책 고지</span><span class="lang-en">Disclaimer</span></a>
       </nav>
-      <p>Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다. 데이터는 공시·공공 원천의 전달값입니다.</p>
+      <p><span class="lang-ko">Mulmit은 정보 제공 서비스이며 투자 자문이나 매매 권유가 아닙니다. 데이터는 공시·공공 원천의 전달값입니다.</span><span class="lang-en">Mulmit is an information service, not investment advice or a solicitation. Values are passed through from filings and public sources.</span></p>
     </footer>
   </main>
 
@@ -189,7 +201,14 @@
 const SYMBOL = "{{SYMBOL}}";
 const IS_KR = /^\d{6}$/.test(SYMBOL);
 const $id = (x) => document.getElementById(x);
-const won = (v) => v == null ? "—" : Math.abs(v) >= 1e12 ? (v/1e12).toFixed(1) + "조" : Math.abs(v) >= 1e8 ? Math.round(v/1e8).toLocaleString() + "억" : Math.round(v).toLocaleString();
+// 이 페이지는 한 번 그리고 끝난다. 언어를 바꾸면 다시 그리는 대신 새로
+// 고침한다 — 서버가 심볼·제목을 렌더하고 SSR 본문까지 있어서, 부분
+// 재렌더보다 통째로 다시 받는 편이 어긋날 곳이 없다(응답 0.07초).
+const EN = document.documentElement.lang === "en";
+const t = (ko, en) => (EN ? en : ko);
+// 레인이 basis_ko / basis_en을 둘 다 준다. 페이지가 한쪽만 쓰고 있었다.
+const basis = (payload) => (payload ? (EN ? payload.basis_en || payload.basis_ko : payload.basis_ko) : "");
+const won = (v) => v == null ? "—" : Math.abs(v) >= 1e12 ? (v/1e12).toFixed(1) + t("조", "T") : Math.abs(v) >= 1e8 ? Math.round(v/1e8).toLocaleString() + t("억", "00M") : Math.round(v).toLocaleString();
 const usd = (v) => v == null ? "—" : Math.abs(v) >= 1e9 ? "$" + (v/1e9).toFixed(1) + "B" : Math.abs(v) >= 1e6 ? "$" + (v/1e6).toFixed(0) + "M" : "$" + Math.round(v).toLocaleString();
 const pct = (v) => v == null ? "—" : v.toFixed(1) + "%";
 const num = (v, d = 0) => v == null ? "—" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -233,8 +252,8 @@ const fill = (tableId, headers, rows) => {
 };
 // 원문 열. 헤더가 어디로 가는지 말하고(DART·EDGAR·PDF), 칸은 같은 말만 한다 —
 // 출처 이름을 열두 번 반복하면 그건 정보가 아니라 소음이다.
-const DOC_HEAD = (source) => ["doc", `원문 · ${source}`];
-const docCell = (url) => ["doc", url ? "열기" : "—", url || null];
+const DOC_HEAD = (source) => ["doc", t(`원문 · ${source}`, `Source · ${source}`)];
+const docCell = (url) => ["doc", url ? t("열기", "Open") : "—", url || null];
 const kpi = (label, value, note) => { const div = document.createElement("div"); div.className = "stock-kpi";
   div.innerHTML = "<small></small><strong></strong>" + (note ? "<span></span>" : "");
   div.querySelector("small").textContent = label; div.querySelector("strong").textContent = value;
@@ -247,25 +266,25 @@ async function loadKr() {
     const kpis = $id("stock-kpis"); kpis.hidden = false;
     const latest = a.latest || {};
     const range = (a.low_52w != null && a.high_52w != null)
-      ? `52주 ₩${num(a.low_52w)}–₩${num(a.high_52w)}` : "";
+      ? t(`52주 ₩${num(a.low_52w)}–₩${num(a.high_52w)}`, `52w ₩${num(a.low_52w)}–₩${num(a.high_52w)}`) : "";
     kpis.append(
-      kpi("공식 종가", latest.value != null ? "₩" + num(latest.value) : "—", (latest.date || "") + " · T+1 확정값"),
-      kpi("전일 대비", pct(a.change && a.change.percent), range),
-      kpi("전고점 대비", pct(a.drawdown_current), ""),
-      kpi("최대 낙폭 (5년)", pct(a.mdd && a.mdd.value), a.mdd && a.mdd.trough_date ? "저점 " + a.mdd.trough_date : ""),
+      kpi(t("공식 종가", "Official close"), latest.value != null ? "₩" + num(latest.value) : "—", (latest.date || "") + t(" · T+1 확정값", " · T+1 confirmed")),
+      kpi(t("전일 대비", "Vs prior day"), pct(a.change && a.change.percent), range),
+      kpi(t("전고점 대비", "From peak"), pct(a.drawdown_current), ""),
+      kpi(t("최대 낙폭 (5년)", "Max drawdown (5y)"), pct(a.mdd && a.mdd.value), a.mdd && a.mdd.trough_date ? t("저점 ", "trough ") + a.mdd.trough_date : ""),
     );
     $id("head-state").hidden = true;
-  } catch (e) { $id("head-state").textContent = "시세 데이터가 아직 없습니다. 잠시 후 새로고침해 주세요."; }
+  } catch (e) { $id("head-state").textContent = t("시세 데이터가 아직 없습니다. 잠시 후 새로고침해 주세요.", "No price data yet. Please refresh in a moment."); }
   // 재무 + 비율 + 후행 배수
   try {
     const f = await fetchJson("/api/kr/fundamentals/" + SYMBOL);
     const rows = (f.annual || []).map((r) => [["", String(r.year)], ["num", won(r.revenue)], ["num" + (r.operating_income < 0 ? " down" : ""), won(r.operating_income)], ["num" + (r.net_income < 0 ? " down" : ""), won(r.net_income)], ["num", pct(r.operating_margin)], ["num", pct(r.roe)], ["num", pct(r.debt_ratio)], ["num" + (r.revenue_growth < 0 ? " down" : ""), pct(r.revenue_growth)]]);
     if (rows.length) {
-      fill("fund-table", [["", "연도"], ["num", "매출"], ["num", "영업이익"], ["num", "순이익"], ["num", "영업이익률"], ["num", "ROE"], ["num", "부채비율"], ["num", "매출성장"]], rows);
+      fill("fund-table", [["", t("연도", "Year")], ["num", t("매출", "Revenue")], ["num", t("영업이익", "Operating income")], ["num", t("순이익", "Net income")], ["num", t("영업이익률", "Operating margin")], ["num", "ROE"], ["num", t("부채비율", "Debt ratio")], ["num", t("매출성장", "Revenue growth")]], rows);
       const v = f.valuation;
       $id("fund-sub").textContent = (v && (v.per != null || v.pbr != null))
-        ? `후행 ${v.per != null ? "PER " + v.per.toFixed(1) : ""}${v.per != null && v.pbr != null ? " · " : ""}${v.pbr != null ? "PBR " + v.pbr.toFixed(2) : ""} (시총 ${v.market_cap_date} 종가 기준 ÷ FY${v.fiscal_year})` : (f.statement || "");
-      $id("fund-note").textContent = f.basis_ko || "";
+        ? t(`후행 ${v.per != null ? "PER " + v.per.toFixed(1) : ""}${v.per != null && v.pbr != null ? " · " : ""}${v.pbr != null ? "PBR " + v.pbr.toFixed(2) : ""} (시총 ${v.market_cap_date} 종가 기준 ÷ FY${v.fiscal_year})`, `Trailing ${v.per != null ? "P/E " + v.per.toFixed(1) : ""}${v.per != null && v.pbr != null ? " · " : ""}${v.pbr != null ? "P/B " + v.pbr.toFixed(2) : ""} (market cap at ${v.market_cap_date} close ÷ FY${v.fiscal_year})`) : (f.statement || "");
+      $id("fund-note").textContent = basis(f) || "";
       $id("sec-fund").hidden = false;
     }
   } catch (e) { console.warn('[stock] section failed', e); }
@@ -274,9 +293,9 @@ async function loadKr() {
     const i = await fetchJson("/api/kr/insider/" + SYMBOL);
     const rows = (i.reports || []).slice(0, 12).map((r) => [["", r.report_date || "—"], ["", r.reporter || "—"], ["", r.position && r.position !== "-" ? r.position : (r.main_shareholder || "—")], ["num", num(r.shares_owned)], ["num" + (r.shares_change < 0 ? " down" : r.shares_change > 0 ? " up" : ""), r.shares_change == null ? "—" : (r.shares_change > 0 ? "+" : "") + num(r.shares_change)], docCell(r.report_url)]);
     if (rows.length) {
-      $id("insider-title").textContent = "임원·주요주주 소유보고";
-      fill("insider-table", [["", "보고일"], ["", "보고자"], ["", "직위·관계"], ["num", "소유수량"], ["num", "증감"], DOC_HEAD("DART")], rows);
-      $id("insider-note").textContent = i.basis_ko || "";
+      $id("insider-title").textContent = t("임원·주요주주 소유보고", "Officer and major-holder ownership reports");
+      fill("insider-table", [["", t("보고일", "Filed")], ["", t("보고자", "Filer")], ["", t("직위·관계", "Role")], ["num", t("소유수량", "Shares held")], ["num", t("증감", "Change")], DOC_HEAD("DART")], rows);
+      $id("insider-note").textContent = basis(i) || "";
       $id("sec-insider").hidden = false;
     }
   } catch (e) { console.warn('[stock] section failed', e); }
@@ -285,9 +304,9 @@ async function loadKr() {
     const ev = await fetchJson("/api/kr/events");
     const mine = (ev.events || []).filter((x) => x.stock_code === SYMBOL).slice(0, 8);
     if (mine.length) {
-      $id("events-title").textContent = "주요사항보고 (최근)";
-      fill("events-table", [["", "접수일"], ["", "보고서명"], DOC_HEAD("DART")], mine.map((x) => [["", x.filed_at], ["", x.report_name], docCell(x.url)]));
-      $id("events-sub").textContent = "DART 접수 목록 원문 제목 그대로 · 수집 주기 갱신";
+      $id("events-title").textContent = t("주요사항보고 (최근)", "Material event reports (recent)");
+      fill("events-table", [["", t("접수일", "Received")], ["", t("보고서명", "Report")], DOC_HEAD("DART")], mine.map((x) => [["", x.filed_at], ["", x.report_name], docCell(x.url)]));
+      $id("events-sub").textContent = t("DART 접수 목록 원문 제목 그대로 · 수집 주기 갱신", "DART filing titles verbatim · refreshed on the collection cycle");
       $id("sec-events").hidden = false;
     }
   } catch (e) { console.warn('[stock] section failed', e); }
@@ -300,16 +319,16 @@ async function loadKr() {
     const stock = k.stock || {};
     const vs = stock.vs_baseline, pct = stock.percentile, level = stock.level;
     if (vs != null || pct != null) {
-      $id("ksi-sub").textContent = `네이버 통합검색 ${k.window?.days || 90}일 추이 · 같은 요일끼리 비교`;
+      $id("ksi-sub").textContent = t(`네이버 통합검색 ${k.window?.days || 90}일 추이 · 같은 요일끼리 비교`, `NAVER search over ${k.window?.days || 90} days · like weekday with like`);
       const vsNode = $id("ksi-vs");
-      vsNode.textContent = vs == null ? "표본 부족" : `×${vs.toFixed(2)}`;
+      vsNode.textContent = vs == null ? t("표본 부족", "Not enough samples") : `×${vs.toFixed(2)}`;
       vsNode.className = vs == null ? "" : vs > 1 ? "up" : vs < 1 ? "down" : "";
       $id("ksi-vs-note").textContent = stock.compared_to
-        ? `같은 요일 ${stock.compared_to.samples}개 중앙값 대비` : "";
+        ? t(`같은 요일 ${stock.compared_to.samples}개 중앙값 대비`, `vs median of ${stock.compared_to.samples} same weekdays`) : "";
       $id("ksi-pct").textContent = pct == null ? "—" : `${pct.toFixed(0)}%`;
       $id("ksi-level").textContent = level == null ? "—"
         : level >= 10 ? level.toFixed(1) : level >= 1 ? level.toFixed(2) : level.toFixed(3);
-      $id("ksi-level-note").textContent = k.anchor ? `${k.anchor.name} = 100 기준` : "";
+      $id("ksi-level-note").textContent = k.anchor ? t(`${k.anchor.name} = 100 기준`, `${k.anchor.name} = 100`) : "";
       // 추이선은 다른 화면과 같은 함수를 쓴다 — 창을 자르는 규칙이 갈리면
       // 같은 그림이 다른 뜻이 된다.
       const spark = window.mulmitSparkline?.((stock.series || []).map(
@@ -317,7 +336,7 @@ async function loadKr() {
       const host = $id("ksi-spark");
       host.replaceChildren();
       if (spark) host.append(spark.node);
-      $id("ksi-note").textContent = k.basis_ko || "";
+      $id("ksi-note").textContent = basis(k) || "";
       $id("sec-ksi").hidden = false;
     }
   } catch (e) { console.warn('[stock] section failed', e); }
@@ -327,8 +346,8 @@ async function loadKr() {
     const p = await fetchJson("/api/kr/pension");
     const mine = (p.filings || []).filter((x) => x.stock_code === SYMBOL).slice(0, 5);
     if (mine.length) {
-      $id("extra-title").textContent = "국민연금 5% 공시 (이 종목)";
-      fill("extra-table", [["", "보고일"], ["num", "보유비율"], ["num", "증감"], ["", "보고사유"], DOC_HEAD("DART")], mine.map((x) => [["", x.report_date], ["num", x.ratio == null ? "—" : x.ratio + "%"], ["num", x.ratio_change == null ? "—" : x.ratio_change + "%p"], ["", x.reason || "—"], docCell(x.report_url)]));
+      $id("extra-title").textContent = t("국민연금 5% 공시 (이 종목)", "NPS 5% ownership filings (this stock)");
+      fill("extra-table", [["", t("보고일", "Filed")], ["num", t("보유비율", "Stake")], ["num", t("증감", "Change")], ["", t("보고사유", "Reason")], DOC_HEAD("DART")], mine.map((x) => [["", x.report_date], ["num", x.ratio == null ? "—" : x.ratio + "%"], ["num", x.ratio_change == null ? "—" : x.ratio_change + "%p"], ["", x.reason || "—"], docCell(x.report_url)]));
       $id("sec-extra").hidden = false;
     }
   } catch (e) { console.warn('[stock] section failed', e); }
@@ -340,26 +359,26 @@ async function loadUs() {
   // Saying so is better than a link to a page that cannot answer for this
   // ticker — which is exactly how the page read as "no information".
   const note = $id("no-risk-note");
-  note.textContent = "낙폭·변동성 분석은 국내 종목만 — 미국 가격 데이터는 재배포 라이선스가 없습니다";
+  note.textContent = t("낙폭·변동성 분석은 국내 종목만 — 미국 가격 데이터는 재배포 라이선스가 없습니다", "Drawdown and volatility are Korean stocks only — US price data is not licensed for redistribution");
   note.hidden = false;
 
   // 재무 + 비율
   try {
     const f = await fetchJson("/api/us/fundamentals/" + SYMBOL);
-    if (f.status === "queued") { $id("head-state").textContent = "이 티커는 수집 대기열에 들어갔습니다. 다음 수집 주기(약 1시간) 후 다시 열어 주세요."; }
+    if (f.status === "queued") { $id("head-state").textContent = t("이 티커는 수집 대기열에 들어갔습니다. 다음 수집 주기(약 1시간) 후 다시 열어 주세요.", "This ticker was queued for collection. Please reopen after the next cycle (about an hour)."); }
     const rows = (f.annual || []).map((r) => [["", r.end || "—"], ["num", usd(r.revenue)], ["num" + (r.operating_income < 0 ? " down" : ""), usd(r.operating_income)], ["num" + (r.net_income < 0 ? " down" : ""), usd(r.net_income)], ["num", pct(r.operating_margin)], ["num", pct(r.roe)], ["num" + (r.revenue_growth < 0 ? " down" : ""), pct(r.revenue_growth)], ["num", r.eps_diluted == null ? "—" : r.eps_diluted.toFixed(2)]]);
     if (rows.length) {
-      fill("fund-table", [["", "기간 종료"], ["num", "매출"], ["num", "영업이익"], ["num", "순이익"], ["num", "영업이익률"], ["num", "ROE"], ["num", "매출성장"], ["num", "EPS"]], rows);
-      $id("fund-note").textContent = f.basis_ko || "";
+      fill("fund-table", [["", t("기간 종료", "Period end")], ["num", t("매출", "Revenue")], ["num", t("영업이익", "Operating income")], ["num", t("순이익", "Net income")], ["num", t("영업이익률", "Operating margin")], ["num", "ROE"], ["num", t("매출성장", "Revenue growth")], ["num", "EPS"]], rows);
+      $id("fund-note").textContent = basis(f) || "";
       $id("sec-fund").hidden = false;
       $id("head-state").hidden = true;
       const kpis = $id("stock-kpis"); kpis.hidden = false;
       const latest = (f.annual || [])[0] || {};
       kpis.append(
-        kpi("최근 연간 매출", usd(latest.revenue), latest.end || ""),
-        kpi("순이익", usd(latest.net_income), ""),
+        kpi(t("최근 연간 매출", "Latest annual revenue"), usd(latest.revenue), latest.end || ""),
+        kpi(t("순이익", "Net income"), usd(latest.net_income), ""),
         kpi("ROE", pct(latest.roe), ""),
-        kpi("영업이익률", pct(latest.operating_margin), ""),
+        kpi(t("영업이익률", "Operating margin"), pct(latest.operating_margin), ""),
       );
     }
   } catch (e) { console.warn('[stock] section failed', e); }
@@ -384,9 +403,9 @@ async function loadUs() {
       ];
     });
     if (rows.length) {
-      $id("insider-title").textContent = "내부자 거래 (Form 3·4·5)";
-      fill("insider-table", [["", "거래일"], ["", "보고자"], ["", "유형"], ["num", "수량"], ["num", "단가"], DOC_HEAD("EDGAR")], rows);
-      $id("insider-note").textContent = "SEC EDGAR 원문 전달 · 개별 보고 라인 단위";
+      $id("insider-title").textContent = t("내부자 거래 (Form 3·4·5)", "Insider trades (Forms 3/4/5)");
+      fill("insider-table", [["", t("거래일", "Trade date")], ["", t("보고자", "Filer")], ["", t("유형", "Type")], ["num", t("수량", "Shares")], ["num", t("단가", "Price")], DOC_HEAD("EDGAR")], rows);
+      $id("insider-note").textContent = t("SEC EDGAR 원문 전달 · 개별 보고 라인 단위", "SEC EDGAR verbatim · one row per reported line");
       $id("sec-insider").hidden = false;
       $id("head-state").hidden = true;
     }
@@ -396,9 +415,9 @@ async function loadUs() {
     const ev = await fetchJson("/api/us/events?ticker=" + encodeURIComponent(SYMBOL));
     const mine = (ev.events || []).slice(0, 8);
     if (mine.length) {
-      $id("events-title").textContent = "8-K 이벤트 공시 (최근)";
-      fill("events-table", [["", "제출일"], ["", "내용 (Item)"], DOC_HEAD("EDGAR")], mine.map((x) => [["", x.filed_at], ["", (x.items || []).map((it) => it.label.ko).join(" · ") || "—"], docCell(x.url)]));
-      $id("events-sub").textContent = "표준 Item 제목 · 수집 주기 갱신";
+      $id("events-title").textContent = t("8-K 이벤트 공시 (최근)", "8-K event filings (recent)");
+      fill("events-table", [["", t("제출일", "Filed")], ["", t("내용 (Item)", "Item")], DOC_HEAD("EDGAR")], mine.map((x) => [["", x.filed_at], ["", (x.items || []).map((it) => it.label.ko).join(" · ") || "—"], docCell(x.url)]));
+      $id("events-sub").textContent = t("표준 Item 제목 · 수집 주기 갱신", "Standard Item titles · refreshed on the collection cycle");
       $id("sec-events").hidden = false;
     }
   } catch (e) { console.warn('[stock] section failed', e); }
@@ -423,8 +442,8 @@ async function loadUs() {
       });
     }
     if (mine.length) {
-      $id("extra-title").textContent = "미 하원 의원 거래 (STOCK Act)";
-      fill("extra-table", [["", "의원"], ["", "거래일"], ["", "유형"], ["", "금액 구간"], DOC_HEAD("PDF")], mine.slice(0, 8).map((x) => [["", x.member ? (x.district ? `${x.member} (${x.district})` : x.member) : "—"], ["", x.date || "—"], ["", x.type || "—"], ["", x.amount || "—"], docCell(x.url)]));
+      $id("extra-title").textContent = t("미 하원 의원 거래 (STOCK Act)", "US House trades (STOCK Act)");
+      fill("extra-table", [["", t("의원", "Member")], ["", t("거래일", "Trade date")], ["", t("유형", "Type")], ["", t("금액 구간", "Amount range")], DOC_HEAD("PDF")], mine.slice(0, 8).map((x) => [["", x.member ? (x.district ? `${x.member} (${x.district})` : x.member) : "—"], ["", x.date || "—"], ["", x.type || "—"], ["", x.amount || "—"], docCell(x.url)]));
       $id("sec-extra").hidden = false;
     }
   } catch (e) { console.warn('[stock] section failed', e); }
@@ -438,6 +457,16 @@ async function loadUs() {
   const drew = [...document.querySelectorAll(".stock-section")].some((s) => !s.hidden);
   if (ssr && drew) ssr.remove();
 });
+
+// 언어 토글. 저장하고 새로고침한다 — 위 주석대로, 부분 재렌더보다 안전하다.
+const localeButton = $id("locale-toggle");
+if (localeButton) {
+  localeButton.textContent = EN ? "KO" : "EN";
+  localeButton.addEventListener("click", () => {
+    try { localStorage.setItem("monitor.locale", EN ? "ko" : "en"); } catch (e) { /* 저장소 없음 */ }
+    location.reload();
+  });
+}
 
 // 방문 통계 비콘 (익명·쿠키 없음)
 try {
