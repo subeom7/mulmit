@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "물밑 Mulmit — 시장 신호 콘솔",
+  "short_name": "물밑",
+  "description": "한국·미국·암호화폐 시장 신호를 한 화면에 — 공시 기록과 공공데이터로 봅니다.",
+  "lang": "ko",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0c0f",
+  "theme_color": "#0a0c0f",
+  "icons": [
+    { "src": "/static/brand/favicon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/brand/favicon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/static/brand/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/static/brand/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

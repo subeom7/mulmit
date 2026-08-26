@@ -22,7 +22,8 @@ client = TestClient(app)
 
 # 사람이 여는 페이지, 정적 파일, 게이트가 없는 API를 한 줄씩.
 PATHS = ["/", "/kr", "/us", "/crypto", "/bio", "/analytics", "/news", "/glossary",
-         "/favicon.ico", "/robots.txt", "/api/health", "/api/status"]
+         "/favicon.ico", "/robots.txt", "/manifest.webmanifest", "/sw.js",
+         "/api/health", "/api/status"]
 
 
 @pytest.mark.parametrize("path", PATHS)

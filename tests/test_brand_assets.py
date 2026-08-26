@@ -56,10 +56,12 @@ def test_png_set_is_square_at_the_sizes_the_pages_declare():
 
 
 def test_every_public_page_declares_ico_png_svg_and_apple_touch_icons():
-    # Search-engine ownership files live beside the pages but are not pages.
+    # Search-engine ownership files live beside the pages but are not pages,
+    # and offline.html is the service worker's fallback — deliberately
+    # self-contained, so it declares no external icon links.
     pages = [
         p for p in Path(config.STATIC_DIR).glob("*.html")
-        if not p.name.startswith(("naver", "google"))
+        if not p.name.startswith(("naver", "google")) and p.name != "offline.html"
     ]
     assert pages
     for page in pages:
