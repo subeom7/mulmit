@@ -134,6 +134,8 @@ def test_install_ui_is_wired_quiet_and_self_contained():
     - 크롬 기본 인포바 대신 우리 타이밍: beforeinstallprompt를 잡아 둔다.
     - 조용함: 설치되면 다시 안 보이고(appinstalled), 닫으면 침묵 기간이
       있어야 한다 — 매 방문 배너는 알림 해제보다 빠르게 사이트를 해제당한다.
+    - 폰·태블릿 전용: PC에서도 beforeinstallprompt는 발화하지만 거기서
+      배너는 소음이다(운영자 결정 2026-08-27) — 터치 기기 판정이 있어야 한다.
     - 자기 완결: pwa.js는 전 페이지에 실리므로 외부 호스트 요청이 없어야 한다.
     """
     source = (config.STATIC_DIR / "pwa.js").read_text(encoding="utf-8")
@@ -142,4 +144,5 @@ def test_install_ui_is_wired_quiet_and_self_contained():
     assert "preventDefault" in source
     assert "appinstalled" in source
     assert "mulmit-install-snooze" in source
+    assert "(hover: none) and (pointer: coarse)" in source
     assert "http://" not in source and "https://" not in source
