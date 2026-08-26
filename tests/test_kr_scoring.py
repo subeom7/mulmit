@@ -67,16 +67,23 @@ def _flat_rows(start, count, *, close=1000.0, volume=1000):
 
 
 class FakeDart:
-    def __init__(self, index_rows=None, holdings_by_corp=None, truncated=False):
+    def __init__(self, index_rows=None, holdings_by_corp=None, truncated=False,
+                 windowed=False):
         self.index_rows = index_rows or []
         self.holdings = holdings_by_corp or {}
         self.truncated = truncated
+        # 백필 테스트는 진짜처럼 창으로 걸러 받는다. 기존 테스트는 창과 무관한
+        # 성질을 고정하므로 옛 동작(전부 반환)을 유지한다.
+        self.windowed = windowed
         self.index_calls: list[tuple] = []
         self.detail_calls: list[str] = []
 
     def fetch_filing_index(self, *, detail_type, bgn_de, end_de, max_pages=60):
         self.index_calls.append((detail_type, bgn_de, end_de))
-        return list(self.index_rows), self.truncated
+        rows = self.index_rows
+        if self.windowed:
+            rows = [r for r in rows if bgn_de <= r["rcept_dt"] <= end_de]
+        return list(rows), self.truncated
 
     def fetch_major_holdings(self, corp_code):
         self.detail_calls.append(corp_code)
@@ -302,6 +309,123 @@ def test_checkpoints_are_frozen_once_scored(db, scoring_lane):
     assert store.load_score_events(1)[0]["checkpoints"] == first
 
 
+# --- 소급 백필 ---------------------------------------------------------------
+
+
+def _seed_pending_event(*, rcept_no="20251001000111", stock_code="093240",
+                        corp_code="00441243", report_date=dt.date(2025, 10, 1),
+                        market="Y"):
+    """collect의 창(오늘−30일) 밖 과거 이벤트를 원장에 직접 놓는다."""
+    store.save_score_events([{
+        "rcept_no": rcept_no, "corp_code": corp_code, "stock_code": stock_code,
+        "corp_name": "형지엘리트", "market": market,
+        "filing_name": "주식등의대량보유상황보고서(일반)",
+        "report_date": report_date, "reporter": "대명화학",
+        "detail_status": "unavailable", "base_status": "pending", "is_new": False,
+    }])
+
+
+def test_backfill_collect_walks_windows_back_to_the_floor(db, scoring_lane, monkeypatch):
+    monkeypatch.setattr(kr_scoring, "BACKFILL_FLOOR", dt.date(2026, 5, 1))
+    dart = FakeDart(index_rows=[
+        _index_row(),  # 20260820 — 정상 수집분
+        _index_row(rcept_no="20260610000001", rcept_dt="20260610",
+                   corp_code="00000001", corp_name="옛회사", stock_code="000001"),
+        _index_row(rcept_no="20260505000002", rcept_dt="20260505",
+                   corp_code="00000002", corp_name="더옛회사", stock_code="000002"),
+    ], windowed=True)
+    kr_scoring.collect(dart, today=TODAY)  # 원장 최소 날짜 = 2026-08-20
+
+    stats = kr_scoring.backfill_collect(dart, today=TODAY)
+
+    assert stats["saved"] == 2
+    assert stats["done"] is True
+    # 3개월 상한 안의 창이 최소 날짜 하루 전부터 바닥까지 이어진다.
+    assert dart.index_calls[1:] == [
+        ("D001", "20260526", "20260819"),
+        ("D001", "20260501", "20260525"),
+    ]
+    dates = sorted(str(e["report_date"]) for e in store.load_score_events(10))
+    assert dates[0] == "2026-05-05"
+
+    # 완주는 커서로 기억된다 — 다음 호출은 인덱스를 다시 걷지 않는다. 저장된
+    # 최소 날짜(05-05)가 바닥(05-01)에 안 닿아도 그렇다: 그 사이가 비었음을
+    # 확인한 것이 커서다.
+    again = kr_scoring.backfill_collect(dart, today=TODAY)
+    assert again["done"] is True
+    assert again["windows"] == 0
+    assert len(dart.index_calls) == 3
+
+
+def test_backfill_details_start_from_the_eroding_edge(db, scoring_lane):
+    """majorstock 롤링 창이 매일 과거를 지운다 — 오래된 회사가 먼저다."""
+    _seed_pending_event(rcept_no="20250101000001", corp_code="00000009",
+                        report_date=dt.date(2025, 1, 1))
+    _seed_pending_event(rcept_no="20260101000002", corp_code="00000010",
+                        report_date=dt.date(2026, 1, 1))
+
+    assert store.score_corps_missing_detail(2, oldest_first=True) == [
+        "00000009", "00000010"]
+    assert store.score_corps_missing_detail(2) == ["00000010", "00000009"]
+
+
+def test_backfill_scores_a_settled_event_in_one_fetch(db, scoring_lane):
+    """오래된 이벤트는 시세 한 번으로 기준가와 세 체크포인트가 전부 나온다."""
+    report = dt.date(2025, 10, 1)
+    _seed_pending_event(report_date=report)
+    rows = _flat_rows(report + dt.timedelta(days=3), 140, close=1000.0)
+    rows[5]["flt_rt"] = 2.0  # +21 창 안의 단 하루 +2%
+    fsc = FakeFsc(
+        stock_rows={"093240": rows},
+        index_rows={"코스피": _flat_rows(report, 260, close=2500.0)},
+    )
+
+    stats = kr_scoring.backfill_score(fsc, today=TODAY)
+
+    assert stats == {"candidates": 1, "bases": 1, "no_data": 0,
+                     "scored": 3, "halted": 0}
+    assert len(fsc.stock_calls) == 1
+    event = store.load_score_events(1)[0]
+    assert event["base_status"] == "ok"
+    assert str(event["base_date"]) == str(report + dt.timedelta(days=3))
+    horizons = {c["horizon"]: c for c in event["checkpoints"]}
+    assert set(horizons) == {21, 63, 126}
+    for checkpoint in horizons.values():
+        assert checkpoint["stock_return"] == pytest.approx(2.0, abs=0.01)
+        assert checkpoint["excess"] == pytest.approx(2.0, abs=0.01)
+
+
+def test_backfill_scores_only_ripe_horizons_and_skips_fresh_filings(db, scoring_lane):
+    twilight = TODAY - dt.timedelta(days=40)
+    _seed_pending_event(rcept_no="20260717000111", report_date=twilight)
+    fresh = TODAY - dt.timedelta(days=5)
+    _seed_pending_event(rcept_no="20260821000222", stock_code="006260",
+                        corp_code="00105952", report_date=fresh)
+    fsc = FakeFsc(
+        stock_rows={"093240": _flat_rows(twilight, 38)},
+        index_rows={"코스피": _flat_rows(twilight, 60)},
+    )
+
+    stats = kr_scoring.backfill_score(fsc, today=TODAY)
+
+    # 갓 나온 공시는 후보가 아니다 — T+1 공개 대기는 정상 주기의 몫이다.
+    assert stats["candidates"] == 1
+    assert [c[0] for c in fsc.stock_calls] == ["093240"]
+    event = {e["rcept_no"]: e for e in store.load_score_events(10)}
+    assert [c["horizon"] for c in event["20260717000111"]["checkpoints"]] == [21]
+    assert event["20260821000222"]["base_status"] == "pending"
+
+
+def test_backfill_folds_an_empty_window_to_no_data(db, scoring_lane):
+    _seed_pending_event(report_date=dt.date(2025, 3, 1))
+    fsc = FakeFsc(stock_rows={"093240": []})
+
+    stats = kr_scoring.backfill_score(fsc, today=TODAY)
+
+    assert stats["no_data"] == 1
+    assert store.load_score_events(1)[0]["base_status"] == "no_data"
+
+
 # --- 보드와 서빙 -------------------------------------------------------------
 
 
@@ -329,6 +453,7 @@ def test_board_blob_carries_schema_disclaimer_and_live_reference(db, scoring_lan
     stats = _run_full_refresh(db)
 
     assert stats["board_cards"] == 1
+    assert stats["backfill_collect"]["done"] is True  # refresh가 백필을 함께 돈다
     board = kr_scoring.get_board()
     assert board["schema"] == kr_scoring.SCHEMA
     assert "추천이 아닙니다" in board["basis_ko"]

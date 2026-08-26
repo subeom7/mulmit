@@ -64,6 +64,17 @@ BASE_WINDOW_DAYS = 14
 #: 공시검색 창 상한 — corp_code 없는 조회는 3개월까지만(프로브 실측).
 MAX_COLLECT_WINDOW_DAYS = 89
 
+#: 소급 백필의 바닥. majorstock 요약 API의 롤링 창이 실측 시점(2026-08-26)에
+#: 2024-09까지 닿았다 — 그 이전은 원문 파싱 없이는 상세를 붙일 수 없어 별도
+#: 판정 전 보류다(PLAN_SCORING §3). 창은 매일 하루씩 미끄러지므로 상세는
+#: 가장 오래된 쪽부터 붙인다.
+BACKFILL_FLOOR = dt.date(2024, 9, 1)
+#: 백필 인덱스 걷기는 한 주기에 이만큼 — 3개월 창 × 8이면 바닥까지 한 번에 간다.
+BACKFILL_MAX_WINDOWS_PER_RUN = 10
+#: 오래된 이벤트는 이 달력 폭 하나로 기준가와 세 체크포인트를 전부 채점한다
+#: (+126영업일 ≈ 189달력일 + 휴장 여유). 시세 호출이 이벤트당 한 번이 된다.
+FULL_SCORE_WINDOW_DAYS = 230
+
 _KST = dt.timezone(dt.timedelta(hours=9))
 
 BENCH_BY_MARKET = {"Y": "코스피", "K": "코스닥"}
@@ -129,21 +140,10 @@ def _looks_new(report_type: str | None, reason: str | None) -> bool:
 # --- 1) 수집: 공시검색 → 이벤트 원장 ----------------------------------------
 
 
-def collect(provider: DartProvider, *, today: dt.date) -> dict[str, int]:
-    last = store.score_events_max_date()
-    if last is None:
-        start = today - dt.timedelta(days=config.KR_SCORING_COLLECT_DAYS)
-    else:
-        # 사흘 겹쳐 다시 걷는다 — 늦게 붙는 공시를 놓치지 않기 위해서다.
-        start = last - dt.timedelta(days=3)
-    start = max(start, today - dt.timedelta(days=MAX_COLLECT_WINDOW_DAYS))
-
-    rows, truncated = provider.fetch_filing_index(
-        detail_type=DETAIL_TYPE_MAJOR_HOLDINGS,
-        bgn_de=start.strftime("%Y%m%d"),
-        end_de=today.strftime("%Y%m%d"),
-    )
-    existing = store.score_event_ids(start)
+def _ledger_rows(
+    rows: list[dict[str, Any]], existing: set[str]
+) -> list[dict[str, Any]]:
+    """공시검색 행을 원장 행으로 — 중복·비상장은 버린다."""
     seen: set[str] = set()
     fresh: list[dict[str, Any]] = []
     for row in rows:
@@ -169,13 +169,79 @@ def collect(provider: DartProvider, *, today: dt.date) -> dict[str, int]:
             "base_status": "pending",
             "is_new": False,
         })
-    saved = store.save_score_events(fresh)
+    return fresh
+
+
+def collect(provider: DartProvider, *, today: dt.date) -> dict[str, int]:
+    last = store.score_events_max_date()
+    if last is None:
+        start = today - dt.timedelta(days=config.KR_SCORING_COLLECT_DAYS)
+    else:
+        # 사흘 겹쳐 다시 걷는다 — 늦게 붙는 공시를 놓치지 않기 위해서다.
+        start = last - dt.timedelta(days=3)
+    start = max(start, today - dt.timedelta(days=MAX_COLLECT_WINDOW_DAYS))
+
+    rows, truncated = provider.fetch_filing_index(
+        detail_type=DETAIL_TYPE_MAJOR_HOLDINGS,
+        bgn_de=start.strftime("%Y%m%d"),
+        end_de=today.strftime("%Y%m%d"),
+    )
+    saved = store.save_score_events(_ledger_rows(rows, store.score_event_ids(start)))
     return {"indexed": len(rows), "saved": saved, "truncated": int(truncated)}
 
 
-def fill_details(provider: DartProvider) -> dict[str, int]:
-    """상세 없는 이벤트에 majorstock을 회사당 한 번씩 붙인다. 실패분은 null."""
-    corps = store.score_corps_missing_detail(config.KR_SCORING_DETAIL_CORPS_PER_RUN)
+#: 백필 커서 blob. 저장된 최소 날짜로는 "바닥까지 확인했다"를 기억할 수 없다 —
+#: 바닥 근처 창이 비어 있으면 min-date가 바닥에 영영 닿지 않아, 매 주기 같은
+#: 빈 창을 다시 걷게 된다. 커서는 매 주기 다시 저장돼 reports 청소(48h)를
+#: 넘긴다; 오래 꺼져 있다 잃으면 min-date에서 다시 유도한다(빈 창 한 바퀴 손해).
+BACKFILL_CURSOR_KEY = "kr_score_backfill_cursor_v1"
+_CURSOR_TTL = 10 * 365 * 24 * 3600  # 커서에 신선도 개념은 없다
+
+
+def backfill_collect(provider: DartProvider, *, today: dt.date) -> dict[str, Any]:
+    """원장의 최소 날짜에서 BACKFILL_FLOOR까지 3개월 창으로 거슬러 걷는다.
+
+    커서는 걷는 동안 로컬로 전진한다 — 창에 상장 공시가 하나도 없어도
+    전진해야 하므로, 저장된 최소 날짜를 창마다 다시 묻지 않는다.
+    """
+    blob = store.load_report(BACKFILL_CURSOR_KEY, _CURSOR_TTL) or {}
+    cursor = _as_date(blob.get("cursor")) or store.score_events_min_date()
+    if cursor is None:
+        return {"skipped": "no_ledger"}  # 정상 수집이 먼저다
+    windows = indexed = saved = 0
+    while cursor > BACKFILL_FLOOR and windows < BACKFILL_MAX_WINDOWS_PER_RUN:
+        end = cursor - dt.timedelta(days=1)
+        start = max(end - dt.timedelta(days=MAX_COLLECT_WINDOW_DAYS - 4), BACKFILL_FLOOR)
+        rows, _truncated = provider.fetch_filing_index(
+            detail_type=DETAIL_TYPE_MAJOR_HOLDINGS,
+            bgn_de=start.strftime("%Y%m%d"),
+            end_de=end.strftime("%Y%m%d"),
+        )
+        indexed += len(rows)
+        saved += store.save_score_events(_ledger_rows(rows, store.score_event_ids(start)))
+        cursor = start
+        windows += 1
+    store.save_report(BACKFILL_CURSOR_KEY, {"cursor": cursor.isoformat()})
+    return {
+        "windows": windows,
+        "indexed": indexed,
+        "saved": saved,
+        "done": cursor <= BACKFILL_FLOOR,
+        "cursor": cursor.isoformat(),
+    }
+
+
+def fill_details(
+    provider: DartProvider, *, limit: int | None = None, oldest_first: bool = False
+) -> dict[str, int]:
+    """상세 없는 이벤트에 majorstock을 회사당 한 번씩 붙인다. 실패분은 null.
+
+    정상 주기는 최신 공시부터(보드가 먼저), 백필은 ``oldest_first``로 침식 중인
+    2024-09 가장자리부터 붙인다.
+    """
+    if limit is None:
+        limit = config.KR_SCORING_DETAIL_CORPS_PER_RUN
+    corps = store.score_corps_missing_detail(limit, oldest_first=oldest_first)
     updated = failed = 0
     for corp_code in corps:
         try:
@@ -284,6 +350,76 @@ def _bench_return(
     return (acc - 1.0) * 100.0
 
 
+def _bench_lookup(provider: FscProvider, *, since: dt.date, today: dt.date):
+    """시장(Y/K)별 지수 행을 주기당 한 번만 걷는 캐시."""
+    cache: dict[str, list[dict[str, Any]] | None] = {}
+
+    def lookup(market: str | None) -> list[dict[str, Any]] | None:
+        idx_nm = BENCH_BY_MARKET.get(market or "")
+        if idx_nm is None:
+            return None
+        if idx_nm not in cache:
+            try:
+                cache[idx_nm] = provider.fetch_index_rows(idx_nm, start=since, end=today)
+            except (DataUnavailable, DataError, RateLimited) as exc:
+                log.warning("벤치마크 %s 조회 실패: %s", idx_nm, exc)
+                cache[idx_nm] = None
+        return cache[idx_nm]
+
+    return lookup
+
+
+def _checkpoint_row(
+    rcept_no: str,
+    horizon: int,
+    rows: list[dict[str, Any]],
+    *,
+    base_date: dt.date,
+    bench: list[dict[str, Any]] | None,
+) -> dict[str, Any] | None:
+    """rows[0]=기준일인 시세 행에서 한 horizon의 체크포인트를 만든다.
+
+    행이 모자라면(아직 안 익음) None — 만들지 않는다. 정상 주기와 백필이
+    같은 함수를 쓴다: 두 벌이면 반드시 어긋난다.
+    """
+    if len(rows) <= horizon:
+        return None
+    segment = rows[: horizon + 1]
+    end_date = segment[-1]["date"]
+    traded = sum(1 for row in segment[1:] if (row.get("volume") or 0) > 0)
+    checkpoint: dict[str, Any] = {
+        "rcept_no": rcept_no,
+        "horizon": horizon,
+        "end_date": end_date,
+        "traded_days": traded,
+        "halted_days": horizon - traded,
+    }
+    if traded == 0:
+        # 전 구간 정지 — 수익률 0%가 아니라 채점 불능이다(도부 실측).
+        checkpoint.update(
+            {"stock_return": None, "bench_return": None, "excess": None, "status": "halted"}
+        )
+        return checkpoint
+    stock_return = _chained_return(segment)
+    bench_return = (
+        _bench_return(bench or [], after=base_date, through=end_date)
+        if stock_return is not None
+        else None
+    )
+    excess = (
+        round(stock_return - bench_return, 4)
+        if stock_return is not None and bench_return is not None
+        else None
+    )
+    checkpoint.update({
+        "stock_return": round(stock_return, 4) if stock_return is not None else None,
+        "bench_return": round(bench_return, 4) if bench_return is not None else None,
+        "excess": excess,
+        "status": "scored",
+    })
+    return checkpoint
+
+
 def score_checkpoints(provider: FscProvider, *, today: dt.date) -> dict[str, int]:
     due_before = {
         h: today - dt.timedelta(days=math.ceil(h * CALENDAR_FACTOR)) for h in HORIZONS
@@ -291,23 +427,8 @@ def score_checkpoints(provider: FscProvider, *, today: dt.date) -> dict[str, int
     events = store.score_events_awaiting_checkpoints(
         HORIZONS, due_before=due_before, limit=config.KR_SCORING_SCORE_PER_RUN
     )
-    bench_cache: dict[str, list[dict[str, Any]] | None] = {}
-
-    def bench_rows(market: str | None, since: dt.date) -> list[dict[str, Any]] | None:
-        idx_nm = BENCH_BY_MARKET.get(market or "")
-        if idx_nm is None:
-            return None
-        if idx_nm not in bench_cache:
-            try:
-                bench_cache[idx_nm] = provider.fetch_index_rows(
-                    idx_nm, start=since, end=today
-                )
-            except (DataUnavailable, DataError, RateLimited) as exc:
-                log.warning("벤치마크 %s 조회 실패: %s", idx_nm, exc)
-                bench_cache[idx_nm] = None
-        return bench_cache[idx_nm]
-
     earliest = min((e["base_date"] for e in events), default=today)
+    bench = _bench_lookup(provider, since=earliest, today=today)
     scored = halted = 0
     for event in events:
         base_date = _as_date(event["base_date"])
@@ -330,45 +451,84 @@ def score_checkpoints(provider: FscProvider, *, today: dt.date) -> dict[str, int
             )
             continue
         for horizon in event["missing_horizons"]:
-            if len(rows) <= horizon:
+            checkpoint = _checkpoint_row(
+                event["rcept_no"], horizon, rows,
+                base_date=base_date, bench=bench(event.get("market")),
+            )
+            if checkpoint is None:
                 continue  # 영업일이 아직 안 찼다 — 달력 필터가 낙관했을 뿐이다
-            segment = rows[: horizon + 1]
-            end_date = segment[-1]["date"]
-            traded = sum(1 for row in segment[1:] if (row.get("volume") or 0) > 0)
-            checkpoint: dict[str, Any] = {
-                "rcept_no": event["rcept_no"],
-                "horizon": horizon,
-                "end_date": end_date,
-                "traded_days": traded,
-                "halted_days": horizon - traded,
-            }
-            if traded == 0:
-                # 전 구간 정지 — 수익률 0%가 아니라 채점 불능이다(도부 실측).
-                checkpoint.update(
-                    {"stock_return": None, "bench_return": None,
-                     "excess": None, "status": "halted"}
-                )
+            if checkpoint["status"] == "halted":
                 halted += 1
             else:
-                stock_return = _chained_return(segment)
-                bench = _bench_return(
-                    bench_rows(event.get("market"), earliest) or [],
-                    after=base_date, through=end_date,
-                ) if stock_return is not None else None
-                excess = (
-                    round(stock_return - bench, 4)
-                    if stock_return is not None and bench is not None
-                    else None
-                )
-                checkpoint.update({
-                    "stock_return": round(stock_return, 4) if stock_return is not None else None,
-                    "bench_return": round(bench, 4) if bench is not None else None,
-                    "excess": excess,
-                    "status": "scored",
-                })
                 scored += 1
             store.save_score_checkpoint(checkpoint)
     return {"candidates": len(events), "scored": scored, "halted": halted}
+
+
+def backfill_score(provider: FscProvider, *, today: dt.date) -> dict[str, int]:
+    """오래된 무기준가 이벤트를 시세 한 번으로 끝까지 채점한다.
+
+    기준가와 익은 체크포인트 전부가 한 번의 fetch에서 나온다 — 백필 이벤트
+    대부분은 세 horizon이 이미 도래해 있어, 나눠 부르면 호출만 배가 된다.
+    아직 안 익은 horizon은 만들지 않는다: 정상 주기가 때가 되면 이어받는다.
+    """
+    candidates = store.score_events_pending_base(
+        config.KR_SCORING_BACKFILL_SCORE_PER_RUN,
+        floor=FSC_FLOOR,
+        # T+1 공개 대기 중인 갓 나온 공시는 정상 주기의 몫이다.
+        before=today - dt.timedelta(days=BASE_WINDOW_DAYS + 1),
+        oldest_first=True,
+    )
+    stats = {"candidates": len(candidates), "bases": 0, "no_data": 0,
+             "scored": 0, "halted": 0}
+    if not candidates:
+        return stats
+    earliest = min(
+        (_as_date(e["report_date"]) or today for e in candidates), default=today
+    )
+    bench = _bench_lookup(provider, since=earliest, today=today)
+    for event in candidates:
+        report_date = _as_date(event["report_date"])
+        if report_date is None:
+            continue
+        window_end = min(report_date + dt.timedelta(days=FULL_SCORE_WINDOW_DAYS), today)
+        try:
+            rows = provider.fetch_stock_rows(
+                event["stock_code"], start=report_date, end=window_end
+            )
+        except RateLimited:
+            log.warning("data.go.kr 허용량 — 남은 백필 채점은 다음 주기에")
+            break
+        except (DataUnavailable, DataError) as exc:
+            log.warning("백필 시세 조회 실패 %s: %s", event["stock_code"], exc)
+            continue
+        if not rows:
+            # 창이 통째로 비었다 — 상장폐지·이전상장 등. 더 묻지 않는다.
+            store.set_score_base(event["rcept_no"], status="no_data")
+            stats["no_data"] += 1
+            continue
+        base = rows[0]
+        store.set_score_base(
+            event["rcept_no"],
+            status="ok",
+            base_date=base["date"],
+            base_close=base["close"],
+            base_halted=not (base.get("volume") or 0) > 0,
+        )
+        stats["bases"] += 1
+        for horizon in HORIZONS:
+            checkpoint = _checkpoint_row(
+                event["rcept_no"], horizon, rows,
+                base_date=base["date"], bench=bench(event.get("market")),
+            )
+            if checkpoint is None:
+                continue
+            if checkpoint["status"] == "halted":
+                stats["halted"] += 1
+            else:
+                stats["scored"] += 1
+            store.save_score_checkpoint(checkpoint)
+    return stats
 
 
 # --- 4) 보드 조립 ------------------------------------------------------------
@@ -514,6 +674,18 @@ def refresh(
     stats["details"] = fill_details(dart_provider)
     stats["bases"] = fill_bases(fsc_provider, today=today)
     stats["checkpoints"] = score_checkpoints(fsc_provider, today=today)
+    # 소급 백필 — 완주하면 셋 다 저절로 무행동이 된다(커서 조회·빈 후보).
+    try:
+        stats["backfill_collect"] = backfill_collect(dart_provider, today=today)
+    except (DataUnavailable, DataError, RateLimited) as exc:
+        log.warning("백필 인덱스 걷기 실패: %s", exc)
+        stats["backfill_collect"] = {"failed": str(exc)}
+    stats["backfill_details"] = fill_details(
+        dart_provider,
+        limit=config.KR_SCORING_BACKFILL_DETAIL_CORPS_PER_RUN,
+        oldest_first=True,
+    )
+    stats["backfill_score"] = backfill_score(fsc_provider, today=today)
     board = build_board(today=today)
     stats["board_cards"] = board["count"]
     return stats

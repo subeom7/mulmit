@@ -1967,44 +1967,72 @@ def score_event_ids(since: dt.date) -> set[str]:
         return {row.rcept_no for row in rows}
 
 
-def score_events_max_date() -> dt.date | None:
-    with engine().connect() as conn:
-        value = conn.execute(
-            sa.select(sa.func.max(kr_score_events.c.report_date))
-        ).scalar()
+def _as_stored_date(value: Any) -> dt.date | None:
     # SQLite는 Date 집계를 문자열로 돌려줄 수 있다 — 방언 차이를 여기서 흡수한다.
     if isinstance(value, str):
         return dt.date.fromisoformat(value)
     return value
 
 
-def score_corps_missing_detail(limit: int) -> list[str]:
-    """상세가 아직 없는 이벤트의 회사를 최신 공시부터 돌려준다."""
+def score_events_max_date() -> dt.date | None:
+    with engine().connect() as conn:
+        return _as_stored_date(
+            conn.execute(sa.select(sa.func.max(kr_score_events.c.report_date))).scalar()
+        )
+
+
+def score_events_min_date() -> dt.date | None:
+    """백필 커서 — 원장이 과거로 얼마나 내려갔는가."""
+    with engine().connect() as conn:
+        return _as_stored_date(
+            conn.execute(sa.select(sa.func.min(kr_score_events.c.report_date))).scalar()
+        )
+
+
+def score_corps_missing_detail(limit: int, *, oldest_first: bool = False) -> list[str]:
+    """상세가 아직 없는 이벤트의 회사 목록.
+
+    정상 주기는 최신 공시부터(보드 카드가 먼저), 백필은 가장 오래된 쪽부터 —
+    majorstock 롤링 창이 매일 과거를 지우므로 침식 중인 가장자리가 급하다.
+    """
+    edge = sa.func.min if oldest_first else sa.func.max
     stmt = (
         sa.select(
             kr_score_events.c.corp_code,
-            sa.func.max(kr_score_events.c.report_date).label("latest"),
+            edge(kr_score_events.c.report_date).label("edge"),
         )
         .where(kr_score_events.c.detail_status == "unavailable")
         .group_by(kr_score_events.c.corp_code)
-        .order_by(sa.desc("latest"))
+        .order_by(sa.asc("edge") if oldest_first else sa.desc("edge"))
         .limit(limit)
     )
     with engine().connect() as conn:
         return [row.corp_code for row in conn.execute(stmt)]
 
 
-def score_events_pending_base(limit: int, *, floor: dt.date) -> list[dict[str, Any]]:
-    """기준가가 아직 없는 이벤트, 최신부터. floor 이전(가격 lane 밖)은 묻지 않는다."""
-    stmt = (
-        sa.select(kr_score_events)
-        .where(
-            (kr_score_events.c.base_status == "pending")
-            & (kr_score_events.c.report_date >= floor)
-        )
-        .order_by(kr_score_events.c.report_date.desc())
-        .limit(limit)
+def score_events_pending_base(
+    limit: int,
+    *,
+    floor: dt.date,
+    before: dt.date | None = None,
+    oldest_first: bool = False,
+) -> list[dict[str, Any]]:
+    """기준가가 아직 없는 이벤트. floor 이전(가격 lane 밖)은 묻지 않는다.
+
+    정상 주기는 최신부터, 백필은 오래된 쪽부터(``before``로 갓 나온 공시를
+    제외한다 — T+1 공개 대기는 정상 주기의 몫이다).
+    """
+    where = (kr_score_events.c.base_status == "pending") & (
+        kr_score_events.c.report_date >= floor
     )
+    if before is not None:
+        where = where & (kr_score_events.c.report_date <= before)
+    order = (
+        kr_score_events.c.report_date.asc()
+        if oldest_first
+        else kr_score_events.c.report_date.desc()
+    )
+    stmt = sa.select(kr_score_events).where(where).order_by(order).limit(limit)
     with engine().connect() as conn:
         return [dict(row._mapping) for row in conn.execute(stmt)]
 

@@ -384,6 +384,13 @@ KR_SCORING_BASE_PER_RUN = _int("KR_SCORING_BASE_PER_RUN", 60)
 KR_SCORING_SCORE_PER_RUN = _int("KR_SCORING_SCORE_PER_RUN", 25)
 # 보드에 싣는 최신 이벤트 수 — 원장은 전부 쌓이고, 보드는 창이다.
 KR_SCORING_BOARD_EVENTS = _int("KR_SCORING_BOARD_EVENTS", 60)
+# 소급 백필(2024-09~) 전용 예산 — 정상 주기와 분리한다. majorstock 롤링 창이
+# 매일 하루씩 과거를 지우므로 상세는 침식 중인 가장자리(가장 오래된 쪽)부터
+# 붙이고, 오래된 이벤트는 시세 한 번으로 기준가+체크포인트를 전부 채점한다.
+# 완주하면 저절로 무행동이 된다. 급하면 0이 아니라 값을 올려라 — 0은 그 단계를
+# 쉬게 하는 스위치다.
+KR_SCORING_BACKFILL_DETAIL_CORPS_PER_RUN = _int("KR_SCORING_BACKFILL_DETAIL_CORPS_PER_RUN", 400)
+KR_SCORING_BACKFILL_SCORE_PER_RUN = _int("KR_SCORING_BACKFILL_SCORE_PER_RUN", 400)
 
 # 미 하원 PTR(STOCK Act) — 법정 공시 relay. 키는 없고 게이트만 있다.
 US_PTR_ENABLED = _bool("US_PTR_ENABLED", False)
