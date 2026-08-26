@@ -120,6 +120,20 @@ KR_PENSION_NOT_CONFIGURED = {
     "message": "DART_API_KEY must be issued by opendart.fss.or.kr before use.",
 }
 
+# 채점 lane은 DART(이벤트)와 FSC(가격) 두 승인 lane의 합성이다 — 어느 한쪽이
+# 꺼져도 닫힌다. 새 권리는 없다(docs/PLAN_SCORING.md).
+KR_SCORING_DISABLED = {
+    "code": "kr_scoring_disabled",
+    "status": "disabled",
+    "message": "The scoring lane needs both the DART and FSC lanes enabled.",
+}
+
+KR_SCORING_NOT_CONFIGURED = {
+    "code": "kr_scoring_not_configured",
+    "status": "not_configured",
+    "message": "DART_API_KEY and FSC_API_KEY must both be configured before use.",
+}
+
 KR_FUNDAMENTALS_DISABLED = {
     "code": "kr_fundamentals_disabled",
     "status": "disabled",

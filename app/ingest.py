@@ -38,6 +38,7 @@ from . import (
     kr_insider,
     kr_pension,
     kr_press,
+    kr_scoring,
     kr_stocks,
     news_feed,
     news_videos,
@@ -856,6 +857,34 @@ def refresh_kr_pension(*, force: bool = False) -> dict:
         return {"failed": str(exc)}
 
 
+def refresh_kr_scoring(*, force: bool = False) -> dict:
+    """대량보유 스코어보드 갱신 — DART 이벤트 수집과 FSC 채점을 한 배치로 돈다.
+
+    두 lane(DART·FSC) 중 하나만 꺼져도 닫힌다 — 이벤트 없는 채점도, 가격 없는
+    채점도 성립하지 않는다. 규칙과 프로브 실측은 docs/PLAN_SCORING.md.
+    """
+    if not (config.DART_ENABLED and config.FSC_ENABLED):
+        return {"skipped": "disabled"}
+    if not (config.DART_API_KEY and config.FSC_API_KEY):
+        return {"skipped": "not_configured"}
+    if not force:
+        board = store.load_report(kr_scoring.CACHE_KEY, config.KR_SCORING_MAX_AGE)
+        # 신선해도 모양이 다르면 다시 걷는다 — 배포 직후 옛 blob이 화면을 옛
+        # 모양으로 붙들던 사고의 재발 방지다(ROADMAP 2026-08-25).
+        if board is not None and board.get("schema") == kr_scoring.SCHEMA:
+            return {"skipped": "fresh"}
+    try:
+        result = kr_scoring.refresh()
+        log.info("대량보유 스코어보드 갱신: %s", result)
+        return result
+    except RateLimited:
+        log.warning("허용량 — 스코어보드는 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("대량보유 스코어보드 갱신 실패: %s", exc)
+        return {"failed": str(exc)}
+
+
 def refresh_kr_events(*, force: bool = False) -> dict:
     """주요사항보고 접수 목록 갱신. 속보성이라 자체 주기(KR_EVENTS_MAX_AGE)를 쓴다."""
     if not config.DART_ENABLED:
@@ -1360,6 +1389,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             fsc_result = refresh_fsc()
             insider_result = refresh_insider_filings()
             pension_result = refresh_kr_pension()
+            refresh_kr_scoring()
             kr_events_result = refresh_kr_events()
             refresh_gdelt_news()
             refresh_kr_press()
@@ -1422,6 +1452,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             fsc_result = refresh_fsc()
             insider_result = refresh_insider_filings()
             pension_result = refresh_kr_pension()
+            refresh_kr_scoring()
             kr_events_result = refresh_kr_events()
             refresh_gdelt_news()
             refresh_kr_press()
@@ -1517,6 +1548,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         fsc_result = refresh_fsc()
         insider_result = refresh_insider_filings()
         pension_result = refresh_kr_pension()
+        refresh_kr_scoring()
         kr_events_result = refresh_kr_events()
         refresh_gdelt_news()
         refresh_kr_press()

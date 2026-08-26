@@ -46,11 +46,13 @@ from . import (
     kr_pension,
     kr_pension_portfolio,
     kr_press,
+    kr_scoring,
     kr_search_interest,
     kr_stocks,
     news_feed,
     news_page,
     news_videos,
+    score_page,
     search,
     service,
     signal_feed,
@@ -681,6 +683,21 @@ def weekend_page_view() -> HTMLResponse:
     for key, value in weekend_page.render().items():
         page = page.replace("{{" + key + "}}", value)
     return HTMLResponse(page, headers={"Cache-Control": "public, max-age=120"})
+
+
+@app.get("/score", include_in_schema=False)
+def score_page_view() -> HTMLResponse:
+    """대량보유 스코어보드. 서버에서 렌더한다.
+
+    `/weekend`와 같은 이유로 같은 선택이다 — 이 페이지의 존재 이유가
+    `5% 공시 그 후` 류의 질의라 JS로 채우면 뜻이 없다. 요청 경로는 배치가
+    저장한 보드만 읽으므로 크롤러가 몰려도 상류 호출은 0이다.
+    """
+    page = score_page.template()
+    page = page.replace("{{JSONLD}}", score_page.json_ld())
+    for key, value in score_page.render().items():
+        page = page.replace("{{" + key + "}}", value)
+    return HTMLResponse(page, headers={"Cache-Control": "public, max-age=300"})
 
 
 @app.get("/glossary", include_in_schema=False)
@@ -1599,6 +1616,30 @@ def kr_holdings_filings(request: Request, response: Response) -> dict:
             status_code=503, detail="major-holding filings not collected yet"
         ) from exc
     response.headers["Cache-Control"] = "public, max-age=300"
+    return payload
+
+
+@app.get("/api/kr/score")
+@limiter.limit(config.RATE_LIMIT)
+def kr_score_board(request: Request, response: Response) -> dict:
+    """대량보유(5%) 공시 스코어보드. 배치가 저장한 보드만 읽는다."""
+    try:
+        payload = kr_scoring.get_board()
+    except kr_scoring.KrScoringDisabled as exc:
+        detail = (
+            data_rights.KR_SCORING_NOT_CONFIGURED
+            if exc.reason == "not_configured"
+            else data_rights.KR_SCORING_DISABLED
+        )
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    except DataUnavailable as exc:
+        raise HTTPException(
+            status_code=503, detail="score board not built yet"
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=300"
+    response.headers["X-Data-Source"] = "FSS DART / FSC data.go.kr"
     return payload
 
 

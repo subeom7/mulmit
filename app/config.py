@@ -372,6 +372,19 @@ KR_DART_PRECOLLECT_PER_RUN = _int("KR_DART_PRECOLLECT_PER_RUN", 8)
 # 사용자가 보는 신선도 기준은 DART_MAX_AGE 그대로다.
 KR_DART_COVERAGE_MAX_AGE = _int("KR_DART_COVERAGE_MAX_AGE", 60 * 60 * 24 * 3)
 
+# 대량보유(5%) 스코어보드 — DART(이벤트) + FSC(가격)를 함께 쓰는 채점 lane.
+# 별도 게이트는 두지 않는다: 새 권리가 없고(둘 다 기존 승인 lane), 두 게이트
+# 중 하나만 꺼져도 lane이 닫힌다. 규칙과 실측은 docs/PLAN_SCORING.md.
+KR_SCORING_MAX_AGE = _int("KR_SCORING_MAX_AGE", 60 * 60 * 6)
+# 첫 수집이 걷는 과거 일수. 이후에는 마지막 저장일부터 이어 걷는다.
+KR_SCORING_COLLECT_DAYS = _int("KR_SCORING_COLLECT_DAYS", 30)
+# 한 주기의 호출 예산. 상세는 회사당 DART 1회, 기준가·채점은 이벤트당 FSC 1회.
+KR_SCORING_DETAIL_CORPS_PER_RUN = _int("KR_SCORING_DETAIL_CORPS_PER_RUN", 40)
+KR_SCORING_BASE_PER_RUN = _int("KR_SCORING_BASE_PER_RUN", 60)
+KR_SCORING_SCORE_PER_RUN = _int("KR_SCORING_SCORE_PER_RUN", 25)
+# 보드에 싣는 최신 이벤트 수 — 원장은 전부 쌓이고, 보드는 창이다.
+KR_SCORING_BOARD_EVENTS = _int("KR_SCORING_BOARD_EVENTS", 60)
+
 # 미 하원 PTR(STOCK Act) — 법정 공시 relay. 키는 없고 게이트만 있다.
 US_PTR_ENABLED = _bool("US_PTR_ENABLED", False)
 US_PTR_TIMEOUT = _float("US_PTR_TIMEOUT", 30.0)

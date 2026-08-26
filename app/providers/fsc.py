@@ -509,6 +509,74 @@ class FscProvider:
 
         return self._series_result(spec, rows, observations, window)
 
+    def _daily_rows(
+        self,
+        endpoint: str,
+        params: dict[str, str],
+        *,
+        field: str,
+        wanted: str,
+        start: dt.date,
+        end: dt.date,
+    ) -> list[dict[str, Any]]:
+        window = {"beginBasDt": start.strftime("%Y%m%d"), "endBasDt": end.strftime("%Y%m%d")}
+        rows = self._paged_rows(endpoint, {**params, **window})
+        by_date: dict[dt.date, dict[str, Any]] = {}
+        for row in rows:
+            if str(row.get(field) or "").strip() != wanted:
+                continue
+            date = _parse_date(row.get("basDt"))
+            close = _parse_number(row.get("clpr"))
+            if date is None or close is None:
+                continue
+            previous = by_date.get(date)
+            if previous is not None and previous["close"] != close:
+                # _select와 같은 이유: 한 식별자·한 날짜에 서로 다른 종가가 오면
+                # 필터가 유일하지 않은 것이다. 하나를 고르면 뜻 모를 수가 나간다.
+                raise DataUnavailable(
+                    f"FSC returned multiple distinct closes for {wanted} on {date.isoformat()}"
+                )
+            by_date[date] = {
+                "date": date,
+                "close": close,
+                "vs": _parse_number(row.get("vs")),
+                "flt_rt": _parse_number(row.get("fltRt")),
+                "volume": _parse_number(row.get("trqu")),
+            }
+        return [by_date[key] for key in sorted(by_date)]
+
+    def fetch_stock_rows(
+        self, code: str, *, start: dt.date, end: dt.date
+    ) -> list[dict[str, Any]]:
+        """한 종목의 일별 원시 행(종가·대비·등락률·거래량), 오래된 날짜부터.
+
+        fetch_series와 달리 fltRt·trqu를 버리지 않는다 — 채점 lane이
+        (1+fltRt) 연쇄곱(분할·권리락 안전)과 거래정지 감지(trqu 0)를 이 두
+        필드에서 읽는다. 실측 근거는 `docs/PLAN_SCORING.md` §1.
+        """
+        code = code.strip().upper()
+        return self._daily_rows(
+            STOCK_ENDPOINT,
+            {"likeSrtnCd": code},
+            field="srtnCd",
+            wanted=code,
+            start=start,
+            end=end,
+        )
+
+    def fetch_index_rows(
+        self, idx_nm: str, *, start: dt.date, end: dt.date
+    ) -> list[dict[str, Any]]:
+        """한 지수의 일별 원시 행 — 채점 벤치마크(코스피/코스닥)용."""
+        return self._daily_rows(
+            INDEX_ENDPOINT,
+            {"idxNm": idx_nm},
+            field="idxNm",
+            wanted=idx_nm,
+            start=start,
+            end=end,
+        )
+
     def fetch_day_snapshot(
         self, *, max_probe_days: int = 10
     ) -> tuple[str, list[dict[str, Any]]]:

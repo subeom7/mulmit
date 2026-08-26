@@ -370,6 +370,60 @@ company_events = sa.Table(
     sa.Index("ix_company_events_filed", "filed_at"),
 )
 
+# 대량보유(5%) 공시 채점 이벤트 — 스코어보드의 원장(元帳)이다.
+#
+# blob lane과 달리 **롤링 창이 아니라 축적**이다: 공시는 제출 후 불변이므로
+# 행은 지우지 않고 쌓는다(정정은 새 rcept_no로 온다). majorstock 요약 API가
+# 최근 약 2년 창만 돌려주는 것을 실측했으므로(PLAN_SCORING §1), 오늘부터
+# 걷어 두는 이 표 자체가 시간이 지날수록 원천보다 깊어진다.
+#
+# 기준가(base)와 체크포인트는 **채점 결과의 동결**이다 — 값이 한 번 쓰이면
+# 다시 계산해 덮지 않는다. 생존편향 차단이 제품 규칙이기 때문이다.
+kr_score_events = sa.Table(
+    "kr_score_events",
+    metadata,
+    sa.Column("rcept_no", sa.String(20), primary_key=True),
+    sa.Column("corp_code", sa.String(8), nullable=False),
+    sa.Column("stock_code", sa.String(12), nullable=False),
+    sa.Column("corp_name", sa.String(256), nullable=False),
+    sa.Column("market", sa.String(2)),  # corp_cls: Y 유가증권 · K 코스닥 · N 코넥스 · E 기타
+    sa.Column("filing_name", sa.String(256)),
+    sa.Column("report_date", sa.Date, nullable=False),
+    sa.Column("reporter", sa.String(256)),
+    sa.Column("report_type", sa.String(64)),
+    sa.Column("reason", sa.Text),
+    sa.Column("ratio", sa.Float),
+    sa.Column("ratio_change", sa.Float),
+    sa.Column("is_new", sa.Boolean, nullable=False, server_default=sa.text("0")),
+    # 'ok'면 majorstock 상세가 붙은 것. 'unavailable'은 아직/실패 — 수치는 null.
+    sa.Column("detail_status", sa.String(16), nullable=False, server_default="unavailable"),
+    # 'pending' → 'ok'(기준가 동결) 또는 'no_data'(가격 행 자체가 없음 — 더 안 묻는다).
+    sa.Column("base_status", sa.String(16), nullable=False, server_default="pending"),
+    sa.Column("base_date", sa.Date),
+    sa.Column("base_close", sa.Float),
+    # 기준일의 거래량이 0 — 공시 시점에 이미 거래정지였다는 실측 함정(도부 227420).
+    sa.Column("base_halted", sa.Boolean, nullable=False, server_default=sa.text("0")),
+    sa.Column("created_at", sa.Float, nullable=False),
+    sa.Index("ix_kr_score_events_date", "report_date"),
+    sa.Index("ix_kr_score_events_stock", "stock_code"),
+)
+
+kr_score_checkpoints = sa.Table(
+    "kr_score_checkpoints",
+    metadata,
+    sa.Column("rcept_no", sa.String(20), primary_key=True),
+    sa.Column("horizon", sa.Integer, primary_key=True),  # 영업일: 21 · 63 · 126
+    sa.Column("end_date", sa.Date, nullable=False),
+    # (1+fltRt) 연쇄곱 수익률(%). 정지 구간뿐이면 null이고 status가 말한다.
+    sa.Column("stock_return", sa.Float),
+    sa.Column("bench_return", sa.Float),
+    sa.Column("excess", sa.Float),
+    sa.Column("traded_days", sa.Integer),
+    sa.Column("halted_days", sa.Integer),
+    sa.Column("status", sa.String(16), nullable=False),  # 'scored' | 'halted'
+    sa.Column("scored_at", sa.Float, nullable=False),
+)
+
 _engine: sa.Engine | None = None
 _engine_lock = threading.Lock()
 
@@ -1848,3 +1902,249 @@ def record_push_result(endpoint: str, *, ok: bool, max_failures: int = 8) -> Non
                 & (push_subscriptions.c.failures >= max_failures)
             )
         )
+
+
+# --- 대량보유 채점 이벤트 ----------------------------------------------------
+
+
+def save_score_events(rows: list[dict[str, Any]]) -> int:
+    """공시검색에서 온 이벤트를 쌓는다. 이미 있는 행의 채점 상태는 건드리지 않는다.
+
+    갱신 대상은 공시 원문 필드뿐이다 — base/checkpoint는 동결이므로 upsert
+    목록에 넣지 않는다.
+    """
+    if not rows:
+        return 0
+    now = time.time()
+    prepared = [{"created_at": now, **row} for row in rows]
+    update_cols = ["corp_name", "market", "filing_name", "reporter"]
+    with engine().begin() as conn:
+        for start in range(0, len(prepared), 500):
+            conn.execute(
+                _upsert(kr_score_events, prepared[start : start + 500], update_cols)
+            )
+    return len(prepared)
+
+
+def update_score_event_details(
+    corp_code: str, details: dict[str, dict[str, Any]]
+) -> int:
+    """majorstock 상세를 rcept_no로 조인해 붙인다. 이벤트 자체는 이미 있다."""
+    updated = 0
+    with engine().begin() as conn:
+        for rcept_no, detail in details.items():
+            result = conn.execute(
+                sa.update(kr_score_events)
+                .where(
+                    (kr_score_events.c.rcept_no == rcept_no)
+                    & (kr_score_events.c.corp_code == corp_code)
+                )
+                .values(
+                    reporter=detail.get("reporter"),
+                    report_type=detail.get("report_type"),
+                    reason=detail.get("reason"),
+                    ratio=detail.get("ratio"),
+                    ratio_change=detail.get("ratio_change"),
+                    is_new=bool(detail.get("is_new")),
+                    detail_status="ok",
+                )
+            )
+            updated += result.rowcount
+    return updated
+
+
+def score_event_ids(since: dt.date) -> set[str]:
+    with engine().connect() as conn:
+        rows = conn.execute(
+            sa.select(kr_score_events.c.rcept_no).where(
+                kr_score_events.c.report_date >= since
+            )
+        )
+        return {row.rcept_no for row in rows}
+
+
+def score_events_max_date() -> dt.date | None:
+    with engine().connect() as conn:
+        value = conn.execute(
+            sa.select(sa.func.max(kr_score_events.c.report_date))
+        ).scalar()
+    # SQLite는 Date 집계를 문자열로 돌려줄 수 있다 — 방언 차이를 여기서 흡수한다.
+    if isinstance(value, str):
+        return dt.date.fromisoformat(value)
+    return value
+
+
+def score_corps_missing_detail(limit: int) -> list[str]:
+    """상세가 아직 없는 이벤트의 회사를 최신 공시부터 돌려준다."""
+    stmt = (
+        sa.select(
+            kr_score_events.c.corp_code,
+            sa.func.max(kr_score_events.c.report_date).label("latest"),
+        )
+        .where(kr_score_events.c.detail_status == "unavailable")
+        .group_by(kr_score_events.c.corp_code)
+        .order_by(sa.desc("latest"))
+        .limit(limit)
+    )
+    with engine().connect() as conn:
+        return [row.corp_code for row in conn.execute(stmt)]
+
+
+def score_events_pending_base(limit: int, *, floor: dt.date) -> list[dict[str, Any]]:
+    """기준가가 아직 없는 이벤트, 최신부터. floor 이전(가격 lane 밖)은 묻지 않는다."""
+    stmt = (
+        sa.select(kr_score_events)
+        .where(
+            (kr_score_events.c.base_status == "pending")
+            & (kr_score_events.c.report_date >= floor)
+        )
+        .order_by(kr_score_events.c.report_date.desc())
+        .limit(limit)
+    )
+    with engine().connect() as conn:
+        return [dict(row._mapping) for row in conn.execute(stmt)]
+
+
+def set_score_base(
+    rcept_no: str,
+    *,
+    status: str,
+    base_date: dt.date | None = None,
+    base_close: float | None = None,
+    base_halted: bool = False,
+) -> None:
+    with engine().begin() as conn:
+        conn.execute(
+            sa.update(kr_score_events)
+            .where(kr_score_events.c.rcept_no == rcept_no)
+            .values(
+                base_status=status,
+                base_date=base_date,
+                base_close=base_close,
+                base_halted=base_halted,
+            )
+        )
+
+
+def score_events_awaiting_checkpoints(
+    horizons: Iterable[int], *, due_before: dict[int, dt.date], limit: int
+) -> list[dict[str, Any]]:
+    """기준가는 있는데 어떤 horizon의 체크포인트가 비어 있는 이벤트들.
+
+    due_before[h]보다 base_date가 이른(=달력상 도래했을 법한) 것만 고른다 —
+    정확한 판정은 가격 행 수로 하고, 여기는 API 호출을 아끼는 1차 필터다.
+    """
+    horizons = list(horizons)
+    latest_due = max(due_before.values())
+    stmt = (
+        sa.select(kr_score_events)
+        .where(
+            (kr_score_events.c.base_status == "ok")
+            & (kr_score_events.c.base_date <= latest_due)
+        )
+        .order_by(kr_score_events.c.base_date.asc())
+    )
+    with engine().connect() as conn:
+        events = [dict(row._mapping) for row in conn.execute(stmt)]
+        done: dict[str, set[int]] = {}
+        for row in conn.execute(sa.select(kr_score_checkpoints)):
+            done.setdefault(row.rcept_no, set()).add(row.horizon)
+    picked = []
+    for event in events:
+        base_date = event["base_date"]
+        if isinstance(base_date, str):
+            base_date = dt.date.fromisoformat(base_date)
+            event["base_date"] = base_date
+        missing = [
+            h for h in horizons
+            if h not in done.get(event["rcept_no"], set())
+            and base_date <= due_before[h]
+        ]
+        if missing:
+            picked.append({**event, "missing_horizons": missing})
+            if len(picked) >= limit:
+                break
+    return picked
+
+
+def save_score_checkpoint(row: dict[str, Any]) -> None:
+    with engine().begin() as conn:
+        conn.execute(
+            _upsert(
+                kr_score_checkpoints,
+                [{**row, "scored_at": time.time()}],
+                ["end_date", "stock_return", "bench_return", "excess",
+                 "traded_days", "halted_days", "status", "scored_at"],
+            )
+        )
+
+
+def load_score_events(limit: int) -> list[dict[str, Any]]:
+    """보드 조립용: 최신 이벤트와 그 체크포인트를 함께 돌려준다."""
+    stmt = (
+        sa.select(kr_score_events)
+        .order_by(kr_score_events.c.report_date.desc(), kr_score_events.c.rcept_no.desc())
+        .limit(limit)
+    )
+    with engine().connect() as conn:
+        events = [dict(row._mapping) for row in conn.execute(stmt)]
+        ids = [event["rcept_no"] for event in events]
+        checkpoints: dict[str, list[dict[str, Any]]] = {}
+        if ids:
+            for row in conn.execute(
+                sa.select(kr_score_checkpoints).where(
+                    kr_score_checkpoints.c.rcept_no.in_(ids)
+                )
+            ):
+                checkpoints.setdefault(row.rcept_no, []).append(dict(row._mapping))
+    for event in events:
+        event["checkpoints"] = sorted(
+            checkpoints.get(event["rcept_no"], []), key=lambda c: c["horizon"]
+        )
+    return events
+
+
+def score_checkpoint_aggregates(min_samples: int = 5) -> list[dict[str, Any]]:
+    """신규 진입 이벤트의 horizon별 집계 — 표본이 min_samples 미만이면 내지 않는다."""
+    stmt = (
+        sa.select(
+            kr_score_checkpoints.c.horizon,
+            kr_score_checkpoints.c.excess,
+        )
+        .select_from(
+            kr_score_checkpoints.join(
+                kr_score_events,
+                kr_score_checkpoints.c.rcept_no == kr_score_events.c.rcept_no,
+            )
+        )
+        .where(
+            (kr_score_events.c.is_new.is_(True))
+            & (kr_score_checkpoints.c.status == "scored")
+        )
+    )
+    with engine().connect() as conn:
+        rows = list(conn.execute(stmt))
+    grouped: dict[int, list[float]] = {}
+    for row in rows:
+        if row.excess is not None:
+            grouped.setdefault(row.horizon, []).append(row.excess)
+    out = []
+    for horizon in sorted(grouped):
+        excesses = sorted(grouped[horizon])
+        if len(excesses) < min_samples:
+            continue
+        mid = len(excesses) // 2
+        median = (
+            excesses[mid]
+            if len(excesses) % 2
+            else (excesses[mid - 1] + excesses[mid]) / 2
+        )
+        out.append({
+            "horizon": horizon,
+            "samples": len(excesses),
+            "median_excess": round(median, 2),
+            "positive_share": round(
+                sum(1 for e in excesses if e > 0) / len(excesses), 3
+            ),
+        })
+    return out

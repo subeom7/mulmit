@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko" data-theme="dark" data-mode="easy">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="대량보유(5% 룰) 공시가 나온 뒤 그 종목의 주가는 실제로 어떻게 됐을까? 공시일 종가를 동결해 1·3·6개월 뒤를 지수 대비로 자동 채점해 기록합니다. 투자 추천이 아니라 기록·통계입니다.">
+  <meta name="keywords" content="대량보유 공시, 5% 공시, 5%룰, 대량보유상황보고서, 지분 공시 그 후, 대량보유 공시 주가, 슈퍼개미 공시, 기관 지분 공시">
+  <title>대량보유 5% 공시 그 후 — 공시 이후 주가 스코어보드 | 물밑 Mulmit</title>
+  <meta name="doc-title-ko" content="대량보유 5% 공시 그 후 — 공시 이후 주가 스코어보드 | 물밑 Mulmit">
+  <meta name="doc-title-en" content="After the 5% filing — scored outcomes of Korean large-holding disclosures | Mulmit">
+  <link rel="canonical" href="https://mulmit.com/score">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mulmit">
+  <meta property="og:title" content="대량보유 5% 공시 그 후 — 공시 이후 주가 스코어보드">
+  <meta property="og:description" content="5% 공시 이후의 주가를 시스템이 자동 채점해 기록합니다. 기준가 동결, 1·3·6개월 체크포인트, 지수 대비 초과수익. 기록이며 추천이 아닙니다.">
+  <meta property="og:url" content="https://mulmit.com/score">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="icon" type="image/png" sizes="96x96" href="/static/brand/favicon-96.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/favicon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/static/brand/mulmit-favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0a0c0f">
+  <script src="/static/pwa.js?v=6a43f0b1e9" defer></script>
+  <script type="application/ld+json">{{JSONLD}}</script>
+  <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
+  <link rel="stylesheet" href="/static/monitor.css?v=a8c69e8f6a">
+  <link rel="stylesheet" href="/static/tokens.css?v=f611cb4ae7">
+  <link rel="stylesheet" href="/static/console.css?v=e70abdacc0">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로</a>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Mulmit home">
+      <img class="brand-mark" src="/static/brand/mulmit-favicon.svg" alt="" aria-hidden="true" width="30" height="30">
+      <span><strong>Mulmit</strong></span>
+    </a>
+    <nav class="view-switch" aria-label="View">
+      <a class="view-tab" href="/"><span class="lang-ko">홈</span><span class="lang-en">Home</span></a>
+      <a class="view-tab" href="/kr"><span class="lang-ko">한국</span><span class="lang-en">Korea</span></a>
+      <a class="view-tab" href="/us"><span class="lang-ko">미국·글로벌</span><span class="lang-en">US &amp; Global</span></a>
+      <a class="view-tab" href="/crypto"><span class="lang-ko">암호화폐</span><span class="lang-en">Crypto</span></a>
+      <a class="view-tab" href="/analytics"><span class="lang-ko">종목 분석</span><span class="lang-en">Stock analytics</span></a>
+    </nav>
+    <div class="mast-actions">
+      <button class="icon-button" id="locale-toggle" type="button" aria-label="Switch language">EN</button>
+    </div>
+  </header>
+
+  <main id="main" class="shell score-page">
+    <div class="console-head">
+      <div>
+        <h1>대량보유 5% 공시 그 후</h1>
+        <p class="console-sub">{{SUMMARY}}</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="table-scroll">
+        <table class="accessible-table score-table">
+          <caption class="weekend-caption">공시 이후 주가 추적 {{ASOF}}</caption>
+          <thead>
+            <tr>
+              <th scope="col">종목</th>
+              <th scope="col">보고자</th>
+              <th scope="col" class="num">공시일</th>
+              <th scope="col" class="num">보유비율</th>
+              <th scope="col" class="num">기준가</th>
+              <th scope="col" class="num">현재 <small>참고</small></th>
+              <th scope="col" class="num">+1개월</th>
+              <th scope="col" class="num">+3개월</th>
+              <th scope="col" class="num">+6개월</th>
+            </tr>
+          </thead>
+          <tbody>{{ROWS}}</tbody>
+        </table>
+      </div>
+      <footer class="panel-footer">
+        {{SOURCE}}
+        <span>{{DISCLAIMER}}</span>
+      </footer>
+    </div>
+
+    <section class="console-section score-aggregates" aria-labelledby="agg-title">
+      <header><h2 id="agg-title">신규 진입 공시의 집계</h2></header>
+      <div class="panel">
+        {{AGGREGATES}}
+      </div>
+    </section>
+
+    <!-- 이 아래가 이 페이지의 절반이다. 사람들이 검색창에 치는 질문에 실제로
+         답하고, 그 답이 본문에 글자로 있어야 크롤러가 읽는다. 구조화 데이터
+         (FAQPage)는 여기 있는 것과 같은 말만 담는다. -->
+    <section class="console-section score-faq" aria-labelledby="faq-title">
+      <header><h2 id="faq-title">자주 묻는 것</h2></header>
+
+      <div class="panel weekend-answer">
+        <h3>대량보유(5%) 공시란 무엇인가요?</h3>
+        <p>자본시장법의 5% 룰에 따라, 상장회사 주식을 5% 이상 보유하게 되거나 그 뒤
+        1%p 이상 변동이 생기면 <strong>주식등의 대량보유 상황보고서</strong>를 금융감독원
+        전자공시(DART)에 제출해야 합니다. 자산운용사·행동주의 펀드·개인 큰손이 어떤
+        종목을 담고 뺐는지가 이 공시로 드러납니다. 보고 기한이 5영업일이라
+        <strong>공시일은 실제 매매일보다 늦을 수 있습니다.</strong></p>
+
+        <h3>공시를 따라 사면 수익이 나나요?</h3>
+        <p>이 페이지는 그 질문에 <strong>의견이 아니라 기록으로</strong> 답하려고 합니다.
+        공시가 나온 날의 종가를 동결해 두고, 1·3·6개월 뒤의 주가를 시장 지수와 비교해
+        자동 채점합니다. 위 표와 집계가 그 결과 전부이며, 특정 종목을 사라는 뜻도 팔라는
+        뜻도 아닙니다. 과거의 기록은 미래를 보장하지 않습니다.</p>
+
+        <h3>수익률은 어떻게 계산하나요?</h3>
+        <p>기준가는 <strong>공시일 이후 첫 거래일의 공식 종가</strong>로 고정합니다.
+        수익률은 일별 등락률을 이어 곱해 계산하므로 액면분할·권리락이 있어도 왜곡되지
+        않고, 같은 기간의 코스피·코스닥 지수 수익률을 빼서 <strong>초과수익(%p)</strong>으로
+        표시합니다. 거래정지 구간은 0%가 아니라 <strong>정지</strong>로 표시합니다 —
+        정지 중의 가격은 채점할 수 없기 때문입니다.</p>
+
+        <h3>왜 어떤 카드는 "기준가 대기"인가요?</h3>
+        <p>공식 종가는 금융위원회 공공데이터로 받는데, 당일 종가는 <strong>다음 영업일
+        오후 1시 이후</strong>에 공개됩니다. 갓 올라온 공시는 그래서 기준가가 하루쯤
+        비어 있고, 이것은 지연이 아니라 발행 주기입니다. 값을 만들어 채우지 않습니다.</p>
+
+        <h3>더 자세히 보려면</h3>
+        <p><a href="/kr">한국 시장 화면</a>에 대량보유 공시 전체 표와 국민연금 5% 공시,
+        코스피 지수군이 함께 있습니다. 표의 종목명을 누르면 그 종목의 재무제표와 공시가
+        붙은 종목 페이지로 갑니다.</p>
+      </div>
+    </section>
+    <footer class="site-footer">
+      <nav aria-label="Legal">
+        <a href="/privacy"><span class="lang-ko">개인정보처리방침</span><span class="lang-en">Privacy policy</span></a>
+        <a href="/terms"><span class="lang-ko">이용약관</span><span class="lang-en">Terms of use</span></a>
+        <a href="/disclaimer"><span class="lang-ko">면책 고지</span><span class="lang-en">Disclaimer</span></a>
+        <a href="/kr"><span class="lang-ko">한국 시장</span><span class="lang-en">Korean markets</span></a>
+        <a href="/glossary"><span class="lang-ko">용어 사전</span><span class="lang-en">Glossary</span></a>
+      </nav>
+      <p>이 페이지는 공시 이후 주가의 기록·통계이며 투자 권유가 아닙니다. 과거의 적중이 미래의 수익을 보장하지 않습니다.</p>
+    </footer>
+  </main>
+
+  <script src="/static/search.js?v=e2093e0d4d" defer></script>
+</body>
+</html>
