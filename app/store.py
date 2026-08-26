@@ -394,7 +394,11 @@ kr_score_events = sa.Table(
     sa.Column("reason", sa.Text),
     sa.Column("ratio", sa.Float),
     sa.Column("ratio_change", sa.Float),
-    sa.Column("is_new", sa.Boolean, nullable=False, server_default=sa.text("0")),
+    # server_default는 sa.false()여야 한다 — sa.text("0")은 SQLite에선 돌지만
+    # Postgres는 boolean 컬럼의 integer 기본값을 거부해 create_all이 죽는다
+    # (2026-08-26 배포 실측: 헬스체크 실패 → 롤백. LIKE 대소문자에 이은 두 번째
+    # 방언 함정이다).
+    sa.Column("is_new", sa.Boolean, nullable=False, server_default=sa.false()),
     # 'ok'면 majorstock 상세가 붙은 것. 'unavailable'은 아직/실패 — 수치는 null.
     sa.Column("detail_status", sa.String(16), nullable=False, server_default="unavailable"),
     # 'pending' → 'ok'(기준가 동결) 또는 'no_data'(가격 행 자체가 없음 — 더 안 묻는다).
@@ -402,7 +406,7 @@ kr_score_events = sa.Table(
     sa.Column("base_date", sa.Date),
     sa.Column("base_close", sa.Float),
     # 기준일의 거래량이 0 — 공시 시점에 이미 거래정지였다는 실측 함정(도부 227420).
-    sa.Column("base_halted", sa.Boolean, nullable=False, server_default=sa.text("0")),
+    sa.Column("base_halted", sa.Boolean, nullable=False, server_default=sa.false()),
     sa.Column("created_at", sa.Float, nullable=False),
     sa.Index("ix_kr_score_events_date", "report_date"),
     sa.Index("ix_kr_score_events_stock", "stock_code"),
