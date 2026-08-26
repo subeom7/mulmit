@@ -380,6 +380,18 @@ button:focus-visible, a:focus-visible, select:focus-visible {
   .kro-price { font-size: 24px; }
   /* 컬럼 많은 표는 셀을 찌그러뜨리는 대신 컨테이너 안에서 가로 스크롤한다. */
   #ptr-body table, #krp-body table, #kre-body table, #kridx-body table, #ev-body table, #krev-body table { min-width: 620px; }
+  /* 첫 열은 sticky라 스크롤하면 숫자 열이 그 밑으로 미끄러져 들어간다. 배경이
+     같고 경계가 없으면 "6,742.74"의 왼쪽이 먹혀 "2.74"만 남은 것처럼 보인다 —
+     스크롤이 아니라 데이터가 깨진 것으로 읽혔다(안드로이드 실측 2026-08-26).
+     오른쪽 모서리에 선과 그림자를 줘 "고정 열 아래로 지나간다"로 읽히게 한다.
+     collapse에서는 셀 box-shadow가 그려지지 않아(크롬 실측) 좁은 화면에서만
+     separate로 바꾼다 — 셀은 아래 테두리뿐이라 spacing 0이면 그림이 같다.
+     스크롤이 생기지 않는 넓은 화면에는 이 블록 자체가 없다. */
+  .accessible-table { border-collapse: separate; border-spacing: 0; }
+  .accessible-table th:first-child, .accessible-table td:first-child {
+    border-right: 1px solid var(--line-strong);
+    box-shadow: 10px 0 12px -4px rgba(0, 0, 0, .7);
+  }
 }
 @media (max-width: 430px) {
   .hero h1 { font-size: clamp(30px, 9.5vw, 42px); }
