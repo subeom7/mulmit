@@ -196,7 +196,16 @@
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
     );
   }
+  function isTouchDevice() {
+    // 설치 배너는 폰·태블릿 전용(운영자 결정 2026-08-27). PC 크롬에서도
+    // beforeinstallprompt는 발화하지만 거기서 배너는 소음이다 — 데스크톱
+    // 설치를 원하는 사람에게는 주소창의 브라우저 자체 설치 아이콘이 남는다.
+    // UA 대신 기기 성질로 가른다: 주 입력이 hover 없는 거친 포인터(손가락)면
+    // 폰·태블릿이고, 터치스크린 노트북은 주 입력이 마우스라 걸리지 않는다.
+    return window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+  }
   function bannerAllowed() {
+    if (!isTouchDevice()) return false;
     if (isStandalone() || firstVisit) return false;
     if (storageGet(INSTALLED_KEY)) return false;
     return Date.now() >= Number(storageGet(SNOOZE_KEY) || 0);
