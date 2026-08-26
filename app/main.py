@@ -312,6 +312,8 @@ mimetypes.add_type("font/woff", ".woff")
 # (2026-08-25 실측: 파일은 정상적인 `RIFF....WEBP`, naturalWidth 0). 테스트로는
 # 잡히지 않는 종류라 눈으로 보다가 나왔다.
 mimetypes.add_type("image/webp", ".webp")
+# 매니페스트도 같은 이유 — guess_type 표에 없는 환경이 있다.
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 if config.STATIC_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=config.STATIC_DIR), name="static")
@@ -419,6 +421,56 @@ def favicon() -> FileResponse:
         config.STATIC_DIR / "brand" / "favicon.ico",
         media_type="image/x-icon",
         headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.get("/manifest.webmanifest", include_in_schema=False)
+def web_app_manifest() -> FileResponse:
+    """PWA 웹 앱 매니페스트 — 설치 가능 조건의 절반(나머지는 /sw.js).
+
+    파일 위치는 스코프와 무관하지만(스코프는 manifest의 `scope` 필드가 정한다)
+    루트에 두면 어떤 페이지에서 링크해도 경로 추론이 필요 없다.
+    """
+    return FileResponse(
+        config.STATIC_DIR / "manifest.webmanifest",
+        media_type="application/manifest+json",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/sw.js", include_in_schema=False)
+def service_worker() -> FileResponse:
+    """서비스 워커. 여기는 위치가 곧 권한이다 — 워커는 자기 URL의 디렉터리까지만
+    제어할 수 있어서, /static/ 아래서 서빙하면 사이트 전체를 다루지 못한다.
+
+    no-cache: 워커 갱신은 브라우저가 이 URL의 바이트를 비교해서 일어난다.
+    캐시가 이 URL을 물고 있으면 배포된 워커가 사용자에게 늦게 도착한다.
+    (STATIC_VERSIONED의 `?v=` 자가치유는 여기 못 쓴다 — 워커 URL은 정체성이라
+    버전을 붙이면 갱신이 아니라 딴 워커가 된다.)
+    """
+    return FileResponse(
+        config.STATIC_DIR / "sw.js",
+        media_type="text/javascript",
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
+@app.get("/.well-known/assetlinks.json", include_in_schema=False)
+def assetlinks() -> FileResponse:
+    """TWA Digital Asset Links — Play 앱이 이 사이트를 자기 콘텐츠로 증명하는 파일.
+
+    배선만 먼저 깐다. 내용의 지문은 **Play App Signing 키**(콘솔 → 앱 무결성)에서
+    나오는데 그 키는 첫 AAB 업로드 뒤에야 존재한다(DIRECTION.md Phase 0 함정 ②).
+    업로드 키 지문을 넣으면 검증이 조용히 실패해서 앱에 주소창이 뜬다.
+    순서: 첫 AAB 업로드 → 지문 확보 → app/static/assetlinks.json 커밋 → 검증.
+    그때까지 이 경로는 404가 맞다 — 빈 배열을 주면 "검증됐는데 아무 앱도 없다"가 된다.
+    """
+    path = config.STATIC_DIR / "assetlinks.json"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="not yet published")
+    return FileResponse(
+        path, media_type="application/json",
+        headers={"Cache-Control": "public, max-age=3600"},
     )
 
 
