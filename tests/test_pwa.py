@@ -70,13 +70,17 @@ def test_service_worker_is_served_from_the_root_scope():
     assert response.headers["cache-control"] == "no-cache"
 
 
-def test_service_worker_touches_only_the_offline_page():
-    """워커가 캐시하는 URL 목록이 늘어나면 그 항목마다 '낡은 값' 위험을 재검토해야
-    한다. 목록이 오프라인 페이지 하나인 동안은 검토할 것이 없다."""
+def test_service_worker_never_touches_data_urls():
+    """워커 코드에 /api/ 나 `?v=` 자산 URL이 나타나면 그 항목마다 '낡은 값'
+    위험을 재검토해야 한다. 캐시에 넣는 URL은 오프라인 페이지 하나뿐이어야
+    한다 — 푸시 알림의 아이콘 URL처럼 캐시 밖에서 쓰는 참조는 허용된다."""
     source = (config.STATIC_DIR / "sw.js").read_text(encoding="utf-8")
 
     urls = set(re.findall(r'"(/[^"]*)"', source))
-    assert urls == {"/static/offline.html"}, urls
+    assert not any(url.startswith("/api/") for url in urls), urls
+    assert not any("?v=" in url for url in urls), urls
+    assert source.count("cache.add") == 1, "캐시에 넣는 곳이 늘었다 — 낡은 값 위험을 재검토하라"
+    assert 'OFFLINE_URL = "/static/offline.html"' in source
 
 
 def test_offline_page_is_self_contained():

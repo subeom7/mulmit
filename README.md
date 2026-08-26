@@ -459,6 +459,8 @@ PR 전에 `ruff`와 `pytest`를 로컬에서 돌린다. 게이트 값은 이미�
 | `GET /api/correlation?tickers=AAPL,MSFT` | 상관계수 행렬 (레거시 opt-in, 최대 12개) |
 | `GET /api/stats/traffic` | 접속 통계 요약 |
 | `POST /api/presence`, `POST /api/pageview` | 익명 접속 하트비트·페이지뷰 비콘 |
+| `GET /api/push/config` | 웹 푸시 안내 — 켜짐 여부·VAPID 공개키·주제별 기준선 |
+| `POST /api/push/subscribe`, `POST /api/push/unsubscribe` | 웹 푸시 구독 등록·해제 (김프 임계값 알림) |
 
 `/api/metrics` 파라미터: `horizon`(개월, 1~60) · `sims`(200~50000) ·
 `drift`(historical/zero/capm/custom) · `drift_value` · `lookback`(년) · `series`(bool)
