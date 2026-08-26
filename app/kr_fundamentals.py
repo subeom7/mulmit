@@ -198,19 +198,22 @@ def _fetch_payload(provider: DartProvider, corp_code: str, corp_name: str, code:
     }
 
 
-def get_report(stock_code: str) -> dict[str, Any]:
-    """한 종목의 연간 재무 패널. DB·캐시 우선, 미스에서만 단발 조회."""
+def get_report(stock_code: str, *, allow_fetch: bool = True) -> dict[str, Any]:
+    """한 종목의 연간 재무 패널. DB·캐시 우선, 미스에서만 단발 조회.
+
+    `allow_fetch=False`면 저장된 것만 본다(크롤러가 보는 서버 렌더 경로).
+    """
     _require_lane()
     stock_code = stock_code.strip().upper()
 
-    ensure_corp_codes()
+    ensure_corp_codes(allow_fetch=allow_fetch)
     mapping = store.get_dart_corp_code(stock_code)
     if mapping is None:
         raise KrFundamentalsUnknown(stock_code)
     corp_code = mapping["corp_code"]
 
     cached = store.load_report(_cache_key(corp_code), config.DART_MAX_AGE)
-    if cached is None:
+    if cached is None and allow_fetch:
         failed_at = _recent_failures.get(corp_code, 0.0)
         if time.time() - failed_at > FAILURE_MEMO_SECONDS:
             with _fetch_lock:

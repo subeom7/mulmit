@@ -426,8 +426,13 @@ def etf_board() -> dict[str, Any]:
     }
 
 
-def get_analysis(code: str) -> dict[str, Any]:
-    """DB-first analysis for one code; a cache miss fetches synchronously."""
+def get_analysis(code: str, *, allow_fetch: bool = True) -> dict[str, Any]:
+    """DB-first analysis for one code; a cache miss fetches synchronously.
+
+    `allow_fetch=False`면 저장된 것만 본다. 크롤러가 보는 서버 렌더 경로가
+    이걸 쓴다 — 처음 열리는 URL마다 상류를 부르면 응답이 3.5초가 되고,
+    구글은 그 속도에 맞춰 크롤을 줄인다(실측 2026-08-26).
+    """
     _require_lane()
     code = code.strip().upper()
     series_key = f"{KR_STOCK_KEY_PREFIX}{code}"
@@ -443,7 +448,7 @@ def get_analysis(code: str) -> dict[str, Any]:
     if not fresh:
         failed_at = _recent_failures.get(code, 0.0)
         can_retry = time.time() - failed_at > FAILURE_MEMO_SECONDS
-        if config.FSC_API_KEY and can_retry:
+        if allow_fetch and config.FSC_API_KEY and can_retry:
             with _series_lock(code):
                 record = store.get_economic_series(series_key)
                 fresh = (

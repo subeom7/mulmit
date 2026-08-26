@@ -64,8 +64,14 @@ def _provider() -> DartProvider:
     )
 
 
-def ensure_corp_codes() -> None:
-    """상장 법인코드 매핑이 없으면 한 번 받아 둔다. 배치가 주기 갱신한다."""
+def ensure_corp_codes(*, allow_fetch: bool = True) -> None:
+    """상장 법인코드 매핑이 없으면 한 번 받아 둔다. 배치가 주기 갱신한다.
+
+    `allow_fetch=False`면 낡았어도 받아오지 않는다 — 이건 DART 법인코드
+    **전체 zip**을 내려받는 호출이라, 크롤러 요청에 얹히면 안 된다.
+    """
+    if not allow_fetch:
+        return
     if not store.dart_corp_codes_stale(config.DART_CORP_MAX_AGE):
         return
     with _fetch_lock:
@@ -80,19 +86,22 @@ def _cache_key(corp_code: str) -> str:
     return f"dart_elestock_{corp_code}"
 
 
-def get_reports(stock_code: str) -> dict[str, Any]:
-    """한 종목의 소유상황 보고 목록. DB·캐시 우선, 미스에서만 단발 조회."""
+def get_reports(stock_code: str, *, allow_fetch: bool = True) -> dict[str, Any]:
+    """한 종목의 소유상황 보고 목록. DB·캐시 우선, 미스에서만 단발 조회.
+
+    `allow_fetch=False`면 저장된 것만 본다(크롤러가 보는 서버 렌더 경로).
+    """
     _require_lane()
     stock_code = stock_code.strip().upper()
 
-    ensure_corp_codes()
+    ensure_corp_codes(allow_fetch=allow_fetch)
     mapping = store.get_dart_corp_code(stock_code)
     if mapping is None:
         raise KrInsiderUnknown(stock_code)
     corp_code = mapping["corp_code"]
 
     cached = store.load_report(_cache_key(corp_code), config.DART_MAX_AGE)
-    if cached is None:
+    if cached is None and allow_fetch:
         failed_at = _recent_failures.get(corp_code, 0.0)
         if time.time() - failed_at > FAILURE_MEMO_SECONDS:
             with _fetch_lock:
