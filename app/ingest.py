@@ -33,7 +33,9 @@ from . import (
     econ_calendar,
     hip3_history,
     kr_events,
+    kr_fundamentals,
     kr_holdings,
+    kr_insider,
     kr_pension,
     kr_press,
     kr_stocks,
@@ -578,6 +580,56 @@ def _precollect_kr_stocks() -> int:
         log.info("국내 종가 미리 수집 %d종목 (남은 대상 %d)", collected, len(missing) - collected)
     return collected
 
+
+def _precollect_kr_dart() -> int:
+    """시총 상위 종목의 DART 재무·소유보고를 조금씩 모은다.
+
+    이 단계가 없으면 그 두 블록은 **사람이 그 페이지를 열어야만** 채워진다.
+    2026-08-26까지 실제로 그렇게 채워지고 있었다 — 크롤러 요청이 DART를
+    동기로 부르면서(콜드 응답 3.5초) 캐시를 만들었다. 그 경로를 막았으니
+    배치가 대신 모아야 하고, 안 그러면 320종목 중 62개에서 멈춘다.
+
+    종가 사전수집과 같은 자세다: 조금씩, 한도에 닿으면 중단, 실패는 삼킨다.
+    """
+    if not (config.DART_ENABLED and config.DART_API_KEY):
+        return 0
+    budget = max(0, config.KR_DART_PRECOLLECT_PER_RUN)
+    if not budget:
+        return 0
+
+    # 사이트맵이 광고하는 집합(종가가 있는 종목)을 시총 순으로 채운다 —
+    # 광고한 것과 크롤러가 받는 것이 어긋나지 않아야 한다.
+    listed = set(store.list_kr_codes_with_series())
+    wanted = [
+        (code, name)
+        for code, name in store.list_kr_codes_by_market_cap(config.KR_PRECOLLECT_TOP)
+        if code in listed
+    ]
+
+    collected = 0
+    for code, _name in wanted:
+        if collected >= budget:
+            break
+        for label, module in (("재무", kr_fundamentals), ("소유보고", kr_insider)):
+            if collected >= budget:
+                break
+            try:
+                if module.is_cached(code):
+                    continue
+                if module is kr_fundamentals:
+                    module.get_report(code)
+                else:
+                    module.get_reports(code)
+                collected += 1
+            except RateLimited:
+                log.warning("DART 한도 — %s 사전수집은 다음 주기에 (%d건 완료)", label, collected)
+                return collected
+            except Exception as exc:  # noqa: BLE001 - 한 종목이 나머지를 막지 않는다
+                log.warning("%s %s 사전수집 실패: %s", code, label, exc)
+    if collected:
+        log.info("DART 사전수집 %d건", collected)
+    return collected
+
 def refresh_fsc(*, force: bool = False) -> dict:
     """Refresh the Korean official closes published as FSC open data.
 
@@ -655,6 +707,7 @@ def refresh_fsc(*, force: bool = False) -> dict:
     # 한 바퀴에 조금씩만 모은다. data.go.kr 일일 한도를 한 번에 쓰면 그날의 다른
     # 수집이 굶는다 — 로스터·지수·ETF가 같은 한도를 나눠 쓴다.
     result["precollected"] = _precollect_kr_stocks()
+    result["dart_precollected"] = _precollect_kr_dart()
 
     keys = [spec.series_key for spec in FSC_SERIES]
     targets = (

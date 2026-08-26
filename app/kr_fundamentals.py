@@ -197,6 +197,17 @@ def _fetch_payload(provider: DartProvider, corp_code: str, corp_name: str, code:
         "rights": {"status": "approved", "notice": DART_ATTRIBUTION},
     }
 
+def is_cached(stock_code: str) -> bool:
+    """저장된 것이 있는지만 본다 — 상류를 부르지 않는다.
+
+    배치가 "무엇을 아직 안 모았나"를 세는 데 쓴다. 이걸 모르면 이미 있는 것을
+    다시 부르느라 주기당 예산이 사라진다.
+    """
+    mapping = store.get_dart_corp_code(stock_code.strip().upper())
+    if mapping is None:
+        return False
+    return store.load_report(_cache_key(mapping["corp_code"]), config.DART_MAX_AGE) is not None
+
 
 def get_report(stock_code: str, *, allow_fetch: bool = True) -> dict[str, Any]:
     """한 종목의 연간 재무 패널. DB·캐시 우선, 미스에서만 단발 조회.
