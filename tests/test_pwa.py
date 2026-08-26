@@ -126,3 +126,20 @@ def test_the_worker_registration_url_carries_no_version():
 
     assert 'register("/sw.js")' in source
     assert "sw.js?v" not in source
+
+
+def test_install_ui_is_wired_quiet_and_self_contained():
+    """설치 유도의 세 규칙을 못 박는다.
+
+    - 크롬 기본 인포바 대신 우리 타이밍: beforeinstallprompt를 잡아 둔다.
+    - 조용함: 설치되면 다시 안 보이고(appinstalled), 닫으면 침묵 기간이
+      있어야 한다 — 매 방문 배너는 알림 해제보다 빠르게 사이트를 해제당한다.
+    - 자기 완결: pwa.js는 전 페이지에 실리므로 외부 호스트 요청이 없어야 한다.
+    """
+    source = (config.STATIC_DIR / "pwa.js").read_text(encoding="utf-8")
+
+    assert "beforeinstallprompt" in source
+    assert "preventDefault" in source
+    assert "appinstalled" in source
+    assert "mulmit-install-snooze" in source
+    assert "http://" not in source and "https://" not in source
