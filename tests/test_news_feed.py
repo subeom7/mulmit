@@ -8,6 +8,7 @@ RateLimited로 올라가며, 종목 태그는 닫힌 사전의 단어 경계 매
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 
 import pytest
@@ -132,7 +133,8 @@ def test_gate_and_route(db, gdelt):
 
 def test_feed_carries_news_with_attribution(db, gdelt, monkeypatch):
     news_feed.refresh(GkgProvider())
-    feed = signal_feed.build_feed()
+    # 절대 날짜 픽스처 + 실제 시계 = 날짜 경계에서 저절로 죽는 테스트다(08-27 실측).
+    feed = signal_feed.build_feed(today=dt.date(2026, 8, 20))
 
     news = [i for i in feed["items"] if i["kind"] == "news"]
     assert len(news) == 2

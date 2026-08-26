@@ -7,6 +7,8 @@
 
 from __future__ import annotations
 
+import datetime as dt
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -72,7 +74,9 @@ def test_route_and_feed_integration(press, monkeypatch):
     assert ok.status_code == 200
     assert ok.json()["count"] == 2
 
-    feed = signal_feed.build_feed()
+    # 픽스처 날짜가 절대값이라 시계를 고정한다 — 실제 시계로 두면 7일 창이
+    # 달력을 따라 움직여 이 테스트가 날짜 경계에서 저절로 죽는다(2026-08-27 실측).
+    feed = signal_feed.build_feed(today=dt.date(2026, 8, 20))
     rows = [i for i in feed["items"] if i["kind"] == "kr_press"]
     assert len(rows) == 2
     assert rows[0]["title"]["ko"].startswith("[")
