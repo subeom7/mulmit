@@ -51,6 +51,9 @@ def test_refresh_then_build_merges_and_sorts(db):
     providers = {event["provider"] for event in payload["events"]}
     assert providers == {"curated", "fred"}
     assert econ_calendar.CURATED_VERIFIED_AT in payload["basis_ko"]
+    # 잭슨홀 심포지엄은 큐레이션으로 실리고 정책회의와 같은 kind로 칠해진다.
+    jackson = [e for e in payload["events"] if "잭슨홀" in e["name"]["ko"]]
+    assert jackson and jackson[0]["kind"] == "policy"
 
 
 def test_curated_events_serve_without_a_fred_blob(db):
