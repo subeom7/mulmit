@@ -94,6 +94,46 @@ def test_the_render_never_calls_upstream(kr_stock, monkeypatch):
     assert "시세 요약" in body, "상류 없이도 저장된 값으로 본문이 나와야 한다"
 
 
+def test_the_render_never_calls_upstream_on_a_cache_miss(db, monkeypatch):
+    """위 테스트는 **캐시가 채워진** 종목만 봤다. 그래서 통과했는데도 새어 나갔다.
+
+    크롤러가 여는 URL은 정의상 처음 열리는 URL이라 전부 캐시 미스다. 그 경로에서
+    `get_analysis`·`get_report`·`get_reports`가 각각 FSC·DART를 동기로 불렀다.
+    실측(2026-08-26, 라이브): 콜드 3.4~5.9초 · 웜 0.06초. 구글은 그 속도에
+    맞춰 크롤을 줄였고, `Discovered — currently not indexed`가 2,954개였다.
+
+    파일 맨 위 주석에는 "요청 경로에서 상류를 부르지 않는다"고 이미 적혀 있었다.
+    뜻은 맞았고 호출 대상이 안에서 몰래 불렀다 — 그래서 **빈 저장소로** 건다.
+    """
+    from app import kr_fundamentals, kr_stocks
+
+    def explode(*args, **kwargs):
+        raise AssertionError("캐시 미스 렌더에서 상류를 불렀다")
+
+    monkeypatch.setattr(kr_insider, "_provider", explode)
+    monkeypatch.setattr(kr_fundamentals, "_provider", explode)
+    monkeypatch.setattr(kr_stocks, "_fetch_series", explode)
+    monkeypatch.setattr(config, "FSC_API_KEY", "test-key")   # 게이트가 아니라 규칙이 막아야 한다
+
+    # 저장된 것이 없으면 빈 본문. 터지지도, 상류를 부르지도 않는다.
+    assert stock_page.render("005930", korean=True) == ""
+
+
+def test_the_store_only_flag_is_actually_passed(db) -> None:
+    """규칙이 호출부에 없으면 위 테스트는 우연히 통과할 수 있다.
+
+    세 접근자 모두 기본값이 `allow_fetch=True`다(사용자가 특정 종목을 열면
+    수집이 도는 것이 맞다). 크롤러가 보는 경로만 꺼야 한다.
+    """
+    import inspect
+
+    source = inspect.getsource(stock_page)
+    for call in ("get_analysis(", "kr_fundamentals.get_report(", "kr_insider.get_reports("):
+        start = source.index(call)
+        segment = source[start : source.index(")", start) + 1]
+        assert "allow_fetch=False" in segment, f"{call} 가 저장소 전용이 아니다"
+
+
 def test_the_page_substitutes_the_placeholder(kr_stock):
     from fastapi.testclient import TestClient
 

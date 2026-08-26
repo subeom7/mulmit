@@ -70,7 +70,7 @@ def _kr_body(code: str) -> str:
 
     # 시세 통계 — 저장된 종가만. 미수집 종목을 여기서 수집하지 않는다.
     try:
-        analysis = kr_stocks.get_analysis(code)
+        analysis = kr_stocks.get_analysis(code, allow_fetch=False)
     except Exception:  # noqa: BLE001 - 조각 하나의 실패가 페이지를 죽이지 않는다
         analysis = None
     if analysis:
@@ -87,7 +87,7 @@ def _kr_body(code: str) -> str:
 
     # 연간 재무제표
     try:
-        fundamentals = kr_fundamentals.get_report(code)
+        fundamentals = kr_fundamentals.get_report(code, allow_fetch=False)
     except Exception:  # noqa: BLE001
         fundamentals = None
     if fundamentals:
@@ -107,7 +107,7 @@ def _kr_body(code: str) -> str:
 
     # 임원·주요주주 소유보고 — 저장된 것만
     try:
-        reports = (kr_insider.get_reports(code) or {}).get("reports") or []
+        reports = (kr_insider.get_reports(code, allow_fetch=False) or {}).get("reports") or []
     except Exception:  # noqa: BLE001
         reports = []
     rows = [
