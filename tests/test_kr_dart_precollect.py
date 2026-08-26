@@ -67,8 +67,8 @@ def test_it_only_fills_what_the_sitemap_advertises(dart_open, monkeypatch) -> No
     _seed(["000111", "000222"], listings_only=["000333"])
 
     asked: list[str] = []
-    monkeypatch.setattr(kr_fundamentals, "is_cached", lambda code: False)
-    monkeypatch.setattr(kr_insider, "is_cached", lambda code: True)
+    monkeypatch.setattr(kr_fundamentals, "is_cached", lambda code, **kw: False)
+    monkeypatch.setattr(kr_insider, "is_cached", lambda code, **kw: True)
     monkeypatch.setattr(kr_fundamentals, "get_report", lambda code: asked.append(code))
 
     ingest._precollect_kr_dart()
@@ -80,8 +80,8 @@ def test_it_does_not_refetch_what_is_already_cached(dart_open, monkeypatch) -> N
     """이미 있는 것을 다시 부르면 주기당 예산이 거기서 다 나간다."""
     _seed(["000111", "000222"])
     calls: list[str] = []
-    monkeypatch.setattr(kr_fundamentals, "is_cached", lambda code: True)
-    monkeypatch.setattr(kr_insider, "is_cached", lambda code: True)
+    monkeypatch.setattr(kr_fundamentals, "is_cached", lambda code, **kw: True)
+    monkeypatch.setattr(kr_insider, "is_cached", lambda code, **kw: True)
     monkeypatch.setattr(kr_fundamentals, "get_report", lambda code: calls.append(code))
     monkeypatch.setattr(kr_insider, "get_reports", lambda code: calls.append(code))
 
@@ -92,8 +92,8 @@ def test_it_does_not_refetch_what_is_already_cached(dart_open, monkeypatch) -> N
 def test_it_stops_at_the_daily_limit(dart_open, monkeypatch) -> None:
     """다른 수집이 같은 한도를 나눠 쓴다. 한 번에 다 쓰면 그날 나머지가 굶는다."""
     _seed(["000111", "000222", "000333"])
-    monkeypatch.setattr(kr_fundamentals, "is_cached", lambda code: False)
-    monkeypatch.setattr(kr_insider, "is_cached", lambda code: False)
+    monkeypatch.setattr(kr_fundamentals, "is_cached", lambda code, **kw: False)
+    monkeypatch.setattr(kr_insider, "is_cached", lambda code, **kw: False)
 
     tries: list[str] = []
 
@@ -111,8 +111,8 @@ def test_it_stops_at_the_daily_limit(dart_open, monkeypatch) -> None:
 def test_one_failure_does_not_stop_the_rest(dart_open, monkeypatch) -> None:
     """한 종목의 DART 실패가 나머지 종목을 막으면 커버리지가 거기서 멈춘다."""
     _seed(["000111", "000222"])
-    monkeypatch.setattr(kr_fundamentals, "is_cached", lambda code: False)
-    monkeypatch.setattr(kr_insider, "is_cached", lambda code: True)
+    monkeypatch.setattr(kr_fundamentals, "is_cached", lambda code, **kw: False)
+    monkeypatch.setattr(kr_insider, "is_cached", lambda code, **kw: True)
 
     seen: list[str] = []
 
@@ -130,7 +130,7 @@ def test_a_closed_lane_collects_nothing(dart_open, monkeypatch) -> None:
     """게이트가 닫혀 있으면 아무것도 부르지 않는다 — 키 없이 호출하면 로그만 더럽다."""
     _seed(["000111"])
     monkeypatch.setattr(config, "DART_ENABLED", False)
-    monkeypatch.setattr(kr_fundamentals, "is_cached", lambda code: False)
+    monkeypatch.setattr(kr_fundamentals, "is_cached", lambda code, **kw: False)
 
     # 예외로 확인하면 안 된다 — 사전수집의 `except Exception`이 그것을 삼켜서
     # 게이트가 없어도 테스트가 통과한다(실제로 그렇게 통과했다).
@@ -150,3 +150,45 @@ def test_the_batch_actually_runs_it(dart_open) -> None:
     assert 'result["dart_precollected"] = _precollect_kr_dart()' in source, (
         "배치가 이 단계를 부르지 않는다"
     )
+
+
+def test_coverage_tolerance_is_not_the_serving_freshness(dart_open, monkeypatch) -> None:
+    """숫자 하나가 두 질문에 답하면 예산이 안 맞는다.
+
+    처음에 `DART_MAX_AGE`(12시간) 하나로 썼다가 실측에서 막혔다: 640건을 하루
+    두 번 갱신하려면 1,280건/일이 필요한데 예산은 8×96 = 768건/일이라, 신규
+    확보와 갱신이 서로 예산을 뺏으며 60% 언저리에서 정체한다.
+
+    연간 재무제표는 분기에 한 번 바뀐다. 커버리지 목적에서 사흘 지난 값은
+    **없는 것보다 낫다** — 그래서 허용치를 따로 둔다.
+    """
+    assert config.KR_DART_COVERAGE_MAX_AGE > config.DART_MAX_AGE, (
+        "커버리지 허용치가 서빙 신선도보다 짧으면 예산이 갱신에만 쓰인다"
+    )
+
+    _seed(["000111"])
+    asked: list[int] = []
+
+    def spy(code, *, max_age):
+        asked.append(max_age)
+        return True
+
+    monkeypatch.setattr(kr_fundamentals, "is_cached", spy)
+    monkeypatch.setattr(kr_insider, "is_cached", spy)
+    ingest._precollect_kr_dart()
+
+    assert asked, "사전수집이 캐시 여부를 묻지 않았다"
+    assert set(asked) == {config.KR_DART_COVERAGE_MAX_AGE}, (
+        f"사전수집이 서빙 신선도로 물었다: {set(asked)}"
+    )
+
+
+def test_the_serving_path_still_uses_the_short_freshness() -> None:
+    """사용자가 보는 값의 기준은 안 바뀌어야 한다 — 이 작업은 배치 이야기다."""
+    import inspect
+
+    for module in (kr_fundamentals, kr_insider):
+        source = inspect.getsource(module)
+        assert "config.DART_MAX_AGE" in source, (
+            f"{module.__name__}의 서빙 경로가 짧은 신선도를 잃었다"
+        )
