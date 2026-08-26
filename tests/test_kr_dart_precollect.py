@@ -36,8 +36,17 @@ def dart_open(db, monkeypatch):
     return db
 
 
-def _seed(codes: list[str], *, listings_only: list[str] | None = None) -> None:
-    """시총 로스터와 종가 계열을 함께 심는다 — 둘 다 있어야 대상이 된다."""
+def _seed(
+    codes: list[str],
+    *,
+    listings_only: list[str] | None = None,
+    unmapped: list[str] | None = None,
+) -> None:
+    """시총 로스터·종가 계열·DART 법인코드 매핑을 함께 심는다.
+
+    셋 다 있어야 사전수집 대상이 된다. `unmapped`는 종가는 있는데 DART 매핑이
+    없는 종목 — 우선주가 그렇다.
+    """
     import datetime as dt
 
     from app.kr_stocks import stock_series_spec
@@ -48,6 +57,11 @@ def _seed(codes: list[str], *, listings_only: list[str] | None = None) -> None:
         for index, code in enumerate(codes + list(listings_only or []))
     ]
     store.save_kr_listings(rows, "20260825")
+    store.save_dart_corp_codes([
+        {"stock_code": code, "corp_code": f"0000{code}", "corp_name": f"종목{code}"}
+        for code in codes
+        if code not in set(unmapped or [])
+    ])
     for code in codes:
         spec = stock_series_spec(code, f"종목{code}")
         store.save_economic_series(
@@ -192,3 +206,28 @@ def test_the_serving_path_still_uses_the_short_freshness() -> None:
         assert "config.DART_MAX_AGE" in source, (
             f"{module.__name__}의 서빙 경로가 짧은 신선도를 잃었다"
         )
+
+
+def test_it_skips_stocks_that_have_no_dart_filer(dart_open, monkeypatch) -> None:
+    """DART에 법인코드가 없는 종목은 애초에 모을 것이 없다.
+
+    우선주가 그렇다 — 삼성전자우(005935)는 삼성전자와 따로 공시하지 않는다.
+    실측(2026-08-26): 사이트맵 320종목 중 8개가 매핑 없음이고 전부 우선주였다.
+    스팩·리츠도 같은 이유로 걸린다.
+
+    예산을 쓰지는 않지만(실패는 collected를 올리지 않는다) 매 주기 두 줄씩
+    경고를 남긴다 — 8종목 × 2블록 × 96주기 = 하루 1,536줄이 같은 실패로 찬다.
+
+    **이름으로 거르지 않는다.** "우"로 끝나는지 보는 건 추측이고, 못 모으는
+    진짜 조건은 매핑 부재다. 그것만 보면 종목 분류를 몰라도 맞는다.
+    """
+    _seed(["000111", "005935"], unmapped=["005935"])
+
+    asked: list[str] = []
+    monkeypatch.setattr(kr_fundamentals, "is_cached", lambda code, **kw: False)
+    monkeypatch.setattr(kr_insider, "is_cached", lambda code, **kw: True)
+    monkeypatch.setattr(kr_fundamentals, "get_report", lambda code: asked.append(code))
+
+    ingest._precollect_kr_dart()
+    assert "005935" not in asked, "법인코드가 없는 종목에 상류를 걸었다"
+    assert "000111" in asked, "매핑이 있는 종목은 계속 모아야 한다"

@@ -607,9 +607,20 @@ def _precollect_kr_dart() -> int:
     ]
 
     collected = 0
+    unmapped = 0
     for code, _name in wanted:
         if collected >= budget:
             break
+        # DART에 법인코드가 없는 종목은 애초에 모을 것이 없다. 우선주가 대부분이고
+        # (실측 2026-08-26: 사이트맵 320종목 중 8개, 전부 우선주) 스팩·리츠도 같은
+        # 이유로 걸린다. 이름으로 추측하지 않는다 — 못 모으는 진짜 조건은 매핑
+        # 부재이고, 그것만 보면 분류를 몰라도 맞는다.
+        #
+        # 예산은 안 쓰지만(실패는 collected를 올리지 않는다) 매 주기 두 줄씩
+        # 경고를 남겨 로그가 그것으로 찬다 — 8종목 × 2블록 × 96주기 = 하루 1,536줄.
+        if store.get_dart_corp_code(code) is None:
+            unmapped += 1
+            continue
         for label, module in (("재무", kr_fundamentals), ("소유보고", kr_insider)):
             if collected >= budget:
                 break
@@ -626,8 +637,10 @@ def _precollect_kr_dart() -> int:
                 return collected
             except Exception as exc:  # noqa: BLE001 - 한 종목이 나머지를 막지 않는다
                 log.warning("%s %s 사전수집 실패: %s", code, label, exc)
-    if collected:
-        log.info("DART 사전수집 %d건", collected)
+    if collected or unmapped:
+        log.info(
+            "DART 사전수집 %d건 (법인코드 없는 종목 %d개 건너뜀)", collected, unmapped
+        )
     return collected
 
 def refresh_fsc(*, force: bool = False) -> dict:
