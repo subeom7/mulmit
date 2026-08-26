@@ -85,16 +85,17 @@ def ensure_corp_codes(*, allow_fetch: bool = True) -> None:
 def _cache_key(corp_code: str) -> str:
     return f"dart_elestock_{corp_code}"
 
-def is_cached(stock_code: str) -> bool:
+def is_cached(stock_code: str, *, max_age: int) -> bool:
     """저장된 것이 있는지만 본다 — 상류를 부르지 않는다.
 
-    배치가 "무엇을 아직 안 모았나"를 세는 데 쓴다. 이걸 모르면 이미 있는 것을
-    다시 부르느라 주기당 예산이 사라진다.
+    `max_age`를 **부르는 쪽이 밝힌다.** 서빙 신선도와 커버리지 채우기 허용치는
+    다른 질문인데, 처음에 `DART_MAX_AGE` 하나로 답했다가 예산이 안 맞았다
+    (2026-08-26 실측: 12시간 만료면 하루 1,280건이 필요한데 예산은 768건).
     """
     mapping = store.get_dart_corp_code(stock_code.strip().upper())
     if mapping is None:
         return False
-    return store.load_report(_cache_key(mapping["corp_code"]), config.DART_MAX_AGE) is not None
+    return store.load_report(_cache_key(mapping["corp_code"]), max_age) is not None
 
 
 def get_reports(stock_code: str, *, allow_fetch: bool = True) -> dict[str, Any]:

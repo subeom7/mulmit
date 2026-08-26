@@ -614,7 +614,7 @@ def _precollect_kr_dart() -> int:
             if collected >= budget:
                 break
             try:
-                if module.is_cached(code):
+                if module.is_cached(code, max_age=config.KR_DART_COVERAGE_MAX_AGE):
                     continue
                 if module is kr_fundamentals:
                     module.get_report(code)
