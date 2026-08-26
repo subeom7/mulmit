@@ -336,6 +336,23 @@ presence = sa.Table(
     sa.Index("ix_presence_seen", "seen_at"),
 )
 
+# 웹 푸시 구독. endpoint URL이 곧 기기이자 키다 — 브라우저가 만든 값이라
+# 개인 식별 정보가 없고, 구독자가 브라우저에서 알림을 끄면 다음 발송이
+# 404/410으로 돌아와 그때 지운다. web이 쓰고 ingest가 읽는다.
+push_subscriptions = sa.Table(
+    "push_subscriptions",
+    metadata,
+    sa.Column("endpoint", sa.String(1024), primary_key=True),
+    sa.Column("p256dh", sa.String(256), nullable=False),
+    sa.Column("auth", sa.String(64), nullable=False),
+    # 쉼표 목록. 지금은 "kimchi" 하나지만 주제가 늘 것을 안다.
+    sa.Column("topics", sa.String(256), nullable=False),
+    sa.Column("created_at", sa.Float, nullable=False),
+    # 404/410이 아닌 실패(일시 장애·429)의 연속 횟수. 한도를 넘으면 죽은
+    # 구독으로 보고 지운다 — 성공하면 0으로 돌아온다.
+    sa.Column("failures", sa.Integer, nullable=False, server_default="0"),
+)
+
 # 우리 커버리지 내 기업의 8-K 이벤트 공시. 내부자 수집이 이미 받는 submissions
 # 응답에서 같이 뽑아 저장한다 — 이 표를 위해 EDGAR를 따로 부르지 않는다.
 company_events = sa.Table(
@@ -1755,3 +1772,79 @@ def list_kr_codes() -> list[tuple[str, str]]:
             .order_by(kr_listings.c.srtn_cd)
         ).all()
     return [(str(code), str(name or "")) for code, name in rows]
+
+
+# --- 웹 푸시 구독 -------------------------------------------------------------
+
+
+def save_push_subscription(endpoint: str, p256dh: str, auth: str, topics: list[str]) -> None:
+    with engine().begin() as conn:
+        conn.execute(
+            _upsert(
+                push_subscriptions,
+                [{
+                    "endpoint": endpoint,
+                    "p256dh": p256dh,
+                    "auth": auth,
+                    "topics": ",".join(sorted(set(topics))),
+                    "created_at": time.time(),
+                    "failures": 0,
+                }],
+                ["p256dh", "auth", "topics", "failures"],
+            )
+        )
+
+
+def delete_push_subscription(endpoint: str) -> bool:
+    with engine().begin() as conn:
+        result = conn.execute(
+            sa.delete(push_subscriptions).where(push_subscriptions.c.endpoint == endpoint)
+        )
+    return bool(result.rowcount)
+
+
+def load_push_subscriptions(topic: str) -> list[dict[str, Any]]:
+    """주제를 구독한 전 기기.
+
+    주제 필터는 파이썬에서 건다 — LIKE는 SQLite(대소문자 무시)와
+    Postgres(구분)가 다르게 동작해서 국내 검색이 라이브에서만 깨진 전례가
+    있고, 이 표는 수십 행 규모라 전부 읽어도 비용이 없다.
+    """
+    stmt = sa.select(
+        push_subscriptions.c.endpoint,
+        push_subscriptions.c.p256dh,
+        push_subscriptions.c.auth,
+        push_subscriptions.c.failures,
+        push_subscriptions.c.topics,
+    )
+    with engine().connect() as conn:
+        rows = conn.execute(stmt).mappings().all()
+    return [dict(row) for row in rows if topic in str(row["topics"]).split(",")]
+
+
+def record_push_result(endpoint: str, *, ok: bool, max_failures: int = 8) -> None:
+    """성공은 실패 카운터를 지우고, 실패는 쌓다가 한도에서 구독을 지운다.
+
+    404/410(구독 소멸)은 호출자가 delete_push_subscription으로 즉시 지우고,
+    여기는 그 밖의 실패(일시 장애·429)만 온다 — 죽었는지 확신할 수 없으니
+    바로 지우지 않되, 한도를 넘도록 한 번도 성공하지 못하면 죽은 것이다.
+    """
+    with engine().begin() as conn:
+        if ok:
+            conn.execute(
+                sa.update(push_subscriptions)
+                .where(push_subscriptions.c.endpoint == endpoint)
+                .values(failures=0)
+            )
+            return
+        conn.execute(
+            sa.update(push_subscriptions)
+            .where(push_subscriptions.c.endpoint == endpoint)
+            .values(failures=push_subscriptions.c.failures + 1)
+        )
+        conn.execute(
+            sa.delete(push_subscriptions).where(
+                (push_subscriptions.c.endpoint == endpoint)
+                & (push_subscriptions.c.failures >= max_failures)
+            )
+        )

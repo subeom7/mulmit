@@ -16,5 +16,8 @@ xlrd>=2.0
 # zoneinfo("America/New_York")가 OS tz 데이터 없는 환경(Windows 등)에서도 돌게 한다.
 tzdata
 
+# 웹 푸시 발송(VAPID 서명 + 페이로드 암호화). ingest의 push lane만 쓴다.
+pywebpush>=2.0
+
 numpy>=1.24
 statsmodels>=0.14

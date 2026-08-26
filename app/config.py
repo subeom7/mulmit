@@ -220,6 +220,23 @@ NAVER_DATALAB_ANCHOR = os.environ.get("NAVER_DATALAB_ANCHOR", "005930").strip().
 
 COINALYZE_ENABLED = _bool("COINALYZE_ENABLED", False)
 COINALYZE_API_KEY = os.environ.get("COINALYZE_API_KEY", "").strip()
+
+# --- 웹 푸시 (PWA 알림, DIRECTION.md Phase 0의 리텐션 훅) -----------------------
+# 게이트는 web(구독 API·공개키 서빙)과 ingest(발송) 양쪽에서 같은 값이어야 한다.
+# VAPID 개인키는 발송에만 쓰이므로 **ingest에만** 준다(CMC·Coinalyze 키와 같은
+# 규칙). 공개키는 브라우저 구독에 필요해서 web에도 준다 — 이름 그대로 비밀이
+# 아니다. 키 쌍 생성: `vapid --gen`(py-vapid) 후 applicationServerKey를 공개키로.
+WEB_PUSH_ENABLED = _bool("WEB_PUSH_ENABLED", False)
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "").strip()
+VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "").strip()
+# RFC 8292 §2.1의 sub 클레임 — 푸시 서비스가 문제 시 연락할 곳.
+VAPID_SUBJECT = os.environ.get("VAPID_SUBJECT", "https://mulmit.com").strip()
+# 김프 알림 임계값(%p, 양쪽 대칭)과 회복 히스테리시스 — signal_feed의 지수 급변
+# lane과 같은 이유(선 위 진동이 같은 알림을 반복 생성하는 것을 막는다).
+PUSH_KIMCHI_THRESHOLD = _float("PUSH_KIMCHI_THRESHOLD", 3.0)
+PUSH_KIMCHI_REARM = _float("PUSH_KIMCHI_REARM", 0.5)
+# 푸시 서비스에 주는 TTL(초) — 한 시간 지난 김프 알림은 배달할 가치가 없다.
+PUSH_TTL = _int("PUSH_TTL", 60 * 60)
 CHAIN_RPC_ETHEREUM_URL = os.environ.get("CHAIN_RPC_ETHEREUM_URL", "").strip()
 CHAIN_RPC_BASE_URL = os.environ.get("CHAIN_RPC_BASE_URL", "").strip()
 CHAIN_RPC_ARBITRUM_URL = os.environ.get("CHAIN_RPC_ARBITRUM_URL", "").strip()

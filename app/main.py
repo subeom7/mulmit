@@ -61,6 +61,7 @@ from . import (
     us_managers,
     us_overnight,
     us_ptr,
+    web_push,
     weekend_page,
 )
 from .data import DataUnavailable, RateLimited
@@ -778,6 +779,81 @@ def pageview_beacon(request: Request, response: Response, payload: dict) -> dict
         if host and not host.endswith("mulmit.com"):
             referrer_host = host
     store.record_pageview(path, referrer_host, client_id)
+    response.headers["Cache-Control"] = "no-store"
+    return {"ok": True}
+
+
+# --- 웹 푸시 구독 ------------------------------------------------------------
+#
+# 구독의 실체는 브라우저가 만든 endpoint URL이다 — 개인정보가 아니며, 사용자가
+# 브라우저에서 알림을 끄는 순간 죽는다. 발송은 ingest의 push lane이 한다.
+
+_PUSH_ENDPOINT_MAX = 1024  # push_subscriptions.endpoint 열 길이와 같아야 한다
+
+
+def _require_web_push() -> None:
+    if not web_push.enabled():
+        raise HTTPException(status_code=503, detail="웹 푸시가 비활성화되어 있습니다")
+
+
+@app.get("/api/push/config")
+@limiter.limit(config.RATE_LIMIT)
+def push_config(request: Request, response: Response) -> dict:
+    """구독 UI가 그릴 것 — 켜짐 여부, 브라우저 구독에 줄 공개키, 주제별 기준.
+
+    꺼져 있어도 200으로 답한다: 화면은 이걸 보고 버튼을 숨길 뿐, 오류가 아니다.
+    """
+    response.headers["Cache-Control"] = "public, max-age=300"
+    if not web_push.enabled() or not config.VAPID_PUBLIC_KEY:
+        return {"enabled": False}
+    return {
+        "enabled": True,
+        "vapid_public_key": config.VAPID_PUBLIC_KEY,
+        "topics": {
+            web_push.TOPIC_KIMCHI: {
+                "threshold_percent": config.PUSH_KIMCHI_THRESHOLD,
+                "label_ko": "BTC 김치프리미엄(USDT 기준)이 기준선을 넘는 순간",
+            }
+        },
+    }
+
+
+@app.post("/api/push/subscribe")
+@limiter.limit(config.RATE_LIMIT)
+def push_subscribe(request: Request, response: Response, payload: dict) -> dict:
+    _require_web_push()
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=422, detail="invalid payload")
+    endpoint = str(payload.get("endpoint") or "")
+    keys = payload.get("keys") if isinstance(payload.get("keys"), dict) else {}
+    p256dh = str(keys.get("p256dh") or "")
+    auth = str(keys.get("auth") or "")
+    raw_topics = payload.get("topics")
+    topics = [str(topic) for topic in raw_topics] if isinstance(raw_topics, list) else []
+    topics = [topic for topic in topics if topic in web_push.TOPICS]
+
+    # endpoint는 푸시 서비스가 준 https URL이어야 하고, 열 길이를 넘으면
+    # Postgres가 자르지 않고 거절한다 — 여기서 먼저 거른다.
+    if not endpoint.startswith("https://") or len(endpoint) > _PUSH_ENDPOINT_MAX:
+        raise HTTPException(status_code=422, detail="invalid endpoint")
+    if not p256dh or not auth or len(p256dh) > 256 or len(auth) > 64:
+        raise HTTPException(status_code=422, detail="invalid keys")
+    if not topics:
+        raise HTTPException(status_code=422, detail="no known topics")
+
+    store.save_push_subscription(endpoint, p256dh, auth, topics)
+    response.headers["Cache-Control"] = "no-store"
+    return {"ok": True, "topics": sorted(set(topics))}
+
+
+@app.post("/api/push/unsubscribe")
+@limiter.limit(config.RATE_LIMIT)
+def push_unsubscribe(request: Request, response: Response, payload: dict) -> dict:
+    """구독 해제. 이미 없어도 ok — 브라우저 쪽이 먼저 지웠을 수 있다."""
+    _require_web_push()
+    endpoint = str(payload.get("endpoint") or "") if isinstance(payload, dict) else ""
+    if endpoint:
+        store.delete_push_subscription(endpoint)
     response.headers["Cache-Control"] = "no-store"
     return {"ok": True}
 

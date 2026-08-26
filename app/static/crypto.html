@@ -24,7 +24,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#0a0c0f">
-  <script src="/static/pwa.js?v=94df418694" defer></script>
+  <script src="/static/pwa.js?v=6a43f0b1e9" defer></script>
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
   <link rel="stylesheet" href="/static/monitor.css?v=a8c69e8f6a">
   <link rel="stylesheet" href="/static/tokens.css?v=f611cb4ae7">
@@ -133,6 +133,10 @@
       <header>
         <h2 id="ckim-title" data-i18n="crypto.kimchi.title">김치프리미엄 · 원화 시세</h2>
         <span class="sec-note" data-i18n="cryptopage.kimchiNote">국내가 해외보다 얼마나 비싼가</span>
+        <!-- 푸시 토글. pwa.js가 지원·서버 게이트를 확인한 뒤에만 보여 준다.
+             iOS는 홈 화면에 설치한 경우에만 푸시가 가능해 Safari 탭에서는
+             영영 숨겨진 채 남는다 — 그게 맞는 동작이다. -->
+        <button class="icon-button" id="kimchi-alert-toggle" type="button" hidden>🔔 알림 받기</button>
       </header>
       <p class="section-copy" data-i18n="crypto.kimchi.copy">업비트 원화 최근 체결가를 Hyperliquid 오라클 참고가와 비교합니다. 헤드라인 프리미엄은 업비트 KRW-USDT로 나눠 환율을 소거한 'USDT 기준'이고, 공식환율 기준은 한국은행 일별 고시값(날짜 표시)입니다. 호가·수수료·출금 조건은 반영하지 않습니다.</p>
       <p class="easy-only term-hints">

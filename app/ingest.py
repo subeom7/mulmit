@@ -45,6 +45,7 @@ from . import (
     us_fundamentals,
     us_managers,
     us_ptr,
+    web_push,
 )
 from .market_assets import ASSET_TICKERS, CORRELATION_TICKERS
 from .providers import DataUnavailable, RateLimited, get_provider
@@ -1017,6 +1018,18 @@ def refresh_crypto_sentiment(*, force: bool = False) -> dict:
         return {"failed": str(exc)}
 
 
+def refresh_push_alerts(*, force: bool = False) -> dict:
+    """웹 푸시 임계값 알림(첫 주제: 김프). 구독자가 없으면 네트워크 호출 0회."""
+    try:
+        result = web_push.refresh_kimchi_alert()
+        if not result.get("skipped"):
+            log.info("푸시 알림 평가: %s", result)
+        return result
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("푸시 알림 lane 실패: %s", exc)
+        return {"failed": str(exc)}
+
+
 def refresh_bio_trials(*, force: bool = False) -> dict:
     """ClinicalTrials.gov 워치리스트(주 스폰서별 1회, 0.6초 간격) — 6시간 주기. 실패가 나머지 수집을 막지 않는다."""
     try:
@@ -1361,6 +1374,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_crypto_stablecoins()
             refresh_crypto_liquidations()
             refresh_crypto_coin_heat()
+            refresh_push_alerts()
             refresh_bio_trials()
             refresh_bio_fda()
             refresh_bio_pubmed()
@@ -1422,6 +1436,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_crypto_stablecoins()
             refresh_crypto_liquidations()
             refresh_crypto_coin_heat()
+            refresh_push_alerts()
             refresh_bio_trials()
             refresh_bio_fda()
             refresh_bio_pubmed()
@@ -1516,6 +1531,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         refresh_crypto_stablecoins()
         refresh_crypto_liquidations()
         refresh_crypto_coin_heat()
+        refresh_push_alerts()
         refresh_bio_trials()
         refresh_bio_fda()
         refresh_bio_pubmed()
