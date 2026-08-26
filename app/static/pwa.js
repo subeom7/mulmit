@@ -1,7 +1,8 @@
-/* PWA 부트스트랩 — 서비스 워커 등록과 푸시 구독 토글.
+/* PWA 부트스트랩 — 서비스 워커 등록, 푸시 구독 토글, 설치 유도.
  *
- * 설치 유도 UI(beforeinstallprompt)는 후속 단계에서 이 파일에 얹는다 —
- * 페이지마다 인라인으로 흩어 두면 한쪽만 고치는 사고가 난다.
+ * 전부 이 파일에 산다 — 페이지마다 인라인으로 흩어 두면 한쪽만 고치는
+ * 사고가 난다. 어느 페이지에나 실리므로 특정 페이지의 마크업·스타일시트에
+ * 기대지 않는다(배너는 인라인 스타일로 자기 완결).
  *
  * register("/sw.js")의 URL에는 ?v= 를 붙이지 않는다. 워커 URL은 브라우저가
  * 워커의 정체성으로 쓰는 키라서, URL이 바뀌면 갱신이 아니라 딴 워커가 된다.
@@ -147,9 +148,175 @@
       });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setupKimchiToggle);
-  } else {
-    setupKimchiToggle();
+  // --- 설치 유도 --------------------------------------------------------------
+  //
+  // 크롬의 beforeinstallprompt는 기본 인포바의 타이밍이 우리 손 밖이라 잡아
+  // 둔다(preventDefault). iOS에는 그 이벤트 자체가 없어서, 설치 안 된 iOS
+  // 브라우저에는 "공유 → 홈 화면에 추가" 안내를 보여 준다 — iOS 푸시는 홈
+  // 화면 설치본만 받을 수 있으니 이 배너가 알림의 관문이기도 하다.
+  //
+  // 조용함의 규칙: standalone으로 열렸거나 설치된 적이 있으면 영영 안 보이고,
+  // 방문 첫 페이지에서는 안 보이며(둘째 페이지뷰부터), 닫으면 30일 쉰다.
+  // localStorage는 실패할 수 있으니(시크릿 창 등) 전부 try로 감싼다 — 그때
+  // 배너는 다시 후보가 될 뿐이고 닫기 자체는 그 자리에서 여전히 동작한다.
+
+  var SNOOZE_KEY = "mulmit-install-snooze";
+  var VISITED_KEY = "mulmit-visited";
+  var INSTALLED_KEY = "mulmit-installed";
+  var SNOOZE_MS = 30 * 24 * 60 * 60 * 1000;
+
+  function storageGet(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      return null;
+    }
   }
+  function storageSet(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      // 저장 못 하면 규칙이 조금 후해질 뿐, 동작은 그대로다.
+    }
+  }
+
+  var firstVisit = !storageGet(VISITED_KEY);
+  storageSet(VISITED_KEY, "1");
+
+  function isStandalone() {
+    return (
+      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+      window.navigator.standalone === true
+    );
+  }
+  function isIos() {
+    return (
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      // iPadOS 사파리는 데스크톱 UA를 쓴다 — 터치 지원으로 가른다.
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+    );
+  }
+  function bannerAllowed() {
+    if (isStandalone() || firstVisit) return false;
+    if (storageGet(INSTALLED_KEY)) return false;
+    return Date.now() >= Number(storageGet(SNOOZE_KEY) || 0);
+  }
+
+  var banner = null;
+  function hideBanner() {
+    if (banner && banner.parentNode) banner.parentNode.removeChild(banner);
+    banner = null;
+  }
+  function snoozeBanner() {
+    storageSet(SNOOZE_KEY, String(Date.now() + SNOOZE_MS));
+    hideBanner();
+  }
+
+  function showBanner(bodyText, actionLabel, onAction) {
+    if (banner) return;
+    banner = document.createElement("div");
+    banner.setAttribute("role", "dialog");
+    banner.setAttribute("aria-label", "앱 설치 안내");
+    banner.style.cssText =
+      "position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:9999;" +
+      "box-sizing:border-box;width:calc(100% - 24px);max-width:420px;" +
+      "display:flex;align-items:center;gap:12px;padding:12px 14px;" +
+      "background:#10151b;color:#f3f6f8;border:1px solid #2a3138;border-radius:12px;" +
+      "box-shadow:0 8px 28px rgba(0,0,0,.45);font-size:14px;line-height:1.5;";
+
+    var mark = document.createElement("img");
+    mark.src = "/static/brand/mulmit-favicon.svg";
+    mark.alt = "";
+    mark.width = 34;
+    mark.height = 34;
+    mark.style.cssText = "flex:none;border-radius:8px;";
+
+    var text = document.createElement("div");
+    text.style.cssText = "flex:1;min-width:0;";
+    var title = document.createElement("strong");
+    title.textContent = "물밑을 앱처럼";
+    var body = document.createElement("span");
+    body.textContent = bodyText;
+    text.append(title, document.createElement("br"), body);
+
+    banner.append(mark, text);
+
+    if (actionLabel) {
+      var action = document.createElement("button");
+      action.type = "button";
+      action.textContent = actionLabel;
+      action.style.cssText =
+        "flex:none;font:inherit;font-weight:600;color:#0a0c0f;background:#42a5ff;" +
+        "border:0;border-radius:8px;padding:8px 14px;cursor:pointer;";
+      action.addEventListener("click", onAction);
+      banner.append(action);
+    }
+
+    var close = document.createElement("button");
+    close.type = "button";
+    close.setAttribute("aria-label", "닫기");
+    close.textContent = "✕";
+    close.style.cssText =
+      "flex:none;font:inherit;color:#9aa7b2;background:none;border:0;padding:4px;cursor:pointer;";
+    close.addEventListener("click", snoozeBanner);
+    banner.append(close);
+
+    document.body.append(banner);
+  }
+
+  var deferredInstall = null;
+
+  window.addEventListener("beforeinstallprompt", function (event) {
+    event.preventDefault();
+    deferredInstall = event;
+    if (!bannerAllowed()) return;
+    whenReady(function () {
+      window.setTimeout(function () {
+        // 2.5초 사이에 상황이 바뀌었을 수 있다 — 설치가 끝났거나 닫았거나.
+        if (!deferredInstall || !bannerAllowed()) return;
+        showBanner("설치하면 전체화면 앱으로 바로 열립니다.", "설치", function () {
+          var prompt = deferredInstall;
+          deferredInstall = null;
+          if (!prompt) {
+            hideBanner();
+            return;
+          }
+          prompt.prompt();
+          prompt.userChoice.then(function (choice) {
+            if (choice && choice.outcome === "accepted") storageSet(INSTALLED_KEY, "1");
+            else storageSet(SNOOZE_KEY, String(Date.now() + SNOOZE_MS));
+            hideBanner();
+          });
+        });
+      }, 2500);
+    });
+  });
+
+  window.addEventListener("appinstalled", function () {
+    storageSet(INSTALLED_KEY, "1");
+    hideBanner();
+  });
+
+  function setupIosHint() {
+    if (!isIos() || !bannerAllowed()) return;
+    window.setTimeout(function () {
+      if (!bannerAllowed()) return;
+      showBanner(
+        "공유 버튼(↑)을 누르고 '홈 화면에 추가'를 선택하면 앱처럼 열리고 알림도 받을 수 있습니다.",
+        null,
+        null
+      );
+    }, 2500);
+  }
+
+  function whenReady(callback) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", callback);
+    } else {
+      callback();
+    }
+  }
+
+  whenReady(setupKimchiToggle);
+  whenReady(setupIosHint);
 })();
