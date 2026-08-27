@@ -24,11 +24,11 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#0a0c0f">
-  <script src="/static/pwa.js?v=f7ade9a01f" defer></script>
+  <script src="/static/pwa.js?v=bf1d55fdf9" defer></script>
   <link rel="stylesheet" href="/static/fonts/pretendard/PretendardVariable-dynamic-subset.css">
   <link rel="stylesheet" href="/static/monitor.css?v=0a2b7df756">
   <link rel="stylesheet" href="/static/tokens.css?v=f611cb4ae7">
-  <link rel="stylesheet" href="/static/console.css?v=c7be3ccf38">
+  <link rel="stylesheet" href="/static/console.css?v=2cb4d117c9">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to market data</a>
@@ -59,7 +59,10 @@
   </div>
 
   <main id="main" class="shell">
-    <div class="console-head">
+    <!-- head-collapse-mobile: 폰에서는 h1 블록을 접는다(운영자 결정 2026-08-27).
+         첫 섹션이 자기 h2를 갖고 있어 제목이 두 번 쌓이기 때문 — 섹션 h2가
+         없는 /us·/bio는 접지 않는다. -->
+    <div class="console-head head-collapse-mobile">
       <div>
         <h1><span data-i18n="krpage.h1">한국 시장</span> <span class="console-h1-sub" data-i18n="krpage.scope">장 밖의 값 · 공시 · 지수</span></h1>
         <p class="console-sub" data-i18n="krpage.sub">한국장이 닫혀 있어도 주요 종목은 해외 시장에서 24시간 거래됩니다. 그 가격을 원화로 환산해 마지막 종가와 비교하고, 그 사이 쌓인 공시를 함께 봅니다.</p>

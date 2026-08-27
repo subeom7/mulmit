@@ -1383,4 +1383,8 @@ html[data-lang="en"] .lang-en { display: revert; }
   }
   .console-head { padding-bottom: var(--sp-2); margin-bottom: var(--sp-3); }
   .console-section { margin-top: var(--sp-5); }
+  /* 첫 섹션이 자기 h2를 갖는 페이지(/kr·/crypto)는 폰에서 h1 블록을 접는다 —
+     활성 탭이 이미 위치를 말하고 있어 제목이 두 번 쌓였다(운영자 결정
+     2026-08-27). 갱신·새로고침 줄(console-meta)은 남긴다. */
+  .console-head.head-collapse-mobile > div:first-child { display: none; }
 }
