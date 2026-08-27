@@ -428,6 +428,33 @@ kr_score_checkpoints = sa.Table(
     sa.Column("scored_at", sa.Float, nullable=False),
 )
 
+# 식약처 허가 이벤트 — "허가 그 후" 주가 추적의 원장. kr_score_events와 같은
+# 원칙(축적·기준가 동결)이고, 체크포인트는 kr_score_checkpoints를 **공유한다**
+# (event_id가 rcept_no 자리에 들어간다 — "mfds:{item_seq}"라 공시번호와 충돌하지
+# 않고, 5% 집계는 kr_score_events와 조인하므로 bio 행이 섞이지 않는다).
+bio_events = sa.Table(
+    "bio_events",
+    metadata,
+    sa.Column("event_id", sa.String(20), primary_key=True),  # "mfds:{item_seq}"
+    sa.Column("source", sa.String(8), nullable=False),
+    sa.Column("stock_code", sa.String(12), nullable=False),
+    sa.Column("market", sa.String(2)),  # Y 유가증권 · K 코스닥 · N 코넥스
+    sa.Column("company", sa.String(256), nullable=False),
+    sa.Column("title", sa.String(512)),
+    sa.Column("event_date", sa.Date, nullable=False),
+    sa.Column("permit_kind", sa.String(16)),
+    sa.Column("rx", sa.Boolean, nullable=False, server_default=sa.false()),
+    sa.Column("newdrug_class", sa.String(64)),
+    sa.Column("rare", sa.Boolean, nullable=False, server_default=sa.false()),
+    sa.Column("url", sa.String(512)),
+    sa.Column("base_status", sa.String(16), nullable=False, server_default="pending"),
+    sa.Column("base_date", sa.Date),
+    sa.Column("base_close", sa.Float),
+    sa.Column("base_halted", sa.Boolean, nullable=False, server_default=sa.false()),
+    sa.Column("created_at", sa.Float, nullable=False),
+    sa.Index("ix_bio_events_date", "event_date"),
+)
+
 _engine: sa.Engine | None = None
 _engine_lock = threading.Lock()
 
@@ -2180,3 +2207,90 @@ def score_checkpoint_aggregates(min_samples: int = 5) -> list[dict[str, Any]]:
             ),
         })
     return out
+
+
+# --- 식약처 허가 이벤트 -------------------------------------------------------
+
+
+def kr_listing_names() -> list[dict[str, Any]]:
+    """이름 매칭용 로스터 — (코드, 종목명, 시장) 전부."""
+    with engine().connect() as conn:
+        return [
+            {"code": row.srtn_cd, "name": row.itms_nm, "market": row.mrkt_ctg}
+            for row in conn.execute(
+                sa.select(kr_listings.c.srtn_cd, kr_listings.c.itms_nm, kr_listings.c.mrkt_ctg)
+            )
+        ]
+
+
+def save_bio_events(rows: list[dict[str, Any]]) -> int:
+    """허가 이벤트를 쌓는다. 채점 상태(base_*)는 재수집이 덮지 못한다."""
+    if not rows:
+        return 0
+    now = time.time()
+    prepared = [{"created_at": now, **row} for row in rows]
+    update_cols = ["company", "title", "permit_kind", "newdrug_class", "rare", "url"]
+    with engine().begin() as conn:
+        for start in range(0, len(prepared), 500):
+            conn.execute(_upsert(bio_events, prepared[start : start + 500], update_cols))
+    return len(prepared)
+
+
+def bio_events_pending_base(limit: int, *, before: dt.date) -> list[dict[str, Any]]:
+    stmt = (
+        sa.select(bio_events)
+        .where(
+            (bio_events.c.base_status == "pending")
+            & (bio_events.c.event_date <= before)
+        )
+        .order_by(bio_events.c.event_date.asc())
+        .limit(limit)
+    )
+    with engine().connect() as conn:
+        return [dict(row._mapping) for row in conn.execute(stmt)]
+
+
+def set_bio_event_base(
+    event_id: str,
+    *,
+    status: str,
+    base_date: dt.date | None = None,
+    base_close: float | None = None,
+    base_halted: bool = False,
+) -> None:
+    with engine().begin() as conn:
+        conn.execute(
+            sa.update(bio_events)
+            .where(bio_events.c.event_id == event_id)
+            .values(
+                base_status=status,
+                base_date=base_date,
+                base_close=base_close,
+                base_halted=base_halted,
+            )
+        )
+
+
+def load_bio_events(limit: int) -> list[dict[str, Any]]:
+    """보드 조립용 — 체크포인트는 공유 표(kr_score_checkpoints)에서 붙인다."""
+    stmt = (
+        sa.select(bio_events)
+        .order_by(bio_events.c.event_date.desc(), bio_events.c.event_id.desc())
+        .limit(limit)
+    )
+    with engine().connect() as conn:
+        events = [dict(row._mapping) for row in conn.execute(stmt)]
+        ids = [event["event_id"] for event in events]
+        checkpoints: dict[str, list[dict[str, Any]]] = {}
+        if ids:
+            for row in conn.execute(
+                sa.select(kr_score_checkpoints).where(
+                    kr_score_checkpoints.c.rcept_no.in_(ids)
+                )
+            ):
+                checkpoints.setdefault(row.rcept_no, []).append(dict(row._mapping))
+    for event in events:
+        event["checkpoints"] = sorted(
+            checkpoints.get(event["event_id"], []), key=lambda c: c["horizon"]
+        )
+    return events

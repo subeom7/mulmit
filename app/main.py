@@ -24,6 +24,7 @@ from slowapi.util import get_remote_address
 from . import (
     __version__,
     bio,
+    bio_events,
     config,
     covered_pages,
     crypto_board,
@@ -1142,6 +1143,27 @@ def bio_mfds_route(request: Request, response: Response) -> dict:
         ) from exc
     response.headers["Cache-Control"] = "public, max-age=600, stale-while-revalidate=3600"
     response.headers["X-Data-Source"] = "MFDS (data.go.kr)"
+    return payload
+
+
+@app.get("/api/bio/outcomes")
+@limiter.limit(config.RATE_LIMIT)
+def bio_outcomes_route(request: Request, response: Response) -> dict:
+    """식약처 허가 그 후 — 배치가 채점해 저장한 보드만 읽는다."""
+    require_bio_section()
+    try:
+        payload = bio_events.get_board()
+    except bio_events.BioEventsUnavailable as exc:
+        detail = (
+            data_rights.BIO_OUTCOMES_DISABLED
+            if exc.reason == "disabled"
+            else data_rights.BIO_OUTCOMES_COLLECTING
+        )
+        raise HTTPException(
+            status_code=503, detail=detail, headers=dict(data_rights.NO_STORE_HEADERS)
+        ) from exc
+    response.headers["Cache-Control"] = "public, max-age=600, stale-while-revalidate=3600"
+    response.headers["X-Data-Source"] = "MFDS (data.go.kr) / FSC data.go.kr"
     return payload
 
 

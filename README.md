@@ -425,6 +425,7 @@ PR 전에 `ruff`와 `pytest`를 로컬에서 돌린다. 게이트 값은 이미�
 | `GET /api/kr/fundamentals/{code}` | DART 주요계정 재무제표·비율 |
 | `GET /api/kr/insider/{code}` | 임원·주요주주 소유상황 보고 |
 | `GET /api/kr/holdings` | 대량보유(5%) 보고 |
+| `GET /api/bio/outcomes` | 식약처 허가 그 후 — 상장사 이름 매칭 허가 이벤트의 주가 자동 채점(기준가 동결·지수 대비) |
 | `GET /api/kr/score` | 대량보유(5%) 공시 스코어보드 — 공시 이후 주가 자동 채점(기준가 동결·지수 대비, `/score` 페이지) |
 | `GET /api/kr/pension` | 국민연금 대량보유 공시 |
 | `GET /api/kr/pension-portfolio` | 국민연금 국내주식 포트폴리오(연말 스냅샷, 저장소 내 파일) |

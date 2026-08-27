@@ -24,6 +24,7 @@ import time
 
 from . import (
     bio,
+    bio_events,
     config,
     crypto_liquidations,
     crypto_market,
@@ -1119,6 +1120,31 @@ def refresh_bio_mfds(*, force: bool = False) -> dict:
         return {"skipped": "error", "error": str(exc)}
 
 
+def refresh_bio_events(*, force: bool = False) -> dict:
+    """허가 이벤트 채점 보드 — mfds blob(원천)과 FSC 가격의 합성 lane.
+
+    수집은 저장된 blob만 읽으므로 추가 원천 호출이 없고, 채점만 FSC를 쓴다
+    (주기당 최대 BIO_EVENTS_SCORE_PER_RUN×2회). 게이트는 lane 안에서 묻는다.
+    """
+    if not force:
+        board = store.load_report(bio_events.CACHE_KEY, config.BIO_EVENTS_MAX_AGE)
+        # 모양이 다르면 신선해도 다시 걷는다 — 배치 blob 사고의 재발 방지 규칙.
+        if board is not None and board.get("schema") == bio_events.SCHEMA:
+            return {"skipped": "fresh"}
+    try:
+        result = bio_events.refresh()
+        log.info("허가 이벤트 보드 갱신: %s", result)
+        return result
+    except bio_events.BioEventsUnavailable as exc:
+        return {"skipped": exc.reason}
+    except RateLimited:
+        log.warning("허용량 — 허가 이벤트 보드는 다음 주기에 재시도")
+        return {"skipped": "rate_limited"}
+    except Exception as exc:  # noqa: BLE001 - 이 lane 실패가 나머지 수집을 막지 않는다
+        log.warning("허가 이벤트 보드 갱신 실패: %s", exc)
+        return {"failed": str(exc)}
+
+
 def refresh_bio_fda(*, force: bool = False) -> dict:
     """openFDA 원 신청 승인(최근 60일) — 하루 주기, 1~5회 호출."""
     try:
@@ -1410,6 +1436,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_bio_pubmed()
             refresh_bio_adcomm()
             refresh_bio_mfds()
+            refresh_bio_events()
         purged = store.purge_reports(config.REPORT_TTL * 2)
         result = {
             "skipped": "legacy_price_data_disabled",
@@ -1473,6 +1500,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
             refresh_bio_pubmed()
             refresh_bio_adcomm()
             refresh_bio_mfds()
+            refresh_bio_events()
             log.info("백오프 중 — %.0f분 후 재개", waiting / 60)
             return {
                 "skipped": "backoff",
@@ -1569,6 +1597,7 @@ def run_once(tickers: list[str] | None = None) -> dict:
         refresh_bio_pubmed()
         refresh_bio_adcomm()
         refresh_bio_mfds()
+        refresh_bio_events()
 
     purged = store.purge_reports(config.REPORT_TTL * 2)
     result["purged_reports"] = purged

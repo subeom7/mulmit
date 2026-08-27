@@ -118,6 +118,21 @@
         </div>
       </section>
 
+      <section class="console-section" id="bio-outcomes" aria-labelledby="bioo-title">
+        <header>
+          <h2 id="bioo-title" data-i18n="bio.outcomes.title">허가 그 후 — 주가 추적</h2>
+          <span class="sec-note">MFDS × FSC · 자동 채점</span>
+        </header>
+        <p class="section-copy" data-i18n="bio.outcomes.copy">식약처 품목허가 중 업체명이 국내 상장사와 정확히·유일하게 일치하는 것만 종목에 연결해, 허가일 이후 첫 거래일 종가를 동결하고 1·3·6개월 뒤를 지수 대비로 자동 채점합니다. 허가는 매출을 보장하지 않으며, 기록·통계일 뿐 투자 추천이 아닙니다.</p>
+        <div id="bioo-state" class="state-block panel" role="status" data-i18n="status.loading">불러오는 중</div>
+        <div class="panel" id="bioo-panel" hidden>
+          <div class="table-scroll">
+            <table id="bioo-table" class="accessible-table crypto-table bio-table"><caption data-i18n="bio.outcomes.caption">허가 이후 주가 추적 (이름 매칭 상장사)</caption><thead></thead><tbody></tbody></table>
+          </div>
+          <footer class="panel-footer" id="bioo-footer" hidden></footer>
+        </div>
+      </section>
+
       <section class="console-section" id="bio-trials-kr" aria-labelledby="biotkr-title">
         <header>
           <h2 id="biotkr-title" data-i18n="bio.trials.krTitle">국내 스폰서 임상</h2>
@@ -229,7 +244,7 @@
   </template>
   <script>window.MULMIT_PAGE = "bio";</script>
   <script src="/static/console.js?v=fafc741bcd" defer></script>
-  <script src="/static/monitor.js?v=91e0e435d2" defer></script>
+  <script src="/static/monitor.js?v=e4ce659bf0" defer></script>
   <script src="/static/search.js?v=e2093e0d4d" defer></script>
 </body>
 </html>
