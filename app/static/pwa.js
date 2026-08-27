@@ -314,13 +314,27 @@
     hideBanner();
   });
 
-  function setupIosHint() {
-    if (!isIos() || !bannerAllowed()) return;
+  function isInAppBrowser() {
+    // 인앱 브라우저(카카오톡·네이버앱·인스타·페북·라인, 일반 WebView)는 홈
+    // 화면 설치 경로 자체가 없다 — 안내해 봐야 찾을 수 없는 메뉴를 찾게 한다.
+    return /\bwv\b|KAKAOTALK|NAVER\(inapp|Instagram|FBAV|FBAN|Line\//i.test(navigator.userAgent);
+  }
+
+  function setupManualInstallHint() {
+    // beforeinstallprompt를 아는 브라우저(크롬·삼성인터넷·웨일)는 위의 이벤트
+    // 경로가 담당한다. 이벤트가 아예 없는 브라우저 — iOS 전부, 안드로이드
+    // 파이어폭스(운영자 실측 2026-08-27: 배너가 영영 안 떴다) — 에는 코드로
+    // 프롬프트를 띄울 방법이 없으므로 수동 경로를 안내한다.
+    if ("onbeforeinstallprompt" in window) return;
+    if (isInAppBrowser() || !bannerAllowed()) return;
     window.setTimeout(function () {
       if (!bannerAllowed()) return;
       showBanner(
-        t("공유 버튼(↑)을 누르고 '홈 화면에 추가'를 선택하면 앱처럼 열리고 알림도 받을 수 있습니다.",
-          "Tap Share (↑) and choose 'Add to Home Screen' — it opens like an app and can receive alerts."),
+        isIos()
+          ? t("공유 버튼(↑)을 누르고 '홈 화면에 추가'를 선택하면 앱처럼 열리고 알림도 받을 수 있습니다.",
+              "Tap Share (↑) and choose 'Add to Home Screen' — it opens like an app and can receive alerts.")
+          : t("브라우저 메뉴(⋮)에서 '홈 화면에 추가' 또는 '설치'를 누르면 앱처럼 쓸 수 있습니다.",
+              "Open the browser menu (⋮) and choose 'Add to Home screen' or 'Install' to use it like an app."),
         null,
         null
       );
@@ -336,5 +350,5 @@
   }
 
   whenReady(setupKimchiToggle);
-  whenReady(setupIosHint);
+  whenReady(setupManualInstallHint);
 })();
