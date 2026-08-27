@@ -130,11 +130,24 @@ def _as_date(value: Any) -> dt.date | None:
         return None
 
 
+#: 신규 진입을 뜻하는 사유 문구들. "신규" 한 단어로는 "5% 이상 보유에 따른
+#: 공시의무 발생"(원장 실측 40건+)을 놓친다 — 신규 키워드 없이 신규를 말하는
+#: 표현이다. 반대로 "원장 최초 등장" 규칙은 기각했다: 후보 2,515건의 사유
+#: 상위가 "단순추가취득/처분"(기존 보유자의 변동)이라, 원장 깊이가 유한한 한
+#: 2024-09 이전부터 보유하던 보고자가 '첫 등장'으로 위장한다(2026-08-27 프로브).
+NEW_ENTRY_PATTERNS = (
+    "신규",
+    "보유에 따른 공시의무 발생",
+    "보유에 따른 보고의무 발생",
+)
+
+
 def _looks_new(report_type: str | None, reason: str | None) -> bool:
     """신규 진입 판별. report_tp가 '신규'로 오기도 하고, 실측에서는
     report_resn 자유 텍스트("매매로 인한 신규보고의무 발생…")에만 있기도 했다
     — 둘 다 본다(PLAN_SCORING §1)."""
-    return "신규" in str(report_type or "") or "신규" in str(reason or "")
+    text = f"{report_type or ''} {reason or ''}"
+    return any(pattern in text for pattern in NEW_ENTRY_PATTERNS)
 
 
 # --- 1) 수집: 공시검색 → 이벤트 원장 ----------------------------------------
