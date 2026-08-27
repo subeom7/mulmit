@@ -272,6 +272,20 @@ BIO_MFDS_COLLECTING = {
     ),
 }
 
+# 허가 이벤트 채점 보드는 mfds(원천)와 FSC(가격)의 합성이다 — 어느 한쪽이
+# 꺼져도 닫힌다. 새 권리는 없다(둘 다 기존 승인 lane).
+BIO_OUTCOMES_DISABLED = {
+    "code": "bio_outcomes_disabled",
+    "status": "disabled",
+    "message": "The permit-outcome board needs both the MFDS and FSC lanes enabled.",
+}
+
+BIO_OUTCOMES_COLLECTING = {
+    "code": "bio_outcomes_collecting",
+    "status": "collecting",
+    "message": "The permit-outcome board has not stored its first pass yet; values appear after the next ingest run.",
+}
+
 CHAIN_GAS_DISABLED = {
     "code": "chain_gas_disabled",
     "status": "disabled",
