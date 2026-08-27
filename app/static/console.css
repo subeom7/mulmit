@@ -649,6 +649,16 @@ html[data-mode="easy"] #kr-overnight .kro-footer .kro-method { display: none; }
  * 읽힌다 — 그날의 움직임이 아니라 고점에서의 거리다. 조용한 잉크로 둔다. */
 .kridx-table td.peak { color: var(--ink-3); }
 
+/* /score 카드의 인라인 배지 — 클래스만 있고 규칙이 없어 일반 텍스트로
+   보이던 것(2026-08-27 라이브 실측). status-badge와 같은 토큰을 쓴다. */
+.score-new, .score-halted {
+  display: inline-block; padding: 1px 7px; margin-left: 4px;
+  border-radius: 999px; vertical-align: 1px;
+  font: 600 var(--fs-xs)/1.5 var(--sans); white-space: nowrap;
+}
+.score-new { color: var(--accent); background: var(--accent-soft); }
+.score-halted { color: var(--amber); background: color-mix(in srgb, var(--amber) 14%, transparent); }
+
 .risk-strip .status-badge {
   padding: 4px 10px;
   color: var(--ink-3); background: transparent; border-color: var(--line-strong);
