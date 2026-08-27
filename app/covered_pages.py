@@ -27,6 +27,30 @@ from typing import Any
 SITE = "https://mulmit.com"
 
 
+def is_covered(symbol: str, *, korean: bool) -> bool:
+    """사이트맵에 올릴 만한 페이지인가.
+
+    색인 판정(`noindex`)이 **같은 함수**를 쓴다. 두 곳이 따로 판단하면 어긋난다 —
+    사이트맵은 광고하는데 페이지는 색인을 막거나, 그 반대가 된다.
+
+    2026-08-27 실측: KRX 상장목록 2,875종목이 전부 200을 내는데 시세 시계열이
+    있는 것은 320개뿐이다. 나머지 2,555개가 구글 대기열의 89%를 차지하고 있었다
+    (Search Console: 발견 2,954 / 색인 5). 크롤 예산을 값 있는 페이지로 몰아준다.
+
+    404로 막지 않는 이유: 그 페이지들은 고장 난 것이 아니다. 종목은 실재하고
+    이름·시장 구분은 나온다. 값이 아직 없을 뿐이고, 수집되면 이 판정이 저절로
+    뒤집혀 사이트맵에 오르고 noindex가 빠진다.
+    """
+    from . import store
+
+    symbol = symbol.strip().upper()
+    if korean:
+        record = store.get_economic_series(f"kr_stock_{symbol}")
+        return bool(record and (record.get("observation_count") or 0) >= 2)
+    company = store.get_insider_company(symbol)
+    return bool(company and company.get("status") == "ok")
+
+
 def _kr() -> list[tuple[str, str]]:
     from . import store
 

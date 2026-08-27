@@ -568,6 +568,13 @@ def stock_hub(symbol: str) -> HTMLResponse:
         ("{{TITLE}}", title), ("{{DESCRIPTION}}", description),
     ):
         page = page.replace(key, _html.escape(value, quote=True))
+    # 값이 아직 없는 종목은 색인 대기열에서 뺀다. 사람에게는 그대로 보인다.
+    # 판정은 사이트맵과 **같은 함수**를 쓴다 — 따로 판단하면 어긋난다.
+    robots = (
+        "" if covered_pages.is_covered(symbol, korean=bool(korean))
+        else '  <meta name="robots" content="noindex,follow">'
+    )
+    page = page.replace("{{ROBOTS}}", robots)
     # 크롤러가 읽을 본문. 이미 이스케이프된 HTML이라 위 치환 뒤에 넣는다.
     page = page.replace("{{SSR}}", stock_page.render(symbol, korean=bool(korean)))
     return HTMLResponse(page, headers={"Cache-Control": "public, max-age=600"})
