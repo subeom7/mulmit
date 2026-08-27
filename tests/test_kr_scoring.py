@@ -167,6 +167,17 @@ def test_details_join_by_rcept_and_detect_new_entry(db, scoring_lane):
 # --- 기준가 ------------------------------------------------------------------
 
 
+def test_new_entry_detection_covers_phrases_without_the_keyword():
+    """프로브 실측(2026-08-27): "5% 이상 보유에 따른 공시의무 발생"은 신규인데
+    '신규' 키워드가 없다. 반면 '원장 최초 등장' 규칙은 기존 보유자의 위장
+    첫-등장 때문에 기각됐다 — 이 판별은 텍스트 규칙만 쓴다."""
+    assert kr_scoring._looks_new("신규", None) is True
+    assert kr_scoring._looks_new("일반", "매매로 인한 신규보고의무 발생") is True
+    assert kr_scoring._looks_new("일반", "5% 이상 보유에 따른 공시의무 발생") is True
+    assert kr_scoring._looks_new("일반", "단순추가취득/처분") is False
+    assert kr_scoring._looks_new("약식", "- 보유주식수 변동") is False
+
+
 def test_base_freezes_first_trading_close_after_filing(db, scoring_lane):
     dart = FakeDart(index_rows=[_index_row(rcept_dt="20260822")])  # 토요일
     kr_scoring.collect(dart, today=TODAY)
