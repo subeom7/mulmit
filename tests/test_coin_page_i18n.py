@@ -147,14 +147,17 @@ def test_the_server_title_stays_market_appropriate() -> None:
     assert "무기한선물" in main[start : start + 2200], "코인 제목이 한국어가 아니다"
 
 
-def test_the_pwa_banner_is_someone_elses_file() -> None:
-    """이 페이지에서 마지막까지 남은 한글 3개는 pwa.js의 설치 배너다.
+def test_the_pwa_banner_no_longer_leaks_korean_here() -> None:
+    """이 페이지에서 마지막까지 남았던 한글 3개는 pwa.js의 설치 배너였다.
 
     실측(2026-08-26): 영어 모드에서 "물밑을 앱처럼 · 설치하면 전체화면 앱으로
     바로 열립니다. · 설치"가 남았다. 그 배너는 **모든 페이지**에 뜨므로 여기서
-    고칠 일이 아니라 pwa.js 쪽에서 한 번에 고칠 일이다. 잊지 않도록 적어 둔다.
+    고칠 일이 아니라 pwa.js 쪽 일이었고, 2026-08-27에 그쪽을 이중언어로 만들었다.
+
+    이 단언은 그 결론이 되돌아가지 않는지만 본다. 자세한 규칙은
+    `tests/test_pwa_i18n.py`에 있다.
     """
     pwa = (STATIC / "pwa.js").read_text(encoding="utf-8")
-    assert re.search(r"[가-힣]", pwa), (
-        "pwa.js가 이중언어가 됐다면 이 테스트를 지우고 그 배너를 확인 목록에서 빼라"
+    assert "function t(ko, en)" in pwa, (
+        "pwa.js가 다시 한국어 고정이 되면 이 페이지의 영어 화면에도 한글이 돌아온다"
     )

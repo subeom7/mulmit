@@ -23,6 +23,14 @@
     return null;
   });
 
+  // 언어. 이 파일은 모든 페이지에 실리므로 스스로 판단해야 한다 —
+  // <html lang>은 페이지마다 세우는 주체가 다르고(대시보드는 monitor.js,
+  // 상세 페이지는 자기 <head> 부트) 이 스크립트가 그보다 먼저 돌 수도 있다.
+  // 그래서 저장된 값을 직접 읽는다. 열쇠는 사이트 전체가 같다.
+  var EN = false;
+  try { EN = localStorage.getItem("monitor.locale") === "en"; } catch (e) { /* 저장소 차단 */ }
+  function t(ko, en) { return EN ? en : ko; }
+
   var TOPIC = "kimchi";
 
   // applicationServerKey는 base64url 문자열이 아니라 바이트를 요구한다.
@@ -53,17 +61,17 @@
       button.hidden = false;
       button.disabled = state === "blocked";
       if (state === "on") {
-        button.textContent = "🔔 알림 켜짐 · 누르면 해제";
+        button.textContent = t("🔔 알림 켜짐 · 누르면 해제", "🔔 Alerts on · tap to turn off");
         button.setAttribute("aria-pressed", "true");
       } else if (state === "blocked") {
-        button.textContent = "🔕 브라우저에서 알림이 차단됨";
+        button.textContent = t("🔕 브라우저에서 알림이 차단됨", "🔕 Notifications blocked by the browser");
         button.setAttribute("aria-pressed", "false");
       } else {
         var threshold =
           serverConfig && serverConfig.topics && serverConfig.topics[TOPIC]
             ? serverConfig.topics[TOPIC].threshold_percent
             : 3;
-        button.textContent = "🔔 ±" + threshold + "% 넘으면 알림 받기";
+        button.textContent = t("🔔 ±" + threshold + "% 넘으면 알림 받기", "🔔 Alert me past ±" + threshold + "%");
         button.setAttribute("aria-pressed", "false");
       }
     }
@@ -225,7 +233,7 @@
     if (banner) return;
     banner = document.createElement("div");
     banner.setAttribute("role", "dialog");
-    banner.setAttribute("aria-label", "앱 설치 안내");
+    banner.setAttribute("aria-label", t("앱 설치 안내", "Install this app"));
     banner.style.cssText =
       "position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:9999;" +
       "box-sizing:border-box;width:calc(100% - 24px);max-width:420px;" +
@@ -243,7 +251,7 @@
     var text = document.createElement("div");
     text.style.cssText = "flex:1;min-width:0;";
     var title = document.createElement("strong");
-    title.textContent = "물밑을 앱처럼";
+    title.textContent = t("물밑을 앱처럼", "Mulmit as an app");
     var body = document.createElement("span");
     body.textContent = bodyText;
     text.append(title, document.createElement("br"), body);
@@ -263,7 +271,7 @@
 
     var close = document.createElement("button");
     close.type = "button";
-    close.setAttribute("aria-label", "닫기");
+    close.setAttribute("aria-label", t("닫기", "Close"));
     close.textContent = "✕";
     close.style.cssText =
       "flex:none;font:inherit;color:#9aa7b2;background:none;border:0;padding:4px;cursor:pointer;";
@@ -283,7 +291,7 @@
       window.setTimeout(function () {
         // 2.5초 사이에 상황이 바뀌었을 수 있다 — 설치가 끝났거나 닫았거나.
         if (!deferredInstall || !bannerAllowed()) return;
-        showBanner("설치하면 전체화면 앱으로 바로 열립니다.", "설치", function () {
+        showBanner(t("설치하면 전체화면 앱으로 바로 열립니다.", "Install it and it opens straight into a full-screen app."), t("설치", "Install"), function () {
           var prompt = deferredInstall;
           deferredInstall = null;
           if (!prompt) {
@@ -311,7 +319,8 @@
     window.setTimeout(function () {
       if (!bannerAllowed()) return;
       showBanner(
-        "공유 버튼(↑)을 누르고 '홈 화면에 추가'를 선택하면 앱처럼 열리고 알림도 받을 수 있습니다.",
+        t("공유 버튼(↑)을 누르고 '홈 화면에 추가'를 선택하면 앱처럼 열리고 알림도 받을 수 있습니다.",
+          "Tap Share (↑) and choose 'Add to Home Screen' — it opens like an app and can receive alerts."),
         null,
         null
       );
