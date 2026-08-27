@@ -1387,4 +1387,9 @@ html[data-lang="en"] .lang-en { display: revert; }
      활성 탭이 이미 위치를 말하고 있어 제목이 두 번 쌓였다(운영자 결정
      2026-08-27). 갱신·새로고침 줄(console-meta)은 남긴다. */
   .console-head.head-collapse-mobile > div:first-child { display: none; }
+  /* 접힌 페이지의 갱신·새로고침 줄은 monitor.js가 첫 섹션 제목 아래로 옮긴다
+     (미국 탭과 같은 순서). 옮겨 온 줄의 자리와, 빈 껍데기가 된 console-head의
+     여백 정리 — :has 미지원 브라우저에서는 JS도 없던 것처럼 원래 자리에 남는다. */
+  .console-section .console-meta { margin: 2px 0 var(--sp-3); }
+  .console-head.head-collapse-mobile:not(:has(.console-meta)) { display: none; }
 }

@@ -5867,3 +5867,22 @@ document.querySelectorAll("[data-mfds-filter]").forEach((button) => {
 });
 
 // a change
+
+// --- 폰에서 갱신 줄을 제목 아래로 ---------------------------------------------
+// head-collapse-mobile 페이지(/kr·/crypto)는 폰에서 h1 블록이 접힌다(운영자
+// 결정 2026-08-27). 그러면 갱신·새로고침 줄이 제목도 없이 맨 위에 떠서,
+// 미국 탭의 순서(제목 → 갱신 줄)와 어긋났다. 폰에서는 그 줄을 첫 섹션
+// 제목 아래로 옮기고, 화면이 넓어지면 제자리로 돌린다.
+(() => {
+  const collapsedHead = document.querySelector(".console-head.head-collapse-mobile");
+  const meta = collapsedHead ? collapsedHead.querySelector(".console-meta") : null;
+  const firstSectionHeader = document.querySelector(".console-section > header");
+  if (!collapsedHead || !meta || !firstSectionHeader) return;
+  const narrow = window.matchMedia("(max-width: 560px)");
+  const place = () => {
+    if (narrow.matches) firstSectionHeader.after(meta);
+    else collapsedHead.append(meta);
+  };
+  place();
+  narrow.addEventListener("change", place);
+})();
